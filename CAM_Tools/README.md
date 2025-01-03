@@ -4,6 +4,11 @@
 
 Admin Tools v1 is a Tampermonkey userscript designed to enhance the user interface of specific Amazon internal web pages by adding buttons that facilitate data interaction with the backend API. This script is particularly useful for users who need to download data, add new items, activate/deactivate items, or perform redrive operations.
 
+## Functions
+
+- **addButtonsAndProgress**: Adds buttons and a progress tracker to the page. It checks if the buttons already exist to avoid duplication.
+- **fetchItemsForStore**: Fetches item availability data for a specific store. It processes the data to ensure consistency and accuracy.
+
 ## Features
 
 - **Download Data Button**: Allows users to download data from the API. It fetches store information and item availability, compiles the data, and generates a CSV file for download.
