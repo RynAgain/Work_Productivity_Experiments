@@ -28,40 +28,35 @@
         downloadButton.style.borderRadius = '0';
         downloadButton.style.cursor = 'pointer !important';
 
-        // Create a progress tracker
-        var progress = document.createElement('div');
-        progress.id = 'progressTracker';
-        progress.style.position = 'fixed';
-        progress.style.bottom = '40px';
-        progress.style.left = '0';
-        progress.style.width = '100%';
-        progress.style.height = '30px';
-        progress.style.zIndex = '1000 !important';
-        progress.style.fontSize = '14px !important';
-        progress.style.backgroundColor = '#f0f0f0 !important';
-        progress.style.color = '#000 !important';
-        progress.style.textAlign = 'center';
-        progress.style.lineHeight = '30px';
-        progress.style.borderRadius = '0';
-        progress.style.display = 'none';
-        progress.innerHTML = 'Progress: 0%';
+    // Create a progress tracker
+    var progress = document.createElement('div');
+    progress.id = 'progressTracker';
+    progress.style.position = 'fixed';
+    progress.style.bottom = '40px';
+    progress.style.left = '0';
+    progress.style.width = '100%';
+    progress.style.height = '30px';
+    progress.style.zIndex = '1000 !important';
+    progress.style.fontSize = '14px !important';
+    progress.style.backgroundColor = '#f0f0f0 !important';
+    progress.style.color = '#000 !important';
+    progress.style.textAlign = 'center';
+    progress.style.lineHeight = '30px';
+    progress.style.borderRadius = '0';
+    progress.style.display = 'none';
+    progress.innerHTML = 'Progress: 0%';
 
-        // Append the button and progress tracker to the body
-        document.body.appendChild(downloadButton);
-        if (!document.getElementById('progressTracker')) {
-            document.body.appendChild(progress);
-        }
-        console.log('Download data button and progress tracker added to the page');
+    // Append the button and progress tracker to the body
+    document.body.appendChild(downloadButton);
+    if (!document.getElementById('progressTracker')) {
+        document.body.appendChild(progress);
+    }
+    console.log('Download data button and progress tracker added to the page');
 
-        // Add click event to the download data button
-        downloadButton.addEventListener('click', function() {
-            console.log('Download Data button clicked');
-            var progress = document.getElementById('progressTracker');
-            if (progress) {
-                progress.style.display = 'block';
-            } else {
-                console.error('Progress tracker not found');
-            }
+    // Add click event to the download data button
+    downloadButton.addEventListener('click', function() {
+        console.log('Download Data button clicked');
+        progress.style.display = 'block';
 
             // Determine the environment (prod or gamma)
             const environment = window.location.hostname.includes('gamma') ? 'gamma' : 'prod';
