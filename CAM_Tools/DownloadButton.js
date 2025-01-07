@@ -2,7 +2,7 @@
     'use strict';
 
     // Function to add the download data button
-    window.addDownloadButton = function() {
+    window.addDownloadButton = function addDownloadButton() {
         console.log('Attempting to add download data button');
 
         // Check if the button already exists

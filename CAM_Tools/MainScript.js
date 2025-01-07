@@ -15,9 +15,11 @@
 (function() {
     'use strict';
     console.log('Main script is running');
-    // Call initialization functions for each button script
-    if (typeof addDownloadButton === 'function') addDownloadButton();
-    if (typeof addAddItemButton === 'function') addAddItemButton();
-    if (typeof addActivateButton === 'function') addActivateButton();
-    if (typeof addRedriveButton === 'function') addRedriveButton();
+    // Ensure all scripts are loaded before calling initialization functions
+    window.addEventListener('load', function() {
+        if (typeof addDownloadButton === 'function') addDownloadButton();
+        if (typeof addAddItemButton === 'function') addAddItemButton();
+        if (typeof addActivateButton === 'function') addActivateButton();
+        if (typeof addRedriveButton === 'function') addRedriveButton();
+    });
 })();
