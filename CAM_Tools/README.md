@@ -1,45 +1,38 @@
-# Admin Tools v1
+# Tampermonkey Script Breakdown
 
-## Overview
+This repository contains a set of scripts designed for use with Tampermonkey. The scripts are split into separate files for better maintainability, each handling a specific button's functionality on the webpage.
 
-Admin Tools v1 is a Tampermonkey userscript designed to enhance the user interface of specific Amazon internal web pages by adding buttons that facilitate data interaction with the backend API. This script is particularly useful for users who need to download data, add new items, activate/deactivate items, or perform redrive operations.
+## Files
 
-## Functions
+1. **MainScript.js**: The main script that includes `@require` directives for the other scripts. This script should be installed in the Tampermonkey extension.
 
-- **addButtonsAndProgress**: Adds buttons and a progress tracker to the page. It checks if the buttons already exist to avoid duplication.
-- **fetchItemsForStore**: Fetches item availability data for a specific store. It processes the data to ensure consistency and accuracy.
+2. **DownloadButton.js**: Handles the creation and functionality of the "Download Data" button.
 
-## Features
+3. **AddItemButton.js**: Handles the creation and functionality of the "Add New Item(s)" button.
 
-- **Download Data Button**: Allows users to download data from the API. It fetches store information and item availability, compiles the data, and generates a CSV file for download.
-- **Add New Item(s) Button**: Placeholder for future functionality to add new items.
-- **Activate/Deactivate Item(s) Button**: Placeholder for future functionality to activate or deactivate items.
-- **Redrive Button**: Placeholder for future functionality to perform redrive operations.
-- **Progress Tracker**: Displays the progress of data compilation and download operations.
+4. **ActivateButton.js**: Handles the creation and functionality of the "Activate/Deactivate Item(s)" button.
 
-## Installation
-
-1. Install Tampermonkey extension in your browser.
-2. Create a new script in Tampermonkey and paste the contents of `Admin_tools_v1` into it.
-3. Save the script.
+5. **RedriveButton.js**: Handles the creation and functionality of the "Redrive" button.
 
 ## Usage
 
-- Navigate to any page under `https://*.cam.wfm.amazon.dev/*`.
-- The script will automatically add the buttons to the bottom of the page.
-- Click the "Download Data" button to fetch and download data as a CSV file.
-- Other buttons are currently placeholders and will display a "Coming Soon" alert when clicked.
+- **MainScript.js**: Install this script in Tampermonkey. It will automatically include the other scripts using the `@require` directive.
+- **Button Scripts**: Host these scripts on a public GitHub repository. Update the `@require` URLs in `MainScript.js` to point to the raw GitHub URLs of these scripts.
 
-## Technical Details
+## Installation
 
-- The script uses a `MutationObserver` to detect changes in the DOM and ensure buttons are added dynamically.
-- It makes use of the Fetch API to interact with the backend services, sending requests to retrieve store and item data.
-- Data transformations are applied to ensure consistency and accuracy before generating the CSV file.
-
-## Author
-
-Ryan Satterfield
+1. Clone this repository or download the files.
+2. Host the button scripts (`DownloadButton.js`, `AddItemButton.js`, `ActivateButton.js`, `RedriveButton.js`) on your GitHub repository.
+3. Update the `@require` URLs in `MainScript.js` to point to the hosted scripts.
+4. Install `MainScript.js` in Tampermonkey.
 
 ## License
 
-No use acceptable.
+Not for public use.
+
+## TODO
+
+- [ ] Implement the download functionality for the "Download Data" button.
+- [ ] Add functionality for the "Add New Item(s)" button.
+- [ ] Implement the activation/deactivation logic for the "Activate/Deactivate Item(s)" button.
+- [ ] Add functionality for the "Redrive" button.

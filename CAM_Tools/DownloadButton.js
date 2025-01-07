@@ -1,30 +1,18 @@
-// ==UserScript==
-// @name         Add Button to Download Data
-// @namespace    http://tampermonkey.net/
-// @version      4.8
-// @description  Adds a button to download data from the API
-// @author       Ryan Satterfield
-// @match        https://*.cam.wfm.amazon.dev/*
-// @grant        none
-// ==/UserScript==
-
 (function() {
     'use strict';
 
-    console.log('Tampermonkey script is running');
+    // Function to add the download data button
+    function addDownloadButton() {
+        console.log('Attempting to add download data button');
 
-    // Function to add the buttons and progress tracker
-    function addButtonsAndProgress(): void {
-        console.log('Attempting to add buttons and progress tracker');
-
-        // Check if the buttons already exist
+        // Check if the button already exists
         if (document.getElementById('downloadDataButton')) {
-            console.log('Buttons already exist');
+            console.log('Download data button already exists');
             return;
         }
 
         // Create the download data button
-        const downloadButton: HTMLButtonElement = document.createElement('button');
+        var downloadButton = document.createElement('button');
         downloadButton.id = 'downloadDataButton';
         downloadButton.innerHTML = 'Download Data';
         downloadButton.style.position = 'fixed';
@@ -40,82 +28,9 @@
         downloadButton.style.borderRadius = '0';
         downloadButton.style.cursor = 'pointer !important';
 
-        // Create the add new item(s) button
-        const addItemButton: HTMLButtonElement = document.createElement('button');
-        addItemButton.id = 'addItemButton';
-        addItemButton.innerHTML = 'Add New Item(s)';
-        addItemButton.style.position = 'fixed';
-        addItemButton.style.bottom = '0';
-        addItemButton.style.left = '25%';
-        addItemButton.style.width = '25%';
-        addItemButton.style.height = '40px';
-        addItemButton.style.zIndex = '1000 !important';
-        addItemButton.style.fontSize = '14px !important';
-        addItemButton.style.backgroundColor = '#28a745 !important';
-        addItemButton.style.color = '#fff !important';
-        addItemButton.style.border = 'none !important';
-        addItemButton.style.borderRadius = '0';
-        addItemButton.style.cursor = 'pointer !important';
-
-        // Create the activate/deactivate item(s) button
-        const activateButton: HTMLButtonElement = document.createElement('button');
-        activateButton.id = 'activateButton';
-        activateButton.innerHTML = 'Activate/Deactivate Item(s)';
-        activateButton.style.position = 'fixed';
-        activateButton.style.bottom = '0';
-        activateButton.style.left = '50%';
-        activateButton.style.width = '25%';
-        activateButton.style.height = '40px';
-        activateButton.style.zIndex = '1000 !important';
-        activateButton.style.fontSize = '14px !important';
-        activateButton.style.backgroundColor = '#ffc107 !important';
-        activateButton.style.color = '#fff !important';
-        activateButton.style.border = 'none !important';
-        activateButton.style.borderRadius = '0';
-        activateButton.style.cursor = 'pointer !important';
-
-        // Create the redrive button
-        const redriveButton: HTMLButtonElement = document.createElement('button');
-        redriveButton.id = 'redriveButton';
-        redriveButton.innerHTML = 'Redrive';
-        redriveButton.style.position = 'fixed';
-        redriveButton.style.bottom = '0';
-        redriveButton.style.left = '75%';
-        redriveButton.style.width = '25%';
-        redriveButton.style.height = '40px';
-        redriveButton.style.zIndex = '1000 !important';
-        redriveButton.style.fontSize = '14px !important';
-        redriveButton.style.backgroundColor = '#dc3545 !important';
-        redriveButton.style.color = '#fff !important';
-        redriveButton.style.border = 'none !important';
-        redriveButton.style.borderRadius = '0';
-        redriveButton.style.cursor = 'pointer !important';
-
-        // Create a progress tracker
-        const progress: HTMLDivElement = document.createElement('div');
-        progress.id = 'progressTracker';
-        progress.style.position = 'fixed';
-        progress.style.bottom = '40px';
-        progress.style.left = '0';
-        progress.style.width = '100%';
-        progress.style.height = '30px';
-        progress.style.zIndex = '1000 !important';
-        progress.style.fontSize = '14px !important';
-        progress.style.backgroundColor = '#f0f0f0 !important';
-        progress.style.color = '#000 !important';
-        progress.style.textAlign = 'center';
-        progress.style.lineHeight = '30px';
-        progress.style.borderRadius = '0';
-        progress.style.display = 'none';
-        progress.innerHTML = 'Progress: 0%';
-
-        // Append the buttons and progress tracker to the body
+        // Append the button to the body
         document.body.appendChild(downloadButton);
-        document.body.appendChild(addItemButton);
-        document.body.appendChild(activateButton);
-        document.body.appendChild(redriveButton);
-        document.body.appendChild(progress);
-        console.log('Buttons and progress tracker added to the page');
+        console.log('Download data button added to the page');
 
         // Add click event to the download data button
         downloadButton.addEventListener('click', function() {
@@ -123,11 +38,11 @@
             progress.style.display = 'block';
 
             // Determine the environment (prod or gamma)
-            const environment: string = window.location.hostname.includes('gamma') ? 'gamma' : 'prod';
-            const apiUrlBase: string = `https://${environment}.cam.wfm.amazon.dev/api/`;
+            const environment = window.location.hostname.includes('gamma') ? 'gamma' : 'prod';
+            const apiUrlBase = `https://${environment}.cam.wfm.amazon.dev/api/`;
 
             // Define the API endpoint and headers for getting stores
-            const headersStores: HeadersInit = {
+            const headersStores = {
                 'accept': '*/*',
                 'accept-encoding': 'gzip, deflate, br',
                 'accept-language': 'en-US,en;q=0.9',
@@ -152,12 +67,12 @@
                 }
 
                 // Extract store IDs from the nested structure
-                const storeIds: string[] = [];
+                const storeIds = [];
                 for (const region in storeData.storesInformation) {
                     const states = storeData.storesInformation[region];
                     for (const state in states) {
                         const stores = states[state];
-                        stores.forEach((store: any) => {
+                        stores.forEach(store => {
                             console.log('Store:', store);
                             storeIds.push(store.storeTLC);
                         });
@@ -165,8 +80,8 @@
                 }
 
                 // Function to fetch items for a single store
-                const fetchItemsForStore = (storeId: string, index: number): Promise<any[]> => {
-                    const headersItems: HeadersInit = {
+                const fetchItemsForStore = (storeId, index) => {
+                    const headersItems = {
                         'accept': '*/*',
                         'accept-encoding': 'gzip, deflate, br',
                         'accept-language': 'en-US,en;q=0.9',
@@ -194,7 +109,7 @@
                     .then(response => response.json())
                     .then(data => {
                         console.log(`Data for store ${storeId}:`, data);
-                        return data.itemsAvailability.map((item: any) => {
+                        return data.itemsAvailability.map(item => {
                             // Transformations
                             item.andon = item.andon === true ? 'Enabled' : 'Disabled';
                             if (item.inventoryStatus === 'Unlimited') {
@@ -276,30 +191,12 @@
             })
             .catch(error => console.error('Error downloading data:', error));
         });
-
-        // Add click event to the add new item(s) button
-        addItemButton.addEventListener('click', function() {
-            console.log('Add New Item(s) button clicked');
-            alert('Coming Soon');
-        });
-
-        // Add click event to the activate/deactivate item(s) button
-        activateButton.addEventListener('click', function() {
-            console.log('Activate/Deactivate Item(s) button clicked');
-            alert('Coming Soon');
-        });
-
-        // Add click event to the redrive button
-        redriveButton.addEventListener('click', function() {
-            console.log('Redrive button clicked');
-            alert('Coming Soon');
-        });
     }
 
     // Use MutationObserver to detect changes in the DOM
-    const observer: MutationObserver = new MutationObserver(addButtonsAndProgress);
+    const observer = new MutationObserver(addDownloadButton);
     observer.observe(document.body, { childList: true, subtree: true });
 
-    // Initial attempt to add the buttons and progress tracker
-    addButtonsAndProgress();
+    // Initial attempt to add the download data button
+    addDownloadButton();
 })();
