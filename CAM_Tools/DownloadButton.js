@@ -2,7 +2,7 @@
     'use strict';
 
     // Function to add the download data button
-    function addDownloadButton() {
+    window.addDownloadButton = function() {
         console.log('Attempting to add download data button');
 
         // Check if the button already exists
@@ -28,7 +28,25 @@
         downloadButton.style.borderRadius = '0';
         downloadButton.style.cursor = 'pointer !important';
 
-        // Append the button to the body
+        // Create a progress tracker
+        var progress = document.createElement('div');
+        progress.id = 'progressTracker';
+        progress.style.position = 'fixed';
+        progress.style.bottom = '40px';
+        progress.style.left = '0';
+        progress.style.width = '100%';
+        progress.style.height = '30px';
+        progress.style.zIndex = '1000 !important';
+        progress.style.fontSize = '14px !important';
+        progress.style.backgroundColor = '#f0f0f0 !important';
+        progress.style.color = '#000 !important';
+        progress.style.textAlign = 'center';
+        progress.style.lineHeight = '30px';
+        progress.style.borderRadius = '0';
+        progress.style.display = 'none';
+        progress.innerHTML = 'Progress: 0%';
+
+        // Append the button and progress tracker to the body
         document.body.appendChild(downloadButton);
         console.log('Download data button added to the page');
 
