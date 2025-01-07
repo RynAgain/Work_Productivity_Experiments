@@ -32,7 +32,7 @@ Not for public use.
 
 ## TODO
 
-- [ ] Implement the download functionality for the "Download Data" button (requires testing).
+- [ ] Implement the download functionality for the "Download Data" button. (needs testing now)
 - [ ] Add functionality for the "Add New Item(s)" button.
 - [ ] Implement the activation/deactivation logic for the "Activate/Deactivate Item(s)" button.
 - [ ] Add functionality for the "Redrive" button.
