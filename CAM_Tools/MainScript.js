@@ -14,12 +14,16 @@
 
 (function() {
     'use strict';
-    console.log('Main script is running');
-    // Ensure all scripts are loaded before calling initialization functions
-    window.addEventListener('load', function() {
-        if (typeof addDownloadButton === 'function') addDownloadButton();
-        if (typeof addAddItemButton === 'function') addAddItemButton();
-        if (typeof addActivateButton === 'function') addActivateButton();
-        if (typeof addRedriveButton === 'function') addRedriveButton();
+
+    // Wait for DOM or run immediately
+    window.addEventListener('DOMContentLoaded', () => {
+        console.log('Main script: DOMContentLoaded');
+
+        if (typeof window.initDownloadDataFeature === 'function') {
+            // Call the function from the required script
+            window.initDownloadDataFeature();
+        } else {
+            console.error('Required script not loaded or function is missing.');
+        }
     });
 })();
