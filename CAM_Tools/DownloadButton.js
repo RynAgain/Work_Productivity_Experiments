@@ -8,6 +8,7 @@
         // Function to add the download data button
         function addDownloadButton() {
             console.log('Attempting to add download data button');
+            console.log('initDownloadDataFeature function is executing.');
 
             // Check if the button already exists
             if (document.getElementById('downloadDataButton')) {
