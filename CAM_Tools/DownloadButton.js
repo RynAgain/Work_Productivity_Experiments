@@ -2,7 +2,7 @@
     'use strict';
 
     // Expose an init function to the global scope
-    window.initDownloadDataFeature = function initDownloadDataFeature() {
+    window.initDownloadDataFeature = function() {
         console.log('initDownloadDataFeature called from required script');
 
         // Function to add the download data button
