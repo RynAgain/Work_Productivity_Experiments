@@ -14,7 +14,7 @@
 
 (function() {
     'use strict';
-
+    console.log("MainScript Started");
     // Wait for DOM or run immediately
     window.addEventListener('DOMContentLoaded', () => {
         console.log('Main script: DOMContentLoaded');
