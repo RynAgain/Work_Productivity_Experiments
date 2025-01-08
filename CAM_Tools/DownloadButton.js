@@ -27,11 +27,11 @@
             downloadButton.style.height = '40px';
             downloadButton.style.zIndex = '1000 ';
             downloadButton.style.fontSize = '14px ';
-            downloadButton.style.backgroundColor = '#007bff ';
+            downloadButton.style.backgroundColor = '#004E36';
             downloadButton.style.color = '#fff ';
             downloadButton.style.border = 'none ';
             downloadButton.style.borderRadius = '0';
-            downloadButton.style.cursor = 'pointer ';
+            downloadButton.style.cursor = 'pointer';
 
             // Create a progress tracker
             var progress = document.createElement('div');
