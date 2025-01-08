@@ -90,53 +90,64 @@
                 <button id="generateFileButton" style="width: 100%;">Generate File</button>
             `;
 
-            // Add event listener to availability dropdown
-            document.getElementById('availability').addEventListener('change', function() {
-                var currentInventoryField = document.getElementById('currentInventory');
-                if (this.value === 'Unlimited') {
-                    currentInventoryField.value = 0;
-                    currentInventoryField.disabled = true;
-                } else {
-                    currentInventoryField.disabled = false;
-                }
-            });
-
             formContainer.appendChild(closeButton);
             overlay.appendChild(formContainer);
             document.body.appendChild(overlay);
 
-            // Add event listener to "Generate File" button
-            document.getElementById('generateFileButton').addEventListener('click', function() {
-                // Collect input values
-                var storeCode = document.getElementById('storeCode').value;
-                var plu = document.getElementById('plu').value;
-                var currentInventory = document.getElementById('currentInventory').value;
-                var availability = document.getElementById('availability').value;
-                var andonCord = document.getElementById('andonCord').value;
+            // Append close button and form to overlay
+            formContainer.appendChild(closeButton);
+            overlay.appendChild(formContainer);
+            document.body.appendChild(overlay);
 
-                // Check if all fields are filled
-                if (!storeCode || !plu || !availability || !andonCord) {
-                    alert('Please fill in all fields before generating the file.');
-                    return;
-                }
+            // Ensure elements exist before attaching event listeners
+            var availabilityElement = document.getElementById('availability');
+            var generateFileButton = document.getElementById('generateFileButton');
 
-                var csvContent = "data:text/csv;charset=utf-8,Store - 3 Letter Code,Item Name,Item PLU/UPC,Availability,Current Inventory,Sales Floor Capacity,Andon Cord\n"
-                    + `${storeCode},"Null",${plu},${availability},${currentInventory},,${andonCord}\n`;
+            if (availabilityElement) {
+                availabilityElement.addEventListener('change', function() {
+                    var currentInventoryField = document.getElementById('currentInventory');
+                    if (this.value === 'Unlimited') {
+                        currentInventoryField.value = 0;
+                        currentInventoryField.disabled = true;
+                    } else {
+                        currentInventoryField.disabled = false;
+                    }
+                });
+            }
 
-                // Create a download link
-                var encodedUri = encodeURI(csvContent);
-                var link = document.createElement("a");
-                link.setAttribute("href", encodedUri);
-                link.setAttribute("download", "new_item.csv");
-                document.body.appendChild(link);
+            if (generateFileButton) {
+                generateFileButton.addEventListener('click', function() {
+                    // Collect input values
+                    var storeCode = document.getElementById('storeCode').value;
+                    var plu = document.getElementById('plu').value;
+                    var currentInventory = document.getElementById('currentInventory').value;
+                    var availability = document.getElementById('availability').value;
+                    var andonCord = document.getElementById('andonCord').value;
 
-                // Trigger the download
-                link.click();
-                document.body.removeChild(link);
+                    // Check if all fields are filled
+                    if (!storeCode || !plu || !availability || !andonCord) {
+                        alert('Please fill in all fields before generating the file.');
+                        return;
+                    }
 
-                // Remove overlay
-                document.body.removeChild(overlay);
-            });
+                    var csvContent = "data:text/csv;charset=utf-8,Store - 3 Letter Code,Item Name,Item PLU/UPC,Availability,Current Inventory,Sales Floor Capacity,Andon Cord\n"
+                        + `${storeCode},"Null",${plu},${availability},${currentInventory},,${andonCord}\n`;
+
+                    // Create a download link
+                    var encodedUri = encodeURI(csvContent);
+                    var link = document.createElement("a");
+                    link.setAttribute("href", encodedUri);
+                    link.setAttribute("download", "new_item.csv");
+                    document.body.appendChild(link);
+
+                    // Trigger the download
+                    link.click();
+                    document.body.removeChild(link);
+
+                    // Remove overlay
+                    document.body.removeChild(overlay);
+                });
+            }
         });
     }
 
