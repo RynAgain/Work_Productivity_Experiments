@@ -35,7 +35,80 @@
         // Add click event to the add new item(s) button
         addItemButton.addEventListener('click', function() {
             console.log('Add New Item(s) button clicked');
-            alert('Coming Soon');
+            // Create overlay
+            var overlay = document.createElement('div');
+            overlay.id = 'addItemOverlay';
+            overlay.style.position = 'fixed';
+            overlay.style.top = '0';
+            overlay.style.left = '0';
+            overlay.style.width = '100%';
+            overlay.style.height = '100%';
+            overlay.style.backgroundColor = 'rgba(0, 0, 0, 0.5)';
+            overlay.style.zIndex = '1001';
+            overlay.style.display = 'flex';
+            overlay.style.justifyContent = 'center';
+            overlay.style.alignItems = 'center';
+
+            // Create form container
+            var formContainer = document.createElement('div');
+            formContainer.style.backgroundColor = '#fff';
+            formContainer.style.padding = '20px';
+            formContainer.style.borderRadius = '5px';
+            formContainer.style.width = '300px';
+
+            // Create form elements
+            formContainer.innerHTML = `
+                <h3>Add New Item</h3>
+                <label>Store - 3 Letter Code</label>
+                <input type="text" id="storeCode" style="width: 100%; margin-bottom: 10px;">
+                <label>PLU</label>
+                <input type="text" id="plu" style="width: 100%; margin-bottom: 10px;">
+                <label>Current Inventory</label>
+                <input type="number" id="currentInventory" style="width: 100%; margin-bottom: 10px;">
+                <label>Availability</label>
+                <select id="availability" style="width: 100%; margin-bottom: 10px;">
+                    <option value="Unlimited">Unlimited</option>
+                    <option value="Limited">Limited</option>
+                </select>
+                <label>Andon Cord</label>
+                <select id="andonCord" style="width: 100%; margin-bottom: 10px;">
+                    <option value="Enabled">Enabled</option>
+                    <option value="Disabled">Disabled</option>
+                </select>
+                <button id="generateFileButton" style="width: 100%;">Generate File</button>
+            `;
+
+            // Append form to overlay
+            overlay.appendChild(formContainer);
+            document.body.appendChild(overlay);
+
+            // Add event listener to "Generate File" button
+            document.getElementById('generateFileButton').addEventListener('click', function() {
+                // Collect input values
+                var storeCode = document.getElementById('storeCode').value;
+                var plu = document.getElementById('plu').value;
+                var currentInventory = document.getElementById('currentInventory').value;
+                var availability = document.getElementById('availability').value;
+                var andonCord = document.getElementById('andonCord').value;
+
+                // Generate CSV content
+                var csvContent = "data:text/csv;charset=utf-8,Store - 3 Letter Code,Item PLU/UPC,Availability,Current Inventory,Andon Cord\n"
+                    + `${storeCode},,${plu},${availability},${currentInventory},${andonCord}\n`;
+
+                // Create a download link
+                var encodedUri = encodeURI(csvContent);
+                var link = document.createElement("a");
+                link.setAttribute("href", encodedUri);
+                link.setAttribute("download", "new_item.csv");
+                document.body.appendChild(link);
+
+                // Trigger the download
+                link.click();
+                document.body.removeChild(link);
+
+                // Remove overlay
+                document.body.removeChild(overlay);
+            });
         });
     }
 
