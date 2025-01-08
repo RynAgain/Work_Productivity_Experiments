@@ -58,15 +58,9 @@
             // Add click event to the download data button
             downloadButton.addEventListener('click', function() {
                 console.log('Download Data button clicked');
-                progress.style.display = 'block';
-            var progress = document.getElementById('progressTracker');
-            if (progress) {
             var progress = document.getElementById('progressTracker');
             if (progress) {
                 progress.style.display = 'block';
-            } else {
-                console.error('Progress tracker not found');
-            }
             } else {
                 console.error('Progress tracker not found');
             }
