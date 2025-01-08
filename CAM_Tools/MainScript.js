@@ -22,6 +22,7 @@
         if (typeof window.initDownloadDataFeature === 'function') {
             // Call the function from the required script
             window.initDownloadDataFeature();
+            console.log('initDownloadDataFeature function called successfully.');
         } else {
             console.error('Required script not loaded or function is missing.');
         }

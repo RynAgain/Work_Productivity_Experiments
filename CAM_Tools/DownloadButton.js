@@ -54,6 +54,8 @@
             document.body.appendChild(downloadButton);
             document.body.appendChild(progress);
             console.log('Download data button and progress tracker added to the page');
+            console.log('Button HTML:', downloadButton.outerHTML);
+            console.log('Progress HTML:', progress.outerHTML);
 
             // Add click event to the download data button
             downloadButton.addEventListener('click', function() {
