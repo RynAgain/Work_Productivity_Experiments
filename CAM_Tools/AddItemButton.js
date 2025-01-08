@@ -61,6 +61,7 @@
             closeButton.style.backgroundColor = '#000';
             closeButton.style.padding = '5px';
             closeButton.style.borderRadius = '50%';
+            closeButton.addEventListener('click', function() {
                 document.body.removeChild(overlay);
             });
 
