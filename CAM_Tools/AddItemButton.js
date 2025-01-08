@@ -153,23 +153,6 @@
                         currentInventoryField.disabled = false;
                     }
 
-                    var csvContent = "data:text/csv;charset=utf-8,Store - 3 Letter Code,Item Name,Item PLU/UPC,Availability,Current Inventory,Sales Floor Capacity,Andon Cord,Tracking Start Date,Tracking End Date\n"
-                        + `${storeCode},"Null",${plu},${availability},${currentInventory},,${andonCord},${trackingStartDate},${trackingEndDate}\n`;
-
-                    // Create a download link
-                    var encodedUri = encodeURI(csvContent);
-                    var link = document.createElement("a");
-                    link.setAttribute("href", encodedUri);
-                    link.setAttribute("download", "new_item.csv");
-                    document.body.appendChild(link);
-
-                    // Trigger the download
-                    link.click();
-                    document.body.removeChild(link);
-
-                    // Remove overlay
-                    document.body.removeChild(overlay);
-
                 });
             }
 
