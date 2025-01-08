@@ -60,7 +60,12 @@
             // Add click event to the download data button
             downloadButton.addEventListener('click', function() {
                 console.log('Download Data button clicked');
+            var progress = document.getElementById('progressTracker');
+            if (progress) {
                 progress.style.display = 'block';
+            } else {
+                console.error('Progress tracker not found');
+            }
 
                 // Determine the environment (prod or gamma)
                 const environment = window.location.hostname.includes('gamma') ? 'gamma' : 'prod';
