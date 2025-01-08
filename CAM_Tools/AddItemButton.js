@@ -1,7 +1,40 @@
 (function() {
     'use strict';
 
-    // Function to add the add new item(s) button
+    // Add CSS styles for input fields and buttons
+    var style = document.createElement('style');
+    style.innerHTML = `
+        .input-field {
+            font-family: inherit;
+            font-size: 16px;
+            padding: 8px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            width: 100%;
+            box-sizing: border-box;
+            transition: border-color 0.3s, box-shadow 0.3s;
+        }
+        .input-field:focus {
+            border-color: #007bff;
+            box-shadow: 0 0 5px rgba(0, 123, 255, 0.5);
+        }
+        .button {
+            font-family: inherit;
+            font-size: 14px;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            background-color: #28a745;
+            color: #fff;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        .button:hover {
+            background-color: #218838;
+        }
+    `;
+    document.head.appendChild(style);
+
     function addAddItemButton() {
         console.log('Attempting to add add new item(s) button');
 
