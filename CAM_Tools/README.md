@@ -8,7 +8,7 @@ This repository contains a set of scripts designed for use with Tampermonkey. Th
 
 2. **DownloadButton.js**: Handles the creation and functionality of the "Download Data" button.
 
-3. **AddItemButton.js**: Handles the creation and functionality of the "Add New Item(s)" button.
+3. **AddItemButton.js**: Handles the creation and functionality of the "Add New Item(s)" button. 
 
 4. **ActivateButton.js**: Handles the creation and functionality of the "Activate/Deactivate Item(s)" button.
 
@@ -32,7 +32,7 @@ Not for public use.
 
 ## TODO
 
-- [ ] Implement the download functionality for the "Download Data" button. (needs testing now)
+- [x] Implement the download functionality for the "Download Data" button. (needs testing now)
 - [ ] Add functionality for the "Add New Item(s)" button.
 - [ ] Implement the activation/deactivation logic for the "Activate/Deactivate Item(s)" button.
 - [ ] Add functionality for the "Redrive" button.

@@ -57,8 +57,10 @@
             closeButton.style.left = '0';
             closeButton.style.fontSize = '24px';
             closeButton.style.cursor = 'pointer';
-            closeButton.style.color = '#000';
-            closeButton.addEventListener('click', function() {
+            closeButton.style.color = '#fff';
+            closeButton.style.backgroundColor = '#000';
+            closeButton.style.padding = '5px';
+            closeButton.style.borderRadius = '50%';
                 document.body.removeChild(overlay);
             });
 
