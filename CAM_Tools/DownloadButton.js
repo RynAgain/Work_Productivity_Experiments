@@ -225,8 +225,8 @@
         }
 
         // Use MutationObserver to detect changes in the DOM
-        const observer = new MutationObserver(addDownloadButton);
-        observer.observe(document.body, { childList: true, subtree: true });
+        //const observer = new MutationObserver(addDownloadButton);
+        //observer.observe(document.body, { childList: true, subtree: true });
 
         // Initial attempt to add the download data button
         addDownloadButton();
