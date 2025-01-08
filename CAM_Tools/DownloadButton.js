@@ -25,13 +25,13 @@
             downloadButton.style.left = '0';
             downloadButton.style.width = '25%';
             downloadButton.style.height = '40px';
-            downloadButton.style.zIndex = '1000 !important';
-            downloadButton.style.fontSize = '14px !important';
-            downloadButton.style.backgroundColor = '#007bff !important';
-            downloadButton.style.color = '#fff !important';
-            downloadButton.style.border = 'none !important';
+            downloadButton.style.zIndex = '1000 ';
+            downloadButton.style.fontSize = '14px ';
+            downloadButton.style.backgroundColor = '#007bff ';
+            downloadButton.style.color = '#fff ';
+            downloadButton.style.border = 'none ';
             downloadButton.style.borderRadius = '0';
-            downloadButton.style.cursor = 'pointer !important';
+            downloadButton.style.cursor = 'pointer ';
 
             // Create a progress tracker
             var progress = document.createElement('div');
@@ -41,10 +41,10 @@
             progress.style.left = '0';
             progress.style.width = '100%';
             progress.style.height = '30px';
-            progress.style.zIndex = '1000 !important';
-            progress.style.fontSize = '14px !important';
-            progress.style.backgroundColor = '#f0f0f0 !important';
-            progress.style.color = '#000 !important';
+            progress.style.zIndex = '1000 ';
+            progress.style.fontSize = '14px ';
+            progress.style.backgroundColor = '#f0f0f0 ';
+            progress.style.color = '#000 ';
             progress.style.textAlign = 'center';
             progress.style.lineHeight = '30px';
             progress.style.borderRadius = '0';
