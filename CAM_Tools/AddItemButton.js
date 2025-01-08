@@ -114,9 +114,14 @@
                 var availability = document.getElementById('availability').value;
                 var andonCord = document.getElementById('andonCord').value;
 
-                // Generate CSV content
-                var csvContent = "data:text/csv;charset=utf-8,Store - 3 Letter Code,Item PLU/UPC,Availability,Current Inventory,Andon Cord\n"
-                    + `${storeCode},,${plu},${availability},${currentInventory},${andonCord}\n`;
+                // Check if all fields are filled
+                if (!storeCode || !plu || !availability || !andonCord) {
+                    alert('Please fill in all fields before generating the file.');
+                    return;
+                }
+
+                var csvContent = "data:text/csv;charset=utf-8,Store - 3 Letter Code,Item Name,Item PLU/UPC,Availability,Current Inventory,Sales Floor Capacity,Andon Cord\n"
+                    + `${storeCode},"Null",${plu},${availability},${currentInventory},,${andonCord}\n`;
 
                 // Create a download link
                 var encodedUri = encodeURI(csvContent);
