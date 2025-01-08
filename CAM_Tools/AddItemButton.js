@@ -53,8 +53,8 @@
             var closeButton = document.createElement('span');
             closeButton.innerHTML = '&times;';
             closeButton.style.position = 'absolute';
-            closeButton.style.top = '10px';
-            closeButton.style.right = '20px';
+            closeButton.style.top = '0';
+            closeButton.style.left = '0';
             closeButton.style.fontSize = '24px';
             closeButton.style.cursor = 'pointer';
             closeButton.style.color = '#000';
@@ -79,8 +79,8 @@
                 <input type="number" id="currentInventory" style="width: 100%; margin-bottom: 10px;">
                 <label>Availability</label>
                 <select id="availability" style="width: 100%; margin-bottom: 10px;">
-                    <option value="Unlimited">Unlimited</option>
                     <option value="Limited">Limited</option>
+                    <option value="Unlimited">Unlimited</option>
                 </select>
                 <label>Andon Cord</label>
                 <select id="andonCord" style="width: 100%; margin-bottom: 10px;">
