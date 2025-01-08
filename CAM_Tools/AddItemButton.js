@@ -90,6 +90,10 @@
                     <option value="Enabled">Enabled</option>
                     <option value="Disabled">Disabled</option>
                 </select>
+                <label>Tracking Start Date</label>
+                <input type="date" id="trackingStartDate" style="width: 100%; margin-bottom: 10px;">
+                <label>Tracking End Date</label>
+                <input type="date" id="trackingEndDate" style="width: 100%; margin-bottom: 10px;">
                 <button id="generateFileButton" style="width: 100%;">Generate File</button>
             `;
 
@@ -115,26 +119,9 @@
                     } else {
                         currentInventoryField.disabled = false;
                     }
-                });
-            }
 
-            if (generateFileButton) {
-                generateFileButton.addEventListener('click', function() {
-                    // Collect input values
-                    var storeCode = document.getElementById('storeCode').value;
-                    var plu = document.getElementById('plu').value;
-                    var currentInventory = document.getElementById('currentInventory').value;
-                    var availability = document.getElementById('availability').value;
-                    var andonCord = document.getElementById('andonCord').value;
-
-                    // Check if all fields are filled
-                    if (!storeCode || !plu || !availability || !andonCord) {
-                        alert('Please fill in all fields before generating the file.');
-                        return;
-                    }
-
-                    var csvContent = "data:text/csv;charset=utf-8,Store - 3 Letter Code,Item Name,Item PLU/UPC,Availability,Current Inventory,Sales Floor Capacity,Andon Cord\n"
-                        + `${storeCode},"Null",${plu},${availability},${currentInventory},,${andonCord}\n`;
+                    var csvContent = "data:text/csv;charset=utf-8,Store - 3 Letter Code,Item Name,Item PLU/UPC,Availability,Current Inventory,Sales Floor Capacity,Andon Cord,Tracking Start Date,Tracking End Date\n"
+                        + `${storeCode},"Null",${plu},${availability},${currentInventory},,${andonCord},${trackingStartDate},${trackingEndDate}\n`;
 
                     // Create a download link
                     var encodedUri = encodeURI(csvContent);
@@ -149,15 +136,37 @@
 
                     // Remove overlay
                     document.body.removeChild(overlay);
+
+                });
+            }
+
+            if (generateFileButton) {
+                generateFileButton.addEventListener('click', function() {
+                    // Collect input values
+                    var storeCode = document.getElementById('storeCode').value;
+                    var plu = document.getElementById('plu').value;
+                    var currentInventory = document.getElementById('currentInventory').value;
+                    var availability = document.getElementById('availability').value;
+                    var andonCord = document.getElementById('andonCord').value;
+
+                    // Check if all required fields are filled
+                    if (!storeCode || !plu || !availability || !andonCord) {
+                        alert('Please fill in all required fields before generating the file.');
+                        return;
+                    }
+
+                    // Check if both tracking dates are filled if one is provided
+                    var trackingStartDate = document.getElementById('trackingStartDate').value;
+                    var trackingEndDate = document.getElementById('trackingEndDate').value;
+                    if ((trackingStartDate && !trackingEndDate) || (!trackingStartDate && trackingEndDate)) {
+                        alert('Please provide both Tracking Start Date and Tracking End Date.');
+                        return;
+                    }
                 });
             }
         });
     }
 
-    // Use MutationObserver to detect changes in the DOM
-    const observer = new MutationObserver(addAddItemButton);
-    observer.observe(document.body, { childList: true, subtree: true });
-
-    // Initial attempt to add the add new item(s) button
+    // Initialize the add item button
     addAddItemButton();
 })();
