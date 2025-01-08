@@ -49,7 +49,19 @@
             overlay.style.justifyContent = 'center';
             overlay.style.alignItems = 'center';
 
-            // Create form container
+            // Create close button
+            var closeButton = document.createElement('span');
+            closeButton.innerHTML = '&times;';
+            closeButton.style.position = 'absolute';
+            closeButton.style.top = '10px';
+            closeButton.style.right = '20px';
+            closeButton.style.fontSize = '24px';
+            closeButton.style.cursor = 'pointer';
+            closeButton.style.color = '#000';
+            closeButton.addEventListener('click', function() {
+                document.body.removeChild(overlay);
+            });
+
             var formContainer = document.createElement('div');
             formContainer.style.backgroundColor = '#fff';
             formContainer.style.padding = '20px';
@@ -78,7 +90,18 @@
                 <button id="generateFileButton" style="width: 100%;">Generate File</button>
             `;
 
-            // Append form to overlay
+            // Add event listener to availability dropdown
+            document.getElementById('availability').addEventListener('change', function() {
+                var currentInventoryField = document.getElementById('currentInventory');
+                if (this.value === 'Unlimited') {
+                    currentInventoryField.value = 0;
+                    currentInventoryField.disabled = true;
+                } else {
+                    currentInventoryField.disabled = false;
+                }
+            });
+
+            formContainer.appendChild(closeButton);
             overlay.appendChild(formContainer);
             document.body.appendChild(overlay);
 
