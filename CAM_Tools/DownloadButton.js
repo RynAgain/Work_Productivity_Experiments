@@ -52,17 +52,21 @@
 
             // Append the button and progress tracker to the body
             document.body.appendChild(downloadButton);
-            if (!document.getElementById('progressTracker')) {
-                document.body.appendChild(progress);
-            }
+            document.body.appendChild(progress);
             console.log('Download data button and progress tracker added to the page');
 
             // Add click event to the download data button
             downloadButton.addEventListener('click', function() {
                 console.log('Download Data button clicked');
+                progress.style.display = 'block';
+            var progress = document.getElementById('progressTracker');
+            if (progress) {
             var progress = document.getElementById('progressTracker');
             if (progress) {
                 progress.style.display = 'block';
+            } else {
+                console.error('Progress tracker not found');
+            }
             } else {
                 console.error('Progress tracker not found');
             }
