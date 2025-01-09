@@ -55,7 +55,7 @@
         addItemButton.style.height = '40px';
         addItemButton.style.zIndex = '1000 !important';
         addItemButton.style.fontSize = '14px !important';
-        addItemButton.style.backgroundColor = '#28a745 !important';
+        addItemButton.style.backgroundColor = '#004E36 !important';
         addItemButton.style.color = '#fff !important';
         addItemButton.style.border = 'none !important';
         addItemButton.style.borderRadius = '0';
