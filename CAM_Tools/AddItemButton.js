@@ -54,12 +54,12 @@
         addItemButton.style.width = '25%';
         addItemButton.style.height = '40px';
         addItemButton.style.zIndex = '1000 !important';
-        addItemButton.style.fontSize = '14px !important';
-        addItemButton.style.backgroundColor = '#004E36 !important';
-        addItemButton.style.color = '#fff !important';
-        addItemButton.style.border = 'none !important';
+        addItemButton.style.fontSize = '14px';
+        addItemButton.style.backgroundColor = '#004E36';
+        addItemButton.style.color = '#fff';
+        addItemButton.style.border = 'none';
         addItemButton.style.borderRadius = '0';
-        addItemButton.style.cursor = 'pointer !important';
+        addItemButton.style.cursor = 'pointer';
 
         // Append the button to the body
         document.body.appendChild(addItemButton);
