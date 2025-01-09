@@ -24,7 +24,7 @@
             padding: 10px 20px;
             border: none;
             border-radius: 4px;
-            background-color: #28a745;
+            background-color: #004E36;
             color: #fff;
             cursor: pointer;
             transition: background-color 0.3s;
