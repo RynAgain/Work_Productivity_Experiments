@@ -18,11 +18,11 @@
         redriveButton.style.position = 'fixed';
         redriveButton.style.bottom = '0';
         redriveButton.style.left = '60%';
-        redriveButton.style.width = '25%';
+        redriveButton.style.width = '20%';
         redriveButton.style.height = '40px';
         redriveButton.style.zIndex = '1000';
         redriveButton.style.fontSize = '14px';
-        redriveButton.style.backgroundColor = '#dc3545';
+        redriveButton.style.backgroundColor = '#004E36';
         redriveButton.style.color = '#fff';
         redriveButton.style.border = 'none';
         redriveButton.style.borderRadius = '0';

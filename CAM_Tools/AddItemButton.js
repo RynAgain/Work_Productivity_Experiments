@@ -51,7 +51,7 @@
         addItemButton.style.position = 'fixed';
         addItemButton.style.bottom = '0';
         addItemButton.style.left = '20%';
-        addItemButton.style.width = '25%';
+        addItemButton.style.width = '20%';
         addItemButton.style.height = '40px';
         addItemButton.style.zIndex = '1000';
         addItemButton.style.fontSize = '14px';

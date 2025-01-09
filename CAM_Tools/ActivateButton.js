@@ -18,11 +18,11 @@
         activateButton.style.position = 'fixed';
         activateButton.style.bottom = '0';
         activateButton.style.left = '40%';
-        activateButton.style.width = '25%';
+        activateButton.style.width = '20%';
         activateButton.style.height = '40px';
         activateButton.style.zIndex = '1000';
         activateButton.style.fontSize = '14px';
-        activateButton.style.backgroundColor = '#ffc107';
+        activateButton.style.backgroundColor = '#004E36';
         activateButton.style.color = '#fff';
         activateButton.style.border = 'none';
         activateButton.style.borderRadius = '0';

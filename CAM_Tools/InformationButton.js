@@ -18,7 +18,7 @@
         informationButton.style.position = 'fixed';
         informationButton.style.bottom = '0';
         informationButton.style.left = '75%';
-        informationButton.style.width = '25%';
+        informationButton.style.width = '20%';
         informationButton.style.height = '40px';
         informationButton.style.zIndex = '1000';
         informationButton.style.fontSize = '14px';
