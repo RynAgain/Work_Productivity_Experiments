@@ -23,13 +23,14 @@
             downloadButton.style.position = 'fixed';
             downloadButton.style.bottom = '0';
             downloadButton.style.left = '0';
+            downloadButton.style.width = '20%';
             downloadButton.style.width = '25%';
             downloadButton.style.height = '40px';
-            downloadButton.style.zIndex = '1000 ';
-            downloadButton.style.fontSize = '14px ';
+            downloadButton.style.zIndex = '1000';
+            downloadButton.style.fontSize = '14px';
             downloadButton.style.backgroundColor = '#004E36';
-            downloadButton.style.color = '#fff ';
-            downloadButton.style.border = 'none ';
+            downloadButton.style.color = '#fff';
+            downloadButton.style.border = 'none';
             downloadButton.style.borderRadius = '0';
             downloadButton.style.cursor = 'pointer';
 

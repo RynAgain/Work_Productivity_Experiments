@@ -17,14 +17,14 @@
         activateButton.innerHTML = 'Activate/Deactivate Item(s)';
         activateButton.style.position = 'fixed';
         activateButton.style.bottom = '0';
-        activateButton.style.left = '50%';
+        activateButton.style.left = '40%';
         activateButton.style.width = '25%';
         activateButton.style.height = '40px';
-        activateButton.style.zIndex = '1000 !important';
-        activateButton.style.fontSize = '14px !important';
-        activateButton.style.backgroundColor = '#ffc107 !important';
-        activateButton.style.color = '#fff !important';
-        activateButton.style.border = 'none !important';
+        activateButton.style.zIndex = '1000';
+        activateButton.style.fontSize = '14px';
+        activateButton.style.backgroundColor = '#ffc107';
+        activateButton.style.color = '#fff';
+        activateButton.style.border = 'none';
         activateButton.style.borderRadius = '0';
         activateButton.style.cursor = 'pointer !important';
 

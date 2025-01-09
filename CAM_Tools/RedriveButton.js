@@ -17,14 +17,14 @@
         redriveButton.innerHTML = 'Redrive';
         redriveButton.style.position = 'fixed';
         redriveButton.style.bottom = '0';
-        redriveButton.style.left = '75%';
+        redriveButton.style.left = '60%';
         redriveButton.style.width = '25%';
         redriveButton.style.height = '40px';
-        redriveButton.style.zIndex = '1000 !important';
-        redriveButton.style.fontSize = '14px !important';
-        redriveButton.style.backgroundColor = '#dc3545 !important';
-        redriveButton.style.color = '#fff !important';
-        redriveButton.style.border = 'none !important';
+        redriveButton.style.zIndex = '1000';
+        redriveButton.style.fontSize = '14px';
+        redriveButton.style.backgroundColor = '#dc3545';
+        redriveButton.style.color = '#fff';
+        redriveButton.style.border = 'none';
         redriveButton.style.borderRadius = '0';
         redriveButton.style.cursor = 'pointer !important';
 
