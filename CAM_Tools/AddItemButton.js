@@ -86,8 +86,8 @@
             var closeButton = document.createElement('span');
             closeButton.innerHTML = '&times;';
             closeButton.style.position = 'absolute';
-            closeButton.style.top = '0';
-            closeButton.style.right = '0';
+            closeButton.style.top = '10px';
+            closeButton.style.right = '10px';
             closeButton.style.fontSize = '24px';
             closeButton.style.cursor = 'pointer';
             closeButton.style.color = '#fff';
@@ -99,6 +99,7 @@
             });
 
             var formContainer = document.createElement('div');
+            formContainer.style.position = 'relative';
             formContainer.style.backgroundColor = '#fff';
             formContainer.style.padding = '20px';
             formContainer.style.borderRadius = '5px';
