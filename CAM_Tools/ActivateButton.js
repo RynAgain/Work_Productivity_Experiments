@@ -189,15 +189,15 @@
                             return data.itemsAvailability.filter(item => pluInput.includes(item.wfmScanCode)).map(item => {
                                 // Transformations
                                 return {
-                                    storeCode: storeId,
-                                    andon: andonCord,
-                                    itemName: item.itemName,
-                                    itemPLU: item.wfmScanCode,
-                                    availability: item.inventoryStatus,
-                                    currentInventory: item.inventoryStatus === 'Unlimited' ? 0 : Math.max(0, Math.min(10000, parseInt(item.currentInventoryQuantity) || 0)),
-                                    salesFloor: '',
-                                    trackingStartDate: '',
-                                    trackingEndDate: ''
+                                    'Store - 3 Letter Code': storeId,
+                                    'Andon Cord': andonCord,
+                                    'Item Name': item.itemName,
+                                    'Item PLU/UPC': item.wfmScanCode,
+                                    'Availability': item.inventoryStatus,
+                                    'Current Inventory': item.inventoryStatus === 'Unlimited' ? 0 : Math.max(0, Math.min(10000, parseInt(item.currentInventoryQuantity) || 0)),
+                                    'Sales Floor Capacity': '',
+                                    'Tracking Start Date': '',
+                                    'Tracking End Date': ''
                                 };
                             });
                         })
