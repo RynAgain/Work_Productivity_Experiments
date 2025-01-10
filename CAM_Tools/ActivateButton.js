@@ -188,18 +188,16 @@
                             console.log(`Data for store ${storeId}:`, data);
                             return data.itemsAvailability.filter(item => pluInput.includes(item.wfmScanCode)).map(item => {
                                 // Transformations
-                                item.andon = andonCord;
-                                if (item.inventoryStatus === 'Unlimited') {
-                                    item.currentInventoryQuantity = 0;
-                                } else if (item.inventoryStatus === 'Limited') {
-                                    item.currentInventoryQuantity = Math.max(0, Math.min(10000, parseInt(item.currentInventoryQuantity) || 0));
-                                }
-                                item.hasAndonEnabledComponent = item.hasAndonEnabledComponent || 'FALSE';
-                                item.isMultiChannel = item.isMultiChannel || 'FALSE';
-                                item.reservedQuantity = item.reservedQuantity !== undefined && item.reservedQuantity !== '' ? parseInt(item.reservedQuantity) || 0 : 0;
-                                item.salesFloorCapacity = item.salesFloorCapacity !== undefined && item.salesFloorCapacity !== '' ? parseInt(item.salesFloorCapacity) || 0 : 0;
-                                item.wfmoaReservedQuantity = item.wfmoaReservedQuantity !== undefined && item.wfmoaReservedQuantity !== '' ? parseInt(item.wfmoaReservedQuantity) || 0 : 0;
-                                return item;
+                                return {
+                                    andon: andonCord,
+                                    itemName: item.itemName,
+                                    itemPLU: item.wfmScanCode,
+                                    availability: item.inventoryStatus,
+                                    currentInventory: item.inventoryStatus === 'Unlimited' ? 0 : Math.max(0, Math.min(10000, parseInt(item.currentInventoryQuantity) || 0)),
+                                    salesFloor: '',
+                                    trackingStartDate: '',
+                                    trackingEndDate: ''
+                                };
                             });
                         })
                         .catch(error => {
@@ -217,29 +215,18 @@
                         if (allItems.length > 0) {
                             // Specify the correct headers to include
                             const desiredHeaders = [
-                                'andon', 'currentInventoryQuantity', 'hasAndonEnabledComponent',
-                                'inventoryStatus', 'isMultiChannel', 'itemName', 'itemType',
-                                'reservedQuantity', 'salesFloorCapacity', 'storeId', 'storeName',
-                                'team', 'wfmScanCode', 'wfmoaReservedQuantity', 'multiChannelEndDate',
-                                'multiChannelStartDate', 'itemUnitOfMeasurement', 'Helper_Column'
+                                'andon', 'itemName', 'itemPLU', 'availability',
+                                'currentInventory', 'salesFloor', 'trackingStartDate', 'trackingEndDate'
                             ];
                             const csvContent = "data:text/csv;charset=utf-8,"
                                 + desiredHeaders.join(",") + "\n" // Add headers
-                                + allItems.map(e => desiredHeaders.map(header => {
-                                    if (['currentInventoryQuantity','reservedQuantity', 'salesFloorCapacity', 'wfmoaReservedQuantity'].includes(header)) {
-                                        return `"${e[header] || 0}"`;
-                                    }
-                                    if (header === 'Helper_Column') {
-                                        return `"${e['storeId'] || ''}${e['wfmScanCode'] || ''}"`;
-                                    }
-                                    return `"${e[header] || ''}"`;
-                                }).join(",")).join("\n");
+                                + allItems.map(e => desiredHeaders.map(header => `"${e[header] || ''}"`).join(",")).join("\n");
 
                             // Create a download link
                             const encodedUri = encodeURI(csvContent);
                             const link = document.createElement("a");
                             link.setAttribute("href", encodedUri);
-                            link.setAttribute("download", "filtered_items_data.csv");
+                            link.setAttribute("download", "upload_items_data.csv");
                             document.body.appendChild(link);
 
                             // Trigger the download
