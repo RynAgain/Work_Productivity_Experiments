@@ -194,7 +194,7 @@
                                     itemName: item.itemName,
                                     itemPLU: item.wfmScanCode,
                                     availability: item.inventoryStatus,
-                                    currentInventory: item.inventoryStatus === 'Unlimited' ? "0" : Math.max(0, Math.min(10000, parseInt(item.currentInventoryQuantity) || "0")),
+                                    currentInventory: item.inventoryStatus === 'Unlimited' ? 0 : Math.max(0, Math.min(10000, parseInt(item.currentInventoryQuantity) || 0)),
                                     salesFloor: '',
                                     trackingStartDate: '',
                                     trackingEndDate: ''
