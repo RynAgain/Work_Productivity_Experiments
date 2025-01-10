@@ -156,30 +156,52 @@
                 });
             }
 
-            if (generateFileButton) {
-                generateFileButton.addEventListener('click', function() {
-                    // Collect input values
-                    var storeCode = document.getElementById('storeCode').value;
-                    var plu = document.getElementById('plu').value;
-                    var currentInventory = document.getElementById('currentInventory').value;
-                    var availability = document.getElementById('availability').value;
-                    var andonCord = document.getElementById('andonCord').value;
+if (generateFileButton) {
+    generateFileButton.addEventListener('click', function() {
+        // Collect input values
+        var storeCode = document.getElementById('storeCode').value;
+        var plu = document.getElementById('plu').value;
+        var currentInventory = document.getElementById('currentInventory').value;
+        var availability = document.getElementById('availability').value;
+        var andonCord = document.getElementById('andonCord').value;
 
-                    // Check if all required fields are filled
-                    if (!storeCode || !plu || !availability || !andonCord) {
-                        alert('Please fill in all required fields before generating the file.');
-                        return;
-                    }
+        // Check if all required fields are filled
+        if (!storeCode || !plu || !availability || !andonCord) {
+            alert('Please fill in all required fields before generating the file.');
+            return;
+        }
 
-                    // Check if both tracking dates are filled if one is provided
-                    var trackingStartDate = document.getElementById('trackingStartDate').value;
-                    var trackingEndDate = document.getElementById('trackingEndDate').value;
-                    if ((trackingStartDate && !trackingEndDate) || (!trackingStartDate && trackingEndDate)) {
-                        alert('Please provide both Tracking Start Date and Tracking End Date.');
-                        return;
-                    }
-                });
-            }
+        // Check if both tracking dates are filled if one is provided
+        var trackingStartDate = document.getElementById('trackingStartDate').value;
+        var trackingEndDate = document.getElementById('trackingEndDate').value;
+
+        if ((trackingStartDate && !trackingEndDate) || (!trackingStartDate && trackingEndDate)) {
+            alert('Please provide both Tracking Start Date and Tracking End Date.');
+            return;
+        }
+
+        // Create CSV content
+        var csvContent = 'Store - 3 Letter Code,Item Name,Item PLU/UPC,Availability,Current Inventory,Sales Floor Capacity,Andon Cord,Tracking Start Date,Tracking End Date\n';
+        csvContent += `${storeCode},,${plu},${availability},${currentInventory},,${andonCord},${trackingStartDate},${trackingEndDate}\n`;
+
+        // Create a Blob from the CSV string
+        var blob = new Blob([csvContent], { type: 'text/csv' });
+
+        // Create a link element
+        var link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        link.download = 'add_item_data.csv';
+
+        // Append the link to the body
+        document.body.appendChild(link);
+
+        // Trigger the download
+        link.click();
+
+        // Remove the link from the document
+        document.body.removeChild(link);
+    });
+}
         });
     }
 
