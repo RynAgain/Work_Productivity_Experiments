@@ -210,44 +210,40 @@ redriveButton.addEventListener('click', function() {
                 const allItems = results.flat();
                 console.log('Filtered items data:', allItems);
 
-                if (allItems.length > 0) {
-                    // Specify the correct headers to include
-                    const desiredHeaders = [
-                        'Store - 3 Letter Code', 'Item Name', 'Item PLU/UPC', 'Availability',
-                        'Current Inventory', 'Sales Floor Capacity', 'Andon Cord', 'Tracking Start Date', 'Tracking End Date'
-                    ];
-                    const csvContentRestore = "data:text/csv;charset=utf-8,"
-                        + desiredHeaders.join(",") + "\n" // Add headers
-                        + allItems.map(e => desiredHeaders.map(header => `"${e[header] || ''}"`).join(",")).join("\n");
+if (allItems.length > 0) {
+    // Specify the correct headers to include
+    const desiredHeaders = [
+        'Store - 3 Letter Code', 'Item Name', 'Item PLU/UPC', 'Availability',
+        'Current Inventory', 'Sales Floor Capacity', 'Andon Cord', 'Tracking Start Date', 'Tracking End Date'
+    ];
+    const csvContentRestore = desiredHeaders.join(",") + "\n" // Add headers
+        + allItems.map(e => desiredHeaders.map(header => `"${e[header] || ''}"`).join(",")).join("\n");
 
-                    // Create a download link for Redrive Restore
-                    const encodedUriRestore = encodeURI(csvContentRestore);
-                    const linkRestore = document.createElement("a");
-                    linkRestore.setAttribute("href", encodedUriRestore);
-                    linkRestore.setAttribute("download", "Redrive Restore.csv");
-                    document.body.appendChild(linkRestore);
-                    linkRestore.click();
-                    document.body.removeChild(linkRestore);
+    const desiredHeadersRedrive = [
+        'Store - 3 Letter Code', 'Item Name', 'Item PLU/UPC', 'Availability',
+        'Current Inventory', 'Sales Floor Capacity', 'Redrive Andon Cord', 'Tracking Start Date', 'Tracking End Date'
+    ];
+    const csvContentRedrive = desiredHeadersRedrive.join(",") + "\n" // Add headers
+        + allItems.map(e => desiredHeadersRedrive.map(header => `"${e[header] || ''}"`).join(",")).join("\n");
 
-                    // Create a download link for Redrive
-                    const desiredHeadersRedrive = [
-                        'Store - 3 Letter Code', 'Item Name', 'Item PLU/UPC', 'Availability',
-                        'Current Inventory', 'Sales Floor Capacity', 'Redrive Andon Cord', 'Tracking Start Date', 'Tracking End Date'
-                    ];
-                    const csvContentRedrive = "data:text/csv;charset=utf-8,"
-                        + desiredHeadersRedrive.join(",") + "\n" // Add headers
-                        + allItems.map(e => desiredHeadersRedrive.map(header => `"${e[header] || ''}"`).join(",")).join("\n");
+    // Use JSZip to create a zip file containing both CSV files
+    const zip = new JSZip();
+    zip.file("Redrive Restore.csv", csvContentRestore);
+    zip.file("Redrive.csv", csvContentRedrive);
 
-                    const encodedUriRedrive = encodeURI(csvContentRedrive);
-                    const linkRedrive = document.createElement("a");
-                    linkRedrive.setAttribute("href", encodedUriRedrive);
-                    linkRedrive.setAttribute("download", "Redrive.csv");
-                    document.body.appendChild(linkRedrive);
-                    linkRedrive.click();
-                    document.body.removeChild(linkRedrive);
-                } else {
-                    console.log('No items data available to download.');
-                }
+    zip.generateAsync({ type: "blob" })
+        .then(function(content) {
+            // Create a download link for the zip file
+            const link = document.createElement("a");
+            link.href = URL.createObjectURL(content);
+            link.download = "RedriveFiles.zip";
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        });
+} else {
+    console.log('No items data available to download.');
+}
             });
         })
         .catch(error => console.error('Error downloading data:', error));
