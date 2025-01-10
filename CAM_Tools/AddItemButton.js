@@ -93,7 +93,7 @@
             closeButton.style.color = '#fff';
             closeButton.style.backgroundColor = '#000';
             closeButton.style.padding = '5px';
-            closeButton.style.borderRadius = '50%';
+closeButton.style.borderRadius = '0';
             closeButton.addEventListener('click', function() {
                 document.body.removeChild(overlay);
             });

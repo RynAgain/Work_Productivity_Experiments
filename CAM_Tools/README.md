@@ -21,9 +21,11 @@ This repository contains a set of scripts designed for use with Tampermonkey. Th
 
 ## Installation
 
-
 1. Install `MainScript.js` in Tampermonkey.
-2. Check for updates peridocially
+2. Check for updates peridocially in the tampermonkey dashboard.
+
+## Random Issues
+1. sometimes the download button just won't appear.  refresh the page.
 
 ## License
 
