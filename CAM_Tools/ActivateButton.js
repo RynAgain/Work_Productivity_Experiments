@@ -189,11 +189,12 @@
                             return data.itemsAvailability.filter(item => pluInput.includes(item.wfmScanCode)).map(item => {
                                 // Transformations
                                 return {
+                                    storeCode: storeId,
                                     andon: andonCord,
                                     itemName: item.itemName,
                                     itemPLU: item.wfmScanCode,
                                     availability: item.inventoryStatus,
-                                    currentInventory: item.inventoryStatus === 'Unlimited' ? 0 : Math.max(0, Math.min(10000, parseInt(item.currentInventoryQuantity) || 0)),
+                                    currentInventory: item.inventoryStatus === 'Unlimited' ? "0" : Math.max(0, Math.min(10000, parseInt(item.currentInventoryQuantity) || "0")),
                                     salesFloor: '',
                                     trackingStartDate: '',
                                     trackingEndDate: ''
@@ -215,8 +216,8 @@
                         if (allItems.length > 0) {
                             // Specify the correct headers to include
                             const desiredHeaders = [
-                                'andon', 'itemName', 'itemPLU', 'availability',
-                                'currentInventory', 'salesFloor', 'trackingStartDate', 'trackingEndDate'
+                                'Store - 3 Letter Code', 'Item Name', 'Item PLU/UPC', 'Availability',
+                                'Current Inventory', 'Sales Floor Capacity', 'Andon Cord', 'Tracking Start Date', 'Tracking End Date'
                             ];
                             const csvContent = "data:text/csv;charset=utf-8,"
                                 + desiredHeaders.join(",") + "\n" // Add headers
