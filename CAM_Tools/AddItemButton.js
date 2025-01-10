@@ -87,7 +87,7 @@
             closeButton.innerHTML = '&times;';
             closeButton.style.position = 'absolute';
             closeButton.style.top = '0';
-            closeButton.style.left = '0';
+            closeButton.style.right = '0';
             closeButton.style.fontSize = '24px';
             closeButton.style.cursor = 'pointer';
             closeButton.style.color = '#fff';
@@ -130,11 +130,6 @@
                 <button id="generateFileButton" style="width: 100%;">Generate File</button>
             `;
 
-            formContainer.appendChild(closeButton);
-            overlay.appendChild(formContainer);
-            document.body.appendChild(overlay);
-
-            // Append close button and form to overlay
             formContainer.appendChild(closeButton);
             overlay.appendChild(formContainer);
             document.body.appendChild(overlay);
