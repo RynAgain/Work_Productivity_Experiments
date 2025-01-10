@@ -194,7 +194,7 @@
                                     'Item Name': item.itemName,
                                     'Item PLU/UPC': item.wfmScanCode,
                                     'Availability': item.inventoryStatus,
-                                    'Current Inventory': item.inventoryStatus === 'Unlimited' ? "0" : Math.max(0, Math.min(10000, parseInt(item.currentInventoryQuantity) || "0")),
+                                    'Current Inventory': item.inventoryStatus === 'Unlimited' ? "0" : (Math.max(0, Math.min(10000, parseInt(item.currentInventoryQuantity) || 0))).toString(),
                                     'Sales Floor Capacity': '',
                                     'Tracking Start Date': '',
                                     'Tracking End Date': ''

@@ -21,10 +21,9 @@ This repository contains a set of scripts designed for use with Tampermonkey. Th
 
 ## Installation
 
-1. Clone this repository or download the files.
-2. Host the button scripts (`DownloadButton.js`, `AddItemButton.js`, `ActivateButton.js`, `RedriveButton.js`) on your GitHub repository.
-3. Update the `@require` URLs in `MainScript.js` to point to the hosted scripts.
-4. Install `MainScript.js` in Tampermonkey.
+
+1. Install `MainScript.js` in Tampermonkey.
+2. Check for updates peridocially
 
 ## License
 
@@ -33,6 +32,6 @@ Not for public use.
 ## TODO
 
 - [x] Implement the download functionality for the "Download Data" button. (needs testing now)
-- [ ] Add functionality for the "Add New Item(s)" button.
-- [ ] Implement the activation/deactivation logic for the "Activate/Deactivate Item(s)" button.
+- [x] Add functionality for the "Add New Item(s)" button.
+- [x] Implement the activation/deactivation logic for the "Activate/Deactivate Item(s)" button.
 - [ ] Add functionality for the "Redrive" button.
