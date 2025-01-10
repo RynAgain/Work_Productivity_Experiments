@@ -54,8 +54,8 @@
             var closeButton = document.createElement('span');
             closeButton.innerHTML = '&times;';
             closeButton.style.position = 'absolute';
-            closeButton.style.top = '0';
-            closeButton.style.left = '0';
+            closeButton.style.top = '10px';
+            closeButton.style.right = '10px';
             closeButton.style.fontSize = '24px';
             closeButton.style.cursor = 'pointer';
             closeButton.style.color = '#fff';
@@ -106,8 +106,151 @@
 
             // Add click event to the "Generate Upload File" button
             document.getElementById('generateUploadFileButton').addEventListener('click', function() {
-                // Logic to generate the upload file will go here
-                alert('Generate Upload File button clicked');
+                // Logic to generate the upload file
+                const pluInput = document.getElementById('pluInput').value.split(',').map(plu => plu.trim());
+                const bySelect = document.getElementById('bySelect').value;
+                const storeRegionInput = document.getElementById('storeRegionInput').value.split(',').map(sr => sr.trim());
+                const andonCord = document.getElementById('andonCordSelect').value;
+
+                // Determine the environment (prod or gamma)
+                const environment = window.location.hostname.includes('gamma') ? 'gamma' : 'prod';
+                const apiUrlBase = `https://${environment}.cam.wfm.amazon.dev/api/`;
+
+                // Define the API endpoint and headers for getting stores
+                const headersStores = {
+                    'accept': '*/*',
+                    'accept-encoding': 'gzip, deflate, br',
+                    'accept-language': 'en-US,en;q=0.9',
+                    'content-type': 'application/x-amz-json-1.0',
+                    'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36 Edg/130.0.0.0',
+                    'x-amz-target': 'WfmCamBackendService.GetStoresInformation'
+                };
+
+                // Call the API to get the list of stores
+                fetch(apiUrlBase, {
+                    method: 'POST',
+                    headers: headersStores,
+                    body: JSON.stringify({}),
+                    credentials: 'include' // Include cookies in the request
+                })
+                .then(response => response.json())
+                .then(storeData => {
+                    console.log('Store data received:', storeData);
+
+                    if (!storeData || !storeData.storesInformation) {
+                        throw new Error('Invalid store data received');
+                    }
+
+                    // Extract store IDs and filter based on user input
+                    const storeIds = [];
+                    for (const region in storeData.storesInformation) {
+                        const states = storeData.storesInformation[region];
+                        for (const state in states) {
+                            const stores = states[state];
+                            stores.forEach(store => {
+                                if ((bySelect === 'Store' && storeRegionInput.includes(store.storeTLC)) ||
+                                    (bySelect === 'Region' && storeRegionInput.includes(state))) {
+                                    storeIds.push(store.storeTLC);
+                                }
+                            });
+                        }
+                    }
+
+                    // Function to fetch items for a single store
+                    const fetchItemsForStore = (storeId) => {
+                        const headersItems = {
+                            'accept': '*/*',
+                            'accept-encoding': 'gzip, deflate, br',
+                            'accept-language': 'en-US,en;q=0.9',
+                            'content-type': 'application/x-amz-json-1.0',
+                            'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36 Edg/130.0.0.0',
+                            'x-amz-target': 'WfmCamBackendService.GetItemsAvailability'
+                        };
+
+                        const payloadItems = {
+                            "filterContext": {
+                                "storeIds": [storeId]
+                            },
+                            "paginationContext": {
+                                "pageNumber": 0,
+                                "pageSize": 10000
+                            }
+                        };
+
+                        return fetch(apiUrlBase, {
+                            method: 'POST',
+                            headers: headersItems,
+                            body: JSON.stringify(payloadItems),
+                            credentials: 'include' // Include cookies in the request
+                        })
+                        .then(response => response.json())
+                        .then(data => {
+                            console.log(`Data for store ${storeId}:`, data);
+                            return data.itemsAvailability.filter(item => pluInput.includes(item.wfmScanCode)).map(item => {
+                                // Transformations
+                                item.andon = andonCord;
+                                if (item.inventoryStatus === 'Unlimited') {
+                                    item.currentInventoryQuantity = 0;
+                                } else if (item.inventoryStatus === 'Limited') {
+                                    item.currentInventoryQuantity = Math.max(0, Math.min(10000, parseInt(item.currentInventoryQuantity) || 0));
+                                }
+                                item.hasAndonEnabledComponent = item.hasAndonEnabledComponent || 'FALSE';
+                                item.isMultiChannel = item.isMultiChannel || 'FALSE';
+                                item.reservedQuantity = item.reservedQuantity !== undefined && item.reservedQuantity !== '' ? parseInt(item.reservedQuantity) || 0 : 0;
+                                item.salesFloorCapacity = item.salesFloorCapacity !== undefined && item.salesFloorCapacity !== '' ? parseInt(item.salesFloorCapacity) || 0 : 0;
+                                item.wfmoaReservedQuantity = item.wfmoaReservedQuantity !== undefined && item.wfmoaReservedQuantity !== '' ? parseInt(item.wfmoaReservedQuantity) || 0 : 0;
+                                return item;
+                            });
+                        })
+                        .catch(error => {
+                            console.error(`Error downloading data for store ${storeId}:`, error);
+                            return [];
+                        });
+                    };
+
+                    // Fetch items for all stores and compile results
+                    Promise.all(storeIds.map(storeId => fetchItemsForStore(storeId)))
+                    .then(results => {
+                        const allItems = results.flat();
+                        console.log('Filtered items data:', allItems);
+
+                        if (allItems.length > 0) {
+                            // Specify the correct headers to include
+                            const desiredHeaders = [
+                                'andon', 'currentInventoryQuantity', 'hasAndonEnabledComponent',
+                                'inventoryStatus', 'isMultiChannel', 'itemName', 'itemType',
+                                'reservedQuantity', 'salesFloorCapacity', 'storeId', 'storeName',
+                                'team', 'wfmScanCode', 'wfmoaReservedQuantity', 'multiChannelEndDate',
+                                'multiChannelStartDate', 'itemUnitOfMeasurement', 'Helper_Column'
+                            ];
+                            const csvContent = "data:text/csv;charset=utf-8,"
+                                + desiredHeaders.join(",") + "\n" // Add headers
+                                + allItems.map(e => desiredHeaders.map(header => {
+                                    if (['currentInventoryQuantity','reservedQuantity', 'salesFloorCapacity', 'wfmoaReservedQuantity'].includes(header)) {
+                                        return `"${e[header] || 0}"`;
+                                    }
+                                    if (header === 'Helper_Column') {
+                                        return `"${e['storeId'] || ''}${e['wfmScanCode'] || ''}"`;
+                                    }
+                                    return `"${e[header] || ''}"`;
+                                }).join(",")).join("\n");
+
+                            // Create a download link
+                            const encodedUri = encodeURI(csvContent);
+                            const link = document.createElement("a");
+                            link.setAttribute("href", encodedUri);
+                            link.setAttribute("download", "filtered_items_data.csv");
+                            document.body.appendChild(link);
+
+                            // Trigger the download
+                            link.click();
+                            document.body.removeChild(link);
+                        } else {
+                            console.log('No items data available to download.');
+                        }
+                    });
+                })
+                .catch(error => console.error('Error downloading data:', error));
             });
         });
     }
