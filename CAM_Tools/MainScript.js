@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         CAM_Admin_Tools
 // @namespace    http://tampermonkey.net/
-// @version      2.3.5
+// @version      2.3.6
 // @description  Main script to include button functionalities
 // @author       Ryan Satterfield
 // @match        https://*.cam.wfm.amazon.dev/*
@@ -20,7 +20,7 @@
 
 (function() {
     'use strict';
-    console.log("MainScript Started");
+    console.log("MainScript Started - loading buttons");
     // Wait for DOM or run immediately
     window.addEventListener('DOMContentLoaded', () => {
         console.log('Main script: DOMContentLoaded');
