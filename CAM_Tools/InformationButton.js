@@ -115,7 +115,6 @@ Not for public use.
         var darkModeToggleButton = overlay.querySelector('#darkModeToggleButton');
         darkModeToggleButton.addEventListener('click', function() {
             document.body.classList.toggle('dark-mode');
-            location.reload(); // Re-render the page
         });
 
         // Append the overlay to the body
