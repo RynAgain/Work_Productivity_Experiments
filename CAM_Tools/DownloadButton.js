@@ -203,7 +203,13 @@
                         if (cancelRequested) {
                             return Promise.resolve([]);
                         }
+                        if (cancelRequested) {
+                            return Promise.resolve([]);
+                        }
                         return fetchItemsForStore(storeId, index).then(result => {
+                            if (cancelRequested) {
+                                return [];
+                            }
                             completedStores++;
                             if (!cancelRequested) {
                                 const progressPercent = Math.round((completedStores / totalStores) * 100);

@@ -104,7 +104,7 @@ Not for public use.
                 background-color: #121212;
                 color: #ffffff;
             }
-            .dark-mode, .dark-mode * {
+            .dark-mode, .dark-mode *:not([style*="background-color: transparent"]) {
                 background-color: #333333;
                 color: #ffffff;
             }
