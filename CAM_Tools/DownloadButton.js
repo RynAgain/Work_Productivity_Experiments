@@ -171,7 +171,7 @@
                         fetchItemsForStore(storeId, index).then(result => {
                             completedStores++;
                             const progressPercent = Math.round((completedStores / totalStores) * 100);
-                            progress.innerHTML = `Compilinig Item Data: ${completedStores}/${totalStores} stores processed (${progressPercent}%)`;
+                            progress.innerHTML = `Compiling Item Data: ${completedStores}/${totalStores} stores processed (${progressPercent}%)`;
                             return result;
                         })
                     ))
@@ -216,12 +216,33 @@
 
                             // Update progress to indicate completion
                             progress.innerHTML = 'Downloading Now!';
+                            // Inject CSS for fade-out effect
+                            const style = document.createElement('style');
+                            style.innerHTML = `
+                                @keyframes fadeOut {
+                                    0% { opacity: 1; }
+                                    100% { opacity: 0; visibility: hidden; }
+                                }
+                                .fade-out {
+                                    animation: fadeOut 2s forwards;
+                                }
+                            `;
+                            document.head.appendChild(style);
+
+                            // Apply fade-out effect after a delay
+                            setTimeout(() => {
+                                progress.classList.add('fade-out');
+                            }, 2000);
+
+                            //TODO: make the Downloading Now! message fade so we can see the whole page again.
+                            //TODO make sure the program can handle and retry stores that fail unitll they work? if it fails 5 times on one store timeout and give the error message
                         } else {
                             console.log('No items data available to download.');
                         }
                     });
                 })
                 .catch(error => console.error('Error downloading data:', error));
+                //make this message appear red!
             });
         }
 
