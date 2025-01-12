@@ -176,9 +176,19 @@ if (generateFileButton) {
             return;
         }
 
+        // Split store codes and PLUs by commas
+        var storeCodes = storeCode.split(',').map(code => code.trim());
+        var plus = plu.split(',').map(p => p.trim());
+
         // Create CSV content
         var csvContent = 'Store - 3 Letter Code,Item Name,Item PLU/UPC,Availability,Current Inventory,Sales Floor Capacity,Andon Cord,Tracking Start Date,Tracking End Date\n';
-        csvContent += `${storeCode},Name_Does_Not_Matter,${plu},${availability},${currentInventory},,${andonCord},${trackingStartDate},${trackingEndDate}\n`;
+        
+        // Generate a row for each combination of store code and PLU
+        storeCodes.forEach(store => {
+            plus.forEach(plu => {
+                csvContent += `${store},Name_Does_Not_Matter,${plu},${availability},${currentInventory},,${andonCord},${trackingStartDate},${trackingEndDate}\n`;
+            });
+        });
 
         // Create a Blob from the CSV string
         var blob = new Blob([csvContent], { type: 'text/csv' });

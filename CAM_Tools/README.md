@@ -6,13 +6,15 @@ This repository contains a set of scripts designed for use with Tampermonkey. Th
 
 1. **MainScript.js**: The main script that includes `@require` directives for the other scripts. This script should be installed in the Tampermonkey extension.
 
-2. **DownloadButton.js**: Handles the creation and functionality of the "Download Data" button.
+2. **DownloadButton.js**: Handles the creation and functionality of the "Download Data" button. It initiates a download process, tracks progress, and allows cancellation.
 
-3. **AddItemButton.js**: Handles the creation and functionality of the "Add New Item(s)" button. 
+3. **AddItemButton.js**: Handles the creation and functionality of the "Add New Item(s)" button. It allows users to input multiple store codes and PLUs, generating a CSV file with the combinations.
 
-4. **ActivateButton.js**: Handles the creation and functionality of the "Activate/Deactivate Item(s)" button.
+4. **ActivateButton.js**: Handles the creation and functionality of the "Activate/Deactivate Item(s)" button. It toggles the activation state of items.
 
-5. **RedriveButton.js**: Handles the creation and functionality of the "Redrive" button.
+5. **RedriveButton.js**: Handles the creation and functionality of the "Redrive" button. It triggers a redrive process for selected items.
+
+6. **InformationButton.js**: Provides additional information about the items or processes. It displays detailed breakdowns and usage instructions.
 
 ## Usage
 
@@ -22,10 +24,10 @@ This repository contains a set of scripts designed for use with Tampermonkey. Th
 ## Installation
 
 1. Install `MainScript.js` in Tampermonkey.
-2. Check for updates peridocially in the tampermonkey dashboard.
+2. Check for updates periodically in the Tampermonkey dashboard.
 
 ## Random Issues
-1. sometimes the download button just won't appear.  refresh the page.
+1. Sometimes the download button just won't appear. Refresh the page.
 
 ## License
 

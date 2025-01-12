@@ -52,22 +52,47 @@
             progress.style.display = 'none';
             progress.innerHTML = 'Progress: 0%';
 
-            // Append the button and progress tracker to the body
+            // Create a cancel button
+            var cancelButton = document.createElement('button');
+            cancelButton.id = 'cancelButton';
+            cancelButton.innerHTML = 'Cancel';
+            cancelButton.style.position = 'fixed';
+            cancelButton.style.bottom = '80px';
+            cancelButton.style.left = '0';
+            cancelButton.style.width = '20%';
+            cancelButton.style.height = '40px';
+            cancelButton.style.zIndex = '1000';
+            cancelButton.style.fontSize = '14px';
+            cancelButton.style.backgroundColor = '#FF0000';
+            cancelButton.style.color = '#fff';
+            cancelButton.style.border = 'none';
+            cancelButton.style.borderRadius = '0';
+            cancelButton.style.cursor = 'pointer';
+            cancelButton.style.display = 'none';
+
+            // Append the button, progress tracker, and cancel button to the body
             document.body.appendChild(downloadButton);
             document.body.appendChild(progress);
-            console.log('Download data button and progress tracker added to the page');
+            document.body.appendChild(cancelButton);
+            console.log('Download data button, progress tracker, and cancel button added to the page');
             console.log('Button HTML:', downloadButton.outerHTML);
             console.log('Progress HTML:', progress.outerHTML);
 
             // Add click event to the download data button
             downloadButton.addEventListener('click', function() {
                 console.log('Download Data button clicked');
-            var progress = document.getElementById('progressTracker');
-            if (progress) {
-                progress.style.display = 'block';
-            } else {
-                console.error('Progress tracker not found');
-            }
+                var progress = document.getElementById('progressTracker');
+                var cancelButton = document.getElementById('cancelButton');
+                if (progress) {
+                    progress.style.display = 'block';
+                    if (cancelButton) {
+                        cancelButton.style.display = 'block';
+                    } else {
+                        console.error('Cancel button not found');
+                    }
+                } else {
+                    console.error('Progress tracker not found');
+                }
 
                 // Determine the environment (prod or gamma)
                 const environment = window.location.hostname.includes('gamma') ? 'gamma' : 'prod';
@@ -167,14 +192,26 @@
                     let completedStores = 0;
                     const totalStores = storeIds.length;
 
-                    Promise.all(storeIds.map((storeId, index) =>
-                        fetchItemsForStore(storeId, index).then(result => {
+                    let cancelRequested = false;
+                    cancelButton.addEventListener('click', function() {
+                        cancelRequested = true;
+                        progress.innerHTML = 'Download Cancelled';
+                        cancelButton.style.display = 'none';
+                    });
+
+                    Promise.all(storeIds.map((storeId, index) => {
+                        if (cancelRequested) {
+                            return Promise.resolve([]);
+                        }
+                        return fetchItemsForStore(storeId, index).then(result => {
                             completedStores++;
-                            const progressPercent = Math.round((completedStores / totalStores) * 100);
-                            progress.innerHTML = `Compiling Item Data: ${completedStores}/${totalStores} stores processed (${progressPercent}%)`;
+                            if (!cancelRequested) {
+                                const progressPercent = Math.round((completedStores / totalStores) * 100);
+                                progress.innerHTML = `Compiling Item Data: ${completedStores}/${totalStores} stores processed (${progressPercent}%)`;
+                            }
                             return result;
-                        })
-                    ))
+                        });
+                    }))
                     .then(results => {
                         const allItems = results.flat();
                         console.log('All items data:', allItems);
@@ -224,7 +261,7 @@
                                     100% { opacity: 0; visibility: hidden; }
                                 }
                                 .fade-out {
-                                    animation: fadeOut 2s forwards;
+                                    animation: fadeOut 10s forwards;
                                 }
                             `;
                             document.head.appendChild(style);
