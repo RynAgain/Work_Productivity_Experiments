@@ -94,7 +94,7 @@ Not for public use.
 - [x] Add functionality for the "Add New Item(s)" button.
 - [x] Implement the activation/deactivation logic for the "Activate/Deactivate Item(s)" button.
 - [ ] Add functionality for the "Redrive" button.`}</pre>
-        <button id="darkModeToggleButton" style="width: 100%; margin-top: 10px;">Toggle Dark Mode</button>
+        <button id="darkModeToggleButton" style="width: 100%; margin-top: 10px;">Customize Dark Mode</button>
         `;
 
         // Add CSS styles for dark mode
@@ -121,6 +121,66 @@ Not for public use.
 
         // Add click event to the dark mode toggle button
         var darkModeToggleButton = overlay.querySelector('#darkModeToggleButton');
+        var darkModeOverlay = document.createElement('div');
+        darkModeOverlay.style.position = 'fixed';
+        darkModeOverlay.style.top = '0';
+        darkModeOverlay.style.left = '0';
+        darkModeOverlay.style.width = '100%';
+        darkModeOverlay.style.height = '100%';
+        darkModeOverlay.style.backgroundColor = 'rgba(0, 0, 0, 0.8)';
+        darkModeOverlay.style.color = '#fff';
+        darkModeOverlay.style.zIndex = '1002';
+        darkModeOverlay.style.display = 'none';
+        darkModeOverlay.style.overflow = 'auto';
+        darkModeOverlay.style.padding = '20px';
+        darkModeOverlay.style.boxSizing = 'border-box';
+        darkModeOverlay.innerHTML = `
+            <h3>Customize Dark Mode</h3>
+            <label><input type="checkbox" id="toggleBody" checked> Body</label><br>
+            <label><input type="checkbox" id="toggleButtons" checked> Buttons</label><br>
+            <label><input type="checkbox" id="toggleLinks" checked> Links</label><br>
+            <label><input type="checkbox" id="toggleInputs" checked> Inputs</label><br>
+            <button id="applyDarkModeSettings" style="margin-top: 10px;">Apply</button>
+        `;
+        document.body.appendChild(darkModeOverlay);
+
+        var applyDarkModeSettings = darkModeOverlay.querySelector('#applyDarkModeSettings');
+        applyDarkModeSettings.addEventListener('click', function() {
+            var toggleBody = darkModeOverlay.querySelector('#toggleBody').checked;
+            var toggleButtons = darkModeOverlay.querySelector('#toggleButtons').checked;
+            var toggleLinks = darkModeOverlay.querySelector('#toggleLinks').checked;
+            var toggleInputs = darkModeOverlay.querySelector('#toggleInputs').checked;
+
+            if (toggleBody) {
+                document.body.classList.add('dark-mode');
+            } else {
+                document.body.classList.remove('dark-mode');
+            }
+
+            if (toggleButtons) {
+                document.querySelectorAll('button').forEach(button => button.classList.add('dark-mode'));
+            } else {
+                document.querySelectorAll('button').forEach(button => button.classList.remove('dark-mode'));
+            }
+
+            if (toggleLinks) {
+                document.querySelectorAll('a').forEach(link => link.classList.add('dark-mode'));
+            } else {
+                document.querySelectorAll('a').forEach(link => link.classList.remove('dark-mode'));
+            }
+
+            if (toggleInputs) {
+                document.querySelectorAll('input, textarea, select').forEach(input => input.classList.add('dark-mode'));
+            } else {
+                document.querySelectorAll('input, textarea, select').forEach(input => input.classList.remove('dark-mode'));
+            }
+
+            darkModeOverlay.style.display = 'none';
+        });
+
+        darkModeToggleButton.addEventListener('click', function() {
+            darkModeOverlay.style.display = 'block';
+        });
         darkModeToggleButton.addEventListener('click', function() {
             document.body.classList.toggle('dark-mode');
         });
