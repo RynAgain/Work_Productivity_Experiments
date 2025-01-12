@@ -101,18 +101,18 @@ Not for public use.
         var style = document.createElement('style');
         style.innerHTML = `
             .dark-mode {
-                background-color: #121212;
+                background: #121212;
                 color: #ffffff;
             }
-            .dark-mode, .dark-mode *:not([style*="background-color: transparent"]) {
-                background-color: #333333;
-                color: #ffffff;
+            .dark-mode, .dark-mode *:not([style*="background-color: transparent"]):not([style*="background: white"]) {
+                background: #444444;
+                color: #e0e0e0;
             }
             .dark-mode a {
                 color: #bb86fc;
             }
-            .dark-mode input, .dark-mode textarea, .dark-mode select {
-                background-color: #333333;
+            .dark-mode input, .dark-mode textarea, .dark-mode select, .dark-mode span {
+                background: #333333;
                 color: #ffffff;
                 border: 1px solid #444444;
             }
@@ -134,46 +134,26 @@ Not for public use.
         darkModeOverlay.style.overflow = 'auto';
         darkModeOverlay.style.padding = '20px';
         darkModeOverlay.style.boxSizing = 'border-box';
-        darkModeOverlay.innerHTML = `
-            <h3>Customize Dark Mode</h3>
-            <label><input type="checkbox" id="toggleBody" checked> Body</label><br>
-            <label><input type="checkbox" id="toggleButtons" checked> Buttons</label><br>
-            <label><input type="checkbox" id="toggleLinks" checked> Links</label><br>
-            <label><input type="checkbox" id="toggleInputs" checked> Inputs</label><br>
-            <button id="applyDarkModeSettings" style="margin-top: 10px;">Apply</button>
-        `;
+        // Dynamically generate toggle options for each element type
+        const elementTypes = [...new Set(Array.from(document.querySelectorAll('*')).map(el => el.tagName.toLowerCase()))];
+        darkModeOverlay.innerHTML = '<h3>Customize Dark Mode</h3>';
+        elementTypes.forEach(type => {
+            darkModeOverlay.innerHTML += `<label><input type="checkbox" class="toggleElement" data-type="${type}" checked> ${type}</label><br>`;
+        });
+        darkModeOverlay.innerHTML += '<button id="applyDarkModeSettings" style="margin-top: 10px;">Apply</button>';
         document.body.appendChild(darkModeOverlay);
 
         var applyDarkModeSettings = darkModeOverlay.querySelector('#applyDarkModeSettings');
         applyDarkModeSettings.addEventListener('click', function() {
-            var toggleBody = darkModeOverlay.querySelector('#toggleBody').checked;
-            var toggleButtons = darkModeOverlay.querySelector('#toggleButtons').checked;
-            var toggleLinks = darkModeOverlay.querySelector('#toggleLinks').checked;
-            var toggleInputs = darkModeOverlay.querySelector('#toggleInputs').checked;
-
-            if (toggleBody) {
-                document.body.classList.add('dark-mode');
-            } else {
-                document.body.classList.remove('dark-mode');
-            }
-
-            if (toggleButtons) {
-                document.querySelectorAll('button').forEach(button => button.classList.add('dark-mode'));
-            } else {
-                document.querySelectorAll('button').forEach(button => button.classList.remove('dark-mode'));
-            }
-
-            if (toggleLinks) {
-                document.querySelectorAll('a').forEach(link => link.classList.add('dark-mode'));
-            } else {
-                document.querySelectorAll('a').forEach(link => link.classList.remove('dark-mode'));
-            }
-
-            if (toggleInputs) {
-                document.querySelectorAll('input, textarea, select').forEach(input => input.classList.add('dark-mode'));
-            } else {
-                document.querySelectorAll('input, textarea, select').forEach(input => input.classList.remove('dark-mode'));
-            }
+            document.querySelectorAll('.toggleElement').forEach(checkbox => {
+                const type = checkbox.getAttribute('data-type');
+                const elements = document.querySelectorAll(type);
+                if (checkbox.checked) {
+                    elements.forEach(el => el.classList.add('dark-mode'));
+                } else {
+                    elements.forEach(el => el.classList.remove('dark-mode'));
+                }
+            });
 
             darkModeOverlay.style.display = 'none';
         });
