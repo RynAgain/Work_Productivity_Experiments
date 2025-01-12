@@ -55,11 +55,11 @@
         overlay.style.boxSizing = 'border-box';
         overlay.innerHTML = `<pre>${`# Tampermonkey Script Breakdown
 
-This repository contains a set of scripts designed for use with Tampermonkey. The scripts are split into separate files for better maintainability, each handling a specific button's functionality on the webpage.
+ a set of scripts designed for use with Tampermonkey. The scripts are split into separate files for better maintainability, each handling a specific button's functionality on the webpage.
 
 ## Files
 
-1. **MainScript.js**: The main script that includes \`@require\` directives for the other scripts. This script should be installed in the Tampermonkey extension.
+1. **MainScript.js**:  This script should be installed in the Tampermonkey extension.
 
 2. **DownloadButton.js**: Handles the creation and functionality of the "Download Data" button. It initiates a download process, tracks progress, and allows cancellation.
 
@@ -93,7 +93,30 @@ Not for public use.
 - [x] Implement the download functionality for the "Download Data" button. (needs testing now)
 - [x] Add functionality for the "Add New Item(s)" button.
 - [x] Implement the activation/deactivation logic for the "Activate/Deactivate Item(s)" button.
-- [ ] Add functionality for the "Redrive" button.`}</pre>`;
+- [ ] Add functionality for the "Redrive" button.`}</pre>
+        <button id="darkModeToggleButton" style="width: 100%; margin-top: 10px;">Toggle Dark Mode</button>
+        `;
+
+        // Add CSS styles for dark mode
+        var style = document.createElement('style');
+        style.innerHTML = `
+            .dark-mode {
+                background-color: #121212;
+                color: #ffffff;
+            }
+            .dark-mode button {
+                background-color: #333333;
+                color: #ffffff;
+            }
+        `;
+        document.head.appendChild(style);
+
+        // Add click event to the dark mode toggle button
+        var darkModeToggleButton = overlay.querySelector('#darkModeToggleButton');
+        darkModeToggleButton.addEventListener('click', function() {
+            document.body.classList.toggle('dark-mode');
+            location.reload(); // Re-render the page
+        });
 
         // Append the overlay to the body
         // This makes the overlay part of the document, ready to be displayed when needed.
