@@ -135,7 +135,7 @@ Not for public use.
         darkModeOverlay.style.padding = '20px';
         darkModeOverlay.style.boxSizing = 'border-box';
         // Dynamically generate toggle options for each element type
-        const elementTypes = [...new Set(Array.from(document.querySelectorAll('*')).map(el => el.tagName.toLowerCase()))];
+        const elementTypes = [...new Set(Array.from(document.body.getElementsByTagName('*')).map(el => el.tagName.toLowerCase()))];
         darkModeOverlay.innerHTML = '<h3>Customize Dark Mode</h3>';
         elementTypes.forEach(type => {
             darkModeOverlay.innerHTML += `<label><input type="checkbox" class="toggleElement" data-type="${type}" checked> ${type}</label><br>`;
