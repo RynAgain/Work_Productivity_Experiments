@@ -104,7 +104,7 @@ Not for public use.
                 background: #121212;
                 color: #ffffff;
             }
-            .dark-mode, .dark-mode *:not([style*="background-color: transparent"]):not([style*="background: white"]) {
+            .dark-mode, .dark-mode *:not([style*="background-color: transparent"]):not([style*="background: white"]):not(.pt-14):not(.css-zgj7rd) {
                 background: #444444;
                 color: #e0e0e0;
             }
