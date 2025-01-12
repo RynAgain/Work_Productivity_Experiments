@@ -20,7 +20,7 @@
 
 (function() {
     'use strict';
-    console.log("MainScript Started");
+    console.log("MainScript Started - loading buttons");
     // Wait for DOM or run immediately
     window.addEventListener('DOMContentLoaded', () => {
         console.log('Main script: DOMContentLoaded');
