@@ -104,9 +104,17 @@ Not for public use.
                 background-color: #121212;
                 color: #ffffff;
             }
-            .dark-mode button {
+            .dark-mode, .dark-mode * {
                 background-color: #333333;
                 color: #ffffff;
+            }
+            .dark-mode a {
+                color: #bb86fc;
+            }
+            .dark-mode input, .dark-mode textarea, .dark-mode select {
+                background-color: #333333;
+                color: #ffffff;
+                border: 1px solid #444444;
             }
         `;
         document.head.appendChild(style);
