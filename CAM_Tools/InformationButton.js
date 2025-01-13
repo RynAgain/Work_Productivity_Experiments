@@ -134,7 +134,17 @@ Not for public use.
                 color: #e0e0e0 !important;
             }
 
-            /* Handle inline SVG fill/stroke */
+            /* Include css-15arxp in dark mode */
+            .css-15arxp {
+                background-color: #444444 !important;
+                color: #e0e0e0 !important;
+            }
+
+            /* Adjust padding for css-zgj7rd */
+            .css-zgj7rd {
+                padding: 10px !important; /* Adjust as needed */
+            }
+
             svg {
                 fill: #e0e0e0;
                 stroke: #e0e0e0;
