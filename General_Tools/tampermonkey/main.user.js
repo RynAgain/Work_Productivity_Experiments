@@ -6,8 +6,9 @@
 // @author       You
 // @match        *://*/*
 // @grant        none
-// @require      ./ui.js
-// @require      ./buttons.js
+// @require      https://raw.githubusercontent.com/RynAgain/Work_Productivity_Experiments/refs/heads/main/General_Tools/tampermonkey/ui.js
+// @require      https://raw.githubusercontent.com/RynAgain/Work_Productivity_Experiments/refs/heads/main/General_Tools/tampermonkey/buttons.js
+// @require      https://raw.githubusercontent.com/RynAgain/Work_Productivity_Experiments/refs/heads/main/General_Tools/tampermonkey/processExcelInput.js
 // ==/UserScript==
 
 (function() {
