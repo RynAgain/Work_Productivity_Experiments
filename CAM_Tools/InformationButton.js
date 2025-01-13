@@ -134,8 +134,11 @@ Not for public use.
         `;
         document.head.appendChild(style);
 
-        // Add click event to the dark mode toggle button
+        // Ensure darkModeToggleButton exists before adding event listener
         var darkModeToggleButton = overlay.querySelector('#darkModeToggleButton');
+        if (darkModeToggleButton) {
+        }
+
         var darkModeOverlay = document.createElement('div');
         darkModeOverlay.style.position = 'fixed';
         darkModeOverlay.style.top = '0';
