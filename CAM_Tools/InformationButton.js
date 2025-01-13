@@ -118,21 +118,26 @@ Not for public use.
         // Add CSS styles for dark mode
         var style = document.createElement('style');
         style.innerHTML = `
-            .dark-mode {
-                background: #121212;
-                color: #ffffff;
-            }
-            .dark-mode, .dark-mode *:not([style*="background-color: transparent"]):not([style*="background: white"]):not(.pt-14):not(.css-zgj7rd) {
-                background: #444444;
+            /* Target stable IDs/classes and Tailwind utilities */
+            #root, .a-page, .text-white {
+                background-color: #121212;
                 color: #e0e0e0;
             }
-            .dark-mode a {
-                color: #bb86fc;
+
+            .bg-\\[\\#004E36\\] {
+                background-color: #1a1a1a;
             }
-            .dark-mode input, .dark-mode textarea, .dark-mode select, .dark-mode span {
-                background: #333333;
-                color: #ffffff;
-                border: 1px solid #444444;
+
+            /* Broad .dark-mode overrides for ephemeral classes */
+            .dark-mode * {
+                background-color: #444444 !important;
+                color: #e0e0e0 !important;
+            }
+
+            /* Handle inline SVG fill/stroke */
+            svg {
+                fill: #e0e0e0;
+                stroke: #e0e0e0;
             }
         `;
         document.head.appendChild(style);
@@ -166,8 +171,6 @@ Not for public use.
             darkModeOverlay.innerHTML += '<button id="exportSelection" style="margin-top: 10px;">Export Selection</button>';
         }
 
-        updateElementList();
-        setInterval(updateElementList, 30000); // Rescan every 30 seconds
         document.body.appendChild(darkModeOverlay);
 
         var deselectAllButton = darkModeOverlay.querySelector('#deselectAll');
