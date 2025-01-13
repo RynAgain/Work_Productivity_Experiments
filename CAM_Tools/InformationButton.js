@@ -36,9 +36,7 @@
         document.body.appendChild(informationButton);
         console.log('Information button added to the page');
 
-        // Add click event to the information button
         // Create the overlay
-        // The overlay contains detailed information and is initially hidden.
         var overlay = document.createElement('div');
         overlay.id = 'informationOverlay';
         overlay.style.position = 'fixed';
@@ -53,7 +51,7 @@
         overlay.style.overflow = 'auto';
         overlay.style.padding = '20px';
         overlay.style.boxSizing = 'border-box';
-        overlay.innerHTML = `<pre>${`# Tampermonkey Script Breakdown
+        overlay.innerHTML = `
 
  a set of scripts designed for use with Tampermonkey. The scripts are split into separate files for better maintainability, each handling a specific button's functionality on the webpage.
 
@@ -93,12 +91,22 @@ Not for public use.
 - [x] Implement the download functionality for the "Download Data" button. (needs testing now)
 - [x] Add functionality for the "Add New Item(s)" button.
 - [x] Implement the activation/deactivation logic for the "Activate/Deactivate Item(s)" button.
-- [ ] Add functionality for the "Redrive" button.`}</pre>
-        `;
+- [ ] Add functionality for the "Redrive" button.</pre>`;
+
+        // Append the overlay to the body
+        document.body.appendChild(overlay);
+
+        // Add click event to the information button
+        informationButton.addEventListener('click', function() {
+            if (overlay.style.display === 'none') {
+                overlay.style.display = 'block';
+            } else {
+                overlay.style.display = 'none';
+            }
         });
-    }
 
     // Initialize the information button
     addInformationButton();
     // Initialize the information button when the script loads.
-})();
+    }
+});
