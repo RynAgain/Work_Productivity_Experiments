@@ -135,9 +135,9 @@ Not for public use.
         darkModeOverlay.style.padding = '20px';
         darkModeOverlay.style.boxSizing = 'border-box';
         function updateElementList() {
-            const elementTypes = [...new Set(Array.from(document.body.getElementsByTagName('*'))
-                .filter(el => !el.closest('#informationOverlay') && !el.closest('#darkModeOverlay'))
-                .map(el => el.tagName.toLowerCase()))];
+            const elementTypes = [...new Set(Array.from(document.body.querySelectorAll('*'))
+                .filter(el => !el.closest('#informationOverlay') && !el.closest('#darkModeOverlay') && (el.id || el.className))
+                .map(el => el.id || el.className))];
             darkModeOverlay.innerHTML = '<h3>Customize Dark Mode</h3>';
             elementTypes.forEach(type => {
                 darkModeOverlay.innerHTML += `<label><input type="checkbox" class="toggleElement" data-type="${type}" checked> ${type}</label><br>`;
