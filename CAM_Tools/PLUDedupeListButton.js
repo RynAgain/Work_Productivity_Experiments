@@ -104,21 +104,11 @@
         });
     }
 
-    // Attach the functionality to the button
-    function attachPLUDedupeListListener() {
+    // Initialize the PLU Dedupe & List button
+    window.addEventListener('DOMContentLoaded', function() {
         const pluDedupeListButton = document.getElementById('pluDedupeListButton');
         if (pluDedupeListButton) {
             pluDedupeListButton.addEventListener('click', addPLUDedupeListFunctionality);
         }
-    }
-
-    // Ensure the event listener is attached when the button is visible
-    const observer = new MutationObserver(() => {
-        const pluDedupeListButton = document.getElementById('pluDedupeListButton');
-        if (pluDedupeListButton) {
-            attachPLUDedupeListListener();
-        }
     });
-
-    observer.observe(document.body, { childList: true, subtree: true });
 })();
