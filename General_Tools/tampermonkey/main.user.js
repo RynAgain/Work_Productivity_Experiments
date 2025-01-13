@@ -6,7 +6,10 @@
 // @author       You
 // @match        *://*/*
 // @grant        none
-// @require      https://raw.githubusercontent.com/RynAgain/Work_Productivity_Experiments/refs/heads/main/General_Tools/tampermonkey/ui.js
+// @updateURL    https://raw.githubusercontent.com/RynAgain/Work_Productivity_Experiments/refs/heads/main/General_Tools/tampermonkey/main.user.js
+// @downloadURL  https://raw.githubusercontent.com/RynAgain/Work_Productivity_Experiments/refs/heads/main/General_Tools/tampermonkey/main.user.js
+// @supportURL   https://github.com/RynAgain/Work_Productivity_Experiments/issues
+// @run-at       document-body
 // @require      https://raw.githubusercontent.com/RynAgain/Work_Productivity_Experiments/refs/heads/main/General_Tools/tampermonkey/buttons.js
 // @require      https://raw.githubusercontent.com/RynAgain/Work_Productivity_Experiments/refs/heads/main/General_Tools/tampermonkey/processExcelInput.js
 // ==/UserScript==
