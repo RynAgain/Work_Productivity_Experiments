@@ -84,10 +84,20 @@
     }
 
     // Attach the functionality to the button
-    document.addEventListener('DOMContentLoaded', function() {
+    function attachPLUDedupeListListener() {
         const pluDedupeListButton = document.getElementById('pluDedupeListButton');
         if (pluDedupeListButton) {
             pluDedupeListButton.addEventListener('click', addPLUDedupeListFunctionality);
         }
+    }
+
+    // Ensure the event listener is attached when the button is visible
+    const observer = new MutationObserver(() => {
+        const pluDedupeListButton = document.getElementById('pluDedupeListButton');
+        if (pluDedupeListButton) {
+            attachPLUDedupeListListener();
+        }
     });
+
+    observer.observe(document.body, { childList: true, subtree: true });
 })();
