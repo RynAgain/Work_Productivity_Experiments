@@ -145,15 +145,17 @@
                     const storeIds = [];
                     for (const region in storeData.storesInformation) {
                         const states = storeData.storesInformation[region];
-                        for (const state in states) {
-                            const stores = states[state];
-                            stores.forEach(store => {
-                                if ((bySelect === 'Store' && storeRegionInput.includes(store.storeTLC)) ||
-                                    (bySelect === 'Region' && storeRegionInput.includes(state))) {
-                                    storeIds.push(store.storeTLC);
-                                }
-                            });
-                        }
+for (const state in states) {
+    const stores = states[state];
+    stores.forEach(store => {
+    const regionParts = region.split('-');
+    const regionCode = regionParts[regionParts.length - 1]; // Extract short region code
+        if ((bySelect === 'Store' && storeRegionInput.includes(store.storeTLC)) ||
+            (bySelect === 'Region' && storeRegionInput.includes(regionCode))) {
+            storeIds.push(store.storeTLC);
+        }
+    });
+}
                     }
 
                     // Function to fetch items for a single store
