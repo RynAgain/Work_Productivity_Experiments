@@ -14,9 +14,9 @@
 // @require      https://raw.githubusercontent.com/RynAgain/Work_Productivity_Experiments/refs/heads/main/General_Tools/tampermonkey/processExcelInput.js
 // ==/UserScript==
 
-(function() {
+document.addEventListener('DOMContentLoaded', function() {
     'use strict';
 
     // Main script logic
     console.log('Overlay Menu Script loaded');
-})();
+});

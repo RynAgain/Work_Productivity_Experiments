@@ -4,7 +4,11 @@
     function initializeProcessExcelInput() {
         // Function to add a button to process Excel-like input
         function addProcessExcelInputButton() {
+            // Check if button is already initialized
+            if (document.getElementById('processExcelInputButton')) return;
+
             const button = document.createElement('button');
+            button.id = 'processExcelInputButton';
             button.textContent = 'Process Excel Input';
             button.style.margin = '10px';
             button.addEventListener('click', () => {

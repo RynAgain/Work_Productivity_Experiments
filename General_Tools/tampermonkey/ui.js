@@ -2,8 +2,12 @@
     'use strict';
 
     function initializeUI() {
-        // Create the icon button
-        const iconButton = document.createElement('button');
+        // Check if UI is already initialized
+        if (document.getElementById('overlayMenuButton')) return;
+
+        // Create the icon button if not already present
+        let iconButton = document.createElement('button');
+        iconButton.id = 'overlayMenuButton';
         iconButton.style.position = 'fixed';
         iconButton.style.bottom = '10px';
         iconButton.style.left = '10px';
@@ -11,8 +15,9 @@
         iconButton.textContent = 'Menu';
         document.body.appendChild(iconButton);
 
-        // Create the overlay menu
-        const overlayMenu = document.createElement('div');
+        // Create the overlay menu if not already present
+        let overlayMenu = document.createElement('div');
+        overlayMenu.id = 'overlayMenu';
         overlayMenu.style.position = 'fixed';
         overlayMenu.style.top = '0';
         overlayMenu.style.left = '0';
