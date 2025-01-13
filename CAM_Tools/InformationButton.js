@@ -134,13 +134,20 @@ Not for public use.
         darkModeOverlay.style.overflow = 'auto';
         darkModeOverlay.style.padding = '20px';
         darkModeOverlay.style.boxSizing = 'border-box';
-        // Dynamically generate toggle options for each element type
-        const elementTypes = [...new Set(Array.from(document.body.getElementsByTagName('*')).map(el => el.tagName.toLowerCase()))];
-        darkModeOverlay.innerHTML = '<h3>Customize Dark Mode</h3>';
-        elementTypes.forEach(type => {
-            darkModeOverlay.innerHTML += `<label><input type="checkbox" class="toggleElement" data-type="${type}" checked> ${type}</label><br>`;
-        });
-        darkModeOverlay.innerHTML += '<button id="applyDarkModeSettings" style="margin-top: 10px;">Apply</button>';
+        function updateElementList() {
+            const elementTypes = [...new Set(Array.from(document.body.getElementsByTagName('*'))
+                .filter(el => !el.closest('#informationOverlay') && !el.closest('#darkModeOverlay'))
+                .map(el => el.tagName.toLowerCase()))];
+            darkModeOverlay.innerHTML = '<h3>Customize Dark Mode</h3>';
+            elementTypes.forEach(type => {
+                darkModeOverlay.innerHTML += `<label><input type="checkbox" class="toggleElement" data-type="${type}" checked> ${type}</label><br>`;
+            });
+            darkModeOverlay.innerHTML += '<button id="applyDarkModeSettings" style="margin-top: 10px;">Apply</button>';
+            darkModeOverlay.innerHTML += '<button id="resetDarkModeSettings" style="margin-top: 10px;">Reset</button>';
+        }
+
+        updateElementList();
+        setInterval(updateElementList, 30000); // Rescan every 30 seconds
         document.body.appendChild(darkModeOverlay);
 
         var applyDarkModeSettings = darkModeOverlay.querySelector('#applyDarkModeSettings');
@@ -149,12 +156,31 @@ Not for public use.
                 const type = checkbox.getAttribute('data-type');
                 const elements = document.querySelectorAll(type);
                 if (checkbox.checked) {
-                    elements.forEach(el => el.classList.add('dark-mode'));
+                    elements.forEach(el => {
+                        el.classList.add('dark-mode');
+                        el.style.outline = '2px solid red'; // Highlight element
+                    });
                 } else {
-                    elements.forEach(el => el.classList.remove('dark-mode'));
+                    elements.forEach(el => {
+                        el.classList.remove('dark-mode');
+                        el.style.outline = ''; // Remove highlight
+                    });
                 }
             });
 
+            darkModeOverlay.style.display = 'none';
+        });
+
+        var resetDarkModeSettings = darkModeOverlay.querySelector('#resetDarkModeSettings');
+        resetDarkModeSettings.addEventListener('click', function() {
+            document.querySelectorAll('.toggleElement').forEach(checkbox => {
+                const type = checkbox.getAttribute('data-type');
+                const elements = document.querySelectorAll(type);
+                elements.forEach(el => {
+                    el.classList.remove('dark-mode');
+                    el.style.outline = ''; // Remove highlight
+                });
+            });
             darkModeOverlay.style.display = 'none';
         });
 
