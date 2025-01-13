@@ -63,10 +63,11 @@
             closeButton.style.borderRadius = '0';
             closeButton.addEventListener('click', function() {
                 document.body.removeChild(overlay);
-                // Load the PLU Dedupe & List button script
-            var script = document.createElement('script');
-            script.src = 'PLUDedupeListButton.js';
-            document.body.appendChild(script);
+            // Attach the event listener for the PLU Dedupe & List button
+            const pluDedupeListButton = formContainer.querySelector('#pluDedupeListButton');
+            if (pluDedupeListButton) {
+                pluDedupeListButton.addEventListener('click', addPLUDedupeListFunctionality);
+            }
         });
 
             var formContainer = document.createElement('div');
