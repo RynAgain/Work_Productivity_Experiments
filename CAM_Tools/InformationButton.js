@@ -135,14 +135,12 @@ Not for public use.
         darkModeOverlay.style.padding = '20px';
         darkModeOverlay.style.boxSizing = 'border-box';
         function updateElementList() {
-            const previouslySelected = new Set(Array.from(document.querySelectorAll('.toggleElement:checked')).map(el => el.getAttribute('data-type')));
             const elementTypes = [...new Set(Array.from(document.body.querySelectorAll('*'))
                 .filter(el => !el.closest('#informationOverlay') && !el.closest('#darkModeOverlay') && (el.id || el.className))
                 .map(el => el.id || el.className))];
             darkModeOverlay.innerHTML = '<h3>Customize Dark Mode</h3>';
             elementTypes.forEach(type => {
-                const isChecked = previouslySelected.has(type);
-                darkModeOverlay.innerHTML += `<label><input type="checkbox" class="toggleElement" data-type="${type}" ${isChecked ? 'checked' : ''}> ${type}</label><br>`;
+                darkModeOverlay.innerHTML += `<label><input type="checkbox" class="toggleElement" data-type="${type}" checked> ${type}</label><br>`;
             });
             darkModeOverlay.innerHTML += '<button id="deselectAll" style="margin-top: 10px;">Deselect All</button>';
             darkModeOverlay.innerHTML += '<button id="applyDarkModeSettings" style="margin-top: 10px;">Apply</button>';
@@ -155,34 +153,17 @@ Not for public use.
         document.body.appendChild(darkModeOverlay);
 
         var deselectAllButton = darkModeOverlay.querySelector('#deselectAll');
-        deselectAllButton.addEventListener('click', function() {
-            document.querySelectorAll('.toggleElement').forEach(checkbox => {
-                checkbox.addEventListener('change', function() {
-                    const type = checkbox.getAttribute('data-type');
-                    const elements = document.querySelectorAll(type);
-                    if (checkbox.checked) {
-                        elements.forEach(el => {
-                            el.classList.add('dark-mode');
-                            el.style.outline = '2px solid red'; // Highlight element
-                        });
-                    } else {
-                        elements.forEach(el => {
-                            el.classList.remove('dark-mode');
-                            el.style.outline = ''; // Remove highlight
-                        });
-                    }
-                });
-            });
-
-                checkbox.checked = false;
-                const type = checkbox.getAttribute('data-type');
-                const elements = document.querySelectorAll(type);
-                elements.forEach(el => {
-                    el.classList.remove('dark-mode');
-                    el.style.outline = ''; // Remove highlight
-                });
-            });
+deselectAllButton.addEventListener('click', function() {
+    document.querySelectorAll('.toggleElement').forEach(function(checkbox) {
+        checkbox.checked = false;
+        const type = checkbox.getAttribute('data-type');
+        const elements = document.querySelectorAll(type);
+        elements.forEach(function(el) {
+            el.classList.remove('dark-mode');
+            el.style.outline = ''; // Remove highlight
         });
+    });
+});
 
         document.querySelectorAll('.toggleElement').forEach(checkbox => {
             checkbox.addEventListener('change', function() {
