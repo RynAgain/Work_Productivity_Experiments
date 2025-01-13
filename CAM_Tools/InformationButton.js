@@ -142,13 +142,46 @@ Not for public use.
             elementTypes.forEach(type => {
                 darkModeOverlay.innerHTML += `<label><input type="checkbox" class="toggleElement" data-type="${type}" checked> ${type}</label><br>`;
             });
+            darkModeOverlay.innerHTML += '<button id="deselectAll" style="margin-top: 10px;">Deselect All</button>';
             darkModeOverlay.innerHTML += '<button id="applyDarkModeSettings" style="margin-top: 10px;">Apply</button>';
             darkModeOverlay.innerHTML += '<button id="resetDarkModeSettings" style="margin-top: 10px;">Reset</button>';
+            darkModeOverlay.innerHTML += '<button id="exportSelection" style="margin-top: 10px;">Export Selection</button>';
         }
 
         updateElementList();
         setInterval(updateElementList, 30000); // Rescan every 30 seconds
         document.body.appendChild(darkModeOverlay);
+
+        var deselectAllButton = darkModeOverlay.querySelector('#deselectAll');
+        deselectAllButton.addEventListener('click', function() {
+            document.querySelectorAll('.toggleElement').forEach(checkbox => {
+                checkbox.checked = false;
+                const type = checkbox.getAttribute('data-type');
+                const elements = document.querySelectorAll(type);
+                elements.forEach(el => {
+                    el.classList.remove('dark-mode');
+                    el.style.outline = ''; // Remove highlight
+                });
+            });
+        });
+
+        document.querySelectorAll('.toggleElement').forEach(checkbox => {
+            checkbox.addEventListener('change', function() {
+                const type = checkbox.getAttribute('data-type');
+                const elements = document.querySelectorAll(type);
+                if (checkbox.checked) {
+                    elements.forEach(el => {
+                        el.classList.add('dark-mode');
+                        el.style.outline = '2px solid red'; // Highlight element
+                    });
+                } else {
+                    elements.forEach(el => {
+                        el.classList.remove('dark-mode');
+                        el.style.outline = ''; // Remove highlight
+                    });
+                }
+            });
+        });
 
         var applyDarkModeSettings = darkModeOverlay.querySelector('#applyDarkModeSettings');
         applyDarkModeSettings.addEventListener('click', function() {
@@ -182,6 +215,21 @@ Not for public use.
                 });
             });
             darkModeOverlay.style.display = 'none';
+        });
+
+        var exportSelectionButton = darkModeOverlay.querySelector('#exportSelection');
+        exportSelectionButton.addEventListener('click', function() {
+            const selectedElements = [];
+            document.querySelectorAll('.toggleElement').forEach(checkbox => {
+                if (checkbox.checked) {
+                    selectedElements.push(checkbox.getAttribute('data-type'));
+                }
+            });
+            const blob = new Blob([selectedElements.join('\n')], { type: 'text/plain' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = 'selected_elements.txt';
+            link.click();
         });
 
         darkModeToggleButton.addEventListener('click', function() {
