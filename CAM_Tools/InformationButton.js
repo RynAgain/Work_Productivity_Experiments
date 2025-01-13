@@ -11,24 +11,6 @@
         if (document.getElementById('informationButton')) {
             console.log('Information button already exists');
             return;
-            // Reattach event listeners after updating the element list
-            document.querySelectorAll('.toggleElement').forEach(checkbox => {
-                checkbox.addEventListener('change', function() {
-                    const type = checkbox.getAttribute('data-type');
-                    const elements = document.querySelectorAll(type);
-                    if (checkbox.checked) {
-                        elements.forEach(el => {
-                            el.classList.add('dark-mode');
-                            el.style.outline = '2px solid red'; // Highlight element
-                        });
-                    } else {
-                        elements.forEach(el => {
-                            el.classList.remove('dark-mode');
-                            el.style.outline = ''; // Remove highlight
-                        });
-                    }
-                });
-            });
         }
 
         // Create the information button
