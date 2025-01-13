@@ -52,7 +52,28 @@
                 }, 2000);
             }).catch(err => {
                 console.error('Failed to copy text: ', err);
+                // Copy to clipboard
+            navigator.clipboard.writeText(uniqueNumbers.join(', ')).then(() => {
+                // Display "Copied!" message
+                const copiedMessage = document.createElement('div');
+                copiedMessage.innerText = 'Copied!';
+                copiedMessage.style.position = 'fixed';
+                copiedMessage.style.bottom = '10px';
+                copiedMessage.style.right = '10px';
+                copiedMessage.style.backgroundColor = '#4CAF50';
+                copiedMessage.style.color = '#fff';
+                copiedMessage.style.padding = '10px';
+                copiedMessage.style.borderRadius = '5px';
+                document.body.appendChild(copiedMessage);
+
+                // Remove the message after 2 seconds
+                setTimeout(() => {
+                    document.body.removeChild(copiedMessage);
+                }, 2000);
+            }).catch(err => {
+                console.error('Failed to copy text: ', err);
             });
+        });
         });
 
         var formContainer = document.createElement('div');
