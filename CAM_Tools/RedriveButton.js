@@ -102,9 +102,9 @@ redriveButton.addEventListener('click', function() {
     // Add click event to the "Generate Redrive Files" button
     document.getElementById('generateRedriveFileButton').addEventListener('click', function() {
         // Logic to generate the redrive files
-        const pluInput = document.getElementById('pluInput').value.split(',').map(plu => plu.trim());
+        const pluInput = Array.from(new Set(document.getElementById('pluInput').value.split(',').map(plu => plu.trim())));
         const bySelect = document.getElementById('bySelect').value;
-        const storeRegionInput = document.getElementById('storeRegionInput').value.split(',').map(sr => sr.trim());
+        const storeRegionInput = Array.from(new Set(document.getElementById('storeRegionInput').value.split(',').map(sr => sr.trim())));
 
         // Determine the environment (prod or gamma)
         const environment = window.location.hostname.includes('gamma') ? 'gamma' : 'prod';

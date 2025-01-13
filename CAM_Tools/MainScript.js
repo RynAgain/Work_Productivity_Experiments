@@ -12,6 +12,7 @@
 // @require      https://github.com/RynAgain/Work_Productivity_Experiments/raw/main/CAM_Tools/ActivateButton.js
 // @require      https://github.com/RynAgain/Work_Productivity_Experiments/raw/main/CAM_Tools/RedriveButton.js
 // @require      https://github.com/RynAgain/Work_Productivity_Experiments/raw/main/CAM_Tools/InformationButton.js
+// @require      https://github.com/RynAgain/Work_Productivity_Experiments/raw/main/CAM_Tools/GeneralHelpToolsButton.js
 
 // @run-at       document-body
 // @updateURL    https://raw.githubusercontent.com/RynAgain/Work_Productivity_Experiments/refs/heads/main/CAM_Tools/MainScript.js

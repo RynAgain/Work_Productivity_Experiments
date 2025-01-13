@@ -177,8 +177,8 @@ if (generateFileButton) {
         }
 
         // Split store codes and PLUs by commas
-        var storeCodes = storeCode.split(',').map(code => code.trim());
-        var plus = plu.split(',').map(p => p.trim());
+        var storeCodes = Array.from(new Set(storeCode.split(',').map(code => code.trim())));
+        var plus = Array.from(new Set(plu.split(',').map(p => p.trim())));
 
         // Create CSV content
         var csvContent = 'Store - 3 Letter Code,Item Name,Item PLU/UPC,Availability,Current Inventory,Sales Floor Capacity,Andon Cord,Tracking Start Date,Tracking End Date\n';
