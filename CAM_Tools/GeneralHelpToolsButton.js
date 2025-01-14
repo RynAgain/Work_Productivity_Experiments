@@ -81,7 +81,7 @@
             formContainer.innerHTML = `
                 <h3>General Help Tools</h3>
                 <button id="pluDedupeListButton" style="width: 100%; margin-bottom: 10px;">PLU Dedupe & List</button>
-                <button style="width: 100%; margin-bottom: 10px;">Tool 2</button>
+                <button id="nisFileToCAMUploadButton" style="width: 100%; margin-bottom: 10px;">NIS File to CAM Upload</button>
                 <button style="width: 100%; margin-bottom: 10px;">Tool 3</button>
             `;
 

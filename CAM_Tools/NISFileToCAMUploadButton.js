@@ -77,9 +77,9 @@
     const observer = new MutationObserver(function(mutations) {
         mutations.forEach(function(mutation) {
             if (mutation.addedNodes.length) {
-                const nisFileUploadButton = document.getElementById('nisFileUploadButton');
-                if (nisFileUploadButton) {
-                    nisFileUploadButton.addEventListener('click', addNISFileToCAMUploadFunctionality);
+                const nisFileToCAMUploadButton = document.getElementById('nisFileToCAMUploadButton');
+                if (nisFileToCAMUploadButton) {
+                    nisFileToCAMUploadButton.addEventListener('click', addNISFileToCAMUploadFunctionality);
                     observer.disconnect(); // Stop observing once the button is found
                 }
             }
