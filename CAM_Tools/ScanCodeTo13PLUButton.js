@@ -64,8 +64,8 @@
             const input = document.getElementById('scanCodeInput').value;
             const scanCodes = input.split(/[\s,]+/).map(code => code.replace(/\s+/g, '').trim()).filter(code => code !== '');
             const pluCodes = scanCodes.map(code => {
-                const paddedPLU = padTo12Digits(code);
-                return getEAN(paddedPLU);
+                const upcCode = getUPC(code);
+                return getEAN(upcCode);
             });
             const outputFormat = document.getElementById('outputFormatSelect').value;
             const outputText = outputFormat === 'excel' ? pluCodes.join('\n') : pluCodes.join(', ');
@@ -82,23 +82,30 @@
             });
         });
 
-        // Function to pad PLU to 12 digits
-        function padTo12Digits(plu) {
-            return ('000000000000' + plu).slice(-12);
+        // Function to convert to 12-digit UPC
+        function getUPC(sku) {
+            const upc = ('000000000000' + sku).slice(-12);
+            return upc + calculateCheckDigit(upc);
         }
 
-        // Function to calculate EAN-13 from 12-digit PLU
-        function getEAN(plu) {
-            if (plu.length !== 12) {
+        // Function to calculate EAN-13 from 12-digit UPC
+        function getEAN(upc) {
+            if (upc.length !== 12) {
                 return 'Length not 12';
             }
-            const b = [1, 3, 1, 3, 1, 3].reduce((sum, weight, i) => sum + parseInt(plu[i * 2 + 1]) * weight, 0);
-            const c = [1, 3, 1, 3, 1, 3].reduce((sum, weight, i) => sum + parseInt(plu[i * 2]) * weight, 0);
-            const d = b + c;
-            const a = Math.ceil(d / 10) * 10;
-            const e = a - d;
-            return plu + e;
+            const ean = upc + calculateCheckDigit(upc);
+            return ean;
         }
+
+        // Function to calculate check digit
+        function calculateCheckDigit(code) {
+            const oddSum = [0, 2, 4, 6, 8, 10].reduce((sum, i) => sum + parseInt(code[i]), 0);
+            const evenSum = [1, 3, 5, 7, 9, 11].reduce((sum, i) => sum + parseInt(code[i]), 0);
+            const totalSum = oddSum + evenSum * 3;
+            const nextTen = Math.ceil(totalSum / 10) * 10;
+            return nextTen - totalSum;
+        }
+
     }
 
     // Use MutationObserver to detect when the button is added to the DOM
