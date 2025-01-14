@@ -85,7 +85,7 @@
                 </select>
                 <label>Store/Region</label>
                 <input type="text" id="storeRegionInput" style="width: 100%; margin-bottom: 10px;" placeholder="Enter Store/Region codes separated by commas">
-                <label><input type="checkbox" id="allStoresCheckbox"> All Stores</label>
+                <label><input type="checkbox" id="allStoresCheckbox"> All Stores</label><br>
                 <label>Andon Cord</label>
                 <select id="andonCordSelect" style="width: 100%; margin-bottom: 10px;">
                     <option value="Enabled">Enabled</option>
@@ -150,22 +150,25 @@
                         throw new Error('Invalid store data received');
                     }
 
-                    // Extract store IDs and filter based on user input
+                    // Extract store IDs
                     const storeIds = [];
                     for (const region in storeData.storesInformation) {
                         const states = storeData.storesInformation[region];
-for (const state in states) {
-    const stores = states[state];
-    stores.forEach(store => {
-    const regionParts = region.split('-');
-    const regionCode = regionParts[regionParts.length - 1]; // Extract short region code
-        if (document.getElementById('allStoresCheckbox').checked ||
-            (bySelect === 'Store' && storeRegionInput.includes(store.storeTLC)) ||
-            (bySelect === 'Region' && storeRegionInput.includes(regionCode))) {
-            storeIds.push(store.storeTLC);
-        }
-    });
-}
+                        for (const state in states) {
+                            const stores = states[state];
+                            stores.forEach(store => {
+                                if (document.getElementById('allStoresCheckbox').checked) {
+                                    storeIds.push(store.storeTLC);
+                                } else {
+                                    const regionParts = region.split('-');
+                                    const regionCode = regionParts[regionParts.length - 1]; // Extract short region code
+                                    if ((bySelect === 'Store' && storeRegionInput.includes(store.storeTLC)) ||
+                                        (bySelect === 'Region' && storeRegionInput.includes(regionCode))) {
+                                        storeIds.push(store.storeTLC);
+                                    }
+                                }
+                            });
+                        }
                     }
 
                     // Function to fetch items for a single store
