@@ -104,11 +104,18 @@
         });
     }
 
-    // Initialize the PLU Dedupe & List button
-    window.addEventListener('DOMContentLoaded', function() {
-        const pluDedupeListButton = document.getElementById('pluDedupeListButton');
-        if (pluDedupeListButton) {
-            pluDedupeListButton.addEventListener('click', addPLUDedupeListFunctionality);
-        }
+    // Use MutationObserver to detect when the button is added to the DOM
+    const observer = new MutationObserver(function(mutations) {
+        mutations.forEach(function(mutation) {
+            if (mutation.addedNodes.length) {
+                const pluDedupeListButton = document.getElementById('pluDedupeListButton');
+                if (pluDedupeListButton) {
+                    pluDedupeListButton.addEventListener('click', addPLUDedupeListFunctionality);
+                    observer.disconnect(); // Stop observing once the button is found
+                }
+            }
+        });
     });
+
+    observer.observe(document.body, { childList: true, subtree: true });
 })();
