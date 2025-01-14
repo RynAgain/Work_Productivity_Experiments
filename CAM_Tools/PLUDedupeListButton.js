@@ -100,7 +100,21 @@
             const input = document.getElementById('pluInput').value;
             const numbers = input.split(/\s+/).map(num => num.trim()).filter(num => num !== '');
             const uniqueNumbers = Array.from(new Set(numbers));
-            document.getElementById('pluOutput').innerText = uniqueNumbers.join(', ');
+            const outputText = uniqueNumbers.join(', ');
+            document.getElementById('pluOutput').innerText = outputText;
+
+            // Copy to clipboard
+            navigator.clipboard.writeText(outputText).then(() => {
+                // Display "Copied!" message on the Transform button
+                const transformButton = document.getElementById('transformButton');
+                const originalText = transformButton.innerText;
+                transformButton.innerText = 'Copied!';
+                setTimeout(() => {
+                    transformButton.innerText = originalText;
+                }, 2000);
+            }).catch(err => {
+                console.error('Failed to copy text: ', err);
+            });
         });
     }
 

@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         CAM_Admin_Tools
 // @namespace    http://tampermonkey.net/
-// @version      2.5.017
+// @version      2.5.018
 // @description  Main script to include button functionalities
 // @author       Ryan Satterfield
 // @match        https://*.cam.wfm.amazon.dev/*
@@ -13,6 +13,7 @@
 // @require      https://github.com/RynAgain/Work_Productivity_Experiments/raw/main/CAM_Tools/RedriveButton.js
 // @require      https://github.com/RynAgain/Work_Productivity_Experiments/raw/main/CAM_Tools/GeneralHelpToolsButton.js
 // @require      https://github.com/RynAgain/Work_Productivity_Experiments/raw/main/CAM_Tools/PLUDedupeListButton.js
+// @require      https://github.com/RynAgain/Work_Productivity_Experiments/raw/main/CAM_Tools/NISFileToCAMUploadButton.js
 
 // @run-at       document-body
 // @updateURL    https://raw.githubusercontent.com/RynAgain/Work_Productivity_Experiments/refs/heads/main/CAM_Tools/MainScript.js
