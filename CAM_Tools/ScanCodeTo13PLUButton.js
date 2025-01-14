@@ -61,7 +61,7 @@
         // Add event listener to the "Convert" button
         document.getElementById('convertButton').addEventListener('click', function() {
             const input = document.getElementById('scanCodeInput').value;
-            const scanCodes = input.split(/[\s,]+/).map(code => code.trim()).filter(code => code !== '');
+            const scanCodes = input.split(/[\s,]+/).map(code => code.replace(/\s+/g, '').trim()).filter(code => code !== '');
             const pluCodes = scanCodes.map(code => {
                 const paddedPLU = padTo12Digits(code);
                 return getEAN(paddedPLU);
