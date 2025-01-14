@@ -159,7 +159,8 @@ for (const state in states) {
     stores.forEach(store => {
     const regionParts = region.split('-');
     const regionCode = regionParts[regionParts.length - 1]; // Extract short region code
-        if ((bySelect === 'Store' && storeRegionInput.includes(store.storeTLC)) ||
+        if (document.getElementById('allStoresCheckbox').checked ||
+            (bySelect === 'Store' && storeRegionInput.includes(store.storeTLC)) ||
             (bySelect === 'Region' && storeRegionInput.includes(regionCode))) {
             storeIds.push(store.storeTLC);
         }
