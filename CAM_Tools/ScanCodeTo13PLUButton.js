@@ -52,6 +52,7 @@
             </select>
             <button id="convertButton" style="width: 100%; margin-bottom: 10px;">Convert</button>
             <div id="pluOutput" style="width: 100%; height: 100px; border: 1px solid #ccc; padding: 10px; overflow-y: auto;"></div>
+            <button id="copyButton" style="width: 100%; margin-top: 10px;">Copy to Clipboard</button>
         `;
 
         formContainer.appendChild(closeButton);
@@ -69,6 +70,16 @@
             const outputFormat = document.getElementById('outputFormatSelect').value;
             const outputText = outputFormat === 'excel' ? pluCodes.join('\n') : pluCodes.join(', ');
             document.getElementById('pluOutput').innerText = outputText;
+        });
+
+        // Add event listener to the "Copy to Clipboard" button
+        document.getElementById('copyButton').addEventListener('click', function() {
+            const outputText = document.getElementById('pluOutput').innerText;
+            navigator.clipboard.writeText(outputText).then(() => {
+                alert('Output copied to clipboard!');
+            }).catch(err => {
+                console.error('Failed to copy text: ', err);
+            });
         });
 
         // Function to pad PLU to 12 digits
