@@ -180,9 +180,9 @@
                                 item.salesFloorCapacity = item.salesFloorCapacity !== undefined && item.salesFloorCapacity !== '' ? parseInt(item.salesFloorCapacity) || 0 : 0;
                                 item.wfmoaReservedQuantity = item.wfmoaReservedQuantity !== undefined && item.wfmoaReservedQuantity !== '' ? parseInt(item.wfmoaReservedQuantity) || 0 : 0;
                                 return {
-                                    ...item,
-                                    asin: item.asin || '',
-                                    wfmoaMerchantId: item.wfmoaMerchantId || ''
+                                    ...item//,
+                                    // asin: item.asin || '',
+                                    // wfmoaMerchantId: item.wfmoaMerchantId || ''
                                 };
                             });
                         })
@@ -232,7 +232,7 @@
                                 'andon', 'currentInventoryQuantity', 'hasAndonEnabledComponent',
                                 'inventoryStatus', 'isMultiChannel', 'itemName', 'itemType',
                                 'reservedQuantity', 'salesFloorCapacity', 'storeId', 'storeName',
-                                'team', 'wfmScanCode', 'wfmoaReservedQuantity', 'asin', 'wfmoaMerchantId', 'multiChannelEndDate',
+                                'team', 'wfmScanCode', 'wfmoaReservedQuantity', /* 'asin', 'wfmoaMerchantId', */ 'multiChannelEndDate',
                                 'multiChannelStartDate', 'itemUnitOfMeasurement', 'Helper_Column'
                             ];
                             const csvContent = "data:text/csv;charset=utf-8,"

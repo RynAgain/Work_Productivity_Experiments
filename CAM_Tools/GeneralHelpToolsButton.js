@@ -83,6 +83,9 @@
                 <button id="pluDedupeListButton" style="width: 100%; margin-bottom: 10px;">PLU Dedupe & List</button>
                 <button id="nisFileToCAMUploadButton" style="width: 100%; margin-bottom: 10px;">NIS File to CAM Upload</button>
                 <button id="scanCodeTo13PLUButton" style="width: 100%; margin-bottom: 10px;">Scan Code to 13-PLU</button>
+                <button id="pluToAsinButton" style="width: 100%; margin-bottom: 10px;">PLU to ASIN</button>
+                <button id="tool5Button" style="width: 100%; margin-bottom: 10px;">Tool 5</button>
+                <button id="tool6Button" style="width: 100%; margin-bottom: 10px;">Tool 6</button>
             `;
 
             formContainer.appendChild(closeButton);
