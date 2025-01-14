@@ -18,8 +18,8 @@
 // @require      https://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@github.com/RynAgain/Work_Productivity_Experiments/raw/main/CAM_Tools/PLUToASINButton.js
 
 // @run-at       document-body
-// @updateURL    https://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@raw.githubusercontent.com/RynAgain/Work_Productivity_Experiments/refs/heads/main/CAM_Tools/MainScript.js
-// @downloadURL  https://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@raw.githubusercontent.com/RynAgain/Work_Productivity_Experiments/refs/heads/main/CAM_Tools/MainScript.js
+// @updateURL    https://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@github.com/RynAgain/Work_Productivity_Experiments/raw/main/CAM_Tools/MainScript.js
+// @downloadURL  https://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@github.com/RynAgain/Work_Productivity_Experiments/raw/main/CAM_Tools/MainScript.js
 // ==/UserScript==
 
 (function() {
