@@ -85,7 +85,7 @@
         // Function to convert to 12-digit UPC
         function getUPC(sku) {
             const upc = ('000000000000' + sku).slice(-12);
-            return upc + calculateCheckDigit(upc);
+            return upc;
         }
 
         // Function to calculate EAN-13 from 12-digit UPC
@@ -93,8 +93,7 @@
             if (upc.length !== 12) {
                 return 'Length not 12';
             }
-            const ean = upc + calculateCheckDigit(upc);
-            return ean;
+            return upc + calculateCheckDigit(upc);
         }
 
         // Function to calculate check digit
