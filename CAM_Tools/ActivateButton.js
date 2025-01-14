@@ -85,6 +85,7 @@
                 </select>
                 <label>Store/Region</label>
                 <input type="text" id="storeRegionInput" style="width: 100%; margin-bottom: 10px;" placeholder="Enter Store/Region codes separated by commas">
+                <label><input type="checkbox" id="allStoresCheckbox"> All Stores</label>
                 <label>Andon Cord</label>
                 <select id="andonCordSelect" style="width: 100%; margin-bottom: 10px;">
                     <option value="Enabled">Enabled</option>
@@ -104,7 +105,15 @@
                 }
             });
 
-            // Add click event to the "Generate Upload File" button
+            // Add event listener to the "All Stores" checkbox
+            document.getElementById('allStoresCheckbox').addEventListener('change', function() {
+                const storeRegionInput = document.getElementById('storeRegionInput');
+                storeRegionInput.disabled = this.checked;
+                if (this.checked) {
+                    storeRegionInput.value = '';
+                }
+            });
+
             document.getElementById('generateUploadFileButton').addEventListener('click', function() {
                 // Logic to generate the upload file
                 const pluInput = Array.from(new Set(document.getElementById('pluInput').value.split(',').map(plu => plu.trim())));

@@ -85,6 +85,7 @@ redriveButton.addEventListener('click', function() {
         </select>
         <label>Store/Region</label>
         <input type="text" id="storeRegionInput" style="width: 100%; margin-bottom: 10px;" placeholder="Enter Store/Region codes separated by commas">
+        <label><input type="checkbox" id="allStoresCheckbox"> All Stores</label>
         <button id="generateRedriveFileButton" style="width: 100%;">Generate Redrive Files</button>
     `;
 
@@ -99,7 +100,15 @@ redriveButton.addEventListener('click', function() {
         }
     });
 
-    // Add click event to the "Generate Redrive Files" button
+    // Add event listener to the "All Stores" checkbox
+    document.getElementById('allStoresCheckbox').addEventListener('change', function() {
+        const storeRegionInput = document.getElementById('storeRegionInput');
+        storeRegionInput.disabled = this.checked;
+        if (this.checked) {
+            storeRegionInput.value = '';
+        }
+    });
+
     document.getElementById('generateRedriveFileButton').addEventListener('click', function() {
         // Logic to generate the redrive files
         const pluInput = Array.from(new Set(document.getElementById('pluInput').value.split(',').map(plu => plu.trim())));

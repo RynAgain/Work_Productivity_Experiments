@@ -110,6 +110,7 @@ closeButton.style.borderRadius = '0';
                 <h3>Add New Item</h3>
                 <label>Store - 3 Letter Code</label>
                 <input type="text" id="storeCode" style="width: 100%; margin-bottom: 10px;">
+                <label><input type="checkbox" id="allStoresCheckbox"> All Stores</label>
                 <label>PLU</label>
                 <input type="text" id="plu" style="width: 100%; margin-bottom: 10px;">
                 <label>Current Inventory</label>
@@ -138,6 +139,15 @@ closeButton.style.borderRadius = '0';
             // Ensure elements exist before attaching event listeners
             var availabilityElement = document.getElementById('availability');
             var generateFileButton = document.getElementById('generateFileButton');
+
+            // Add event listener to the "All Stores" checkbox
+            document.getElementById('allStoresCheckbox').addEventListener('change', function() {
+                const storeCodeInput = document.getElementById('storeCode');
+                storeCodeInput.disabled = this.checked;
+                if (this.checked) {
+                    storeCodeInput.value = '';
+                }
+            });
 
             if (availabilityElement) {
                 availabilityElement.addEventListener('change', function() {
