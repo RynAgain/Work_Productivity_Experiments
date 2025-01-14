@@ -52,7 +52,7 @@
             </select>
             <label>Store/Region</label>
             <input type="text" id="storeRegionInput" style="width: 100%; margin-bottom: 10px;" placeholder="Enter Store/Region codes separated by commas">
-            <button id="uploadButton" style="width: 100%;">Upload</button>
+            <button id="uploadButton" style="width: 100%;">Convert & Download</button>
         `;
 
         formContainer.appendChild(closeButton);

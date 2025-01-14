@@ -14,7 +14,9 @@ This repository contains a set of scripts designed for use with Tampermonkey. Th
 
 5. **RedriveButton.js**: Handles the creation and functionality of the "Redrive" button. It triggers a redrive process for selected items.
 
-6. **InformationButton.js**: Provides additional information about the items or processes. It displays detailed breakdowns and usage instructions.
+6. **PLUDedupeListButton.js**: Provides functionality for deduplicating and listing PLU numbers. It allows users to input numbers, deduplicate them, and copy the result.
+
+7. **NISFileToCAMUploadButton.js**: Handles the upload of NIS files to CAM. It prompts for a file upload and additional user inputs like "Andon Cord" and "Store/Region".
 
 ## Usage
 
@@ -38,4 +40,6 @@ Not for public use.
 - [x] Implement the download functionality for the "Download Data" button. (needs testing now)
 - [x] Add functionality for the "Add New Item(s)" button.
 - [x] Implement the activation/deactivation logic for the "Activate/Deactivate Item(s)" button.
-- [ ] Add functionality for the "Redrive" button.
+- [x] Add functionality for the "Redrive" button.
+- [] Add new buttons!
+- [ ] Test and verify the "NIS File to CAM Upload" button functionality.
