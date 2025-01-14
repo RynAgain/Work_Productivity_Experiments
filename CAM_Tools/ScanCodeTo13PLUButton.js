@@ -45,6 +45,11 @@
         formContainer.innerHTML = `
             <h3>Scan Code to 13-PLU</h3>
             <textarea id="scanCodeInput" style="width: 100%; height: 100px; margin-bottom: 10px;" placeholder="Enter scan codes here..."></textarea>
+            <label>Output Format</label>
+            <select id="outputFormatSelect" style="width: 100%; margin-bottom: 10px;">
+                <option value="excel">Excel</option>
+                <option value="comma">Comma Separated List</option>
+            </select>
             <button id="convertButton" style="width: 100%; margin-bottom: 10px;">Convert</button>
             <div id="pluOutput" style="width: 100%; height: 100px; border: 1px solid #ccc; padding: 10px; overflow-y: auto;"></div>
         `;
@@ -56,12 +61,14 @@
         // Add event listener to the "Convert" button
         document.getElementById('convertButton').addEventListener('click', function() {
             const input = document.getElementById('scanCodeInput').value;
-            const scanCodes = input.split(/\s+/).map(code => code.trim()).filter(code => code !== '');
+            const scanCodes = input.split(/[\s,]+/).map(code => code.trim()).filter(code => code !== '');
             const pluCodes = scanCodes.map(code => {
                 const paddedPLU = padTo12Digits(code);
                 return getEAN(paddedPLU);
             });
-            document.getElementById('pluOutput').innerText = pluCodes.join(', ');
+            const outputFormat = document.getElementById('outputFormatSelect').value;
+            const outputText = outputFormat === 'excel' ? pluCodes.join('\n') : pluCodes.join(', ');
+            document.getElementById('pluOutput').innerText = outputText;
         });
 
         // Function to pad PLU to 12 digits
