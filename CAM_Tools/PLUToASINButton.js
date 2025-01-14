@@ -62,11 +62,12 @@
             const pluInput = document.getElementById('pluInput').value;
             const pluCodes = pluInput.split(',').map(plu => plu.trim()).filter(plu => plu !== '');
 
-            const apiUrlBase = `https://${window.location.hostname.includes('gamma') ? 'gamma' : 'prod'}.cam.wfm.amazon.dev/api/WfmCamBackendService.GetItemAvailability`;
+            const apiUrlBase = `https://${window.location.hostname.includes('gamma') ? 'gamma' : 'prod'}.cam.wfm.amazon.dev/api/`;
 
             Promise.all(pluCodes.map(plu => {
                 const payload = { storeId: storeCode, wfmScanCode: plu };
-                return fetch(apiUrlBase + 'WfmCamBackendService.GetItemAvailability', {
+                console.log('Payload:', payload);
+                return fetch(apiUrlBase, {
                     method: 'POST',
                     headers: {
                         'accept': '*/*',
@@ -79,7 +80,10 @@
                     body: JSON.stringify(payload),
                     credentials: 'include'
                 })
-                .then(response => response.json())
+                .then(response => {
+                    console.log('Response:', response);
+                    return response.json();
+                })
                 .then(data => ({
                     plu,
                     asin: data.asin || 'error',
