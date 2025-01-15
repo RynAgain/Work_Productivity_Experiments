@@ -93,11 +93,15 @@
                     console.log('Response:', response);
                     return response.json();
                 })
-                .then(data => ({
-                    plu,
-                    asin: data.asin || 'error',
-                    wfmoaMerchantId: data.wfmoaMerchantId || 'error'
-                }))
+                .then(data => {
+                    console.log('Data:', data); // Log the parsed data
+                    return {
+                        plu,
+                        asin: data.asin || 'error',
+                        wfmoaMerchantId: data.wfmoaMerchantId || 'error'
+                    };
+                })
+                })
                 .catch(() => ({
                     plu,
                     asin: 'error',
