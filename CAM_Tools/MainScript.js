@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         CAM_Admin_Tools
 // @namespace    http://tampermonkey.net/
-// @version      2.5.043
+// @version      2.5.044
 // @description  Main script to include button functionalities
 // @author       Ryan Satterfield
 // @match        https://*.cam.wfm.amazon.dev/*
@@ -16,6 +16,7 @@
 // @require      https://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@github.com/RynAgain/Work_Productivity_Experiments/raw/main/CAM_Tools/NISFileToCAMUploadButton.js
 // @require      https://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@github.com/RynAgain/Work_Productivity_Experiments/raw/main/CAM_Tools/ScanCodeTo13PLUButton.js
 // @require      https://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@github.com/RynAgain/Work_Productivity_Experiments/raw/main/CAM_Tools/PLUToASINButton.js
+// @require      https://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@github.com/RynAgain/Work_Productivity_Experiments/raw/main/CAM_Tools/GetMerchantIDFromStoreCode.js
 
 // @run-at       document-body
 // @updateURL    https://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@github.com/RynAgain/Work_Productivity_Experiments/raw/main/CAM_Tools/MainScript.js
