@@ -57,6 +57,13 @@
         // Event listener for the "Get Merchant ID" button
         document.getElementById('getMerchantIdButton').addEventListener('click', function () {
             const storeCode = document.getElementById('storeCodeInput').value.trim().toUpperCase();
+            const storeCodePattern = /^[A-Z]{3}$/;
+            if (!storeCodePattern.test(storeCode)) {
+                console.error('[GetMerchantIDFromStoreCode.js] Store code is empty or invalid.');
+                document.getElementById('merchantIdOutput').innerText = 'Invalid store code. Please enter a valid code.';
+                return;
+            }
+            console.log('[GetMerchantIDFromStoreCode.js] Store Code:', storeCode);
             console.log('Getting Merchant ID for Store Code:', storeCode);
 
             // Determine the environment (prod or gamma)
@@ -90,6 +97,7 @@
             })
             .then(response => response.json())
             .then(data => {
+                console.log('[GetMerchantIDFromStoreCode.js] Items data received:', data);
                 const items = data.itemsAvailability;
                 if (!items || items.length === 0) {
                     throw new Error('No items found for this store code.');
@@ -130,11 +138,12 @@
             })
             .then(response => response.json())
             .then(data => {
-                console.log('Merchant ID:', data.wfmoaMerchantId);
+                console.log('[GetMerchantIDFromStoreCode.js] Merchant ID data received:', data);
+                console.log('[GetMerchantIDFromStoreCode.js] Merchant ID:', data.wfmoaMerchantId);
                 document.getElementById('merchantIdOutput').innerText = `Merchant ID: ${data.wfmoaMerchantId}`;
             })
             .catch(error => {
-                console.error('Error:', error);
+                console.error('[GetMerchantIDFromStoreCode.js] Error fetching Merchant ID:', error);
                 document.getElementById('merchantIdOutput').innerText = 'Error fetching Merchant ID';
             });
         });
