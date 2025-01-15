@@ -52,6 +52,7 @@
         <input type="text" id="pluInput" style="width: 100%; margin-bottom: 10px;" placeholder="Enter PLU(s) separated by commas">
         <button id="convertButton" style="width: 100%; margin-bottom: 10px;">Convert</button>
         <div id="outputTable" style="width: 100%; height: 200px; border: 1px solid #ccc; padding: 10px; overflow-y: auto;"></div>
+        <button id="exportCsvButton" style="width: 100%; margin-top: 10px;">Export to CSV</button>
       `;
   
       formContainer.appendChild(closeButton);
@@ -132,31 +133,39 @@
                   itemName: 'error'
                 };
               });
+
+        document.getElementById('exportCsvButton').addEventListener('click', function () {
+          const csvContent = "data:text/csv;charset=utf-8,"
+            + ["PLU,ASIN,Merchant ID,Item Name"]
+            .concat(results.map(result => `${result.plu},${result.asin},${result.wfmoaMerchantId},${result.itemName}`))
+            .join("\n");
+
+          const encodedUri = encodeURI(csvContent);
+          const link = document.createElement("a");
+          link.setAttribute("href", encodedUri);
+          link.setAttribute("download", "plu_to_asin_data.csv");
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+        });
           })
         ).then(results => {
           // Build the table content with the 5 columns
           const tableContent = results
             .map(result => `
-              <tr>
-                <td>${result.plu}</td>
-                <td>${result.asin}</td>
-                <td>${result.wfmoaMerchantId}</td>
-                <td>${result.currentInventoryQuantity}</td>
-                <td>${result.itemName}</td>
+              <tr style="border-bottom: 1px solid #ddd;">
+                <td style="padding: 8px; text-align: left;">${result.plu}</td>
+                <td style="padding: 8px; text-align: left;">${result.asin}</td>
               </tr>
             `)
             .join('');
   
-          // Note: We add 5 columns in the table header to match the data
           document.getElementById('outputTable').innerHTML = `
-            <table style="width: 100%; border-collapse: collapse;">
+            <table style="width: auto; border-collapse: collapse; table-layout: auto;">
               <thead>
-                <tr>
-                  <th>PLU</th>
-                  <th>ASIN</th>
-                  <th>Merchant ID</th>
-                  <th>Current Qty</th>
-                  <th>Item Name</th>
+                <tr style="border-bottom: 2px solid #ddd;">
+                  <th style="padding: 8px; text-align: left;">PLU</th>
+                  <th style="padding: 8px; text-align: left;">ASIN</th>
                 </tr>
               </thead>
               <tbody>
@@ -183,4 +192,3 @@
   
     observer.observe(document.body, { childList: true, subtree: true });
   })();
-  
