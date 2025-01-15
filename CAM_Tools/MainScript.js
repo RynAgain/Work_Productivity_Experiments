@@ -9,20 +9,20 @@
 // @require      https://cdnjs.cloudflare.com/ajax/libs/jszip/3.7.1/jszip.min.js
 
 // @require      https://github.com/RynAgain/Work_Productivity_Experiments/raw/main/CAM_Tools/AddItemButton.js
-// @require      https://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@github.com/RynAgain/Work_Productivity_Experiments/raw/main/CAM_Tools/ActivateButton.js
-// @require      https://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@github.com/RynAgain/Work_Productivity_Experiments/raw/main/CAM_Tools/RedriveButton.js
-// @require      https://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@github.com/RynAgain/Work_Productivity_Experiments/raw/main/CAM_Tools/GeneralHelpToolsButton.js
-// @require      https://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@github.com/RynAgain/Work_Productivity_Experiments/raw/main/CAM_Tools/PLUDedupeListButton.js
-// @require      https://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@github.com/RynAgain/Work_Productivity_Experiments/raw/main/CAM_Tools/NISFileToCAMUploadButton.js
-// @require      https://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@github.com/RynAgain/Work_Productivity_Experiments/raw/main/CAM_Tools/ScanCodeTo13PLUButton.js
-// @require      https://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@github.com/RynAgain/Work_Productivity_Experiments/raw/main/CAM_Tools/PLUToASINButton.js
-// @require      https://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@github.com/RynAgain/Work_Productivity_Experiments/raw/main/CAM_Tools/DownloadButton.js
-// @require      https://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@github.com/RynAgain/Work_Productivity_Experiments/raw/main/CAM_Tools/GetMerchantIDFromStoreCode.js
+// @require      https://github.com/RynAgain/Work_Productivity_Experiments/raw/main/CAM_Tools/ActivateButton.js
+// @require      https://github.com/RynAgain/Work_Productivity_Experiments/raw/main/CAM_Tools/RedriveButton.js
+// @require      https://github.com/RynAgain/Work_Productivity_Experiments/raw/main/CAM_Tools/GeneralHelpToolsButton.js
+// @require      https://github.com/RynAgain/Work_Productivity_Experiments/raw/main/CAM_Tools/PLUDedupeListButton.js
+// @require      https://github.com/RynAgain/Work_Productivity_Experiments/raw/main/CAM_Tools/NISFileToCAMUploadButton.js
+// @require      https://github.com/RynAgain/Work_Productivity_Experiments/raw/main/CAM_Tools/ScanCodeTo13PLUButton.js
+// @require      https://github.com/RynAgain/Work_Productivity_Experiments/raw/main/CAM_Tools/PLUToASINButton.js
+// @require      https://github.com/RynAgain/Work_Productivity_Experiments/raw/main/CAM_Tools/DownloadButton.js
+// @require      https://github.com/RynAgain/Work_Productivity_Experiments/raw/main/CAM_Tools/GetMerchantIDFromStoreCode.js
 
 
 // @run-at       document-body
-// @updateURL    https://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@github.com/RynAgain/Work_Productivity_Experiments/raw/main/CAM_Tools/MainScript.js
-// @downloadURL  https://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@github.com/RynAgain/Work_Productivity_Experiments/raw/main/CAM_Tools/MainScript.js
+// @updateURL    https://github.com/RynAgain/Work_Productivity_Experiments/raw/main/CAM_Tools/MainScript.js
+// @downloadURL  https://github.com/RynAgain/Work_Productivity_Experiments/raw/main/CAM_Tools/MainScript.js
 // ==/UserScript==
 
 (function() {
