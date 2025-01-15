@@ -154,7 +154,7 @@
     const observer = new MutationObserver(function(mutations) {
         mutations.forEach(function(mutation) {
             if (mutation.addedNodes.length) {
-                const getMerchantIdButton = document.getElementById('getMerchantIdButtonUnique');
+                const getMerchantIdButton = document.getElementById('getMerchantIdButton');
                 if (getMerchantIdButton) {
                     getMerchantIdButton.addEventListener('click', getMerchantIDFromStoreCode);
                     observer.disconnect(); // Stop observing once the button is found
