@@ -139,8 +139,8 @@
             .then(response => response.json())
             .then(data => {
                 console.log('[GetMerchantIDFromStoreCode.js] Merchant ID data received:', data);
-                console.log('[GetMerchantIDFromStoreCode.js] Merchant ID:', data.itemAvailability.MerchantId);
-                document.getElementById('merchantIdOutput').innerText = `Merchant ID: ${data.itemAvailability.MerchantId}`;
+                console.log('[GetMerchantIDFromStoreCode.js] Merchant ID:', data.itemAvailability.merchantId);
+                document.getElementById('merchantIdOutput').innerText = `Merchant ID: ${data.itemAvailability.merchantId}`;
             })
             .catch(error => {
                 console.error('[GetMerchantIDFromStoreCode.js] Error fetching Merchant ID:', error);
