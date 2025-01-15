@@ -18,10 +18,55 @@ This repository contains a set of scripts designed for use with Tampermonkey. Th
 
 7. **NISFileToCAMUploadButton.js**: Handles the upload of NIS files to CAM. It prompts for a file upload and additional user inputs like "Andon Cord" and "Store/Region".
 
+8. **PLUToASINButton.js**: Converts PLU codes to ASINs. It allows users to input store codes and PLU(s), fetches item availability data, and displays results in a table.
+
+9. **GeneralHelpToolsButton.js**: Adds a "General Help Tools" button that opens an overlay with a list of other tool buttons.
+
+10. **GetMerchantIDFromStoreCode.js**: Retrieves the merchant ID from a given store code.
+
 ## Usage
 
 - **MainScript.js**: Install this script in Tampermonkey. It will automatically include the other scripts using the `@require` directive.
 - **Button Scripts**: Host these scripts on a public GitHub repository. Update the `@require` URLs in `MainScript.js` to point to the raw GitHub URLs of these scripts.
+
+## How to Use
+
+### DownloadButton.js
+- **Inputs**: None required directly from the user.
+- **Functionality**: Initiates a download process for item data, tracks progress, and allows cancellation.
+- **Warning**: Might trigger API overloading, and bug the queso team.  Use only when needed.  It basically rapidly spams the API for all the data.
+
+### AddItemButton.js
+- **Inputs**: Store codes, PLU(s), current inventory, availability, Andon Cord status, tracking dates.
+- **Functionality**: Generates a CSV file with combinations of store codes and PLU(s).
+
+### ActivateButton.js
+- **Inputs**: PLU(s), store/region codes, Andon Cord status.
+- **Functionality**: Toggles the activation state of items and generates an upload file.
+
+### RedriveButton.js
+- **Inputs**: None required directly from the user.
+- **Functionality**: Triggers a redrive process for selected items.
+
+### PLUDedupeListButton.js
+- **Inputs**: PLU numbers.
+- **Functionality**: Deduplicates and lists PLU numbers, copying the result to the clipboard.
+
+### NISFileToCAMUploadButton.js
+- **Inputs**: NIS file, Andon Cord status, store/region codes.
+- **Functionality**: Uploads NIS files to CAM with additional user inputs.
+
+### PLUToASINButton.js
+- **Inputs**: Store code, PLU(s).
+- **Functionality**: Converts PLU codes to ASINs, displays results in a table, and allows CSV export.
+
+### GeneralHelpToolsButton.js
+- **Inputs**: None required directly from the user.
+- **Functionality**: Opens an overlay with a list of other tool buttons.
+
+### GetMerchantIDFromStoreCode.js
+- **Inputs**: Store code.
+- **Functionality**: Retrieves the merchant ID from a given store code.
 
 ## Installation
 
@@ -41,5 +86,5 @@ Not for public use.
 - [x] Add functionality for the "Add New Item(s)" button.
 - [x] Implement the activation/deactivation logic for the "Activate/Deactivate Item(s)" button.
 - [x] Add functionality for the "Redrive" button.
-- [] Add new buttons!
+- [x] Add new buttons!
 - [ ] Test and verify the "NIS File to CAM Upload" button functionality.

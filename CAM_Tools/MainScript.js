@@ -1,13 +1,13 @@
 // ==UserScript==
 // @name         CAM_Admin_Tools
 // @namespace    http://tampermonkey.net/
-// @version      2.5.052
+// @version      2.5.053
 // @description  Main script to include button functionalities
 // @author       Ryan Satterfield
 // @match        https://*.cam.wfm.amazon.dev/*
 // @grant        none
 // @require      https://cdnjs.cloudflare.com/ajax/libs/jszip/3.7.1/jszip.min.js
-// @require      https://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@github.com/RynAgain/Work_Productivity_Experiments/raw/main/CAM_Tools/DownloadButton.js
+// @require      https://cdnjs.cloudflare.com/ajax/libs/phaser/3.55.2/phaser.min.js
 // @require      https://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@github.com/RynAgain/Work_Productivity_Experiments/raw/main/CAM_Tools/AddItemButton.js
 // @require      https://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@github.com/RynAgain/Work_Productivity_Experiments/raw/main/CAM_Tools/ActivateButton.js
 // @require      https://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@github.com/RynAgain/Work_Productivity_Experiments/raw/main/CAM_Tools/RedriveButton.js
