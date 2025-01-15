@@ -100,8 +100,10 @@
                         console.log('Data:', data); // Log the parsed data
                         return {
                             plu,
-                            asin: data.asin || 'error',
-                            wfmoaMerchantId: data.wfmoaMerchantId || 'error'
+                            asin: data.itemAvailability.asin || 'error',
+                            wfmoaMerchantId: data.itemAvailability.wfmoaMerchantId || 'error',
+                            currentInventoryQuantity: data.itemAvailability.currentInventoryQuantity || 'error',
+                            itemName: data.itemAvailability.itemName || 'error'
                         };
                     })
                     // Make sure .catch() is chained to the same promise
@@ -118,6 +120,8 @@
                         <td>${result.plu}</td>
                         <td>${result.asin}</td>
                         <td>${result.wfmoaMerchantId}</td>
+                        <td>${result.currentInventoryQuantity}</td>
+                        <td>${result.itemName}</td>
                     </tr>
                 `).join('');
                 document.getElementById('outputTable').innerHTML = `
