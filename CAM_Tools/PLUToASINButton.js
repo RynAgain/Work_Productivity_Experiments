@@ -108,7 +108,7 @@
                   return {
                     plu,
                     asin: 'error',
-                    wfmoaMerchantId: 'error',
+                    MerchantId: 'error',
                     currentInventoryQuantity: 'error',
                     itemName: 'error'
                   };
@@ -118,7 +118,7 @@
                 return {
                   plu,
                   asin: data.itemAvailability.asin || 'error',
-                  wfmoaMerchantId: data.itemAvailability.wfmoaMerchantId || 'error',
+                  MerchantId: data.itemAvailability.MerchantId || 'error',
                   currentInventoryQuantity: data.itemAvailability.currentInventoryQuantity || 'error',
                   itemName: data.itemAvailability.itemName || 'error'
                 };
@@ -128,7 +128,7 @@
                 return {
                   plu,
                   asin: 'error',
-                  wfmoaMerchantId: 'error',
+                  MerchantId: 'error',
                   currentInventoryQuantity: 'error',
                   itemName: 'error'
                 };
@@ -137,7 +137,7 @@
         document.getElementById('exportCsvButton').addEventListener('click', function () {
           const csvContent = "data:text/csv;charset=utf-8,"
             + ["PLU,ASIN,Merchant ID,Item Name"]
-            .concat(results.map(result => `${result.plu},${result.asin},${result.wfmoaMerchantId},${result.itemName}`))
+            .concat(results.map(result => `${result.plu},${result.asin},${result.MerchantId},${result.itemName}`))
             .join("\n");
 
           const encodedUri = encodeURI(csvContent);
