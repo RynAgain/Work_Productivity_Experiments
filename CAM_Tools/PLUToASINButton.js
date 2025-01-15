@@ -72,7 +72,7 @@
                     headers: {
                         'accept': '*/*',
                         'accept-language': 'en-US,en;q=0.9',
-                        //'amz-sdk-invocation-id': '4e6108fd-1eee-4e74-afc3-c9f68d0237c1',
+                        'amz-sdk-invocation-id': '4e6108fd-1eee-4e74-afc3-c9f68d0237c1',
                         'amz-sdk-request': 'attempt=1; max=1',
                         'content-type': 'application/x-amz-json-1.0',
                         'sec-ch-ua': '"Microsoft Edge";v="131", "Chromium";v="131", "Not_A Brand";v="24"',
@@ -87,7 +87,7 @@
                         'x-amz-target': 'WfmCamBackendService.GetItemAvailability'
                     },
                     body: JSON.stringify(payload),
-                    credentials: 'include'
+                    credentials: 'include' // Ensure cookies are sent with the request
                 })
                 .then(response => {
                     console.log('Response:', response);
