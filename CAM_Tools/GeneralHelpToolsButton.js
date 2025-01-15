@@ -64,10 +64,7 @@
             closeButton.addEventListener('click', function() {
                 document.body.removeChild(overlay);
             // Attach the event listener for the PLU Dedupe & List button
-            const pluDedupeListButton = formContainer.querySelector('#pluDedupeListButton');
-            if (pluDedupeListButton) {
-                pluDedupeListButton.addEventListener('click', addPLUDedupeListFunctionality);
-            }
+
         });
 
             var formContainer = document.createElement('div');
