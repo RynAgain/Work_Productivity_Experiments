@@ -59,39 +59,79 @@
             const storeCode = document.getElementById('storeCodeInput').value.trim().toUpperCase();
             console.log('Getting Merchant ID for Store Code:', storeCode);
 
-            // Fetch all store items
-            const itemsApiUrl = `https://example.com/api/getItemsAvailability?storeCode=${storeCode}`;
-            fetch(itemsApiUrl, {
-                method: 'GET',
-                headers: {
-                    'accept': 'application/json',
-                    'content-type': 'application/json'
+            // Determine the environment (prod or gamma)
+            const environment = window.location.hostname.includes('gamma') ? 'gamma' : 'prod';
+            const apiUrlBase = `https://${environment}.cam.wfm.amazon.dev/api/`;
+
+            // Define the API endpoint and headers for getting items
+            const headersItems = {
+                'accept': '*/*',
+                'accept-language': 'en-US,en;q=0.9',
+                'content-type': 'application/x-amz-json-1.0',
+                'x-amz-target': 'WfmCamBackendService.GetItemsAvailability'
+            };
+
+            const payloadItems = {
+                "filterContext": {
+                    "storeIds": [storeCode]
+                },
+                "paginationContext": {
+                    "pageNumber": 0,
+                    "pageSize": 10000
                 }
+            };
+
+            // Fetch all store items
+            fetch(apiUrlBase, {
+                method: 'POST',
+                headers: headersItems,
+                body: JSON.stringify(payloadItems),
+                credentials: 'include' // Include cookies in the request
             })
             .then(response => response.json())
             .then(data => {
-                const items = data.items;
-                if (items.length === 0) {
+                const items = data.itemsAvailability;
+                if (!items || items.length === 0) {
                     throw new Error('No items found for this store code.');
                 }
                 // Pick a random PLU
-                const randomPLU = items[Math.floor(Math.random() * items.length)].plu;
+                const randomPLU = items[Math.floor(Math.random() * items.length)].wfmScanCode;
                 console.log('Random PLU selected:', randomPLU);
 
                 // Use the random PLU to get Merchant ID
-                const merchantApiUrl = `https://example.com/api/getItemAvailability?storeCode=${storeCode}&plu=${randomPLU}`;
+                const merchantApiUrl = apiUrlBase;
+                const headersMerchant = {
+                    'accept': '*/*',
+                    'accept-language': 'en-US,en;q=0.9',
+                    'content-type': 'application/x-amz-json-1.0',
+                    'x-amz-target': 'WfmCamBackendService.GetItemAvailability',
+                    'amz-sdk-request': 'attempt=1; max=1',
+                    'sec-ch-ua': '"Microsoft Edge";v="131", "Chromium";v="131", "Not_A Brand";v="24"',
+                    'sec-ch-ua-mobile': '?0',
+                    'sec-ch-ua-platform': '"Windows"',
+                    'sec-fetch-dest': 'empty',
+                    'sec-fetch-mode': 'cors',
+                    'sec-fetch-site': 'same-origin',
+                    'x-amz-user-agent': 'aws-sdk-js/0.0.1 os/Windows/NT_10.0 lang/js md/browser/Microsoft_Edge_131.0.0.0',
+                    'Referer': `https://${environment}.cam.wfm.amazon.dev/store/${storeCode}/item/${randomPLU}`,
+                    'Referrer-Policy': 'strict-origin-when-cross-origin'
+                };
+                const payloadMerchant = {
+                    storeId: storeCode,
+                    wfmScanCode: randomPLU
+                };
+
                 return fetch(merchantApiUrl, {
                     method: 'POST',
-                    headers: {
-                        'accept': 'application/json',
-                        'content-type': 'application/json'
-                    }
+                    headers: headersMerchant,
+                    body: JSON.stringify(payloadMerchant),
+                    credentials: 'include' // Include cookies in the request
                 });
             })
             .then(response => response.json())
             .then(data => {
-                console.log('Merchant ID:', data.merchantId);
-                document.getElementById('merchantIdOutput').innerText = `Merchant ID: ${data.merchantId}`;
+                console.log('Merchant ID:', data.wfmoaMerchantId);
+                document.getElementById('merchantIdOutput').innerText = `Merchant ID: ${data.wfmoaMerchantId}`;
             })
             .catch(error => {
                 console.error('Error:', error);
