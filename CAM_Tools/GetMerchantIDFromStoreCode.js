@@ -46,16 +46,16 @@
             <h3>Get Merchant ID from Store Code</h3>
             <label>Store Code</label>
             <input type="text" id="storeCodeInput" style="width: 100%; margin-bottom: 10px;" placeholder="Enter 3-letter store code">
-            <button id="getMerchantIdButton" style="width: 100%; margin-bottom: 10px;">Get Merchant ID</button>
+            <button id="getMerchantIdButtonUnique" style="width: 100%; margin-bottom: 10px;">Get Merchant ID</button>
             <div id="merchantIdOutput" style="width: 100%; height: 50px; border: 1px solid #ccc; padding: 10px; overflow-y: auto;"></div>
-        `;
+        `;  //TODO: Confirm the event listener for the button here is properly enabled.
 
         formContainer.appendChild(closeButton);
         overlay.appendChild(formContainer);
         document.body.appendChild(overlay);
 
         // Event listener for the "Get Merchant ID" button
-        document.getElementById('getMerchantIdButton').addEventListener('click', function () {
+        document.getElementById('getMerchantIdButtonUnique').addEventListener('click', function () {
             const storeCode = document.getElementById('storeCodeInput').value.trim().toUpperCase();
             const storeCodePattern = /^[A-Z]{3}$/;
             if (!storeCodePattern.test(storeCode)) {
@@ -154,7 +154,7 @@
     const observer = new MutationObserver(function(mutations) {
         mutations.forEach(function(mutation) {
             if (mutation.addedNodes.length) {
-                const getMerchantIdButton = document.getElementById('getMerchantIdButton');
+                const getMerchantIdButton = document.getElementById('getMerchantIdButtonUnique');
                 if (getMerchantIdButton) {
                     getMerchantIdButton.addEventListener('click', getMerchantIDFromStoreCode);
                     observer.disconnect(); // Stop observing once the button is found
