@@ -9,7 +9,12 @@
         let keyLog = [];
 
         window.addEventListener('keydown', (event) => {
-            keyLog.push(event.key);
+            if (event.key === keySequence[keyLog.length]) {
+                console.log(`Correct key: ${event.key}`);
+                keyLog.push(event.key);
+            } else {
+                keyLog = []; // Reset if the sequence is broken
+            }
             if (keyLog.length > 10) {
                 keyLog.shift(); // Keep only the last 10 keys
             }
