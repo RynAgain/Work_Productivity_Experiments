@@ -8,7 +8,7 @@
 // @grant        none
 // @require      https://cdnjs.cloudflare.com/ajax/libs/jszip/3.7.1/jszip.min.js
 
-// @require      https://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@github.com/RynAgain/Work_Productivity_Experiments/raw/main/CAM_Tools/AddItemButton.js
+// @require      https://github.com/RynAgain/Work_Productivity_Experiments/raw/main/CAM_Tools/AddItemButton.js
 // @require      https://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@github.com/RynAgain/Work_Productivity_Experiments/raw/main/CAM_Tools/ActivateButton.js
 // @require      https://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@github.com/RynAgain/Work_Productivity_Experiments/raw/main/CAM_Tools/RedriveButton.js
 // @require      https://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@github.com/RynAgain/Work_Productivity_Experiments/raw/main/CAM_Tools/GeneralHelpToolsButton.js
