@@ -120,7 +120,19 @@
         });
     }
 
-    // Example usage
-    getMerchantIDFromStoreCode('ABC');
+    // Use MutationObserver to detect when the button is added to the DOM
+    const observer = new MutationObserver(function(mutations) {
+        mutations.forEach(function(mutation) {
+            if (mutation.addedNodes.length) {
+                const getMerchantIdButton = document.getElementById('getMerchantIdButton');
+                if (getMerchantIdButton) {
+                    getMerchantIdButton.addEventListener('click', getMerchantIDFromStoreCode);
+                    observer.disconnect(); // Stop observing once the button is found
+                }
+            }
+        });
+    });
+
+    observer.observe(document.body, { childList: true, subtree: true });
 
 })();
