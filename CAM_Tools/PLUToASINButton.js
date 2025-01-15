@@ -62,58 +62,62 @@
             const pluInput = document.getElementById('pluInput').value;
             const pluCodes = pluInput.split(',').map(plu => plu.trim()).filter(plu => plu !== '');
 
+            // Detect gamma or prod environment
             const apiUrlBase = `https://${window.location.hostname.includes('gamma') ? 'gamma' : 'prod'}.cam.wfm.amazon.dev/api/`;
 
-            Promise.all(pluCodes.map(plu => {
-                const payload = { storeId: storeCode, wfmScanCode: plu };
-                console.log('Payload:', payload);
-                return fetch(apiUrlBase, {
-                    method: 'POST',
-                    headers: {
-                        'accept': '*/*',
-                        'accept-language': 'en-US,en;q=0.9',
-                        'amz-sdk-invocation-id': '4e6108fd-1eee-4e74-afc3-c9f68d0237c1',
-                        'amz-sdk-request': 'attempt=1; max=1',
-                        'content-type': 'application/x-amz-json-1.0',
-                        'sec-ch-ua': '"Microsoft Edge";v="131", "Chromium";v="131", "Not_A Brand";v="24"',
-                        'sec-ch-ua-mobile': '?0',
-                        'sec-ch-ua-platform': '"Windows"',
-                        'sec-fetch-dest': 'empty',
-                        'sec-fetch-mode': 'cors',
-                        'sec-fetch-site': 'same-origin',
-                        'x-amz-user-agent': 'aws-sdk-js/0.0.1 os/Windows/NT_10.0 lang/js md/browser/Microsoft_Edge_131.0.0.0',
-                        'Referer': `https://prod.cam.wfm.amazon.dev/store/${storeCode}/item/${plu}`,
-                        'Referrer-Policy': 'strict-origin-when-cross-origin',
-                        'x-amz-target': 'WfmCamBackendService.GetItemAvailability'
-                    },
-                    body: JSON.stringify(payload),
-                    credentials: 'include' // Ensure cookies are sent with the request
-                })
-                .then(response => {
-                    console.log('Response:', response);
-                    return response.json();
-                })
-                .then(data => {
-                    console.log('Data:', data); // Log the parsed data
-                    return {
+            Promise.all(
+                pluCodes.map(plu => {
+                    const payload = { storeId: storeCode, wfmScanCode: plu };
+                    console.log('Payload:', payload);
+
+                    return fetch(apiUrlBase, {
+                        method: 'POST',
+                        headers: {
+                            'accept': '*/*',
+                            'accept-language': 'en-US,en;q=0.9',
+                            //'amz-sdk-invocation-id': '4e6108fd-1eee-4e74-afc3-c9f68d0237c1',
+                            'amz-sdk-request': 'attempt=1; max=1',
+                            'content-type': 'application/x-amz-json-1.0',
+                            'sec-ch-ua': '"Microsoft Edge";v="131", "Chromium";v="131", "Not_A Brand";v="24"',
+                            'sec-ch-ua-mobile': '?0',
+                            'sec-ch-ua-platform': '"Windows"',
+                            'sec-fetch-dest': 'empty',
+                            'sec-fetch-mode': 'cors',
+                            'sec-fetch-site': 'same-origin',
+                            'x-amz-user-agent': 'aws-sdk-js/0.0.1 os/Windows/NT_10.0 lang/js md/browser/Microsoft_Edge_131.0.0.0',
+                            'Referer': `https://prod.cam.wfm.amazon.dev/store/${storeCode}/item/${plu}`,
+                            'Referrer-Policy': 'strict-origin-when-cross-origin',
+                            'x-amz-target': 'WfmCamBackendService.GetItemAvailability'
+                        },
+                        body: JSON.stringify(payload),
+                        credentials: 'include' // Ensure cookies are sent with the request
+                    })
+                    .then(response => {
+                        console.log('Response:', response);
+                        return response.json();
+                    })
+                    .then(data => {
+                        console.log('Data:', data); // Log the parsed data
+                        return {
+                            plu,
+                            asin: data.asin || 'error',
+                            wfmoaMerchantId: data.wfmoaMerchantId || 'error'
+                        };
+                    })
+                    // Make sure .catch() is chained to the same promise
+                    .catch(() => ({
                         plu,
-                        asin: data.asin || 'error',
-                        wfmoaMerchantId: data.wfmoaMerchantId || 'error'
-                    };
+                        asin: 'error',
+                        wfmoaMerchantId: 'error'
+                    }));
                 })
-                })
-                .catch(() => ({
-                    plu,
-                    asin: 'error',
-                    wfmoaMerchantId: 'error'
-                }));
-            }))
+            )
             .then(results => {
                 const tableContent = results.map(result => `
                     <tr>
-                        <td>\${result.plu}</td>
-                        <td>\${result.asin}</td>
-                        <td>\${result.wfmoaMerchantId}</td>
+                        <td>${result.plu}</td>
+                        <td>${result.asin}</td>
+                        <td>${result.wfmoaMerchantId}</td>
                     </tr>
                 `).join('');
                 document.getElementById('outputTable').innerHTML = `
@@ -126,7 +130,7 @@
                             </tr>
                         </thead>
                         <tbody>
-                            \${tableContent}
+                            ${tableContent}
                         </tbody>
                     </table>
                 `;
