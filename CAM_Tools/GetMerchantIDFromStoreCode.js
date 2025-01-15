@@ -139,25 +139,6 @@
             });
         });
 
-        // Define the API endpoint
-        const apiUrl = `https://example.com/api/getMerchantId?storeCode=${storeCode}`;
-
-        // Fetch the Merchant ID
-        fetch(apiUrl, {
-            method: 'GET',
-            headers: {
-                'accept': 'application/json',
-                'content-type': 'application/json'
-            }
-        })
-        .then(response => response.json())
-        .then(data => {
-            console.log('Merchant ID:', data.merchantId);
-            // Display the Merchant ID or handle it as needed
-        })
-        .catch(error => {
-            console.error('Error fetching Merchant ID:', error);
-        });
     }
 
     // Use MutationObserver to detect when the button is added to the DOM
