@@ -92,12 +92,6 @@
             overlay.appendChild(formContainer);
             document.body.appendChild(overlay);
         });
-
-        // Attach the event listener for the Get Merchant ID button
-        const getMerchantIdButton = formContainer.querySelector('#getMerchantIdButton');
-        if (getMerchantIdButton) {
-            getMerchantIdButton.addEventListener('click', getMerchantIDFromStoreCode);
-        }
     }
 
     // Use MutationObserver to detect changes in the DOM
