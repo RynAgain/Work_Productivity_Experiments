@@ -81,7 +81,7 @@
                 <button id="nisFileToCAMUploadButton" style="width: 100%; margin-bottom: 10px;">zNIS File to CAM Uploadz</button>
                 <button id="scanCodeTo13PLUButton" style="width: 100%; margin-bottom: 10px;">Scan Code to 13-PLU</button>
                 <button id="pluToAsinButton" style="width: 100%; margin-bottom: 10px;">PLU to ASIN</button>
-                <button id="getMerchantIdButton" style="width: 100%; margin-bottom: 10px;">Get WFMOA Merchant ID from Store Code</button>
+                <button id="getMerchantIdButton" style="width: 100%; margin-bottom: 10px;">Get Catering Merchant ID from Store Code</button>
                 <button id="tool6Button" style="width: 100%; margin-bottom: 10px;">Tool 6</button>
             `;
 
