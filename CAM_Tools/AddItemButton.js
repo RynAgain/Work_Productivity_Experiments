@@ -93,7 +93,7 @@
             closeButton.style.color = '#fff';
             closeButton.style.backgroundColor = '#000';
             closeButton.style.padding = '5px';
-closeButton.style.borderRadius = '0';
+            closeButton.style.borderRadius = '0';
             closeButton.addEventListener('click', function() {
                 document.body.removeChild(overlay);
             });
@@ -109,12 +109,12 @@ closeButton.style.borderRadius = '0';
             formContainer.innerHTML = `
                 <h3>Add New Item</h3>
                 <label>Store - 3 Letter Code</label>
-                <input type="text" id="storeCode" style="width: 100%; margin-bottom: 10px;">
-                <label><input type="checkbox" id="allStoresCheckbox"> All Stores</label>
+                <input type="text" id="storeCode" style="width: 100%; margin-bottom: 10px;" placeholder="AAA">
+                <label><input type="checkbox" id="allStoresCheckbox"> All Stores<br></label>
                 <label>PLU</label>
-                <input type="text" id="plu" style="width: 100%; margin-bottom: 10px;">
+                <input type="text" id="plu" style="width: 100%; margin-bottom: 10px;" placeholder="Enter PLU(s) separated by commas">
                 <label>Current Inventory</label>
-                <input type="number" id="currentInventory" style="width: 100%; margin-bottom: 10px;">
+                <input type="number" id="currentInventory" style="width: 100%; margin-bottom: 10px;" placeholder="0">
                 <label>Availability</label>
                 <select id="availability" style="width: 100%; margin-bottom: 10px;">
                     <option value="Limited">Limited</option>
