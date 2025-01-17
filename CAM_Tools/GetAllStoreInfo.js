@@ -155,7 +155,7 @@
                 const totalStores = storeIds.length;
 
                 Promise.all(storeIds.map((storeId, index) => {
-                    return new Promise(resolve => setTimeout(resolve, index * 500)) // Wait 0.5 seconds between requests
+                    return new Promise(resolve => setTimeout(resolve, index * 1000)) // Wait 1. seconds between requests
                     .then(() => fetchMerchantIdsForStore(storeId))
                     .then(result => {
                         completedStores++;

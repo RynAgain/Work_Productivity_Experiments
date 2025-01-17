@@ -1,3 +1,4 @@
+try {
 (function() {
     'use strict';
 
@@ -224,3 +225,6 @@ if (generateFileButton) {
     // Initialize the add item button
     addAddItemButton();
 })();
+} catch (error) {
+    console.error('[AddItemButton.js] Error:', error);
+}
