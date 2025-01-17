@@ -83,11 +83,18 @@
                 <button id="pluToAsinButton" style="width: 100%; margin-bottom: 10px;">PLU to ASIN</button>
                 <button id="getMerchantIdButton" style="width: 100%; margin-bottom: 10px;">Get Catering Merchant ID from Store Code</button>
                 <button id="tool6Button" style="width: 100%; margin-bottom: 10px;">Tool 6</button>
+                <a href="#" id="creditsLink" style="display: block; text-align: center; margin-top: 10px;">Credits</a>
             `;
 
             formContainer.appendChild(closeButton);
             overlay.appendChild(formContainer);
             document.body.appendChild(overlay);
+
+            // Add event listener for the "Credits" link
+            document.getElementById('creditsLink').addEventListener('click', function(event) {
+                event.preventDefault();
+                alert('Software Version: 2.5.066\nLast Update Date: 2025-1-17\nAuthor: Ryan Satterfield');
+            });
         });
     }
 
