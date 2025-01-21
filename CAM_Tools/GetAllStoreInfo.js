@@ -60,7 +60,7 @@
 
                     const payloadItems = {
                         "filterContext": {
-                            "storeIds": [storeId]
+                        "storeIds": [store.storeTLC]
                         },
                         "paginationContext": {
                             "pageNumber": 0,
@@ -76,7 +76,7 @@
                     })
                     .then(response => response.json())
                     .then(data => {
-                        console.log(`[GetAllStoreInfo.js] Data for store ${storeId}:`, data);
+                        console.log(`[GetAllStoreInfo.js] Data for store ${store.storeTLC}:`, data);
                         const items = data.itemsAvailability;
                         if (!items || items.length === 0) {
                             throw new Error('No items found for this store code.');
@@ -140,7 +140,7 @@
                         return tryFetchMerchantId();
                     })
                     .catch(error => {
-                        console.error(`[GetAllStoreInfo.js] Error fetching data for store ${storeId}:`, error);
+                        console.error(`[GetAllStoreInfo.js] Error fetching data for store ${store.storeTLC}:`, error);
                         return { 
                             storeId: store.storeTLC,
                             region: store.region,
