@@ -93,7 +93,7 @@
             // Add event listener for the "Credits" link
             document.getElementById('creditsLink').addEventListener('click', function(event) {
                 event.preventDefault();
-                alert('Software Version: 2.5.066\nLast Update Date: 2025-1-17\nAuthor: Ryan Satterfield');
+                alert('Software Version: 2.5.07\nLast Update Date: 2025-1-23\nAuthor: Ryan Satterfield');
             });
         });
     }

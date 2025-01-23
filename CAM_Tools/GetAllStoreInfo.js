@@ -155,7 +155,7 @@
                 const totalStores = storeIds.length;
 
                 Promise.all(storeIds.map((storeId, index) => {
-                    return new Promise(resolve => setTimeout(resolve, index * 1000)) // Wait 1. seconds between requests
+                    return new Promise(resolve => setTimeout(resolve, index * 100)) // Wait .1 seconds between requests
                     .then(() => fetchMerchantIdsForStore(storeId))
                     .then(result => {
                         completedStores++;
@@ -169,7 +169,7 @@
 
                     // Generate CSV content
                     const csvContent = "data:text/csv;charset=utf-8,"
-                        + ["Store ID,Merchant ID,WFMOA Merchant ID"]
+                        + ["Store ID,Region,Merchant ID,WFMOA Merchant ID"]
                         .concat(results.map(result => `${result.storeId},${result.region},${result.merchantId},${result.wfmoaMerchantId}`))
                         .join("\n");
 

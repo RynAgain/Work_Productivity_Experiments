@@ -203,7 +203,10 @@
                         cancelButton.style.display = 'none';
                     });
 
-                    Promise.all(storeIds.map((storeId, index) => {
+                    const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+
+                    Promise.all(storeIds.map(async (storeId, index) => {
+                        await delay(100); // Add a 0.5 second delay between requests, to try not to overload the api
                         if (cancelRequested) {
                             return Promise.resolve([]);
                         }
