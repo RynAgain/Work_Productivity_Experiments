@@ -6,7 +6,7 @@ This repository contains a set of scripts designed for use with Tampermonkey. Th
 
 1. **MainScript.js**: The main script that includes `@require` directives for the other scripts. This script should be installed in the Tampermonkey extension.
 
-2. **DownloadButton.js**: Handles the creation and functionality of the "Download Data" button. It initiates a download process, tracks progress, and allows cancellation.
+2. **DownloadButton.js**: Handles the creation and functionality of the "Download Data" button. It initiates a download process, tracks progress, and allows cancellation. Includes a delay function to prevent API overloading.
 
 3. **AddItemButton.js**: Handles the creation and functionality of the "Add New Item(s)" button. It allows users to input multiple store codes and PLUs, generating a CSV file with the combinations.
 
@@ -18,11 +18,17 @@ This repository contains a set of scripts designed for use with Tampermonkey. Th
 
 7. **NISFileToCAMUploadButton.js**: Handles the upload of NIS files to CAM. It prompts for a file upload and additional user inputs like "Andon Cord" and "Store/Region".
 
-8. **PLUToASINButton.js**: Converts PLU codes to ASINs. It allows users to input store codes and PLU(s), fetches item availability data, and displays results in a table.
+8. **PLUToASINButton.js**: Converts PLU codes to ASINs. It allows users to input store codes and PLU(s), fetches item availability data, and displays results in a table. Includes CSV export functionality.
 
 9. **GeneralHelpToolsButton.js**: Adds a "General Help Tools" button that opens an overlay with a list of other tool buttons.
 
-10. **GetMerchantIDFromStoreCode.js**: Retrieves the merchant ID from a given store code.
+10. **GetAllStoreInfo.js**: Fetches all store information and merchant IDs.
+
+11. **GetMerchantIDFromStoreCode.js**: Retrieves the merchant ID from a given store code.
+
+12. **EasterEgg.js**: Contains preload, create, and update functions for an Easter egg feature.
+
+13. **ScanCodeTo13PLUButton.js**: Converts scan codes to 13-digit PLU codes.
 
 ## Usage
 
@@ -67,7 +73,6 @@ This repository contains a set of scripts designed for use with Tampermonkey. Th
 ### GetMerchantIDFromStoreCode.js
 - **Inputs**: Store code.
 - **Functionality**: Retrieves the merchant ID from a given store code.
-
 ## Installation
 
 1. Install `MainScript.js` in Tampermonkey.
@@ -88,3 +93,9 @@ Not for public use.
 - [x] Add functionality for the "Redrive" button.
 - [x] Add new buttons!
 - [ ] Test and verify the "NIS File to CAM Upload" button functionality.
+
+- [ ] I feel like adding a color changer that will let the user pick a primary color for cam... not important tho
+
+- [ ] Easter egg?
+
+- [ ]

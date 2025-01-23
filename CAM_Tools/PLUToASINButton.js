@@ -134,22 +134,23 @@
                 };
               });
 
-        document.getElementById('exportCsvButton').addEventListener('click', function () {
-          const csvContent = "data:text/csv;charset=utf-8,"
-            + ["PLU,ASIN,Merchant ID,Item Name"]
-            .concat(results.map(result => `${result.plu},${result.asin},${result.merchantId},${result.itemName}`))
-            .join("\n");
-
-          const encodedUri = encodeURI(csvContent);
-          const link = document.createElement("a");
-          link.setAttribute("href", encodedUri);
-          link.setAttribute("download", "plu_to_asin_data.csv");
-          document.body.appendChild(link);
-          link.click();
-          document.body.removeChild(link);
-        });
           })
         ).then(results => {
+          document.getElementById('exportCsvButton').addEventListener('click', function () {
+            const csvContent = "data:text/csv;charset=utf-8,"
+              + ["PLU,ASIN,Merchant ID,Item Name"]
+              .concat(results.map(result => `${result.plu},${result.asin},${result.merchantId},${result.itemName}`))
+              .join("\n");
+
+            const encodedUri = encodeURI(csvContent);
+            const link = document.createElement("a");
+            link.setAttribute("href", encodedUri);
+            link.setAttribute("download", "plu_to_asin_data.csv");
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+          });
+
           // Build the table content with the 5 columns
           const tableContent = results
             .map(result => `
