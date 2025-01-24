@@ -5,6 +5,7 @@
 function addMeatInventoryToUploadConverterFunctionality() {
     console.log('Meat Inventory to Upload Converter button clicked');
     // Create overlay
+    try {
     var overlay = document.createElement('div');
     overlay.id = 'meatInventoryUploadOverlay';
     overlay.style.position = 'fixed';
@@ -44,7 +45,7 @@ function addMeatInventoryToUploadConverterFunctionality() {
     // Create form elements
     formContainer.innerHTML = `
         <h3>Meat Inventory to Upload Converter</h3>
-        <input type="file" id="meatInventoryFileInput" style="width: 100%; margin-bottom: 10px;">
+                    <input type="file" id="meatInventoryFileInput" accept=".xlsx, .csv" style="width: 100%; margin-bottom: 10px;">
         <label>Andon Cord</label>
         <select id="andonCordSelect" style="width: 100%; margin-bottom: 10px;">
             <option value="Enabled">Enabled</option>
@@ -71,8 +72,79 @@ function addMeatInventoryToUploadConverterFunctionality() {
 
         const file = fileInput.files[0];
         console.log('File selected:', file.name);
-        // Logic to handle file upload goes here
+        const reader = new FileReader();
+        reader.onload = function(event) {
+            const csvData = event.target.result;
+            const parsedData = parseCSV(csvData);
+            const transformedData = transformData(parsedData);
+            const debugMode = true; // Set this to true to download the intermediate dataset
+            if (debugMode) {
+                downloadCSV(parsedData, 'intermediate_dataset.csv');
+            }
+            downloadCSV(transformedData, 'converted_inventory.csv');
+        };
+        reader.readAsText(file);
+
+        function parseCSV(data) {
+            // Parse CSV data into an array of objects
+            const lines = data.split('\n');
+            const headers = lines[0].split(',');
+            return lines.slice(1).map(line => {
+                const values = line.split(',');
+                return headers.reduce((obj, header, index) => {
+                    obj[header.trim()] = values[index].trim();
+                    return obj;
+                }, {});
+            });
+        }
+
+        function transformData(data) {
+            // Remove rows with "WFM Fresh Breakout 2024"
+            const filteredData = data.filter(item => !item['Unnamed: 0'].includes('WFM Fresh Breakout 2024'));
+
+            // Simplify charts into one set of headers
+            const unifiedData = [];
+            filteredData.forEach(item => {
+                const itemName = item['Unnamed: 0'];
+                const itemPLU = item['UPC'];
+                for (let i = 5; i < Object.keys(item).length; i++) {
+                    const storeCode = Object.keys(item)[i];
+                    const inventory = item[storeCode];
+                    if (storeCode && inventory) {
+                        unifiedData.push({
+                            'Item Name': itemName,
+                            'Item PLU/UPC': itemPLU,
+                            'Store - 3 Letter Code': storeCode,
+                            'Current Inventory': inventory
+                        });
+                    }
+                }
+            });
+
+            // Return the cleaned long-form dataset
+            return unifiedData;
+        }
+
+        function downloadCSV(data, filename) {
+            // Convert data to CSV format and trigger download
+            const csvContent = "data:text/csv;charset=utf-8,"
+                + ['Store - 3 Letter Code,Item Name,Item PLU/UPC,Availability,Current Inventory,Sales Floor Capacity,Andon Cord,Tracking Start Date,Tracking End Date']
+                .concat(data.map(item => Object.values(item).join(',')))
+                .join('\n');
+
+            const encodedUri = encodeURI(csvContent);
+            const link = document.createElement("a");
+            link.setAttribute("href", encodedUri);
+            link.setAttribute("download", "converted_inventory.csv");
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
     });
+} catch (error) {
+    console.error('[MeatInventory] Meat Inventory Failed', error)
+}
 }
 
 // Use MutationObserver to detect when the button is added to the DOM
