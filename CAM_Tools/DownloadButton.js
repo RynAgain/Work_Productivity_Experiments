@@ -136,8 +136,8 @@
                         }
                     }
 
-                    // Function to fetch items for a single store
-                    const fetchItemsForStore = (storeId, index) => {
+                    // Function to fetch items for a batch of stores
+                    const fetchItemsForStores = (storeIdsBatch) => {
                         const headersItems = {
                             'accept': '*/*',
                             'accept-encoding': 'gzip, deflate, br',
@@ -149,7 +149,7 @@
 
                         const payloadItems = {
                             "filterContext": {
-                                "storeIds": [storeId]
+                                "storeIds": storeIdsBatch
                             },
                             "paginationContext": {
                                 "pageNumber": 0,
@@ -205,19 +205,22 @@
 
                     const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
-                    Promise.all(storeIds.map(async (storeId, index) => {
-                        await delay(100); // Add a 0.5 second delay between requests, to try not to overload the api
+                    const batchSize = 10; // Number of stores per batch
+                    const storeIdBatches = [];
+                    for (let i = 0; i < storeIds.length; i += batchSize) {
+                        storeIdBatches.push(storeIds.slice(i, i + batchSize));
+                    }
+
+                    Promise.all(storeIdBatches.map(async (storeIdsBatch) => {
+                        await delay(100); // Add a delay between requests
                         if (cancelRequested) {
                             return Promise.resolve([]);
                         }
-                        if (cancelRequested) {
-                            return Promise.resolve([]);
-                        }
-                        return fetchItemsForStore(storeId, index).then(result => {
+                        return fetchItemsForStores(storeIdsBatch).then(result => {
                             if (cancelRequested) {
                                 return [];
                             }
-                            completedStores++;
+                            completedStores += storeIdsBatch.length;
                             if (!cancelRequested) {
                                 const progressPercent = Math.round((completedStores / totalStores) * 100);
                                 progress.innerHTML = `Compiling Item Data: ${completedStores}/${totalStores} stores processed (${progressPercent}%)`;

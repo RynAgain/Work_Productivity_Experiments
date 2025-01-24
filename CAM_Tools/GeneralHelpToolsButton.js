@@ -83,6 +83,7 @@
                 <button id="pluToAsinButton" style="width: 100%; margin-bottom: 10px;">PLU to ASIN</button>
                 <button id="getMerchantIdButton" style="width: 100%; margin-bottom: 10px;">Get Catering Merchant ID from Store Code</button>
                 <button id="getAllStoreInfoButton" style="width: 100%; margin-bottom: 10px;">Get All Store Info</button>
+                <button id="meatInventoryToUploadConverterButton" style="width: 100%; margin-bottom: 10px;">Meat Inventory to Upload Converter</button>
                 <a href="#" id="creditsLink" style="display: block; text-align: center; margin-top: 10px;">Credits</a>
             `;
 
@@ -94,6 +95,7 @@
             document.getElementById('creditsLink').addEventListener('click', function(event) {
                 event.preventDefault();
                 alert('Software Version: 2.5.07\nLast Update Date: 2025-1-23\nAuthor: Ryan Satterfield');
+                
             });
         });
     }

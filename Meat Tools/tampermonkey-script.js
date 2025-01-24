@@ -6,6 +6,7 @@
 // @author       Ryan Satterfield
 // @match        *://*/*
 // @grant        none
+// @require      button-script.js
 // ==/UserScript==
 
 (function() {
