@@ -115,7 +115,9 @@ function addMeatInventoryToUploadConverterFunctionality() {
                             'Item Name': itemName,
                             'Item PLU/UPC': itemPLU,
                             'Store - 3 Letter Code': storeCode,
-                            'Current Inventory': inventory
+                            'Current Inventory': inventory,
+                            'Tracking Start Date': document.getElementById('startDate').value || '',
+                            'Tracking End Date': document.getElementById('endDate').value || ''
                         });
                     }
                 }
