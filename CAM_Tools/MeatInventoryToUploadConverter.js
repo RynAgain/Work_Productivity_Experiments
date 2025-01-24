@@ -100,7 +100,7 @@ function addMeatInventoryToUploadConverterFunctionality() {
 
         function transformData(data) {
             // Remove rows with "WFM Fresh Breakout 2024"
-            const filteredData = data.filter(item => !item['Unnamed: 0'].includes('WFM Fresh Breakout 2024'));
+            const filteredData = data.filter(item => item['Unnamed: 0'] && !item['Unnamed: 0'].includes('WFM Fresh Breakout'));
 
             // Simplify charts into one set of headers
             const unifiedData = [];
