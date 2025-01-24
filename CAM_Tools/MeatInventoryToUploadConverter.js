@@ -92,7 +92,7 @@ function addMeatInventoryToUploadConverterFunctionality() {
             return lines.slice(1).map(line => {
                 const values = line.split(',');
                 return headers.reduce((obj, header, index) => {
-                    obj[header.trim()] = values[index].trim();
+                    obj[header.trim()] = values[index] ? values[index].trim() : '';
                     return obj;
                 }, {});
             });
