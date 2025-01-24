@@ -5,6 +5,10 @@
         // Functionality for the Meat Inventory to Upload Converter
         function addMeatInventoryToUploadConverter() {
             console.log('Meat Inventory to Upload Converter initialized');
+            // Add event listener for the button
+            document.getElementById('meatInventoryToUploadConverterButton').addEventListener('click', function() {
+                console.log('Meat Inventory to Upload Converter button clicked');
+
                 // Create overlay
                 var overlay = document.createElement('div');
                 overlay.id = 'meatInventoryUploadOverlay';
@@ -74,10 +78,6 @@
                     console.log('File selected:', file.name);
                     // Logic to handle file upload goes here
                 });
-            // Add event listener for the button
-            document.getElementById('meatInventoryToUploadConverterButton').addEventListener('click', function() {
-                console.log('Meat Inventory to Upload Converter button clicked');
-                // Additional implementation will go here
             });
         }
 
