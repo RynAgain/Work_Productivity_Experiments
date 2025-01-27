@@ -80,23 +80,44 @@
                 // Toggle this true/false to enable/disable downloading the "intermediate" CSV
                 const debugMode = true;
 
-                // Read file as text
-                const reader = new FileReader();
-                reader.onload = function(event) {
-                    const csvData = event.target.result;
-                    
-                    // STEP 1: Parse the CSV
-                    const parsedData = parseCSV(csvData);
-                    const charts = extractCharts(parsedData);
-                    const unpivotedData = charts.flatMap(chart => unpivotChart(chart));
-
-                    // STEP 2: If debug mode, download the intermediate dataset with all columns
-                    if (debugMode) {
-                        downloadCSV(unpivotedData, 'Inventory_Upload.csv');
-                    }
-
-                };
-                reader.readAsText(file);
+                // Determine file type and read accordingly
+                if (file.type.includes('sheet') || file.name.endsWith('.xlsx')) {
+                    // Handle XLSX file
+                    const reader = new FileReader();
+                    reader.onload = function(event) {
+                        const data = new Uint8Array(event.target.result);
+                        const workbook = XLSX.read(data, { type: 'array' });
+                        let unpivotedData = [];
+                        workbook.SheetNames.forEach(sheetName => {
+                            const sheetData = XLSX.utils.sheet_to_json(workbook.Sheets[sheetName], { header: 1 });
+                            const parsedData = parseCSV(sheetData);
+                            const charts = extractCharts(parsedData);
+                            unpivotedData = unpivotedData.concat(charts.flatMap(chart => unpivotChart(chart)));
+                        });
+                        if (debugMode) {
+                            downloadCSV(unpivotedData, 'Inventory_Upload.csv');
+                        }
+                    };
+                    reader.readAsArrayBuffer(file);
+                } else {
+                    // Handle CSV file
+                    const reader = new FileReader();
+                    reader.onload = function(event) {
+                        const csvData = event.target.result;
+                        
+                        // STEP 1: Parse the CSV
+                        const parsedData = parseCSV(csvData);
+                        const charts = extractCharts(parsedData);
+                        const unpivotedData = charts.flatMap(chart => unpivotChart(chart));
+                        
+                    // STEP 2: If debug mode, download the intermediate dataset with all columns 
+                    // NOTE:  I some how ended up making the intermediate dataset the full data set.  so debug mode technically doesn't need to exist now but I am afraid/don't see a point to remove it.
+                        if (debugMode) {
+                            downloadCSV(unpivotedData, 'Inventory_Upload.csv');
+                        }
+                    };
+                    reader.readAsText(file);
+                }
 
                 // ---------------------
                 // Utility Functions
