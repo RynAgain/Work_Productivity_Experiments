@@ -155,11 +155,14 @@
                 function unpivotChart(chart) {
                     const headers = chart[0];
                     return chart.slice(1).flatMap(row => {
-                        return Object.keys(row).slice(5).map(storeCode => ({
-                            'Item Name': row['Unnamed: 0'],
+                        return Object.keys(row).slice(5).filter(storeCode => storeCode !== 'Grand Total').map(storeCode => ({
+                            'Item Name': row['Unnamed: 0'] || row[headers[0]],
                             'Item PLU/UPC': row['UPC'],
                             'Store - 3 Letter Code': storeCode,
-                            'Current Inventory': row[storeCode]
+                            'Availability': 'Limited',
+                            'Current Inventory': row[storeCode],
+                            'Sales Floor Capacity': '',
+                            'Andon Cord': document.getElementById('andonCordSelect').value || ''
                         }));
                     });
                 }
