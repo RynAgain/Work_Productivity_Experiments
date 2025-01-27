@@ -87,6 +87,8 @@
                     
                     // STEP 1: Parse the CSV
                     const parsedData = parseCSV(csvData);
+                    const charts = extractCharts(parsedData);
+                    const unpivotedData = charts.flatMap(chart => unpivotChart(chart));
 
                     // STEP 2: If debug mode, download the intermediate dataset
                     if (debugMode) {
@@ -97,7 +99,7 @@
                     }
 
                     // STEP 3: Transform the data
-                    const transformedData = transformData(parsedData);
+                    const transformedData = transformData(unpivotedData);
 
                     // STEP 4: Download the final CSV
                     downloadCSV(transformedData, 'converted_inventory.csv');
@@ -110,8 +112,8 @@
 
                 function parseCSV(data) {
                     // Parse CSV data into an array of objects
-                    const lines = data.split('\n').map(line => line.trim());
-                    const headers = lines[0].split(',');
+                    const lines = data.split('\n').filter(line => line.trim() !== '');
+                    const headers = lines[1].split(',');
 
                     return lines.slice(1).map(line => {
                         const values = line.split(',');
@@ -119,6 +121,37 @@
                             obj[header.trim()] = values[index] ? values[index].trim() : '';
                             return obj;
                         }, {});
+                    });
+                }
+
+                function extractCharts(data) {
+                    const charts = [];
+                    let currentChart = [];
+                    data.forEach(row => {
+                        if (row['ITEM#'] && row['UPC'] && row['VIN'] && row['Head/Case']) {
+                            if (currentChart.length > 0) {
+                                charts.push(currentChart);
+                                currentChart = [];
+                            }
+                        } else {
+                            currentChart.push(row);
+                        }
+                    });
+                    if (currentChart.length > 0) {
+                        charts.push(currentChart);
+                    }
+                    return charts;
+                }
+
+                function unpivotChart(chart) {
+                    const headers = chart[0];
+                    return chart.slice(1).flatMap(row => {
+                        return Object.keys(row).slice(5).map(storeCode => ({
+                            'Item Name': row['Unnamed: 0'],
+                            'Item PLU/UPC': row['UPC'],
+                            'Store - 3 Letter Code': storeCode,
+                            'Current Inventory': row[storeCode]
+                        }));
                     });
                 }
 
