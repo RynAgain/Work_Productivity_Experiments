@@ -92,14 +92,9 @@
 
                     // STEP 2: If debug mode, download the intermediate dataset with all columns
                     if (debugMode) {
-                        downloadCSV(unpivotedData, 'intermediate_dataset.csv');
+                        downloadCSV(unpivotedData, 'Inventory_Upload.csv');
                     }
 
-                    // STEP 3: Transform the data
-                    const transformedData = transformData(unpivotedData);
-
-                    // STEP 4: Download the final CSV
-                    downloadCSV(transformedData, 'converted_inventory.csv');
                 };
                 reader.readAsText(file);
 
@@ -159,7 +154,7 @@
                             'Item Name': row['Unnamed: 0'] || row[headers[0]],
                             'Item PLU/UPC': row['UPC'],
                             'Availability': 'Limited',
-                            'Current Inventory': row[storeCode],
+                            'Current Inventory': Math.round(parseFloat(row[storeCode]) * 100) / 100,
                             'Sales Floor Capacity': '',
                             'Store - 3 Letter Code': storeCode,
 
@@ -168,43 +163,6 @@
                     });
                 }
 
-                function transformData(data) {
-                    // Remove rows containing "WFM Fresh Breakout"
-                    const filteredData = data.filter(
-                        item => item['Unnamed: 0'] && !item['Unnamed: 0'].includes('WFM Fresh Breakout')
-                    );
-
-                    const startDate = document.getElementById('startDate').value || '';
-                    const endDate = document.getElementById('endDate').value || '';
-                    const andonCordValue = document.getElementById('andonCordSelect').value || '';
-
-                    const unifiedData = [];
-                    
-                    filteredData.forEach(item => {
-                        const itemName = item['Unnamed: 0'];
-                        const itemPLU = item['UPC'];
-
-                        // For each row, assume columns 5+ are store codes:
-                        const keys = Object.keys(item);
-                        for (let i = 5; i < keys.length; i++) {
-                            const storeCode = keys[i];
-                            const inventory = item[storeCode];
-                            if (storeCode && inventory) {
-                                unifiedData.push({
-                                    'Store - 3 Letter Code': storeCode,
-                                    'Item Name': itemName,
-                                    'Item PLU/UPC': itemPLU,
-                                    'Current Inventory': inventory,
-                                    'Andon Cord': andonCordValue,
-                                    'Tracking Start Date': startDate,
-                                    'Tracking End Date': endDate
-                                });
-                            }
-                        }
-                    });
-
-                    return unifiedData;
-                }
 
                 function downloadCSV(data, filename) {
                     // Decide on your CSV headers (keys must match your objects exactly)
