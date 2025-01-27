@@ -92,10 +92,7 @@
 
                     // STEP 2: If debug mode, download the intermediate dataset
                     if (debugMode) {
-                        downloadCSV(parsedData, 'intermediate_dataset.csv');
-                        setTimeout(() => {
-                            downloadCSV(transformedData, 'converted_inventory.csv');
-                        }, 10000); // 1 second delay
+                        downloadCSV(unpivotedData, 'intermediate_dataset.csv');
                     }
 
                     // STEP 3: Transform the data
@@ -111,13 +108,25 @@
                 // ---------------------
 
                 function parseCSV(data) {
-                    // Parse CSV data into an array of objects
+                    // Split the CSV data into lines and filter out any empty lines
                     const lines = data.split('\n').filter(line => line.trim() !== '');
+
+                    // Use the second line as headers since the first line is not needed
                     const headers = lines[1].split(',');
 
-                    return lines.slice(1).map(line => {
+                    // Map each line to an object using the headers as keys, filtering out lines with only the first cell filled
+                    return lines.slice(1).filter(line => {
                         const values = line.split(',');
+                        // Ignore lines where "Unnamed: X" appears in three or more cells within the row
+                        if (values.filter(v => v.startsWith('Unnamed:')).length >= 3) {
+                            return false;
+                        }
+                        return values.some((value, index) => index > 0 && value.trim() !== '');
+                    }).map(line => {
+                        const values = line.split(',');
+                        // Reduce the values into an object with header-value pairs
                         return headers.reduce((obj, header, index) => {
+                            // Trim each value and assign it to the corresponding header
                             obj[header.trim()] = values[index] ? values[index].trim() : '';
                             return obj;
                         }, {});
