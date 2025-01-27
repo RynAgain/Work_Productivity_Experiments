@@ -158,10 +158,11 @@
                         return Object.keys(row).slice(5).filter(storeCode => storeCode !== 'Grand Total').map(storeCode => ({
                             'Item Name': row['Unnamed: 0'] || row[headers[0]],
                             'Item PLU/UPC': row['UPC'],
-                            'Store - 3 Letter Code': storeCode,
                             'Availability': 'Limited',
                             'Current Inventory': row[storeCode],
                             'Sales Floor Capacity': '',
+                            'Store - 3 Letter Code': storeCode,
+
                             'Andon Cord': document.getElementById('andonCordSelect').value || ''
                         }));
                     });
@@ -211,7 +212,9 @@
                         'Store - 3 Letter Code',
                         'Item Name',
                         'Item PLU/UPC',
+                        'Availability',
                         'Current Inventory',
+                        'Sales Floor Capacity',
                         'Andon Cord',
                         'Tracking Start Date',
                         'Tracking End Date'
