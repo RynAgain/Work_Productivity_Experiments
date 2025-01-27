@@ -89,8 +89,7 @@
                         const workbook = XLSX.read(data, { type: 'array' });
                         let unpivotedData = [];
                         workbook.SheetNames.forEach(sheetName => {
-                            const sheetData = XLSX.utils.sheet_to_json(workbook.Sheets[sheetName], { header: 1 });
-                            const parsedData = parseCSV(sheetData);
+                            const parsedData = parseCSV(XLSX.utils.sheet_to_csv(workbook.Sheets[sheetName], { raw: false }));
                             const charts = extractCharts(parsedData);
                             unpivotedData = unpivotedData.concat(charts.flatMap(chart => unpivotChart(chart)));
                         });
