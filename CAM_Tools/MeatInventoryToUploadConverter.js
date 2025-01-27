@@ -90,7 +90,7 @@
                     const charts = extractCharts(parsedData);
                     const unpivotedData = charts.flatMap(chart => unpivotChart(chart));
 
-                    // STEP 2: If debug mode, download the intermediate dataset
+                    // STEP 2: If debug mode, download the intermediate dataset with all columns
                     if (debugMode) {
                         downloadCSV(unpivotedData, 'intermediate_dataset.csv');
                     }
