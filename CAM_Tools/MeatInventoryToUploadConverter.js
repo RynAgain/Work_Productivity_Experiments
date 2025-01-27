@@ -90,6 +90,7 @@
                         let unpivotedData = [];
                         workbook.SheetNames.forEach(sheetName => {
                             const parsedData = parseCSV(XLSX.utils.sheet_to_csv(workbook.Sheets[sheetName], { raw: false }));
+                            console.log('Parsed Data:', parsedData);
                             console.log('Headers:', parsedData[0]);
                             const charts = extractCharts(parsedData);
                             unpivotedData = unpivotedData.concat(charts.flatMap(chart => unpivotChart(chart)));
