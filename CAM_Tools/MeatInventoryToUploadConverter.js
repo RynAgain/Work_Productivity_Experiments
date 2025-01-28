@@ -90,7 +90,14 @@
                         let unpivotedData = [];
                         workbook.SheetNames.forEach(sheetName => {
                             console.log('Raw Sheet Data:', workbook.Sheets[sheetName]);
-                            const csvContent = XLSX.utils.sheet_to_csv(workbook.Sheets[sheetName], { raw: true });
+                            // Remove all formatting from the sheet
+                            const sheet = workbook.Sheets[sheetName];
+                            Object.keys(sheet).forEach(cell => {
+                                if (cell[0] !== '!') {
+                                    delete sheet[cell].s; // Remove style property
+                                }
+                            });
+                            const csvContent = XLSX.utils.sheet_to_csv(sheet, { raw: true });
                             console.log('CSV Content:', csvContent);
                             const parsedData = parseCSV(csvContent);
                             console.log('Parsed Data:', parsedData);
