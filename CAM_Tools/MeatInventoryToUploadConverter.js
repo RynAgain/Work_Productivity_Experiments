@@ -89,7 +89,10 @@
                         const workbook = XLSX.read(data, { type: 'array' });
                         let unpivotedData = [];
                         workbook.SheetNames.forEach(sheetName => {
-                            const parsedData = parseCSV(XLSX.utils.sheet_to_csv(workbook.Sheets[sheetName], { raw: false }));
+                            console.log('Raw Sheet Data:', workbook.Sheets[sheetName]);
+                            const csvContent = XLSX.utils.sheet_to_csv(workbook.Sheets[sheetName], { raw: true });
+                            console.log('CSV Content:', csvContent);
+                            const parsedData = parseCSV(csvContent);
                             console.log('Parsed Data:', parsedData);
                             console.log('Headers:', parsedData[0]);
                             const charts = extractCharts(parsedData);
@@ -137,7 +140,7 @@
                     return lines.slice(1).filter(line => {
                         const values = line.split(',');
                         // Ignore lines where "Unnamed: X" appears in three or more cells within the row
-                        if (values.filter(v => v.startsWith('Unnamed:')).length >= 3) {
+                        if (values.filter(v => v.startsWith('Unnamed:')).length >= 10) {
                             return false;
                         }
                         return values.some((value, index) => index > 0 && value.trim() !== '');
@@ -174,7 +177,7 @@
                 function unpivotChart(chart) {
                     const headers = chart[0];
                     return chart.slice(1).flatMap(row => {
-                        return Object.keys(row).slice(5).filter(storeCode => !['Grand Total', '2024 Order', 'To Allocate', 'Avg Case Weight', 'Cases/Pallet', 'Pallet Total', 'Weight Total'].includes(storeCode)).map(storeCode => ({
+                        return Object.keys(row).slice(5).filter(storeCode => !['Grand Total', '2024 Order', 'To Allocate', 'Avg Case Weight', 'Cases/Pallet', 'Pallet Total', 'Weight Total', '2024 Order NDC', 'DC Inventory', 'New Allo Total', 'Reduce', 'pr store'].includes(storeCode)).map(storeCode => ({
                             'Item Name': row['Unnamed: 0'] || row[headers[0]],
                             'Item PLU/UPC': row['PLU/UPC'],
                             'Availability': 'Limited',
