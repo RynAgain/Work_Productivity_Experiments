@@ -93,7 +93,9 @@
                             console.log('Parsed Data:', parsedData);
                             console.log('Headers:', parsedData[0]);
                             const charts = extractCharts(parsedData);
+                            console.log('Data after unpivoting:', charts);
                             unpivotedData = unpivotedData.concat(charts.flatMap(chart => unpivotChart(chart)));
+                            console.log('Unpivot:', unpivotedData);
                         });
                         if (debugMode) {
                             downloadCSV(unpivotedData, 'Inventory_Upload.csv');
