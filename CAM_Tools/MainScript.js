@@ -1,13 +1,13 @@
 // ==UserScript==
 // @name         CAM_Admin_Tools
 // @namespace    http://tampermonkey.net/
-// @version      2.5.107
+// @version      2.5.108
 // @description  Main script to include button functionalities
 // @author       Ryan Satterfield
 // @match        https://*.cam.wfm.amazon.dev/*
 // @grant        none
 // @require      https://cdnjs.cloudflare.com/ajax/libs/jszip/3.7.1/jszip.min.js
-// @require https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.17.0/xlsx.full.min.js
+// @require      https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.17.0/xlsx.full.min.js
 
 // @require      https://github.com/RynAgain/Work_Productivity_Experiments/raw/main/CAM_Tools/AddItemButton.js
 // @require      https://github.com/RynAgain/Work_Productivity_Experiments/raw/main/CAM_Tools/ActivateButton.js
@@ -23,7 +23,7 @@
 // @require      https://github.com/RynAgain/Work_Productivity_Experiments/raw/main/CAM_Tools/MeatInventoryToUploadConverter.js
 
 
-// @run-at       document-body
+// @run-at       document-end
 // @updateURL    https://github.com/RynAgain/Work_Productivity_Experiments/raw/main/CAM_Tools/MainScript.js
 // @downloadURL  https://github.com/RynAgain/Work_Productivity_Experiments/raw/main/CAM_Tools/MainScript.js
 // ==/UserScript==
