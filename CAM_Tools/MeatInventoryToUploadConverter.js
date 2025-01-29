@@ -168,7 +168,7 @@
                     const charts = [];
                     let currentChart = [];
                     data.forEach(row => {
-                        if (row['ITEM#'] && row['UPC'] && row['VIN'] && row['Head/Case']) {
+                        if (row['ITEM#'] && row['PLU/UPC'] && row['VIN'] && row['Head/Case']) {
                             if (currentChart.length > 0) {
                                 charts.push(currentChart);
                                 currentChart = [];
@@ -202,6 +202,7 @@
 
                 function downloadCSV(data, filename) {
                     // Decide on your CSV headers (keys must match your objects exactly)
+                    //TODO: before downloading make sure that any "Current Inventory" cell that is undefiend, null or 0 is ouputed as 0 and not left blank
                     const headers = [
                         'Store - 3 Letter Code',
                         'Item Name',
@@ -218,7 +219,12 @@
                     const csvRows = [
                         headers.join(','),
                         ...data.map(row => {
-                            return headers.map(h => row[h] || '').join(',');
+                            return headers.map(h => {
+                                if (h === 'Current Inventory') {
+                                    return row[h] !== undefined && row[h] !== null && row[h] !== '' ? row[h] : 0;
+                                }
+                                return row[h] || 0;
+                            }).join(',');
                         })
                     ];
 
