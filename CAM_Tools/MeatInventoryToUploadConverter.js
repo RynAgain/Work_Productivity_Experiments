@@ -107,6 +107,8 @@
                             unpivotedData = unpivotedData.concat(charts.flatMap(chart => unpivotChart(chart)));
                             console.log('Unpivot:', unpivotedData);
                         });
+                        // Remove rows where "Item PLU/UPC" is an empty string
+                        unpivotedData = unpivotedData.filter(row => row['Item PLU/UPC'] !== '');
                         if (debugMode) {
                             downloadCSV(unpivotedData, 'Inventory_Upload.csv');
                         }
@@ -188,7 +190,7 @@
                             'Item Name': row['Unnamed: 0'] || row[headers[0]],
                             'Item PLU/UPC': row['PLU/UPC'] !== 'PLU/UPC' ? row['PLU/UPC'] : '',
                             'Availability': 'Limited',
-                            'Current Inventory': row[storeCode] !== undefined && row[storeCode] !== null ? Math.round(parseFloat(row[storeCode]) * 100) / 100 : '0',
+                            'Current Inventory': row[storeCode] !== undefined && row[storeCode] !== null && row[storeCode] !== '' ? Math.round(parseFloat(row[storeCode]) * 100) / 100 : '0',
                             'Sales Floor Capacity': '',
                             'Store - 3 Letter Code': storeCode,
 
