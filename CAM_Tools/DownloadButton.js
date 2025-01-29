@@ -313,7 +313,13 @@ downloadButton.style.width = '20%';
         }
 
         // Use MutationObserver to detect changes in the DOM
-        const observer = new MutationObserver(addDownloadButton);
+        const observer = new MutationObserver((mutationsList, observer) => {
+            for (const mutation of mutationsList) {
+                if (mutation.type === 'childList') {
+                    addDownloadButton();
+                }
+            }
+        });
         observer.observe(document.body, { childList: true, subtree: true });
 
         // Initial attempt to add the download data button
