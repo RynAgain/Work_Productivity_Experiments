@@ -223,7 +223,7 @@
                                 if (h === 'Current Inventory') {
                                     return row[h] !== undefined && row[h] !== null && row[h] !== '' ? row[h] : 0;
                                 }
-                                return row[h] || 0;
+                                return row[h] || '';
                             }).join(',');
                         })
                     ];

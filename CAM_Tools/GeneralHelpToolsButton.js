@@ -78,9 +78,9 @@
             formContainer.innerHTML = `
                 <h3>General Help Tools</h3>
                 <button id="pluDedupeListButton" style="width: 100%; margin-bottom: 10px;">PLU Dedupe & List</button>
-                <button id="nisFileToCAMUploadButton" style="width: 100%; margin-bottom: 10px;">zNIS File to CAM Uploadz</button>
+                <button id="nisFileToCAMUploadButton" style="width: 100%; margin-bottom: 10px;">zNon-functional Buttonz</button>
                 <button id="scanCodeTo13PLUButton" style="width: 100%; margin-bottom: 10px;">Scan Code to 13-PLU</button>
-                <button id="pluToAsinButton" style="width: 100%; margin-bottom: 10px;">PLU to ASIN</button>
+                <button id="pluToAsinButton" style="width: 100%; margin-bottom: 10px;">Basic PLU to ASIN</button>
                 <button id="getMerchantIdButton" style="width: 100%; margin-bottom: 10px;">Get Catering Merchant ID from Store Code</button>
                 <button id="getAllStoreInfoButton" style="width: 100%; margin-bottom: 10px;">Get All Store Info</button>
                 <button id="meatInventoryToUploadConverterButton" style="width: 100%; margin-bottom: 10px;">Meat Inventory to Upload Converter</button>
@@ -94,7 +94,7 @@
             // Add event listener for the "Credits" link
             document.getElementById('creditsLink').addEventListener('click', function(event) {
                 event.preventDefault();
-                alert('Software Version: 2.5\nLast Update Date: 2025-1-24\nAuthor: Ryan Satterfield');
+                alert('Software Version: 2.5\nLast Update Date: 2025-1-24\nAuthor: Ryan Satterfield\nThis is an unofficial tool, if it stops working and I no longer work here (currently on contract ending March 31) I dont know how it will get fixed.');
                 
             });
         });
