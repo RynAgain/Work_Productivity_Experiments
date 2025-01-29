@@ -1,10 +1,6 @@
 (function() {
     'use strict';
 
-    // Expose an init function to the global scope
-    window.initDownloadDataFeature = function() {
-        console.log('initDownloadDataFeature called from required script');
-
         // Function to add the download data button
         function addDownloadButton() {
             console.log('Attempting to add download data button');
@@ -106,7 +102,7 @@
                     'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36 Edg/130.0.0.0',
                     'x-amz-target': 'WfmCamBackendService.GetStoresInformation'
                 };
-
+            
                 // Call the API to get the list of stores
                 fetch(apiUrlBase, {
                     method: 'POST',
@@ -313,16 +309,9 @@
         }
 
         // Use MutationObserver to detect changes in the DOM
-        const observer = new MutationObserver((mutationsList, observer) => {
-            for (const mutation of mutationsList) {
-                if (mutation.type === 'childList') {
-                    addDownloadButton();
-                }
-            }
-        });
+        const observer = new MutationObserver(addDownloadButton);
         observer.observe(document.body, { childList: true, subtree: true });
 
         // Initial attempt to add the download data button
         addDownloadButton();
-    };
 })();

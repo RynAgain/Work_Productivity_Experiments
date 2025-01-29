@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         CAM_Admin_Tools
 // @namespace    http://tampermonkey.net/
-// @version      2.5.108
+// @version      2.5.109
 // @description  Main script to include button functionalities
 // @author       Ryan Satterfield
 // @match        https://*.cam.wfm.amazon.dev/*
@@ -31,16 +31,5 @@
 (function() {
     'use strict';
     console.log("MainScript Started - loading buttons");
-    // Wait for DOM or run immediately
-    window.addEventListener('DOMContentLoaded', () => {
-        console.log('Main script: DOMContentLoaded');
 
-        if (typeof window.initDownloadDataFeature === 'function') {
-            // Call the function from the required script
-            window.initDownloadDataFeature();
-            console.log('initDownloadDataFeature function called successfully.');
-        } else {
-            console.error('Required script not loaded or function is missing.');
-        }
-    });
 })();
