@@ -186,9 +186,9 @@
                     return chart.slice(1).flatMap(row => {
                         return Object.keys(row).slice(5).filter(storeCode => !['Grand Total', '2024 Order', 'To Allocate', 'Avg Case Weight', 'Cases/Pallet', 'Pallet Total', 'Weight Total', '2024 Order NDC', 'DC Inventory', 'New Allo Total', 'Reduce', 'pr store'].includes(storeCode)).map(storeCode => ({
                             'Item Name': row['Unnamed: 0'] || row[headers[0]],
-                            'Item PLU/UPC': row['PLU/UPC'],
+                            'Item PLU/UPC': row['PLU/UPC'] !== 'PLU/UPC' ? row['PLU/UPC'] : '',
                             'Availability': 'Limited',
-                            'Current Inventory': Math.round((parseFloat(row[storeCode]) || 0) * 100) / 100,
+                            'Current Inventory': row[storeCode] ? Math.round(parseFloat(row[storeCode]) * 100) / 100 : '0',
                             'Sales Floor Capacity': '',
                             'Store - 3 Letter Code': storeCode,
 
