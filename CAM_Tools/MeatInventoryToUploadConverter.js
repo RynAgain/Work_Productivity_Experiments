@@ -107,8 +107,8 @@
                             unpivotedData = unpivotedData.concat(charts.flatMap(chart => unpivotChart(chart)));
                             console.log('Unpivot:', unpivotedData);
                         });
-                        // Remove rows where "Item PLU/UPC" is an empty string
-                        unpivotedData = unpivotedData.filter(row => row['Item PLU/UPC'] !== '');
+                        // Remove rows where "Item PLU/UPC" is an empty string or "Current Inventory" is NaN
+                        unpivotedData = unpivotedData.filter(row => row['Item PLU/UPC'] !== '' && !isNaN(row['Current Inventory']));
                         if (debugMode) {
                             downloadCSV(unpivotedData, 'Inventory_Upload.csv');
                         }
@@ -202,7 +202,7 @@
 
                 function downloadCSV(data, filename) {
                     // Decide on your CSV headers (keys must match your objects exactly)
-                    //TODO: before downloading make sure that any "Current Inventory" cell that is undefiend, null or 0 is ouputed as 0 and not left blank
+                    //
                     const headers = [
                         'Store - 3 Letter Code',
                         'Item Name',

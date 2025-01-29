@@ -23,8 +23,7 @@
             downloadButton.style.position = 'fixed';
             downloadButton.style.bottom = '0';
             downloadButton.style.left = '0';
-            downloadButton.style.width = '20%';
-            downloadButton.style.width = '25%';
+downloadButton.style.width = '20%';
             downloadButton.style.height = '40px';
             downloadButton.style.zIndex = '1000';
             downloadButton.style.fontSize = '14px';
@@ -153,7 +152,7 @@
                             },
                             "paginationContext": {
                                 "pageNumber": 0,
-                                "pageSize": 10000
+                                "pageSize": 10000 //would like to test expanding this range
                             }
                         };
 
@@ -165,7 +164,7 @@
                         })
                         .then(response => response.json())
                         .then(data => {
-                            console.log(`Data for store ${storeId}:`, data);
+                            console.log(`Data for store batch:`, data); //unclear what this change did
                             return data.itemsAvailability.map(item => {
                                 // Transformations
                                 item.andon = item.andon === true ? 'Enabled' : 'Disabled';
@@ -187,7 +186,7 @@
                             });
                         })
                         .catch(error => {
-                            console.error(`Error downloading data for store ${storeId}:`, error);
+                            console.error(`Error downloading data for store batch:`, error);
                             return [];
                         });
                     };
@@ -211,12 +210,27 @@
                         storeIdBatches.push(storeIds.slice(i, i + batchSize));
                     }
 
-                    Promise.all(storeIdBatches.map(async (storeIdsBatch) => {
-                        await delay(100); // Add a delay between requests
-                        if (cancelRequested) {
-                            return Promise.resolve([]);
+                    const retryLimit = 10;
+                    const fetchWithRetry = async (storeIdsBatch, attempt = 1) => {
+                        try {
+                            await delay(100); // Add a delay between requests
+                            if (cancelRequested) {
+                                return Promise.resolve([]);
+                            }
+                            return fetchItemsForStores(storeIdsBatch);
+                        } catch (error) {
+                            if (attempt < retryLimit) {
+                                console.warn(`Retrying store batch, attempt ${attempt + 1}`);
+                                return fetchWithRetry(storeIdsBatch, attempt + 1);
+                            } else {
+                                console.error(`Failed to download data for store batch after ${retryLimit} attempts`);
+                                return [];
+                            }
                         }
-                        return fetchItemsForStores(storeIdsBatch).then(result => {
+                    };
+
+                    Promise.all(storeIdBatches.map(storeIdsBatch => {
+                        return fetchWithRetry(storeIdsBatch).then(result => {
                             if (cancelRequested) {
                                 return [];
                             }
@@ -269,6 +283,7 @@
 
                             // Update progress to indicate completion
                             progress.innerHTML = 'Downloading Now!';
+                            progress.style.color = 'red'; // Make this message appear red, because that looks better?
                             // Inject CSS for fade-out effect
                             const style = document.createElement('style');
                             style.innerHTML = `
@@ -287,8 +302,6 @@
                                 progress.classList.add('fade-out');
                             }, 2000);
 
-                            //TODO: make the Downloading Now! message fade so we can see the whole page again.
-                            //TODO make sure the program can handle and retry stores that fail unitll they work? if it fails 5 times on one store timeout and give the error message
                         } else {
                             console.log('No items data available to download.');
                         }
