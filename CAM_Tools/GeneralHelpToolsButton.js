@@ -81,9 +81,11 @@
                 <button id="nisFileToCAMUploadButton" style="width: 100%; margin-bottom: 10px;">zNon-functional Buttonz</button>
                 <button id="scanCodeTo13PLUButton" style="width: 100%; margin-bottom: 10px;">Scan Code to 13-PLU</button>
                 <button id="pluToAsinButton" style="width: 100%; margin-bottom: 10px;">Basic PLU to ASIN</button>
-                <button id="getMerchantIdButton" style="width: 100%; margin-bottom: 10px;">Get Catering Merchant ID from Store Code</button>
+                <button id="getMerchantIdButton" style="width: 100%; margin-bottom: 10px;">Get eMerchant IDs from Store Code</button>
                 <button id="getAllStoreInfoButton" style="width: 100%; margin-bottom: 10px;">Get All Store Info</button>
                 <button id="meatInventoryToUploadConverterButton" style="width: 100%; margin-bottom: 10px;">Meat Inventory to Upload Converter</button>
+                <button id="atcpropButton" style ="width: 100%; margin-bottom: 10px;">zATC Propagation Toolz</button>
+                <button id ="tool9" style = "width: 100%; margin-bottom: 10px;">Tool 9</button>
                 <a href="#" id="creditsLink" style="display: block; text-align: center; margin-top: 10px;">Credits</a>
             `;
 
