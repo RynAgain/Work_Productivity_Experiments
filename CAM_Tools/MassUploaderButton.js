@@ -45,7 +45,7 @@
         formContainer.innerHTML = `
             <h3>Mass Upload</h3>
             <input type="file" id="massFileInput" style="width: 100%; margin-bottom: 10px;" multiple>
-            <button id="uploadButton" style="width: 100%;">Upload</button>
+            <button id="newuploadButton" style="width: 100%;">Upload</button>
         `;
 
         formContainer.appendChild(closeButton);
@@ -53,7 +53,7 @@
         document.body.appendChild(overlay);
 
         // Add event listener to the "Upload" button
-        document.getElementById('uploadButton').addEventListener('click', async function() {
+        document.getElementById('newuploadButton').addEventListener('click', async function() {
             console.log('Upload button clicked');
             const files = document.getElementById('massFileInput').files;
             if (files.length === 0) {
