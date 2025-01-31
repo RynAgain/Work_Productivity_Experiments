@@ -2,9 +2,10 @@
     'use strict';
 
     /**
-     * This function shows an overlay to pick multiple files.
+     * This function shows an overlay to pick multiple files (or an entire folder).
      * For each chosen file, we artificially set it on the *existing* <input type="file">
      * and dispatch a "change" event to fool the site into thinking the user clicked it.
+     * We also track status (Waiting, Injecting, etc.) in a small status container.
      */
     function addMassUploaderFunctionality() {
         console.log('Mass Uploader button clicked');
@@ -50,7 +51,7 @@
             width: '300px'
         });
 
-        // === Inner HTML: multiple file input + button ===
+        // === Inner HTML: folder input + button ===
         formContainer.innerHTML = `
             <h3>Mass Upload</h3>
             <input type="file" id="massFileInput" style="width: 100%; margin-bottom: 10px;" multiple webkitdirectory>
@@ -60,19 +61,11 @@
         overlay.appendChild(formContainer);
         document.body.appendChild(overlay);
 
-        // Create a status container to display upload progress
+        // === Create a status container to display upload progress ===
         const statusContainer = document.createElement('div');
         statusContainer.id = 'statusContainer';
         statusContainer.style.marginTop = '10px';
         formContainer.appendChild(statusContainer);
-
-        // Display file names and initial status
-        Array.from(files).forEach(file => {
-            const fileStatus = document.createElement('div');
-            fileStatus.id = `status-${file.name}`;
-            fileStatus.innerText = `${file.name} - Waiting`;
-            statusContainer.appendChild(fileStatus);
-        });
 
         document.getElementById('massUploadButton').addEventListener('click', () => {
             console.log('Mass Upload -> Upload button clicked');
@@ -82,11 +75,16 @@
                 return;
             }
 
-            // Identify the existing file input used by the site.
-            // Adjust this selector to match the real input the site listens to.
-            // e.g. if it’s "input[type=file]", or "#hiddenFileInput", or whatever the app uses.
-            const siteFileInput = document.querySelector('input[type="file"]');
+            // Display file names and initial status
+            Array.from(files).forEach(file => {
+                const fileStatus = document.createElement('div');
+                fileStatus.id = `status-${CSS.escape(file.name)}`; // Use CSS.escape for safer ID
+                fileStatus.innerText = `${file.name} - Waiting`;
+                statusContainer.appendChild(fileStatus);
+            });
 
+            // Identify the site's existing file input (the one the page actually uses)
+            const siteFileInput = document.querySelector('input[type="file"]');
             if (!siteFileInput) {
                 console.error('Could not find the site’s file input. Aborting.');
                 return;
@@ -94,29 +92,34 @@
 
             // For each selected file, forcibly attach it & dispatch "change"
             Array.from(files).forEach((file, index) => {
-                // We'll add a small delay so we don't spam everything at once.
-                // (Remove or adjust if you want instant assignment.)
                 setTimeout(() => {
-                    // Create a new DataTransfer (modern approach)
+                    // Update status to "Injecting"
+                    const fileStatusDiv = document.getElementById(`status-${CSS.escape(file.name)}`);
+                    if (fileStatusDiv) {
+                        fileStatusDiv.innerText = `${file.name} - Injecting...`;
+                    }
+
+                    // 1) Programmatically set the .files property via DataTransfer
                     const dt = new DataTransfer();
                     dt.items.add(file);
-
-                    // 1) Programmatically set the .files property
                     siteFileInput.files = dt.files;
 
                     // 2) Dispatch a "change" event so the site sees the new file
                     const event = new Event('change', { bubbles: true });
                     siteFileInput.dispatchEvent(event);
 
-                    console.log(`Injected file: ${file.name} [${index + 1}/${files.length}] via .files + "change" event`);
-                }, index * 30000); // 2-second spacing
+                    // Update status to "Injected"
+                    if (fileStatusDiv) {
+                        fileStatusDiv.innerText = `${file.name} - Injected`;
+                    }
+
+                    console.log(`Injected file: ${file.name} [${index + 1}/${files.length}]`);
+                }, index * 30000); // 30-second spacing between files
             });
         });
     }
 
-    /**
-     * If there's a button with id="massUploaderButton", wire it to open the overlay.
-     */
+    // === Setup: attach click listener to #massUploaderButton if present ===
     function wireUpMassUploaderButton() {
         const massUploaderButton = document.getElementById('massUploaderButton');
         if (massUploaderButton) {
