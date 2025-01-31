@@ -21,7 +21,7 @@
 // @require      https://github.com/RynAgain/Work_Productivity_Experiments/raw/main/CAM_Tools/GetMerchantIDFromStoreCode.js
 // @require      https://github.com/RynAgain/Work_Productivity_Experiments/raw/main/CAM_Tools/GetAllStoreInfo.js
 // @require      https://github.com/RynAgain/Work_Productivity_Experiments/raw/main/CAM_Tools/MeatInventoryToUploadConverter.js
-// @require      https://github.com/RynAgain/Work_Productivity_Experiments/raw/main/CAM_Tools/MassUploadButton.js
+// @require      https://github.com/RynAgain/Work_Productivity_Experiments/raw/main/CAM_Tools/MassUploaderButton.js
 
 
 // @run-at       document-end
