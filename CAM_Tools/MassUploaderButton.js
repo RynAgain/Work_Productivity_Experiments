@@ -1,7 +1,23 @@
 (function() {
     'use strict';
 
-    // Function to add the NIS File to CAM Upload button functionality
+    // Function to convert CSV to Item Availability List
+    async function convertCsvToItemAvaialbilityList(file) {
+        const fileText = await file.text();
+        const parsedFile = Papa.parse(fileText, {
+            header: true,
+            dynamicTyping: true,
+            delimiter: ",",
+            skipEmptyLines: true,
+        });
+
+        if (parsedFile.errors.length) {
+            return { availabilites: [], validatonError: parsedFile.errors[0] };
+        }
+
+        return { availabilites: parsedFile.data, validatonError: null };
+    }
+
     function addMassUploaderFunctionality() {
         console.log('Mass Uploader button clicked');
         // Create overlay
