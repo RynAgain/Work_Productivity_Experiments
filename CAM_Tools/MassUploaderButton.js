@@ -2,7 +2,7 @@
     'use strict';
 
     // Function to add the NIS File to CAM Upload button functionality
-    function addNISFileToCAMUploadFunctionality() {
+    function addMassUploaderFunctionality() {
         console.log('NIS File to CAM Upload button clicked');
         // Create overlay
         var overlay = document.createElement('div');
@@ -53,8 +53,7 @@
         document.body.appendChild(overlay);
 
         // Add event listener to the "Upload" button
-        // Add event listener to the "Upload" button
-        document.getElementById('uploadButton').addEventListener('click', function() {
+        document.getElementById('uploadButton').addEventListener('click', async function() {
             const files = document.getElementById('massFileInput').files;
             if (files.length === 0) {
                 alert('Please select files to upload.');
@@ -110,7 +109,7 @@
             if (mutation.addedNodes.length) {
                 const massUploaderButton = document.getElementById('massUploaderButton');
                 if (massUploaderButton) {
-                    massUploaderButton.addEventListener('click', addNISFileToCAMUploadFunctionality);
+                    massUploaderButton.addEventListener('click', addMassUploaderFunctionality);
                     observer.disconnect(); // Stop observing once the button is found
                 }
             }
