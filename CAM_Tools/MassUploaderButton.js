@@ -75,21 +75,6 @@
                 return;
             }
 
-            // Display file names and initial status
-            Array.from(files).forEach(file => {
-                const fileStatus = document.createElement('div');
-                fileStatus.id = `status-${CSS.escape(file.name)}`; // Use CSS.escape for safer ID
-                fileStatus.innerText = `${file.name} - Waiting`;
-                statusContainer.appendChild(fileStatus);
-            });
-
-            // Identify the site's existing file input (the one the page actually uses)
-            const siteFileInput = document.querySelector('input[type="file"]');
-            if (!siteFileInput) {
-                console.error('Could not find the site’s file input. Aborting.');
-                return;
-            }
-
             // Function to split a CSV file into chunks of 1002 rows
             const splitCsvFile = (fileContent, fileName) => {
                 const parsed = Papa.parse(fileContent, { header: true });
@@ -107,36 +92,64 @@
                 return chunks;
             };
 
-            Array.from(files).forEach((file, index) => {
-                setTimeout(async () => {
-                    // Read the file content
+            // Process files upon selection
+            const processFiles = async (files) => {
+                const allChunks = [];
+                for (const file of files) {
                     const fileContent = await file.text();
                     const fileChunks = splitCsvFile(fileContent, file.name);
+                    allChunks.push(...fileChunks);
+                }
+                return allChunks;
+            };
 
-                    fileChunks.forEach((chunk, chunkIndex) => {
-                        // Update status to "Injecting"
-                        const fileStatusDiv = document.getElementById(`status-${CSS.escape(file.name)}`);
+            // Handle file selection and splitting
+            document.getElementById('massFileInput').addEventListener('change', async (event) => {
+                const files = event.target.files;
+                if (!files || files.length === 0) {
+                    alert('Please select files to upload.');
+                    return;
+                }
+
+                const chunks = await processFiles(files);
+
+                // Display chunk names and initial status
+                chunks.forEach(chunk => {
+                    const fileStatus = document.createElement('div');
+                    fileStatus.id = `status-${CSS.escape(chunk.name)}`;
+                    fileStatus.innerText = `${chunk.name} - Waiting`;
+                    statusContainer.appendChild(fileStatus);
+                });
+
+                // Prepare for upload
+                const siteFileInput = document.querySelector('input[type="file"]');
+                if (!siteFileInput) {
+                    console.error('Could not find the site’s file input. Aborting.');
+                    return;
+                }
+
+                // Upload chunks
+                chunks.forEach((chunk, index) => {
+                    setTimeout(() => {
+                        const fileStatusDiv = document.getElementById(`status-${CSS.escape(chunk.name)}`);
                         if (fileStatusDiv) {
-                            fileStatusDiv.innerText = `${file.name} - Injecting part ${chunkIndex + 1}`;
+                            fileStatusDiv.innerText = `${chunk.name} - Injecting...`;
                         }
 
-                        // 1) Programmatically set the .files property via DataTransfer
                         const dt = new DataTransfer();
                         dt.items.add(chunk);
                         siteFileInput.files = dt.files;
 
-                        // 2) Dispatch a "change" event so the site sees the new file
                         const event = new Event('change', { bubbles: true });
                         siteFileInput.dispatchEvent(event);
 
-                        // Update status to "Injected"
                         if (fileStatusDiv) {
-                            fileStatusDiv.innerText = `${file.name} - Injected part ${chunkIndex + 1}`;
+                            fileStatusDiv.innerText = `${chunk.name} - Injected`;
                         }
 
-                        console.log(`Injected file: ${chunk.name} [${chunkIndex + 1}/${fileChunks.length}]`);
-                    });
-                }, index * 30000); // 30-second spacing between files
+                        console.log(`Injected file: ${chunk.name} [${index + 1}/${chunks.length}]`);
+                    }, index * 30000);
+                });
             });
         });
     }
