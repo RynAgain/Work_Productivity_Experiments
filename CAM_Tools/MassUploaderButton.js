@@ -63,6 +63,7 @@
 
             const uploadFile = async (file, index) => {
                 console.log(`Preparing to upload file ${index + 1} of ${files.length}: ${file.name}`);
+                // Replace with your own CSV conversion logic:
                 const conversionResult = await convertCsvToItemAvaialbilityList(file);
                 const requestLength = conversionResult.availabilites.length;
 
@@ -98,24 +99,39 @@
                 }
             };
 
+            // Stagger uploads 30s each (custom logic)
             Array.from(files).forEach((file, index) => {
                 setTimeout(() => uploadFile(file, index), index * 30000);
             });
         });
     }
 
-    // Use MutationObserver to detect when the button is added to the DOM
-    const observer = new MutationObserver(function(mutations) {
-        mutations.forEach(function(mutation) {
-            if (mutation.addedNodes.length) {
-                const massUploaderButton = document.getElementById('massUploaderButton');
-                if (massUploaderButton) {
-                    massUploaderButton.addEventListener('click', addMassUploaderFunctionality);
-                    observer.disconnect(); // Stop observing once the button is found
+    /**
+     * Attempt to find #massUploaderButton and attach the click listener
+     * @returns {boolean} true if found and attached, false otherwise
+     */
+    function wireUpMassUploaderButton() {
+        const massUploaderButton = document.getElementById('massUploaderButton');
+        if (massUploaderButton) {
+            massUploaderButton.addEventListener('click', addMassUploaderFunctionality);
+            return true;
+        }
+        return false;
+    }
+
+    // 1) Try to wire up immediately, in case the button is already in the DOM:
+    if (!wireUpMassUploaderButton()) {
+
+        // 2) If not found, use MutationObserver to detect when it appears later:
+        const observer = new MutationObserver(function(mutations) {
+            for (const mutation of mutations) {
+                if (mutation.addedNodes.length > 0 && wireUpMassUploaderButton()) {
+                    observer.disconnect(); // Stop once we've found the button
+                    break;
                 }
             }
         });
-    });
+        observer.observe(document.body, { childList: true, subtree: true });
+    }
 
-    observer.observe(document.body, { childList: true, subtree: true });
 })();
