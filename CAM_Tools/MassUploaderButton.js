@@ -18,6 +18,30 @@
         return { availabilites: parsedFile.data, validatonError: null };
     }
 
+    // Function to display toast notifications
+    function onOpenToast(toast) {
+        const toastContainer = document.getElementById('toastContainer') || createToastContainer();
+        const toastElement = document.createElement('div');
+        toastElement.className = `toast ${toast.type}`;
+        toastElement.innerText = toast.message;
+        toastContainer.appendChild(toastElement);
+
+        setTimeout(() => {
+            toastContainer.removeChild(toastElement);
+        }, toast.timeout || 5000);
+    }
+
+    function createToastContainer() {
+        const container = document.createElement('div');
+        container.id = 'toastContainer';
+        container.style.position = 'fixed';
+        container.style.bottom = '10px';
+        container.style.right = '10px';
+        container.style.zIndex = '1002';
+        document.body.appendChild(container);
+        return container;
+    }
+
     function addMassUploaderFunctionality() {
         console.log('Mass Uploader button clicked');
         // Create overlay
