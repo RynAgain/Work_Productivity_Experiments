@@ -86,7 +86,7 @@
                 <button id="meatInventoryToUploadConverterButton" style="width: 100%; margin-bottom: 10px;">Meat Inventory to Upload Converter</button>
                 <button id="atcpropButton" style ="width: 100%; margin-bottom: 10px;">zATC Propagation Toolz</button>
                 <button id ="filechunker" style = "width: 100%; margin-bottom: 10px;">zFile Chunkerz</button>
-                <button id ="massUploaderButton" style = "width: 100%; margin-bottom: 10px;">zMulti - File Upload</button>
+                <button id ="massUploaderButton" style = "width: 100%; margin-bottom: 10px;">Mass File Upload</button>
                 <a href="#" id="creditsLink" style="display: block; text-align: center; margin-top: 10px;">Credits</a>
             `;
 

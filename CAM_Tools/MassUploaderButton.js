@@ -90,7 +90,23 @@
                 return;
             }
 
-            // For each selected file, forcibly attach it & dispatch "change"
+            // Function to split a CSV file into chunks of 1002 rows
+            const splitCsvFile = (fileContent, fileName) => {
+                const parsed = Papa.parse(fileContent, { header: true });
+                const rows = parsed.data;
+                const headers = parsed.meta.fields;
+                const chunks = [];
+
+                for (let i = 0; i < rows.length; i += 1002) {
+                    const chunkRows = rows.slice(i, i + 1002);
+                    const chunkContent = Papa.unparse([headers, ...chunkRows]);
+                    const chunkFile = new File([chunkContent], `${fileName}_part${Math.floor(i / 1002) + 1}.csv`, { type: 'text/csv' });
+                    chunks.push(chunkFile);
+                }
+
+                return chunks;
+            };
+
             Array.from(files).forEach((file, index) => {
                 setTimeout(() => {
                     // Update status to "Injecting"
