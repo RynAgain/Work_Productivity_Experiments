@@ -53,19 +53,27 @@
         // === Inner HTML: multiple file input + button ===
         formContainer.innerHTML = `
             <h3>Mass Upload</h3>
-            <input type="file" id="massFileInput" style="width: 100%; margin-bottom: 10px;" multiple>
+            <input type="file" id="massFileInput" style="width: 100%; margin-bottom: 10px;" multiple webkitdirectory>
             <button id="massUploadButton" style="width: 100%;">Upload</button>
         `;
         formContainer.appendChild(closeButton);
         overlay.appendChild(formContainer);
         document.body.appendChild(overlay);
 
-        /**
-         * On "Upload" click:
-         * 1) We gather all chosen files
-         * 2) For each one, we artificially set it on the real <input type="file"> the site uses
-         * 3) We dispatch a "change" event so the site thinks it was user-chosen
-         */
+        // Create a status container to display upload progress
+        const statusContainer = document.createElement('div');
+        statusContainer.id = 'statusContainer';
+        statusContainer.style.marginTop = '10px';
+        formContainer.appendChild(statusContainer);
+
+        // Display file names and initial status
+        Array.from(files).forEach(file => {
+            const fileStatus = document.createElement('div');
+            fileStatus.id = `status-${file.name}`;
+            fileStatus.innerText = `${file.name} - Waiting`;
+            statusContainer.appendChild(fileStatus);
+        });
+
         document.getElementById('massUploadButton').addEventListener('click', () => {
             console.log('Mass Upload -> Upload button clicked');
             const files = document.getElementById('massFileInput').files;
@@ -101,7 +109,7 @@
                     siteFileInput.dispatchEvent(event);
 
                     console.log(`Injected file: ${file.name} [${index + 1}/${files.length}] via .files + "change" event`);
-                }, index * 2000); // 2-second spacing
+                }, index * 30000); // 2-second spacing
             });
         });
     }
