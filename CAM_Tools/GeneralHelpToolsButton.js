@@ -86,6 +86,7 @@
                 <button id="meatInventoryToUploadConverterButton" style="width: 100%; margin-bottom: 10px;">Meat Inventory to Upload Converter</button>
                 <button id="atcpropButton" style ="width: 100%; margin-bottom: 10px;">zATC Propagation Toolz</button>
                 <button id ="filechunker" style = "width: 100%; margin-bottom: 10px;">zFile Chunkerz</button>
+                <button id ="massuploaderButton" style = "width: 100%; margin-bottom: 10px;">zMulti - File Upload</button>
                 <a href="#" id="creditsLink" style="display: block; text-align: center; margin-top: 10px;">Credits</a>
             `;
 
@@ -96,7 +97,7 @@
             // Add event listener for the "Credits" link
             document.getElementById('creditsLink').addEventListener('click', function(event) {
                 event.preventDefault();
-                alert('Software Version: 2.5\nLast Update Date: 2025-1-24\nAuthor: Ryan Satterfield\nThis is an unofficial tool, if it stops working and I no longer work here (currently on contract ending March 31) I dont know how it will get fixed.');
+                alert('Software Version: 2.5\nLast Update Date: 2025-2-10\nAuthor: Ryan Satterfield\nThis is an unofficial tool, if it stops working and I no longer work here (currently on contract ending March 31) I dont know how it will get fixed.');
                 
             });
         });

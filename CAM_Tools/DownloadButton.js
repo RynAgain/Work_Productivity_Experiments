@@ -50,7 +50,7 @@
             // Create a cancel button
             var cancelButton = document.createElement('button');
             cancelButton.id = 'cancelButton';
-            cancelButton.innerHTML = 'Cancel';
+            cancelButton.innerHTML = 'Cancel/Close';
             cancelButton.style.position = 'fixed';
             cancelButton.style.bottom = '80px';
             cancelButton.style.left = '0';
