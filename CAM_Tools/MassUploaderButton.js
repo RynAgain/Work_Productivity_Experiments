@@ -2,9 +2,9 @@
     'use strict';
 
     /**
-     * Main function that displays the "Mass Upload" overlay.
-     * When the user clicks "Upload", it queues each selected file 
-     * through the existing app's upload flow.
+     * This function shows an overlay to pick multiple files.
+     * For each chosen file, we artificially set it on the *existing* <input type="file">
+     * and dispatch a "change" event to fool the site into thinking the user clicked it.
      */
     function addMassUploaderFunctionality() {
         console.log('Mass Uploader button clicked');
@@ -60,7 +60,12 @@
         overlay.appendChild(formContainer);
         document.body.appendChild(overlay);
 
-        // === On click "Upload" ===
+        /**
+         * On "Upload" click:
+         * 1) We gather all chosen files
+         * 2) For each one, we artificially set it on the real <input type="file"> the site uses
+         * 3) We dispatch a "change" event so the site thinks it was user-chosen
+         */
         document.getElementById('massUploadButton').addEventListener('click', () => {
             console.log('Mass Upload -> Upload button clicked');
             const files = document.getElementById('massFileInput').files;
@@ -69,48 +74,35 @@
                 return;
             }
 
-            /**
-             * For each file:
-             * 1) Click the existing “Upload file” button in the app
-             * 2) Find the file <input> that the app spawns
-             * 3) Inject our file
-             * 4) Wait 30 seconds
-             */
-            const existingUploadButtonSelector = 'button[aria-label="Upload file"]';
-            const uploadEachFile = (file, index) => {
-                console.log(`Queuing file ${index + 1} of ${files.length}: ${file.name}`);
+            // Identify the existing file input used by the site.
+            // Adjust this selector to match the real input the site listens to.
+            // e.g. if it’s "input[type=file]", or "#hiddenFileInput", or whatever the app uses.
+            const siteFileInput = document.querySelector('input[type="file"]');
 
-                // Use a small delay so each file processes sequentially
+            if (!siteFileInput) {
+                console.error('Could not find the site’s file input. Aborting.');
+                return;
+            }
+
+            // For each selected file, forcibly attach it & dispatch "change"
+            Array.from(files).forEach((file, index) => {
+                // We'll add a small delay so we don't spam everything at once.
+                // (Remove or adjust if you want instant assignment.)
                 setTimeout(() => {
-                    const existingUploadButton = document.querySelector(existingUploadButtonSelector);
-                    if (!existingUploadButton) {
-                        console.error('Could not find the existing "Upload file" button in the page.');
-                        return;
-                    }
-
-                    // 1) Trigger the app's native "upload" flow
-                    existingUploadButton.click();
-
-                    // 2) The app presumably spawns an <input type="file">. Let's find it:
-                    const fileInput = document.querySelector('input[type="file"]');
-                    if (!fileInput) {
-                        console.error('No file input found after clicking the existing Upload button.');
-                        return;
-                    }
-
-                    // 3) Inject our file
-                    // NOTE: Setting .files is not always straightforward in real browsers,
-                    // but typically works in Chrome-based dev/test scenarios.
-                    // If the site checks for events or read-only file inputs, it might not accept this approach.
+                    // Create a new DataTransfer (modern approach)
                     const dt = new DataTransfer();
                     dt.items.add(file);
-                    fileInput.files = dt.files;
 
-                    console.log(`Injected file: ${file.name} (${index + 1}/${files.length}). Waiting 30s before next file...`);
-                }, index * 30000);
-            };
+                    // 1) Programmatically set the .files property
+                    siteFileInput.files = dt.files;
 
-            Array.from(files).forEach(uploadEachFile);
+                    // 2) Dispatch a "change" event so the site sees the new file
+                    const event = new Event('change', { bubbles: true });
+                    siteFileInput.dispatchEvent(event);
+
+                    console.log(`Injected file: ${file.name} [${index + 1}/${files.length}] via .files + "change" event`);
+                }, index * 2000); // 2-second spacing
+            });
         });
     }
 
@@ -126,9 +118,9 @@
         return false;
     }
 
-    // === Try immediately ===
+    // Try hooking up immediately
     if (!wireUpMassUploaderButton()) {
-        // === Fall back: watch for the #massUploaderButton if it's added later ===
+        // If the button isn't in the DOM yet, watch for changes
         const observer = new MutationObserver(() => {
             if (wireUpMassUploaderButton()) {
                 observer.disconnect();
