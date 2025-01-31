@@ -3,7 +3,7 @@
 
     // Function to add the NIS File to CAM Upload button functionality
     function addMassUploaderFunctionality() {
-        console.log('NIS File to CAM Upload button clicked');
+        console.log('Mass Uploader button clicked');
         // Create overlay
         var overlay = document.createElement('div');
         overlay.id = 'nisFileUploadOverlay';
@@ -54,6 +54,7 @@
 
         // Add event listener to the "Upload" button
         document.getElementById('uploadButton').addEventListener('click', async function() {
+            console.log('Upload button clicked');
             const files = document.getElementById('massFileInput').files;
             if (files.length === 0) {
                 alert('Please select files to upload.');
@@ -61,7 +62,7 @@
             }
 
             const uploadFile = async (file, index) => {
-                console.log(`Uploading file ${index + 1} of ${files.length}: ${file.name}`);
+                console.log(`Preparing to upload file ${index + 1} of ${files.length}: ${file.name}`);
                 const conversionResult = await convertCsvToItemAvaialbilityList(file);
                 const requestLength = conversionResult.availabilites.length;
 
