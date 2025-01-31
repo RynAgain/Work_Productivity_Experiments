@@ -108,28 +108,34 @@
             };
 
             Array.from(files).forEach((file, index) => {
-                setTimeout(() => {
-                    // Update status to "Injecting"
-                    const fileStatusDiv = document.getElementById(`status-${CSS.escape(file.name)}`);
-                    if (fileStatusDiv) {
-                        fileStatusDiv.innerText = `${file.name} - Injecting...`;
-                    }
+                setTimeout(async () => {
+                    // Read the file content
+                    const fileContent = await file.text();
+                    const fileChunks = splitCsvFile(fileContent, file.name);
 
-                    // 1) Programmatically set the .files property via DataTransfer
-                    const dt = new DataTransfer();
-                    dt.items.add(file);
-                    siteFileInput.files = dt.files;
+                    fileChunks.forEach((chunk, chunkIndex) => {
+                        // Update status to "Injecting"
+                        const fileStatusDiv = document.getElementById(`status-${CSS.escape(file.name)}`);
+                        if (fileStatusDiv) {
+                            fileStatusDiv.innerText = `${file.name} - Injecting part ${chunkIndex + 1}`;
+                        }
 
-                    // 2) Dispatch a "change" event so the site sees the new file
-                    const event = new Event('change', { bubbles: true });
-                    siteFileInput.dispatchEvent(event);
+                        // 1) Programmatically set the .files property via DataTransfer
+                        const dt = new DataTransfer();
+                        dt.items.add(chunk);
+                        siteFileInput.files = dt.files;
 
-                    // Update status to "Injected"
-                    if (fileStatusDiv) {
-                        fileStatusDiv.innerText = `${file.name} - Injected`;
-                    }
+                        // 2) Dispatch a "change" event so the site sees the new file
+                        const event = new Event('change', { bubbles: true });
+                        siteFileInput.dispatchEvent(event);
 
-                    console.log(`Injected file: ${file.name} [${index + 1}/${files.length}]`);
+                        // Update status to "Injected"
+                        if (fileStatusDiv) {
+                            fileStatusDiv.innerText = `${file.name} - Injected part ${chunkIndex + 1}`;
+                        }
+
+                        console.log(`Injected file: ${chunk.name} [${chunkIndex + 1}/${fileChunks.length}]`);
+                    });
                 }, index * 30000); // 30-second spacing between files
             });
         });
