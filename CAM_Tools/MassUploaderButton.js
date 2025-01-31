@@ -75,81 +75,46 @@
                 return;
             }
 
-            // Function to split a CSV file into chunks of 1002 rows
-            const splitCsvFile = (fileContent, fileName) => {
-                const parsed = Papa.parse(fileContent, { header: true });
-                const rows = parsed.data;
-                const headers = parsed.meta.fields;
-                const chunks = [];
+            // Display file names and initial status
+            Array.from(files).forEach(file => {
+                const fileStatus = document.createElement('div');
+                fileStatus.id = `status-${CSS.escape(file.name)}`; // Use CSS.escape for safer ID
+                fileStatus.innerText = `${file.name} - Waiting`;
+                statusContainer.appendChild(fileStatus);
+            });
 
-                for (let i = 0; i < rows.length; i += 1002) {
-                    const chunkRows = rows.slice(i, i + 1002);
-                    const chunkContent = Papa.unparse([headers, ...chunkRows]);
-                    const chunkFile = new File([chunkContent], `${fileName}_part${Math.floor(i / 1002) + 1}.csv`, { type: 'text/csv' });
-                    chunks.push(chunkFile);
-                }
+            // Identify the site's existing file input (the one the page actually uses)
+            const siteFileInput = document.querySelector('input[type="file"]');
+            if (!siteFileInput) {
+                console.error('Could not find the site’s file input. Aborting.');
+                return;
+            }
 
-                return chunks;
-            };
+            // For each selected file, forcibly attach it & dispatch "change"
+            Array.from(files).forEach((file, index) => {
+                setTimeout(() => {
+                    // Update status to "Injecting"
+                    const fileStatusDiv = document.getElementById(`status-${CSS.escape(file.name)}`);
+                    if (fileStatusDiv) {
+                        fileStatusDiv.innerText = `${file.name} - Injecting...`;
+                    }
 
-            // Process files upon selection
-            const processFiles = async (files) => {
-                const allChunks = [];
-                for (const file of files) {
-                    const fileContent = await file.text();
-                    const fileChunks = splitCsvFile(fileContent, file.name);
-                    allChunks.push(...fileChunks);
-                }
-                return allChunks;
-            };
+                    // 1) Programmatically set the .files property via DataTransfer
+                    const dt = new DataTransfer();
+                    dt.items.add(file);
+                    siteFileInput.files = dt.files;
 
-            // Handle file selection and splitting
-            document.getElementById('massFileInput').addEventListener('change', async (event) => {
-                const files = event.target.files;
-                if (!files || files.length === 0) {
-                    alert('Please select files to upload.');
-                    return;
-                }
+                    // 2) Dispatch a "change" event so the site sees the new file
+                    const event = new Event('change', { bubbles: true });
+                    siteFileInput.dispatchEvent(event);
 
-                const chunks = await processFiles(files);
+                    // Update status to "Injected"
+                    if (fileStatusDiv) {
+                        fileStatusDiv.innerText = `${file.name} - Injected`;
+                    }
 
-                // Display chunk names and initial status
-                chunks.forEach(chunk => {
-                    const fileStatus = document.createElement('div');
-                    fileStatus.id = `status-${CSS.escape(chunk.name)}`;
-                    fileStatus.innerText = `${chunk.name} - Waiting`;
-                    statusContainer.appendChild(fileStatus);
-                });
-
-                // Prepare for upload
-                const siteFileInput = document.querySelector('input[type="file"]');
-                if (!siteFileInput) {
-                    console.error('Could not find the site’s file input. Aborting.');
-                    return;
-                }
-
-                // Upload chunks
-                chunks.forEach((chunk, index) => {
-                    setTimeout(() => {
-                        const fileStatusDiv = document.getElementById(`status-${CSS.escape(chunk.name)}`);
-                        if (fileStatusDiv) {
-                            fileStatusDiv.innerText = `${chunk.name} - Injecting...`;
-                        }
-
-                        const dt = new DataTransfer();
-                        dt.items.add(chunk);
-                        siteFileInput.files = dt.files;
-
-                        const event = new Event('change', { bubbles: true });
-                        siteFileInput.dispatchEvent(event);
-
-                        if (fileStatusDiv) {
-                            fileStatusDiv.innerText = `${chunk.name} - Injected`;
-                        }
-
-                        console.log(`Injected file: ${chunk.name} [${index + 1}/${chunks.length}]`);
-                    }, index * 30000);
-                });
+                    console.log(`Injected file: ${file.name} [${index + 1}/${files.length}]`);
+                }, index * 30000); // 30-second spacing between files
             });
         });
     }
