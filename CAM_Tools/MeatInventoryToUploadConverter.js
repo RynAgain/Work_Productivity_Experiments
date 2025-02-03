@@ -186,7 +186,7 @@
                 function unpivotChart(chart) {
                     const headers = chart[0];
                     return chart.slice(1).flatMap(row => {
-                        return Object.keys(row).slice(5).filter(storeCode => !['Grand Total', '2024 Order', 'To Allocate', 'Avg Case Weight', 'Cases/Pallet', 'Pallet Total', 'Weight Total', '2024 Order NDC', 'DC Inventory', 'New Allo Total', 'Reduce', 'pr store'].includes(storeCode)).map(storeCode => ({
+                        return Object.keys(row).slice(5).filter(storeCode => !['Item#','Grand Total', '2024 Order', 'To Allocate', 'Avg Case Weight', 'Cases/Pallet', 'Pallet Total', 'Weight Total', '2024 Order NDC', 'DC Inventory', 'New Allo Total', 'Reduce', 'pr store', '', 'POET FOR THE HAWAII STORES','VIN'].includes(storeCode)).map(storeCode => ({
                             'Item Name': row['Unnamed: 0'] || row[headers[0]],
                             'Item PLU/UPC': row['PLU/UPC'] !== 'PLU/UPC' ? row['PLU/UPC'] : '',
                             'Availability': 'Limited',
