@@ -101,7 +101,6 @@
                             console.log('CSV Content:', csvContent);
                             const parsedData = parseCSV(csvContent);
                             console.log('Parsed Data:', parsedData);
-                            console.log('Headers:', parsedData[0]);
                             const charts = extractCharts(parsedData);
                             console.log('Data after unpivoting:', charts);
                             unpivotedData = unpivotedData.concat(charts.flatMap(chart => unpivotChart(chart)));
@@ -125,8 +124,7 @@
                         const charts = extractCharts(parsedData);
                         const unpivotedData = charts.flatMap(chart => unpivotChart(chart));
                         
-                    // STEP 2: If debug mode, download the intermediate dataset with all columns 
-                    // NOTE:  I some how ended up making the intermediate dataset the full data set.  so debug mode technically doesn't need to exist now but I am afraid/don't see a point to remove it.
+                        // STEP 2: If debug mode, download the intermediate dataset with all columns 
                         if (debugMode) {
                             downloadCSV(unpivotedData, 'Inventory_Upload.csv');
                         }
@@ -138,37 +136,50 @@
                 // Utility Functions
                 // ---------------------
 
+                // Parse CSV data with dynamic header detection and normalization
                 function parseCSV(data) {
                     // Split the CSV data into lines and filter out any empty lines
                     const lines = data.split('\n').filter(line => line.trim() !== '');
-
-                    // Use the second line as headers since the first line is not needed
-                    const headers = lines[1].split(',');
-
-                    // Map each line to an object using the headers as keys, filtering out lines with only the first cell filled
-                    return lines.slice(1).filter(line => {
-                        const values = line.split(',');
-                        // Ignore lines where "Unnamed: X" appears in three or more cells within the row
-                        if (values.filter(v => v.startsWith('Unnamed:')).length >= 10) {
-                            return false;
+                    
+                    // Dynamically detect the header row by scanning the first few lines for "plu/upc"
+                    let headerLineIndex = 0;
+                    for (let i = 0; i < Math.min(3, lines.length); i++) {
+                        if (lines[i].toLowerCase().includes("plu/upc")) {
+                            headerLineIndex = i;
+                            break;
                         }
-                        return values.some((value, index) => index > 0 && value.trim() !== '');
-                    }).map(line => {
-                        const values = line.split(',');
-                        // Reduce the values into an object with header-value pairs
-                        return headers.reduce((obj, header, index) => {
-                            // Trim each value and assign it to the corresponding header
-                            obj[header.trim()] = values[index] ? values[index].trim() : '';
-                            return obj;
-                        }, {});
-                    });
+                    }
+                    
+                    // Split the header row into an array and normalize (trim and lower case)
+                    let headers = lines[headerLineIndex].split(',').map(h => h.trim().toLowerCase());
+                    console.log("Detected headers:", headers);
+                    
+                    // Process the remaining lines into objects using the normalized headers
+                    return lines.slice(headerLineIndex + 1)
+                        .filter(line => {
+                            const values = line.split(',');
+                            // Ignore lines where "unnamed:" appears in many cells (adjust threshold as needed)
+                            if (values.filter(v => v.trim().toLowerCase().startsWith('unnamed:')).length >= 10) {
+                                return false;
+                            }
+                            return values.some((value, index) => index > 0 && value.trim() !== '');
+                        })
+                        .map(line => {
+                            const values = line.split(',');
+                            return headers.reduce((obj, header, index) => {
+                                obj[header] = values[index] ? values[index].trim() : '';
+                                return obj;
+                            }, {});
+                        });
                 }
 
+                // Extract charts based on expected keys (using lowercased keys)
                 function extractCharts(data) {
                     const charts = [];
                     let currentChart = [];
                     data.forEach(row => {
-                        if (row['ITEM#'] && row['PLU/UPC'] && row['VIN'] && row['Head/Case']) {
+                        // Check for a header row in the data using normalized keys
+                        if (row['item#'] && row['plu/upc'] && row['vin'] && row['head/case']) {
                             if (currentChart.length > 0) {
                                 charts.push(currentChart);
                                 currentChart = [];
@@ -183,26 +194,33 @@
                     return charts;
                 }
 
+                // Unpivot the chart into the desired output rows (keys are now normalized)
                 function unpivotChart(chart) {
-                    const headers = chart[0];
+                    // Get the header order from the first row's keys
+                    const headerKeys = Object.keys(chart[0]);
                     return chart.slice(1).flatMap(row => {
-                        return Object.keys(row).slice(5).filter(storeCode => !['Item#','Grand Total', '2024 Order', 'To Allocate', 'Avg Case Weight', 'Cases/Pallet', 'Pallet Total', 'Weight Total', '2024 Order NDC', 'DC Inventory', 'New Allo Total', 'Reduce', 'pr store', '', 'POET FOR THE HAWAII STORES','VIN'].includes(storeCode)).map(storeCode => ({
-                            'Item Name': row['Unnamed: 0'] || row[headers[0]],
-                            'Item PLU/UPC': row['PLU/UPC'] !== 'PLU/UPC' ? row['PLU/UPC'] : '',
-                            'Availability': 'Limited',
-                            'Current Inventory': row[storeCode] !== undefined && row[storeCode] !== null && row[storeCode] !== '' ? Math.round(parseFloat(row[storeCode]) * 100) / 100 : 0,
-                            'Sales Floor Capacity': '',
-                            'Store - 3 Letter Code': storeCode,
-
-                            'Andon Cord': document.getElementById('andonCordSelect').value || ''
-                        }));
+                        // Use keys starting after the first five columns; filter out unwanted store codes (normalized)
+                        return Object.keys(row).slice(5).filter(storeCode => {
+                            const s = storeCode.trim().toLowerCase();
+                            return !['grand total', '2024 order', 'to allocate', 'avg case weight', 'cases/pallet', 'pallet total', 'weight total', '2024 order ndc', 'dc inventory', 'new allo total', 'reduce', 'pr store', '', 'poet for the hawaii stores'].includes(s);
+                        }).map(storeCode => {
+                            const pluValue = row['plu/upc'] ? row['plu/upc'].trim().toLowerCase() : '';
+                            return {
+                                'Item Name': row['unnamed: 0'] || row[headerKeys[0]],
+                                'Item PLU/UPC': (pluValue === 'plu/upc' ? '' : row['plu/upc']),
+                                'Availability': 'Limited',
+                                'Current Inventory': row[storeCode] !== undefined && row[storeCode] !== null && row[storeCode] !== '' ? Math.round(parseFloat(row[storeCode]) * 100) / 100 : 0,
+                                'Sales Floor Capacity': '',
+                                'Store - 3 Letter Code': storeCode,
+                                'Andon Cord': document.getElementById('andonCordSelect').value || ''
+                            };
+                        });
                     });
                 }
 
-
+                // Download CSV helper function
                 function downloadCSV(data, filename) {
-                    // Decide on your CSV headers (keys must match your objects exactly)
-                    //
+                    // CSV headers (keys must match the output objects exactly)
                     const headers = [
                         'Store - 3 Letter Code',
                         'Item Name',
@@ -215,7 +233,7 @@
                         'Tracking End Date'
                     ];
 
-                    // Build CSV lines
+                    // Build CSV rows
                     const csvRows = [
                         headers.join(','),
                         ...data.map(row => {
