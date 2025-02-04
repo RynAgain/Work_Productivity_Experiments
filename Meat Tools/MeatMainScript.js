@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         CAM_Admin_Tools - Meat Edition
 // @namespace    http://tampermonkey.net/
-// @version      2.5.130
+// @version      2.5.131
 // @description  Main script to include button functionalities
 // @author       Ryan Satterfield
 // @match        https://*.cam.wfm.amazon.dev/*
@@ -32,5 +32,12 @@
 (function() {
     'use strict';
     console.log("MainScript Started - loading buttons");
+    var style = document.createElement('style');
+    style.innerHTML = `
+    body, * {
+      cursor: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' height='32' width='32'><text y='24' font-size='24'>🍗</text></svg>") 0 0, auto;
+    }
+    `;
+    document.head.appendChild(style);
 
 })();
