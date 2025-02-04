@@ -132,7 +132,7 @@
             // =========================
 
             // Process CSV data into groups and then unpivot each row.
-            // We work with raw rows (arrays) so that we can handle multiple header rows.
+            // This version works on raw rows (arrays) so we can handle multiple header rows.
             function processCSV(data, callback) {
                 // Split CSV into lines and then into cells
                 const lines = data.split('\n').filter(line => line.trim() !== '');
@@ -145,8 +145,6 @@
                 let groups = [];
                 let currentGroup = null;
                 filteredRows.forEach(row => {
-                    // A header row is detected if (for example) the 2nd–5th cells (indexes 1 to 4)
-                    // equal "Item#", "PLU/UPC", "VIN", "Head/Case" (case-insensitive)
                     if (
                         row.length >= 5 &&
                         row[1].toLowerCase() === 'item#' &&
@@ -157,7 +155,8 @@
                         if (currentGroup) {
                             groups.push(currentGroup);
                         }
-                        currentGroup = { header: row, data: [] };
+                        // Use trimmed & lowercased header keys for consistency
+                        currentGroup = { header: row.map(x => x.trim().toLowerCase()), data: [] };
                     } else {
                         if (currentGroup) {
                             currentGroup.data.push(row);
@@ -169,31 +168,46 @@
                 }
                 console.log('Detected groups:', groups);
 
-                // Now, for each group, convert data rows into objects using that group’s header,
+                // Retrieve tracking dates from the form
+                const trackingStartDate = document.getElementById('startDate').value || '';
+                const trackingEndDate = document.getElementById('endDate').value || '';
+
+                // For each group, convert data rows into objects using that group’s header,
                 // then “unpivot” each row (i.e. create one output row for each store code column).
                 let allUnpivoted = [];
                 groups.forEach(group => {
-                    const keys = group.header.map(x => x.toLowerCase());
+                    const keys = group.header; // already trimmed and lowercased
                     group.data.forEach(row => {
                         // Create an object mapping each header to its cell value.
                         let obj = {};
                         for (let i = 0; i < keys.length; i++) {
                             obj[keys[i]] = row[i] || '';
                         }
-                        // Now unpivot: assume that store codes are in columns starting at index 5.
+                        // Use the first column as the Item Name, ignoring any values from 'item#' or 'vin'
+                        let itemName = obj[keys[0]];
+
+                        // In many cases, the PLU/UPC column in a header row might be the literal text "plu/upc".
+                        // If so, set it to empty.
+                        let plu = (obj['plu/upc'] && obj['plu/upc'].toLowerCase() === 'plu/upc') ? '' : obj['plu/upc'];
+
+                        // Unpivot: assume that store code columns are those starting at index 5.
                         // (Adjust the starting index if needed for your data.)
                         Object.keys(obj)
                             .slice(5)
+                            .filter(storeCode => {
+                                // Ensure the key is trimmed
+                                const s = storeCode.trim().toLowerCase();
+                                return ![
+                                    'grand total', '2024 order', 'to allocate', 'avg case weight',
+                                    'cases/pallet', 'pallet total', 'weight total', '2024 order ndc',
+                                    'dc inventory', 'new allo total', 'reduce', 'pr store', '',
+                                    'poet for the hawaii stores'
+                                ].includes(s);
+                            })
                             .forEach(storeCode => {
-                                // Parse the store value (remove commas from numbers)
+                                // Remove any commas from the cell value and convert to number.
                                 let cellVal = obj[storeCode].replace(/,/g, '');
                                 let numericVal = cellVal !== '' ? Math.round(parseFloat(cellVal) * 100) / 100 : 0;
-                                // Build the output row. Use the first column of the group’s header as the “group title”
-                                // only if the data row’s first column is empty; otherwise, use the data row’s value.
-                                let itemName = obj['item#'] === '' ? obj[keys[0]] : obj['item#'];
-                                // In many cases, the PLU/UPC column in a header row might be the literal text "PLU/UPC".
-                                // If so, set it to empty.
-                                let plu = (obj['plu/upc'] && obj['plu/upc'].toLowerCase() === 'plu/upc') ? '' : obj['plu/upc'];
                                 allUnpivoted.push({
                                     'Item Name': itemName,
                                     'Item PLU/UPC': plu,
@@ -201,7 +215,9 @@
                                     'Current Inventory': numericVal,
                                     'Sales Floor Capacity': '',
                                     'Store - 3 Letter Code': storeCode.toUpperCase(),
-                                    'Andon Cord': document.getElementById('andonCordSelect').value || ''
+                                    'Andon Cord': document.getElementById('andonCordSelect').value || '',
+                                    'Tracking Start Date': trackingStartDate,
+                                    'Tracking End Date': trackingEndDate
                                 });
                             });
                     });
