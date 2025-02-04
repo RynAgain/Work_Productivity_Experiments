@@ -102,9 +102,9 @@
                             const parsedData = parseCSV(csvContent);
                             console.log('Parsed Data:', parsedData);
                             const charts = extractCharts(parsedData);
-                            console.log('Data after unpivoting:', charts);
+                            console.log('Data after extractCharts:', charts);
                             unpivotedData = unpivotedData.concat(charts.flatMap(chart => unpivotChart(chart)));
-                            console.log('Unpivot:', unpivotedData);
+                            console.log('Unpivoted Data:', unpivotedData);
                         });
                         // Remove rows where "Item PLU/UPC" is an empty string or "Current Inventory" is NaN
                         unpivotedData = unpivotedData.filter(row => row['Item PLU/UPC'] !== '' && !isNaN(row['Current Inventory']));
@@ -196,25 +196,49 @@
 
                 // Unpivot the chart into the desired output rows (keys are now normalized)
                 function unpivotChart(chart) {
-                    // Get the header order from the first row's keys
+                    // Check if the first row is a header row.
+                    // If the first row's "plu/upc" equals "plu/upc" (ignoring case), skip it.
+                    let dataRows;
+                    if (
+                        chart[0]['plu/upc'] &&
+                        chart[0]['plu/upc'].trim().toLowerCase() === 'plu/upc'
+                    ) {
+                        dataRows = chart.slice(1);
+                    } else {
+                        dataRows = chart; // Otherwise, treat all rows as data
+                    }
+                    
+                    // Use the keys from the first row as a reference (whether header or data)
                     const headerKeys = Object.keys(chart[0]);
-                    return chart.slice(1).flatMap(row => {
-                        // Use keys starting after the first five columns; filter out unwanted store codes (normalized)
-                        return Object.keys(row).slice(5).filter(storeCode => {
-                            const s = storeCode.trim().toLowerCase();
-                            return !['grand total', '2024 order', 'to allocate', 'avg case weight', 'cases/pallet', 'pallet total', 'weight total', '2024 order ndc', 'dc inventory', 'new allo total', 'reduce', 'pr store', '', 'poet for the hawaii stores'].includes(s);
-                        }).map(storeCode => {
-                            const pluValue = row['plu/upc'] ? row['plu/upc'].trim().toLowerCase() : '';
-                            return {
-                                'Item Name': row['unnamed: 0'] || row[headerKeys[0]],
-                                'Item PLU/UPC': (pluValue === 'plu/upc' ? '' : row['plu/upc']),
-                                'Availability': 'Limited',
-                                'Current Inventory': row[storeCode] !== undefined && row[storeCode] !== null && row[storeCode] !== '' ? Math.round(parseFloat(row[storeCode]) * 100) / 100 : 0,
-                                'Sales Floor Capacity': '',
-                                'Store - 3 Letter Code': storeCode.toUpperCase(),
-                                'Andon Cord': document.getElementById('andonCordSelect').value || ''
-                            };
-                        });
+                    
+                    return dataRows.flatMap(row => {
+                        return Object.keys(row)
+                            .slice(5)
+                            .filter(storeCode => {
+                                const s = storeCode.trim().toLowerCase();
+                                return ![
+                                    'grand total', '2024 order', 'to allocate', 'avg case weight',
+                                    'cases/pallet', 'pallet total', 'weight total', '2024 order ndc',
+                                    'dc inventory', 'new allo total', 'reduce', 'pr store', '',
+                                    'poet for the hawaii stores'
+                                ].includes(s);
+                            })
+                            .map(storeCode => {
+                                const pluValue = row['plu/upc'] ? row['plu/upc'].trim().toLowerCase() : '';
+                                return {
+                                    'Item Name': row['unnamed: 0'] || row[headerKeys[0]],
+                                    'Item PLU/UPC': (pluValue === 'plu/upc' ? '' : row['plu/upc']),
+                                    'Availability': 'Limited',
+                                    'Current Inventory': row[storeCode] !== undefined &&
+                                        row[storeCode] !== null &&
+                                        row[storeCode] !== ''
+                                        ? Math.round(parseFloat(row[storeCode]) * 100) / 100
+                                        : 0,
+                                    'Sales Floor Capacity': '',
+                                    'Store - 3 Letter Code': storeCode.toUpperCase(),
+                                    'Andon Cord': document.getElementById('andonCordSelect').value || ''
+                                };
+                            });
                     });
                 }
 
