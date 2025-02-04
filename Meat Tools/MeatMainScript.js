@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         CAM_Admin_Tools - Meat Edition
 // @namespace    http://tampermonkey.net/
-// @version      2.5.129
+// @version      2.5.130
 // @description  Main script to include button functionalities
 // @author       Ryan Satterfield
 // @match        https://*.cam.wfm.amazon.dev/*
@@ -12,7 +12,7 @@
 
 
 
-// @require      https://github.com/RynAgain/Work_Productivity_Experiments/raw/main/Meat_Tools/GeneralHelpToolsButton.js
+// @require      https://raw.githubusercontent.com/RynAgain/Work_Productivity_Experiments/refs/heads/main/Meat%20Tools/GeneralHelpToolsButton.js
 // @require      https://github.com/RynAgain/Work_Productivity_Experiments/raw/main/CAM_Tools/PLUDedupeListButton.js
 
 // @require      https://github.com/RynAgain/Work_Productivity_Experiments/raw/main/CAM_Tools/ScanCodeTo13PLUButton.js
@@ -25,8 +25,8 @@
 
 
 // @run-at       document-end
-// @updateURL    https://github.com/RynAgain/Work_Productivity_Experiments/raw/main/Meat_Tools/MeatMainScript.js
-// @downloadURL  https://github.com/RynAgain/Work_Productivity_Experiments/raw/main/Meat_Tools/MeatMainScript.js
+// @updateURL    https://raw.githubusercontent.com/RynAgain/Work_Productivity_Experiments/refs/heads/main/Meat%20Tools/MeatMainScript.js
+// @downloadURL  https://raw.githubusercontent.com/RynAgain/Work_Productivity_Experiments/refs/heads/main/Meat%20Tools/MeatMainScript.js
 // ==/UserScript==
 
 (function() {
