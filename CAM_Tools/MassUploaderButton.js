@@ -6,6 +6,8 @@
      * For each chosen file, we artificially set it on the *existing* <input type="file">
      * and dispatch a "change" event to fool the site into thinking the user clicked it.
      * We also track status (Waiting, Injecting, etc.) in a small status container.
+     * Additionally, after processing each file, we poll for any toast/notification
+     * message from the page during a 35-second window and include that in the status update.
      */
     function addMassUploaderFunctionality() {
         console.log('Mass Uploader button clicked');
@@ -108,12 +110,29 @@
                     const event = new Event('change', { bubbles: true });
                     siteFileInput.dispatchEvent(event);
 
-                    // Update status to "Injected"
-                    if (fileStatusDiv) {
-                        fileStatusDiv.innerText = `${file.name} - Injected`;
-                    }
+                    // After dispatching, start polling for toast/notification for up to 35 seconds
+                    let elapsed = 0;
+                    const pollingInterval = 1000; // poll every second
+                    const maxPollingTime = 35000; // 35 seconds
+                    const poll = setInterval(() => {
+                        const toastElement = document.querySelector('.toast, .notification, .banner');
+                        if (toastElement) {
+                            const toastMessage = toastElement.innerText.trim();
+                            if (fileStatusDiv) {
+                                fileStatusDiv.innerText = `${file.name} - Injected. Status: ${toastMessage}`;
+                            }
+                            console.log(`Injected file: ${file.name} [${index + 1}/${files.length}] - ${toastMessage}`);
+                            clearInterval(poll);
+                        }
+                        elapsed += pollingInterval;
+                        if (elapsed >= maxPollingTime) {
+                            if (fileStatusDiv && fileStatusDiv.innerText.indexOf("Status:") === -1) {
+                                fileStatusDiv.innerText = `${file.name} - Injected. Status: No toast detected`;
+                            }
+                            clearInterval(poll);
+                        }
+                    }, pollingInterval);
 
-                    console.log(`Injected file: ${file.name} [${index + 1}/${files.length}]`);
                 }, index * 30000); // 30-second spacing between files
             });
         });
