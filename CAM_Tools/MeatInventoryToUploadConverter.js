@@ -1,7 +1,7 @@
 (function () {
     'use strict';
 
-    // Functionality for the Meat Inventory to Upload Converter
+    // MAIN FUNCTION: adds our overlay and functionality
     function addMeatInventoryToUploadConverterFunctionality() {
         console.log('Meat Inventory to Upload Converter button clicked');
         try {
@@ -77,36 +77,32 @@
                 const file = fileInput.files[0];
                 console.log('File selected:', file.name);
                 
-                // Toggle this true/false to enable/disable downloading the "intermediate" CSV
+                // Toggle debug mode to automatically download the CSV output
                 const debugMode = true;
-
-                // Determine file type and read accordingly
+                
                 if (file.type.includes('sheet') || file.name.endsWith('.xlsx')) {
-                    // Handle XLSX file
+                    // Handle XLSX file using XLSX.js (assumes XLSX is available)
                     const reader = new FileReader();
                     reader.onload = function(event) {
                         const data = new Uint8Array(event.target.result);
                         const workbook = XLSX.read(data, { type: 'array' });
                         let unpivotedData = [];
                         workbook.SheetNames.forEach(sheetName => {
-                            console.log('Raw Sheet Data:', workbook.Sheets[sheetName]);
-                            // Remove all formatting from the sheet
+                            console.log('Processing sheet:', sheetName);
                             const sheet = workbook.Sheets[sheetName];
+                            // Remove style properties
                             Object.keys(sheet).forEach(cell => {
                                 if (cell[0] !== '!') {
-                                    delete sheet[cell].s; // Remove style property
+                                    delete sheet[cell].s;
                                 }
                             });
                             const csvContent = XLSX.utils.sheet_to_csv(sheet, { raw: true });
                             console.log('CSV Content:', csvContent);
-                            const parsedData = parseCSV(csvContent);
-                            console.log('Parsed Data:', parsedData);
-                            const charts = extractCharts(parsedData);
-                            console.log('Data after extractCharts:', charts);
-                            unpivotedData = unpivotedData.concat(charts.flatMap(chart => unpivotChart(chart)));
-                            console.log('Unpivoted Data:', unpivotedData);
+                            processCSV(csvContent, function(groupData) {
+                                unpivotedData = unpivotedData.concat(groupData);
+                            });
                         });
-                        // Remove rows where "Item PLU/UPC" is an empty string or "Current Inventory" is NaN
+                        // Filter out rows with empty PLU/UPC or non-numeric inventory
                         unpivotedData = unpivotedData.filter(row => row['Item PLU/UPC'] !== '' && !isNaN(row['Current Inventory']));
                         if (debugMode) {
                             downloadCSV(unpivotedData, 'Inventory_Upload.csv');
@@ -114,176 +110,148 @@
                     };
                     reader.readAsArrayBuffer(file);
                 } else {
-                    // Handle CSV file
+                    // Handle CSV file directly
                     const reader = new FileReader();
                     reader.onload = function(event) {
                         const csvData = event.target.result;
-                        
-                        // STEP 1: Parse the CSV
-                        const parsedData = parseCSV(csvData);
-                        const charts = extractCharts(parsedData);
-                        const unpivotedData = charts.flatMap(chart => unpivotChart(chart));
-                        
-                        // STEP 2: If debug mode, download the intermediate dataset with all columns 
+                        let unpivotedData = [];
+                        processCSV(csvData, function(groupData) {
+                            unpivotedData = unpivotedData.concat(groupData);
+                        });
+                        unpivotedData = unpivotedData.filter(row => row['Item PLU/UPC'] !== '' && !isNaN(row['Current Inventory']));
                         if (debugMode) {
                             downloadCSV(unpivotedData, 'Inventory_Upload.csv');
                         }
                     };
                     reader.readAsText(file);
                 }
+            }); // end of convertButton click
 
-                // ---------------------
-                // Utility Functions
-                // ---------------------
+            // =========================
+            // UTILITY FUNCTIONS
+            // =========================
 
-                // Parse CSV data with dynamic header detection and normalization
-                function parseCSV(data) {
-                    // Split the CSV data into lines and filter out any empty lines
-                    const lines = data.split('\n').filter(line => line.trim() !== '');
-                    
-                    // Dynamically detect the header row by scanning the first few lines for "plu/upc"
-                    let headerLineIndex = 0;
-                    for (let i = 0; i < Math.min(3, lines.length); i++) {
-                        if (lines[i].toLowerCase().includes("plu/upc")) {
-                            headerLineIndex = i;
-                            break;
-                        }
-                    }
-                    
-                    // Split the header row into an array and normalize (trim and lower case)
-                    let headers = lines[headerLineIndex].split(',').map(h => h.trim().toLowerCase());
-                    console.log("Detected headers:", headers);
-                    
-                    // Process the remaining lines into objects using the normalized headers
-                    return lines.slice(headerLineIndex + 1)
-                        .filter(line => {
-                            const values = line.split(',');
-                            // Ignore lines where "unnamed:" appears in many cells (adjust threshold as needed)
-                            if (values.filter(v => v.trim().toLowerCase().startsWith('unnamed:')).length >= 10) {
-                                return false;
-                            }
-                            return values.some((value, index) => index > 0 && value.trim() !== '');
-                        })
-                        .map(line => {
-                            const values = line.split(',');
-                            return headers.reduce((obj, header, index) => {
-                                obj[header] = values[index] ? values[index].trim() : '';
-                                return obj;
-                            }, {});
-                        });
-                }
+            // Process CSV data into groups and then unpivot each row.
+            // We work with raw rows (arrays) so that we can handle multiple header rows.
+            function processCSV(data, callback) {
+                // Split CSV into lines and then into cells
+                const lines = data.split('\n').filter(line => line.trim() !== '');
+                const rows = lines.map(line => line.split(',').map(cell => cell.trim()));
 
-                // Extract charts based on expected keys (using lowercased keys)
-                function extractCharts(data) {
-                    const charts = [];
-                    let currentChart = [];
-                    data.forEach(row => {
-                        // Check for a header row in the data using normalized keys
-                        if (row['item#'] && row['plu/upc'] && row['vin'] && row['head/case']) {
-                            if (currentChart.length > 0) {
-                                charts.push(currentChart);
-                                currentChart = [];
-                            }
-                        } else {
-                            currentChart.push(row);
-                        }
-                    });
-                    if (currentChart.length > 0) {
-                        charts.push(currentChart);
-                    }
-                    return charts;
-                }
+                // Filter out title rows (those that have only one nonempty cell)
+                const filteredRows = rows.filter(row => row.filter(cell => cell !== '').length > 1);
 
-                // Unpivot the chart into the desired output rows (keys are now normalized)
-                function unpivotChart(chart) {
-                    // Check if the first row is a header row.
-                    // If the first row's "plu/upc" equals "plu/upc" (ignoring case), skip it.
-                    let dataRows;
+                // Group rows: whenever a row has a header signature in columns 2–5, start a new group.
+                let groups = [];
+                let currentGroup = null;
+                filteredRows.forEach(row => {
+                    // A header row is detected if (for example) the 2nd–5th cells (indexes 1 to 4)
+                    // equal "Item#", "PLU/UPC", "VIN", "Head/Case" (case-insensitive)
                     if (
-                        chart[0]['plu/upc'] &&
-                        chart[0]['plu/upc'].trim().toLowerCase() === 'plu/upc'
+                        row.length >= 5 &&
+                        row[1].toLowerCase() === 'item#' &&
+                        row[2].toLowerCase() === 'plu/upc' &&
+                        row[3].toLowerCase() === 'vin' &&
+                        row[4].toLowerCase() === 'head/case'
                     ) {
-                        dataRows = chart.slice(1);
+                        if (currentGroup) {
+                            groups.push(currentGroup);
+                        }
+                        currentGroup = { header: row, data: [] };
                     } else {
-                        dataRows = chart; // Otherwise, treat all rows as data
+                        if (currentGroup) {
+                            currentGroup.data.push(row);
+                        }
                     }
-                    
-                    // Use the keys from the first row as a reference (whether header or data)
-                    const headerKeys = Object.keys(chart[0]);
-                    
-                    return dataRows.flatMap(row => {
-                        return Object.keys(row)
+                });
+                if (currentGroup) {
+                    groups.push(currentGroup);
+                }
+                console.log('Detected groups:', groups);
+
+                // Now, for each group, convert data rows into objects using that group’s header,
+                // then “unpivot” each row (i.e. create one output row for each store code column).
+                let allUnpivoted = [];
+                groups.forEach(group => {
+                    const keys = group.header.map(x => x.toLowerCase());
+                    group.data.forEach(row => {
+                        // Create an object mapping each header to its cell value.
+                        let obj = {};
+                        for (let i = 0; i < keys.length; i++) {
+                            obj[keys[i]] = row[i] || '';
+                        }
+                        // Now unpivot: assume that store codes are in columns starting at index 5.
+                        // (Adjust the starting index if needed for your data.)
+                        Object.keys(obj)
                             .slice(5)
-                            .filter(storeCode => {
-                                const s = storeCode.trim().toLowerCase();
-                                return ![
-                                    'grand total', '2024 order', 'to allocate', 'avg case weight',
-                                    'cases/pallet', 'pallet total', 'weight total', '2024 order ndc',
-                                    'dc inventory', 'new allo total', 'reduce', 'pr store', '',
-                                    'poet for the hawaii stores'
-                                ].includes(s);
-                            })
-                            .map(storeCode => {
-                                const pluValue = row['plu/upc'] ? row['plu/upc'].trim().toLowerCase() : '';
-                                return {
-                                    'Item Name': row['unnamed: 0'] || row[headerKeys[0]],
-                                    'Item PLU/UPC': (pluValue === 'plu/upc' ? '' : row['plu/upc']),
+                            .forEach(storeCode => {
+                                // Parse the store value (remove commas from numbers)
+                                let cellVal = obj[storeCode].replace(/,/g, '');
+                                let numericVal = cellVal !== '' ? Math.round(parseFloat(cellVal) * 100) / 100 : 0;
+                                // Build the output row. Use the first column of the group’s header as the “group title”
+                                // only if the data row’s first column is empty; otherwise, use the data row’s value.
+                                let itemName = obj['item#'] === '' ? obj[keys[0]] : obj['item#'];
+                                // In many cases, the PLU/UPC column in a header row might be the literal text "PLU/UPC".
+                                // If so, set it to empty.
+                                let plu = (obj['plu/upc'] && obj['plu/upc'].toLowerCase() === 'plu/upc') ? '' : obj['plu/upc'];
+                                allUnpivoted.push({
+                                    'Item Name': itemName,
+                                    'Item PLU/UPC': plu,
                                     'Availability': 'Limited',
-                                    'Current Inventory': row[storeCode] !== undefined &&
-                                        row[storeCode] !== null &&
-                                        row[storeCode] !== ''
-                                        ? Math.round(parseFloat(row[storeCode]) * 100) / 100
-                                        : 0,
+                                    'Current Inventory': numericVal,
                                     'Sales Floor Capacity': '',
                                     'Store - 3 Letter Code': storeCode.toUpperCase(),
                                     'Andon Cord': document.getElementById('andonCordSelect').value || ''
-                                };
+                                });
                             });
                     });
-                }
+                });
+                console.log('Unpivoted data:', allUnpivoted);
+                callback(allUnpivoted);
+            }
 
-                // Download CSV helper function
-                function downloadCSV(data, filename) {
-                    // CSV headers (keys must match the output objects exactly)
-                    const headers = [
-                        'Store - 3 Letter Code',
-                        'Item Name',
-                        'Item PLU/UPC',
-                        'Availability',
-                        'Current Inventory',
-                        'Sales Floor Capacity',
-                        'Andon Cord',
-                        'Tracking Start Date',
-                        'Tracking End Date'
-                    ];
+            // Download CSV helper function
+            function downloadCSV(data, filename) {
+                // CSV headers (keys must match the output objects exactly)
+                const headers = [
+                    'Store - 3 Letter Code',
+                    'Item Name',
+                    'Item PLU/UPC',
+                    'Availability',
+                    'Current Inventory',
+                    'Sales Floor Capacity',
+                    'Andon Cord',
+                    'Tracking Start Date',
+                    'Tracking End Date'
+                ];
 
-                    // Build CSV rows
-                    const csvRows = [
-                        headers.join(','),
-                        ...data.map(row => {
-                            return headers.map(h => {
+                // Build CSV rows
+                const csvRows = [
+                    headers.join(','),
+                    ...data.map(row => {
+                        return headers
+                            .map(h => {
                                 if (h === 'Current Inventory') {
                                     return row[h] !== undefined && row[h] !== null && row[h] !== '' ? row[h] : 0;
                                 }
                                 return row[h] || '';
-                            }).join(',');
-                        })
-                    ];
+                            })
+                            .join(',');
+                    })
+                ];
 
-                    // Create CSV string
-                    const csvContent = 'data:text/csv;charset=utf-8,' + csvRows.join('\n');
-                    const encodedUri = encodeURI(csvContent);
+                // Create CSV string
+                const csvContent = 'data:text/csv;charset=utf-8,' + csvRows.join('\n');
+                const encodedUri = encodeURI(csvContent);
 
-                    // Create a hidden link and trigger download
-                    const link = document.createElement('a');
-                    link.setAttribute('href', encodedUri);
-                    link.setAttribute('download', filename);
-                    document.body.appendChild(link);
-                    link.click();
-                    document.body.removeChild(link);
-                }
-
-            }); // end of convertButton click
+                // Create a hidden link and trigger download
+                const link = document.createElement('a');
+                link.setAttribute('href', encodedUri);
+                link.setAttribute('download', filename);
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            }
         } catch (error) {
             console.error('[MeatInventory] Meat Inventory Failed', error);
         }
@@ -301,6 +269,5 @@
             }
         });
     });
-
     observer.observe(document.body, { childList: true, subtree: true });
 })();
