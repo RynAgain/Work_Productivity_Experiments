@@ -211,7 +211,7 @@
                                 'Availability': 'Limited',
                                 'Current Inventory': row[storeCode] !== undefined && row[storeCode] !== null && row[storeCode] !== '' ? Math.round(parseFloat(row[storeCode]) * 100) / 100 : 0,
                                 'Sales Floor Capacity': '',
-                                'Store - 3 Letter Code': storeCode,
+                                'Store - 3 Letter Code': storeCode.toUpperCase(),
                                 'Andon Cord': document.getElementById('andonCordSelect').value || ''
                             };
                         });
