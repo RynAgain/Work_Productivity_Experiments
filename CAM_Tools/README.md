@@ -98,4 +98,4 @@ Not for public use.
 
 - [ ] Easter egg?
 
-- [ ]
+- [ ]custom cursor?
