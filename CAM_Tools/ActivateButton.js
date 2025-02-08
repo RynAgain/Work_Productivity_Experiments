@@ -120,10 +120,19 @@
                 const bySelect = document.getElementById('bySelect').value;
                 const storeRegionInput = Array.from(new Set(document.getElementById('storeRegionInput').value.split(',').map(sr => sr.trim())));
                 const andonCord = document.getElementById('andonCordSelect').value;
+                var loadingIndicator = document.createElement('div');
+                loadingIndicator.id = 'loadingIndicator';
+                loadingIndicator.innerHTML = 'Processing...';
+                loadingIndicator.style.textAlign = 'center';
+                loadingIndicator.style.marginTop = '10px';
+                loadingIndicator.style.fontSize = '16px';
+                loadingIndicator.style.color = '#004E36';
+                formContainer.appendChild(loadingIndicator);
 
                 // Determine the environment (prod or gamma)
                 const environment = window.location.hostname.includes('gamma') ? 'gamma' : 'prod';
                 const apiUrlBase = `https://${environment}.cam.wfm.amazon.dev/api/`;
+                const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
 
                 // Define the API endpoint and headers for getting stores
                 const headersStores = {
@@ -136,12 +145,12 @@
                 };
 
                 // Call the API to get the list of stores
-                fetch(apiUrlBase, {
+                delay(500).then(() => fetch(apiUrlBase, {
                     method: 'POST',
                     headers: headersStores,
                     body: JSON.stringify({}),
                     credentials: 'include' // Include cookies in the request
-                })
+                }))
                 .then(response => response.json())
                 .then(storeData => {
                     console.log('Store data received:', storeData);
@@ -171,8 +180,14 @@
                         }
                     }
 
-                    // Function to fetch items for a single store
-                    const fetchItemsForStore = (storeId) => {
+                    // Define batching for fetching items for stores
+                    const batchSize = 10;
+                    const storeIdBatches = [];
+                    for (let i = 0; i < storeIds.length; i += batchSize) {
+                        storeIdBatches.push(storeIds.slice(i, i + batchSize));
+                    }
+                    const retryLimit = 10;
+                    const fetchItemsForStores = (storeIdsBatch) => {
                         const headersItems = {
                             'accept': '*/*',
                             'accept-encoding': 'gzip, deflate, br',
@@ -184,7 +199,7 @@
 
                         const payloadItems = {
                             "filterContext": {
-                                "storeIds": [storeId]
+                                "storeIds": storeIdsBatch
                             },
                             "paginationContext": {
                                 "pageNumber": 0,
@@ -192,19 +207,18 @@
                             }
                         };
 
-                        return fetch(apiUrlBase, {
+                        return delay(500).then(() => fetch(apiUrlBase, {
                             method: 'POST',
                             headers: headersItems,
                             body: JSON.stringify(payloadItems),
-                            credentials: 'include' // Include cookies in the request
-                        })
+                            credentials: 'include'
+                        }))
                         .then(response => response.json())
                         .then(data => {
-                            console.log(`Data for store ${storeId}:`, data);
+                            console.log(`Data for store batch:`, data);
                             return data.itemsAvailability.filter(item => pluInput.includes(item.wfmScanCode)).map(item => {
-                                // Transformations
                                 return {
-                                    'Store - 3 Letter Code': storeId,
+                                    'Store - 3 Letter Code': item.storeTLC || '',
                                     'Andon Cord': andonCord,
                                     'Item Name': item.itemName,
                                     'Item PLU/UPC': item.wfmScanCode,
@@ -217,13 +231,27 @@
                             });
                         })
                         .catch(error => {
-                            console.error(`Error downloading data for store ${storeId}:`, error);
+                            console.error(`Error downloading data for store batch:`, error);
                             return [];
                         });
                     };
 
-                    // Fetch items for all stores and compile results
-                    Promise.all(storeIds.map(storeId => fetchItemsForStore(storeId)))
+                    const fetchWithRetry = async (storeIdsBatch, attempt = 1) => {
+                        try {
+                            await delay(100);
+                            return fetchItemsForStores(storeIdsBatch);
+                        } catch (error) {
+                            if (attempt < retryLimit) {
+                                console.warn(`Retrying store batch, attempt ${attempt + 1}`);
+                                return fetchWithRetry(storeIdsBatch, attempt + 1);
+                            } else {
+                                console.error(`Failed after ${retryLimit} attempts`);
+                                return [];
+                            }
+                        }
+                    };
+
+                    Promise.all(storeIdBatches.map(storeIdsBatch => fetchWithRetry(storeIdsBatch)))
                     .then(results => {
                         const allItems = results.flat();
                         console.log('Filtered items data:', allItems);
@@ -235,7 +263,7 @@
                                 'Current Inventory', 'Sales Floor Capacity', 'Andon Cord', 'Tracking Start Date', 'Tracking End Date'
                             ];
                             const csvContent = "data:text/csv;charset=utf-8,"
-                                + desiredHeaders.join(",") + "\n" // Add headers
+                                + desiredHeaders.join(",") + "\n"
                                 + allItems.map(e => desiredHeaders.map(header => `"${e[header] || ''}"`).join(",")).join("\n");
 
                             // Create a download link
