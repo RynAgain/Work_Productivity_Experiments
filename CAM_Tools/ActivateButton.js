@@ -114,7 +114,12 @@
                 }
             });
 
-            document.getElementById('generateUploadFileButton').addEventListener('click', function() {
+document.getElementById('generateUploadFileButton').addEventListener('click', function() {
+                var generateButton = document.getElementById('generateUploadFileButton');
+                var originalButtonText = generateButton.innerHTML;
+                generateButton.innerHTML = 'Processing...';
+                generateButton.style.cursor = 'wait';
+                generateButton.disabled = true;
                 // Logic to generate the upload file
                 const pluInput = Array.from(new Set(document.getElementById('pluInput').value.split(',').map(plu => plu.trim())));
                 const bySelect = document.getElementById('bySelect').value;
@@ -281,7 +286,12 @@
                         }
                     });
                 })
-                .catch(error => console.error('Error downloading data:', error));
+                .catch(error => console.error('Error downloading data:', error))
+                .finally(function() {
+                    generateButton.innerHTML = originalButtonText;
+                    generateButton.style.cursor = 'pointer';
+                    generateButton.disabled = false;
+                });
             });
         });
     }
