@@ -57,10 +57,11 @@
             formContainer.style.borderRadius = '5px';
             formContainer.style.width = '300px';
 
+            // New UI: "Everything" checkbox at top, and "All PLUs" as a checkbox instead of text input.
             formContainer.innerHTML = `
                 <h3>Download Data Options</h3>
-                <label>PLU(s)</label>
-                <input type="text" id="pluInput" style="width: 100%; margin-bottom: 10px;" placeholder="Enter PLU(s) separated by commas">
+                <label><input type="checkbox" id="everythingCheckbox"> Everything</label><br>
+                <label><input type="checkbox" id="allPlusCheckbox"> All PLUs</label><br>
                 <label>By</label>
                 <select id="bySelect" style="width: 100%; margin-bottom: 10px;">
                     <option value="Store">Store</option>
@@ -71,9 +72,29 @@
                 <label><input type="checkbox" id="allStoresCheckbox"> All Stores/Regions</label><br>
                 <button id="executeDownloadButton" style="width: 100%; margin-top:10px;">Download</button>
                 <button id="cancelDownloadButton" style="width: 100%; margin-top:10px; background-color: #FF0000;">Cancel</button>
-                <div id="downloadProgress" style="display:none; margin-top:10px; text-align:center; font-size:16px; color:#004E36;">Progress: 0%</div>
+                <div id="downloadProgress" style="display:none; margin-top:10px; text-align:center; font-size:16px; color:#004E36;">Wait for Parameters</div>
             `;
 
+            // "Everything" checkbox disables all other options if checked
+            formContainer.querySelector('#everythingCheckbox').addEventListener('change', function() {
+                var allPlus = document.getElementById('allPlusCheckbox');
+                var bySelect = document.getElementById('bySelect');
+                var storeRegionInput = document.getElementById('storeRegionInput');
+                var allStores = document.getElementById('allStoresCheckbox');
+                if(this.checked) {
+                    allPlus.disabled = true;
+                    bySelect.disabled = true;
+                    storeRegionInput.disabled = true;
+                    allStores.disabled = true;
+                } else {
+                    allPlus.disabled = false;
+                    bySelect.disabled = false;
+                    storeRegionInput.disabled = false;
+                    allStores.disabled = false;
+                }
+            });
+
+            // If "All Stores/Regions" is checked, disable storeRegionInput
             formContainer.querySelector('#allStoresCheckbox').addEventListener('change', function() {
                 var storeRegionInput = document.getElementById('storeRegionInput');
                 storeRegionInput.disabled = this.checked;
@@ -94,16 +115,24 @@
             formContainer.querySelector('#executeDownloadButton').addEventListener('click', function() {
                 var progress = document.getElementById('downloadProgress');
                 progress.style.display = 'block';
+                progress.innerHTML = 'Wait for Parameters';
 
-                // Get user input values
-                const pluInput = Array.from(new Set(document.getElementById('pluInput').value.split(',').map(plu => plu.trim()))).filter(Boolean);
+                // Check if "Everything" is checked; if so, ignore all other filters
+                var everythingChecked = document.getElementById('everythingCheckbox').checked;
+                var allPlusChecked = document.getElementById('allPlusCheckbox').checked;
+                
+                // For PLUs, if allPlus or everything is checked, use all PLUs (empty filter means no filtering)
+                const pluInput = allPlusChecked || everythingChecked ? [] : [];
                 const bySelect = document.getElementById('bySelect').value;
                 const storeRegionInput = Array.from(new Set(document.getElementById('storeRegionInput').value.split(',').map(sr => sr.trim()))).filter(Boolean);
                 
                 // Determine the environment (prod or gamma)
                 const environment = window.location.hostname.includes('gamma') ? 'gamma' : 'prod';
                 const apiUrlBase = `https://${environment}.cam.wfm.amazon.dev/api/`;
-                
+
+                // Update progress: processing parameters
+                progress.innerHTML = 'Processing...';
+
                 // Define the API endpoint and headers for getting stores
                 const headersStores = {
                     'accept': '*/*',
@@ -128,14 +157,15 @@
                         throw new Error('Invalid store data received');
                     }
                     
-                    // Build storeIds array based on user selections
+                    // Build storeIds array based on user selections.
+                    // If "Everything" is checked, use all stores; otherwise, filter by criteria.
                     const storeIds = [];
                     for(const region in storeData.storesInformation) {
                         const states = storeData.storesInformation[region];
                         for(const state in states) {
                             const stores = states[state];
                             stores.forEach(store => {
-                                if(document.getElementById('allStoresCheckbox').checked) {
+                                if(document.getElementById('allStoresCheckbox').checked || everythingChecked) {
                                     storeIds.push(store.storeTLC);
                                 } else {
                                     const regionCode = region.split('-').pop();
@@ -147,6 +177,9 @@
                             });
                         }
                     }
+
+                    // Update progress: Downloading
+                    progress.innerHTML = 'Downloading';
 
                     const batchSize = 10;
                     const storeIdBatches = [];
@@ -232,7 +265,7 @@
                             document.body.appendChild(link);
                             link.click();
                             document.body.removeChild(link);
-                            progress.innerHTML = 'Download Complete!';
+                            progress.innerHTML = 'Done';
                         } else {
                             progress.innerHTML = 'No data available.';
                         }
