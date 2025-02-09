@@ -33,7 +33,7 @@
         console.log('Redrive button added to the page');
 
         // Add click event to the redrive button
-redriveButton.addEventListener('click', function() {
+    redriveButton.addEventListener('click', function() {
     console.log('Redrive button clicked');
     
     // Create overlay
@@ -88,6 +88,14 @@ redriveButton.addEventListener('click', function() {
         <label><input type="checkbox" id="allStoresCheckbox"> All Stores</label><br>
         <button id="generateRedriveFileButton" style="width: 100%;">Generate Redrive Files</button>
     `;
+    var loadingIndicator = document.createElement('div');
+    loadingIndicator.id = 'redriveLoadingIndicator';
+    loadingIndicator.innerHTML = 'Processing...';
+    loadingIndicator.style.textAlign = 'center';
+    loadingIndicator.style.marginTop = '10px';
+    loadingIndicator.style.fontSize = '16px';
+    loadingIndicator.style.color = '#004E36';
+    formContainer.appendChild(loadingIndicator);
 
     formContainer.appendChild(closeButton);
     overlay.appendChild(formContainer);

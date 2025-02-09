@@ -190,7 +190,7 @@ document.getElementById('generateUploadFileButton').addEventListener('click', fu
                     for (let i = 0; i < storeIds.length; i += batchSize) {
                         storeIdBatches.push(storeIds.slice(i, i + batchSize));
                     }
-                    loadingIndicator.innerHTML = 'Processing {storeIdsBatch}'
+                    loadingIndicator.innerHTML = 'Processing batches...';
                     const retryLimit = 10;
                     const fetchItemsForStores = (storeIdsBatch) => {
                         const headersItems = {
@@ -256,11 +256,16 @@ document.getElementById('generateUploadFileButton').addEventListener('click', fu
                         }
                     };
 
-                    Promise.all(storeIdBatches.map((storeIdsBatch, index) => { 
-                        loadingIndicator.innerHTML = 'Processing batch ' + (index + 1) + ' of ' + storeIdBatches.length; 
-                        return fetchWithRetry(storeIdsBatch); 
-                    }))
-                    .then(results => {
+                    async function processBatches() {
+                        const results = [];
+                        for (let i = 0; i < storeIdBatches.length; i++) {
+                            loadingIndicator.innerHTML = 'Processing batch ' + (i + 1) + ' of ' + storeIdBatches.length;
+                            const res = await fetchWithRetry(storeIdBatches[i]);
+                            results.push(res);
+                        }
+                        return results;
+                    }
+                    processBatches().then(results => {
                         const allItems = results.flat();
                         console.log('Filtered items data:', allItems);
 
@@ -275,7 +280,7 @@ document.getElementById('generateUploadFileButton').addEventListener('click', fu
                                 + allItems.map(e => desiredHeaders.map(header => `"${e[header] || ''}"`).join(",")).join("\n");
 
                             // Create a download link
-                            loadingIndicator.innerHTML = 'Downloading...'
+                            loadingIndicator.innerHTML = 'Downloading...';
                             const encodedUri = encodeURI(csvContent);
                             const link = document.createElement("a");
                             link.setAttribute("href", encodedUri);
