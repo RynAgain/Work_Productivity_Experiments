@@ -57,8 +57,22 @@
             formContainer.style.borderRadius = '5px';
             formContainer.style.width = '300px';
 
-            // New UI: "Everything" checkbox at top, and "All PLUs" as a checkbox instead of text input.
-            formContainer.innerHTML = `
+            // Create close button inside the form container (like other buttons)
+            var closeButton = document.createElement('span');
+            closeButton.innerHTML = '&times;';
+            closeButton.style.position = 'absolute';
+            closeButton.style.top = '5px';
+            closeButton.style.right = '5px';
+            closeButton.style.fontSize = '24px';
+            closeButton.style.cursor = 'pointer';
+            closeButton.style.color = '#000';
+            closeButton.addEventListener('click', function() {
+                document.body.removeChild(overlay);
+            });
+            formContainer.appendChild(closeButton);
+
+            // New UI: "Everything" checkbox at top, and "All PLUs" as a checkbox
+            formContainer.innerHTML += `
                 <h3>Download Data Options</h3>
                 <label><input type="checkbox" id="everythingCheckbox"> Everything</label><br>
                 <label><input type="checkbox" id="allPlusCheckbox"> All PLUs</label><br>
@@ -121,7 +135,7 @@
                 var everythingChecked = document.getElementById('everythingCheckbox').checked;
                 var allPlusChecked = document.getElementById('allPlusCheckbox').checked;
                 
-                // For PLUs, if allPlus or everything is checked, use all PLUs (empty filter means no filtering)
+                // For PLUs, if allPlus or everything is checked, use all PLUs (empty array means no filtering)
                 const pluInput = allPlusChecked || everythingChecked ? [] : [];
                 const bySelect = document.getElementById('bySelect').value;
                 const storeRegionInput = Array.from(new Set(document.getElementById('storeRegionInput').value.split(',').map(sr => sr.trim()))).filter(Boolean);
