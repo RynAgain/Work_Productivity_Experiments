@@ -87,7 +87,7 @@
                 <button id="atcpropButton" style ="width: 100%; margin-bottom: 10px;">zATC Propagation Toolz</button>
                 <button id ="filechunker" style = "width: 100%; margin-bottom: 10px;">File Chunker</button>
                 <button id ="massUploaderButton" style = "width: 100%; margin-bottom: 10px;">Mass File Upload</button>
-                <button id ="zAuditHistoryDashboardz" style = "width: 100%; margin-bottom: 10px;">Mass File Upload</button>
+                <button id ="auditHistoryDashboardButton" style = "width: 100%; margin-bottom: 10px;">zAudit History Dashboardz</button>
                 <a href="#" id="creditsLink" style="display: block; text-align: center; margin-top: 10px;">Credits</a>
             `;
 
