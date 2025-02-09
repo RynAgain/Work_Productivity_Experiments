@@ -130,6 +130,17 @@
             // =========================
             // UTILITY FUNCTIONS
             // =========================
+            // Helper function to format date from YYYY-MM-DD to MM/DD/YYYY.
+            function formatDate(dateString) {
+                if (!dateString) {
+                    return '';
+                }
+                const parts = dateString.split('-');
+                if (parts.length !== 3) {
+                    return dateString;
+                }
+                return parts[1] + '/' + parts[2] + '/' + parts[0];
+            }
 
             // Process CSV data into groups and then unpivot each row.
             // This version works on raw rows (arrays) so we can handle multiple header rows.
@@ -216,8 +227,8 @@
                                     'Sales Floor Capacity': '',
                                     'Store - 3 Letter Code': storeCode.toUpperCase(),
                                     'Andon Cord': document.getElementById('andonCordSelect').value || '',
-                                    'Tracking Start Date': trackingStartDate,
-                                    'Tracking End Date': trackingEndDate
+                                    'Tracking Start Date': formatDate(trackingStartDate),
+                                    'Tracking End Date': formatDate(trackingEndDate)
                                 });
                             });
                     });

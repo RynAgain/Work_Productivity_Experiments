@@ -117,9 +117,8 @@
 document.getElementById('generateUploadFileButton').addEventListener('click', function() {
                 var generateButton = document.getElementById('generateUploadFileButton');
                 var originalButtonText = generateButton.innerHTML;
-                generateButton.innerHTML = 'Processing...';
-                generateButton.style.cursor = 'wait';
-                generateButton.disabled = true;
+                
+                
                 // Logic to generate the upload file
                 const pluInput = Array.from(new Set(document.getElementById('pluInput').value.split(',').map(plu => plu.trim())));
                 const bySelect = document.getElementById('bySelect').value;
@@ -191,6 +190,7 @@ document.getElementById('generateUploadFileButton').addEventListener('click', fu
                     for (let i = 0; i < storeIds.length; i += batchSize) {
                         storeIdBatches.push(storeIds.slice(i, i + batchSize));
                     }
+                    loadingIndicator.innerHTML = 'Processing {storeIdsBatch}'
                     const retryLimit = 10;
                     const fetchItemsForStores = (storeIdsBatch) => {
                         const headersItems = {
@@ -256,7 +256,10 @@ document.getElementById('generateUploadFileButton').addEventListener('click', fu
                         }
                     };
 
-                    Promise.all(storeIdBatches.map(storeIdsBatch => fetchWithRetry(storeIdsBatch)))
+                    Promise.all(storeIdBatches.map((storeIdsBatch, index) => { 
+                        loadingIndicator.innerHTML = 'Processing batch ' + (index + 1) + ' of ' + storeIdBatches.length; 
+                        return fetchWithRetry(storeIdsBatch); 
+                    }))
                     .then(results => {
                         const allItems = results.flat();
                         console.log('Filtered items data:', allItems);
@@ -272,6 +275,7 @@ document.getElementById('generateUploadFileButton').addEventListener('click', fu
                                 + allItems.map(e => desiredHeaders.map(header => `"${e[header] || ''}"`).join(",")).join("\n");
 
                             // Create a download link
+                            loadingIndicator.innerHTML = 'Downloading...'
                             const encodedUri = encodeURI(csvContent);
                             const link = document.createElement("a");
                             link.setAttribute("href", encodedUri);
