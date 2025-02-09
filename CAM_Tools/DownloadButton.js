@@ -57,21 +57,27 @@
             formContainer.style.borderRadius = '5px';
             formContainer.style.width = '300px';
 
-            // Create close button inside the form container (like other buttons)
+            // Create close button inside the form container (styled similar to AddItemButton)
             var closeButton = document.createElement('span');
-            closeButton.innerHTML = '&times;';
+            closeButton.innerHTML = 'X';
             closeButton.style.position = 'absolute';
-            closeButton.style.top = '5px';
-            closeButton.style.right = '5px';
-            closeButton.style.fontSize = '24px';
+            closeButton.style.top = '10px';
+            closeButton.style.right = '10px';
+            closeButton.style.fontSize = '18px';
+            closeButton.style.fontWeight = 'bold';
             closeButton.style.cursor = 'pointer';
-            closeButton.style.color = '#000';
+            closeButton.style.color = '#fff';
+            closeButton.style.backgroundColor = '#004E36';
+            closeButton.style.border = 'none';
+            closeButton.style.padding = '2px 6px';
+            closeButton.style.borderRadius = '0';
             closeButton.addEventListener('click', function() {
                 document.body.removeChild(overlay);
             });
             formContainer.appendChild(closeButton);
 
-            // New UI: "Everything" checkbox at top, and "All PLUs" as a checkbox
+            // New UI with improved layout:
+            // Options first, then Download button, then progress indicator, then Cancel button.
             formContainer.innerHTML += `
                 <h3>Download Data Options</h3>
                 <label><input type="checkbox" id="everythingCheckbox"> Everything</label><br>
@@ -85,8 +91,8 @@
                 <input type="text" id="storeRegionInput" style="width: 100%; margin-bottom: 10px;" placeholder="Enter Store/Region codes separated by commas">
                 <label><input type="checkbox" id="allStoresCheckbox"> All Stores/Regions</label><br>
                 <button id="executeDownloadButton" style="width: 100%; margin-top:10px;">Download</button>
-                <button id="cancelDownloadButton" style="width: 100%; margin-top:10px; background-color: #FF0000;">Cancel</button>
                 <div id="downloadProgress" style="display:none; margin-top:10px; text-align:center; font-size:16px; color:#004E36;">Wait for Parameters</div>
+                <button id="cancelDownloadButton" style="width: 100%; margin-top:10px; background-color: #FF0000;">Cancel</button>
             `;
 
             // "Everything" checkbox disables all other options if checked
@@ -229,10 +235,23 @@
                             credentials: 'include'
                         })
                         .then(response => response.json())
-                        .then(data => {
-                            console.log(`Data for store batch:`, data);
-                            return data.itemsAvailability;
-                        })
+    .then(data => {
+        console.log(`Data for store batch:`, data);
+        return data.itemsAvailability.map(item => {
+            item.andon = item.andon === true ? 'Enabled' : 'Disabled';
+            if (item.inventoryStatus === 'Unlimited') {
+                item.currentInventoryQuantity = 0;
+            } else if (item.inventoryStatus === 'Limited') {
+                item.currentInventoryQuantity = Math.max(0, Math.min(10000, parseInt(item.currentInventoryQuantity) || 0));
+            }
+            item.hasAndonEnabledComponent = item.hasAndonEnabledComponent || 'FALSE';
+            item.isMultiChannel = item.isMultiChannel || 'FALSE';
+            item.reservedQuantity = item.reservedQuantity !== undefined && item.reservedQuantity !== '' ? parseInt(item.reservedQuantity) || 0 : 0;
+            item.salesFloorCapacity = item.salesFloorCapacity !== undefined && item.salesFloorCapacity !== '' ? parseInt(item.salesFloorCapacity) || 0 : 0;
+            item.wfmoaReservedQuantity = item.wfmoaReservedQuantity !== undefined && item.wfmoaReservedQuantity !== '' ? parseInt(item.wfmoaReservedQuantity) || 0 : 0;
+            return item;
+        });
+    })
                         .catch(error => {
                             console.error('Error fetching items for batch:', error);
                             return [];
@@ -275,7 +294,7 @@
                             const encodedUri = encodeURI(csvContent);
                             const link = document.createElement("a");
                             link.setAttribute("href", encodedUri);
-                            link.setAttribute("download", "custom_items_data.csv");
+                            link.setAttribute("download", "Cam_Item_Data.csv");
                             document.body.appendChild(link);
                             link.click();
                             document.body.removeChild(link);
