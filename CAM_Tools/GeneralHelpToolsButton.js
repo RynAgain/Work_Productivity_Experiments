@@ -91,6 +91,7 @@
                 <button id ="filechunker" style = "width: 100%; margin-bottom: 10px;">File Chunker</button>
                 <button id ="massUploaderButton" style = "width: 100%; margin-bottom: 10px;">Mass File Upload</button>
                 <button id ="auditHistoryDashboardButton" style = "width: 100%; margin-bottom: 10px;">zAudit History Dashboardz</button>
+                <button id ="dailyInventoryTool" style = "width: 100%; margin-bottom: 10px;">zDaily Inventory Toolz</button>
                 <a href="#" id="creditsLink" style="display: block; text-align: center; margin-top: 10px;">Credits</a>
             `;
 
