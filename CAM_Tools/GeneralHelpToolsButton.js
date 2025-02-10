@@ -76,6 +76,9 @@
 
             // Create list of buttons
             formContainer.innerHTML = `
+                <label style="display:block; margin-bottom:10px;">
+                  <input type="checkbox" id="highlightToggle" style="margin-right:5px;"> Activate Syntax Highlight
+                </label>
                 <h3>General Help Tools</h3>
                 <button id="pluDedupeListButton" style="width: 100%; margin-bottom: 10px;">PLU Dedupe & List</button>
                 <button id="nisFileToCAMUploadButton" style="width: 100%; margin-bottom: 10px;">zNon-functional Buttonz</button>
@@ -94,6 +97,20 @@
             formContainer.appendChild(closeButton);
             overlay.appendChild(formContainer);
             document.body.appendChild(overlay);
+            // Add event listener for the highlight toggle
+                if (event.target.checked) {
+                    if (!window.hljs) {
+                        loadCSS("https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/styles/dark.min.css");
+                        loadScript("https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/highlight.min.js", function() {
+                            if (overlay && overlay.style.display === "block") {
+                                hljs.highlightAll();
+                            }
+                        });
+                    } else {
+                        hljs.highlightAll();
+                    }
+                }
+            });
 
             // Add event listener for the "Credits" link
             document.getElementById('creditsLink').addEventListener('click', function(event) {
