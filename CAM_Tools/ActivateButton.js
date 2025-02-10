@@ -223,7 +223,7 @@ document.getElementById('generateUploadFileButton').addEventListener('click', fu
                             console.log(`Data for store batch:`, data);
                             return data.itemsAvailability.filter(item => pluInput.includes(item.wfmScanCode)).map(item => {
                                 return {
-                                    'Store - 3 Letter Code': item.storeTLC || '',
+                                    'Store - 3 Letter Code': item.storeCode || item.storeTLC || item.storeId || item.store || '',
                                     'Andon Cord': andonCord,
                                     'Item Name': item.itemName,
                                     'Item PLU/UPC': item.wfmScanCode,
@@ -233,6 +233,7 @@ document.getElementById('generateUploadFileButton').addEventListener('click', fu
                                     'Tracking Start Date': '',
                                     'Tracking End Date': ''
                                 };
+                                console.log(item);
                             });
                         })
                         .catch(error => {
