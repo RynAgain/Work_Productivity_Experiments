@@ -48,9 +48,12 @@
               bottom: 0;
               left: 0;
               z-index: 1000;
-              background-color: black;
+              background-color: transparent !important;
               padding: 10px;
               border-radius: 5px;
+              display: flex;
+              flex-wrap: wrap;
+              gap: 10px;
           }
       `;
       document.head.appendChild(style);
@@ -68,7 +71,7 @@
        element.style.left = element.style.left || '0px';
        element.style.top = element.style.top || '0px';
      }
-     var pos = {x:0, y:0};
+     let pos = {x:0, y:0};
 
      element.onmousedown = dragMouseDown;
      function dragMouseDown(e){
@@ -82,8 +85,8 @@
      function elementDrag(e){
          e = e || window.event;
          e.preventDefault();
-         var dx = pos.x - e.clientX;
-         var dy = pos.y - e.clientY;
+         let dx = pos.x - e.clientX;
+         let dy = pos.y - e.clientY;
          pos.x = e.clientX;
          pos.y = e.clientY;
          element.style.top = (element.offsetTop - dy) + "px";
@@ -96,12 +99,11 @@
   }
 
   function getBaseButtonsContainer(){
-      var container = document.getElementById('camBaseButtons');
+      let container = document.getElementById('camBaseButtons');
       if(!container){
          container = document.createElement('div');
          container.id = 'camBaseButtons';
-         container.classList.add('ui-button'); // Apply general button style if needed
-         // Base container custom styling is already defined globally via #camBaseButtons rule
+         // Do not add any button style class to the container so it remains unstyled.
          document.body.appendChild(container);
          makeDraggable(container, {left: 10, top: window.innerHeight - 100});
       }
