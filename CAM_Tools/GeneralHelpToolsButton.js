@@ -98,6 +98,7 @@
             overlay.appendChild(formContainer);
             document.body.appendChild(overlay);
             // Add event listener for the highlight toggle
+            document.getElementById('highlightToggle').addEventListener('change', function(event) {
                 if (event.target.checked) {
                     if (!window.hljs) {
                         loadCSS("https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/styles/dark.min.css");
