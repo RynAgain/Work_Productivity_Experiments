@@ -4,29 +4,26 @@
     // Function to add the download data button
     function addDownloadButton() {
         console.log('Attempting to add download data button');
-        
+
         // Check if the button already exists
         if (document.getElementById('downloadDataButton')) {
             console.log('Download data button already exists');
             return;
         }
 
-        // Create the download data button
+        // Create the download data button using shared button styling
         var downloadButton = document.createElement('button');
         downloadButton.id = 'downloadDataButton';
         downloadButton.innerHTML = 'Download Data';
+        downloadButton.className = 'button'; // Use common button class for consistent styling
+
+        // Set positioning to align with other UI elements (e.g., AddItemButton)
         downloadButton.style.position = 'fixed';
         downloadButton.style.bottom = '0';
         downloadButton.style.left = '0';
         downloadButton.style.width = '20%';
         downloadButton.style.height = '40px';
         downloadButton.style.zIndex = '1000';
-        downloadButton.style.fontSize = '14px';
-        downloadButton.style.backgroundColor = '#004E36';
-        downloadButton.style.color = '#fff';
-        downloadButton.style.border = 'none';
-        downloadButton.style.borderRadius = '0';
-        downloadButton.style.cursor = 'pointer';
 
         document.body.appendChild(downloadButton);
         console.log('Download data button added to the page');
@@ -34,7 +31,7 @@
         // Add click event to the download data button to show options overlay
         downloadButton.addEventListener('click', function() {
             console.log('Download Data button clicked');
-            
+
             // Create overlay for download options
             var overlay = document.createElement('div');
             overlay.id = 'downloadOverlay';
@@ -57,19 +54,17 @@
             formContainer.style.borderRadius = '5px';
             formContainer.style.width = '300px';
 
-            // Create close button inside the form container (styled similar to AddItemButton)
+            // Create close button styled similarly to AddItemButton's close button
             var closeButton = document.createElement('span');
-            closeButton.innerHTML = 'X';
+            closeButton.innerHTML = '&times;';
             closeButton.style.position = 'absolute';
             closeButton.style.top = '10px';
             closeButton.style.right = '10px';
-            closeButton.style.fontSize = '18px';
-            closeButton.style.fontWeight = 'bold';
+            closeButton.style.fontSize = '24px';
             closeButton.style.cursor = 'pointer';
             closeButton.style.color = '#fff';
-            closeButton.style.backgroundColor = '#004E36';
-            closeButton.style.border = 'none';
-            closeButton.style.padding = '2px 6px';
+            closeButton.style.backgroundColor = '#000';
+            closeButton.style.padding = '5px';
             closeButton.style.borderRadius = '0';
             closeButton.addEventListener('click', function() {
                 document.body.removeChild(overlay);
@@ -77,7 +72,7 @@
             formContainer.appendChild(closeButton);
 
             // New UI with improved layout:
-            // Options first, then Download button, then progress indicator, then Cancel button.
+            // Options first, then Download button, progress indicator, then Cancel button.
             formContainer.innerHTML += `
                 <h3>Download Data Options</h3>
                 <label><input type="checkbox" id="everythingCheckbox"> Everything</label><br>
@@ -90,9 +85,9 @@
                 <label>Store/Region</label>
                 <input type="text" id="storeRegionInput" style="width: 100%; margin-bottom: 10px;" placeholder="Enter Store/Region codes separated by commas">
                 <label><input type="checkbox" id="allStoresCheckbox"> All Stores/Regions</label><br>
-                <button id="executeDownloadButton" style="width: 100%; margin-top:10px;">Download</button>
+                <button id="executeDownloadButton" class="button" style="width: 100%; margin-top:10px;">Download</button>
                 <div id="downloadProgress" style="display:none; margin-top:10px; text-align:center; font-size:16px; color:#004E36;">Wait for Parameters</div>
-                <button id="cancelDownloadButton" style="width: 100%; margin-top:10px; background-color: #FF0000;">Cancel</button>
+                <button id="cancelDownloadButton" class="button" style="width: 100%; margin-top:10px; background-color: #FF0000;">Cancel</button>
             `;
 
             // "Everything" checkbox disables all other options if checked
@@ -178,7 +173,6 @@
                     }
                     
                     // Build storeIds array based on user selections.
-                    // If "Everything" is checked, use all stores; otherwise, filter by criteria.
                     const storeIds = [];
                     for(const region in storeData.storesInformation) {
                         const states = storeData.storesInformation[region];
@@ -236,7 +230,7 @@
                         })
                         .then(response => response.json())
                         .then(data => {
-                            console.log(`Data for store batch:`, data);
+                            console.log('Data for store batch:', data);
                             return data.itemsAvailability.map(item => {
                                 item.andon = item.andon === true ? 'Enabled' : 'Disabled';
                                 if (item.inventoryStatus === 'Unlimited') {
@@ -287,11 +281,8 @@
                         const allItems = results.flat();
                         console.log('All items data:', allItems);
                         if(allItems.length > 0) {
-                            // Generate CSV content from available items
                             const desiredHeaders = Object.keys(allItems[0]);
-                            const csvContent = "data:text/csv;charset=utf-8," + desiredHeaders.join(",") + "\n" 
-                                + allItems.map(e => desiredHeaders.map(header => `"${e[header] || ''}"`).join(",")).join("\n");
-                            // Create and trigger download link
+                            const csvContent = "data:text/csv;charset=utf-8," + desiredHeaders.join(",") + "\n" + allItems.map(e => desiredHeaders.map(header => "\"" + (e[header] || "") + "\"").join(",")).join("\n");
                             const encodedUri = encodeURI(csvContent);
                             const link = document.createElement("a");
                             link.setAttribute("href", encodedUri);
@@ -317,7 +308,7 @@
         });
     }
 
-    // Use MutationObserver to detect changes in the DOM
+    // Use MutationObserver to detect changes and add the download button when needed
     const observer = new MutationObserver(addDownloadButton);
     observer.observe(document.body, { childList: true, subtree: true });
 
