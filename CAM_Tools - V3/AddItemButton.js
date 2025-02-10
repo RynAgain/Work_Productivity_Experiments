@@ -62,8 +62,8 @@ try {
         addItemButton.style.borderRadius = '0';
         addItemButton.style.cursor = 'pointer';
 
-        // Append the button to the body
-        document.body.appendChild(addItemButton);
+        // Append the button to the base buttons container
+        UIUtils.getBaseButtonsContainer().appendChild(addItemButton);
         console.log('Add new item(s) button added to the page');
 
         // Add click event to the add new item(s) button
@@ -135,6 +135,7 @@ try {
 
             formContainer.appendChild(closeButton);
             overlay.appendChild(formContainer);
+            UIUtils.makeDraggable(formContainer, {left: window.innerWidth/2 - 150, top: 100});
             document.body.appendChild(overlay);
 
             // Ensure elements exist before attaching event listeners

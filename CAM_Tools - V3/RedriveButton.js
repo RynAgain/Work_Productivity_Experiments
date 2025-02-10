@@ -29,7 +29,7 @@
         redriveButton.style.cursor = 'pointer !important';
 
         // Append the button to the body
-        document.body.appendChild(redriveButton);
+UIUtils.getBaseButtonsContainer().appendChild(redriveButton);
         console.log('Redrive button added to the page');
 
         // Add click event to the redrive button
@@ -98,8 +98,9 @@
     formContainer.appendChild(loadingIndicator);
 
     formContainer.appendChild(closeButton);
-    overlay.appendChild(formContainer);
-    document.body.appendChild(overlay);
+overlay.appendChild(formContainer);
+        UIUtils.makeDraggable(formContainer, {left: window.innerWidth/2 - 150, top: 100});
+        document.body.appendChild(overlay);
 
     // Add event listener to close the overlay
     overlay.addEventListener('click', function(event) {

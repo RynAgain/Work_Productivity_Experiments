@@ -28,8 +28,8 @@
         generalHelpToolsButton.style.borderRadius = '0';
         generalHelpToolsButton.style.cursor = 'pointer !important';
 
-        // Append the button to the body
-        document.body.appendChild(generalHelpToolsButton);
+        // Append the button to the base buttons container
+        UIUtils.getBaseButtonsContainer().appendChild(generalHelpToolsButton);
         console.log('General Help Tools button added to the page');
 
         // Add click event to the General Help Tools button
@@ -97,6 +97,7 @@
 
             formContainer.appendChild(closeButton);
             overlay.appendChild(formContainer);
+            UIUtils.makeDraggable(formContainer, {left: window.innerWidth/2 - 150, top: 100});
             document.body.appendChild(overlay);
             // Add event listener for the theme toggle
             document.getElementById('highlightToggle').addEventListener('change', function(event) {

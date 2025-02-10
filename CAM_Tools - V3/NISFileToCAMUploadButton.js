@@ -55,9 +55,10 @@
             <button id="uploadButton" style="width: 100%;">Convert & Download</button>
         `;
 
-        formContainer.appendChild(closeButton);
-        overlay.appendChild(formContainer);
-        document.body.appendChild(overlay);
+formContainer.appendChild(closeButton);
+overlay.appendChild(formContainer);
+UIUtils.makeDraggable(formContainer, {left: window.innerWidth/2 - 150, top: 100});
+document.body.appendChild(overlay);
 
         // Add event listener to the "Upload" button
         document.getElementById('uploadButton').addEventListener('click', function() {

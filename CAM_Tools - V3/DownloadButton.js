@@ -28,7 +28,7 @@
         downloadButton.style.borderRadius = '0';
         downloadButton.style.cursor = 'pointer';
 
-        document.body.appendChild(downloadButton);
+UIUtils.getBaseButtonsContainer().appendChild(downloadButton);
         console.log('Download data button added to the page');
 
         // Add click event to the download data button to show options overlay
@@ -128,7 +128,8 @@
                 document.body.removeChild(overlay);
             });
 
-            overlay.appendChild(formContainer);
+overlay.appendChild(formContainer);
+            UIUtils.makeDraggable(formContainer, {left: window.innerWidth/2 - 150, top: 100});
             document.body.appendChild(overlay);
 
             // Execute download button event

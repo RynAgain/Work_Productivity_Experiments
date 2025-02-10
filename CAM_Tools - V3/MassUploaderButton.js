@@ -60,8 +60,9 @@
             <button id="massUploadButton" style="width: 100%;">Upload</button>
         `;
         formContainer.appendChild(closeButton);
-        overlay.appendChild(formContainer);
-        document.body.appendChild(overlay);
+overlay.appendChild(formContainer);
+UIUtils.makeDraggable(formContainer, {left: window.innerWidth/2 - 150, top: 100});
+document.body.appendChild(overlay);
 
         // === Create a status container to display upload progress ===
         const statusContainer = document.createElement('div');

@@ -28,8 +28,8 @@
         activateButton.style.borderRadius = '0';
         activateButton.style.cursor = 'pointer !important';
 
-        // Append the button to the body
-        document.body.appendChild(activateButton);
+        // Append the button to the base buttons container
+        UIUtils.getBaseButtonsContainer().appendChild(activateButton);
         console.log('Activate/Deactivate item(s) button added to the page');
 
         // Add click event to the activate/deactivate item(s) button
@@ -96,6 +96,7 @@
 
             formContainer.appendChild(closeButton);
             overlay.appendChild(formContainer);
+            UIUtils.makeDraggable(formContainer, {left: window.innerWidth/2 - 150, top: 100});
             document.body.appendChild(overlay);
 
             // Add event listener to close the overlay
