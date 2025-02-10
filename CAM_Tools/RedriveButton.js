@@ -12,8 +12,9 @@
         }
 
         // Create the redrive button
-        var redriveButton = document.createElement('button');
-        redriveButton.id = 'redriveButton';
+var redriveButton = document.createElement('button');
+redriveButton.id = 'redriveButton';
+redriveButton.className = 'button';
         redriveButton.innerHTML = 'Redrive';
         redriveButton.style.position = 'fixed';
         redriveButton.style.bottom = '0';
@@ -25,7 +26,7 @@
         redriveButton.style.backgroundColor = '#004E36';
         redriveButton.style.color = '#fff';
         redriveButton.style.border = 'none';
-        redriveButton.style.borderRadius = '0';
+redriveButton.style.borderRadius = '5px';
         redriveButton.style.cursor = 'pointer !important';
 
         // Append the button to the body

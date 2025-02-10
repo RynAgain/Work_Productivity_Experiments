@@ -46,7 +46,8 @@ try {
         }
 
         // Create the add new item(s) button
-        var addItemButton = document.createElement('button');
+var addItemButton = document.createElement('button');
+addItemButton.className = 'button';
         addItemButton.id = 'addItemButton';
         addItemButton.innerHTML = 'Add New Item(s)';
         addItemButton.style.position = 'fixed';
@@ -59,7 +60,7 @@ try {
         addItemButton.style.backgroundColor = '#004E36';
         addItemButton.style.color = '#fff';
         addItemButton.style.border = 'none';
-        addItemButton.style.borderRadius = '0';
+addItemButton.style.borderRadius = '5px';
         addItemButton.style.cursor = 'pointer';
 
         // Append the button to the body

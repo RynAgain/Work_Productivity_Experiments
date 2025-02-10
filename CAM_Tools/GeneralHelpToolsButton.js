@@ -25,7 +25,7 @@
         generalHelpToolsButton.style.backgroundColor = '#004E36';
         generalHelpToolsButton.style.color = '#fff';
         generalHelpToolsButton.style.border = 'none';
-        generalHelpToolsButton.style.borderRadius = '0';
+generalHelpToolsButton.style.borderRadius = '5px';
         generalHelpToolsButton.style.cursor = 'pointer !important';
 
         // Append the button to the body
