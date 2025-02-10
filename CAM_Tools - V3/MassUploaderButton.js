@@ -15,7 +15,7 @@
         // === Overlay ===
         const overlay = document.createElement('div');
         overlay.id = 'massUploaderOverlay';
-        Object.assign(overlay.style, {
+Object.assign(overlay.style, {
             position: 'fixed',
             top: '0',
             left: '0',
@@ -27,6 +27,7 @@
             justifyContent: 'center',
             alignItems: 'center'
         });
+        overlay.style.pointerEvents = 'none';
 
         // === Close button ===
         const closeButton = document.createElement('span');
@@ -44,14 +45,15 @@
         closeButton.addEventListener('click', () => document.body.removeChild(overlay));
 
         // === Form container ===
-        const formContainer = document.createElement('div');
-        Object.assign(formContainer.style, {
+const formContainer = document.createElement('div');
+Object.assign(formContainer.style, {
             position: 'relative',
             backgroundColor: '#fff',
             padding: '20px',
             borderRadius: '5px',
             width: '300px'
         });
+        formContainer.style.pointerEvents = 'auto';
 
         // === Inner HTML: folder input + button ===
         formContainer.innerHTML = `

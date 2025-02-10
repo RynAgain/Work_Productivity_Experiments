@@ -48,6 +48,7 @@
             overlay.style.display = 'flex';
             overlay.style.justifyContent = 'center';
             overlay.style.alignItems = 'center';
+            overlay.style.pointerEvents = 'none';
 
             // Create close button
             var closeButton = document.createElement('span');
@@ -76,9 +77,6 @@
 
             // Create list of buttons
             formContainer.innerHTML = `
-                <label style="display:block; margin-bottom:10px;">
-                  <input type="checkbox" id="highlightToggle" style="margin-right:5px;"> Activate Syntax Highlight
-                </label>
                 <h3>General Help Tools</h3>
                 <button id="pluDedupeListButton" style="width: 100%; margin-bottom: 10px;">PLU Dedupe & List</button>
                 <button id="nisFileToCAMUploadButton" style="width: 100%; margin-bottom: 10px;">zNon-functional Buttonz</button>
@@ -96,6 +94,8 @@
             `;
 
             formContainer.appendChild(closeButton);
+            // Ensure the form container remains interactive even when the overlay does not capture events
+            formContainer.style.pointerEvents = 'auto';
             overlay.appendChild(formContainer);
             UIUtils.makeDraggable(formContainer, {left: window.innerWidth/2 - 150, top: 100});
             document.body.appendChild(overlay);
