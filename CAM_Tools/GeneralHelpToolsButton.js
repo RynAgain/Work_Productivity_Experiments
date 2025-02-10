@@ -97,19 +97,14 @@
             formContainer.appendChild(closeButton);
             overlay.appendChild(formContainer);
             document.body.appendChild(overlay);
-            // Add event listener for the highlight toggle
+            // Add event listener for the theme toggle
             document.getElementById('highlightToggle').addEventListener('change', function(event) {
                 if (event.target.checked) {
-                    if (!window.hljs) {
-                        loadCSS("https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/styles/dark.min.css");
-                        loadScript("https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/highlight.min.js", function() {
-                            if (overlay && overlay.style.display === "block") {
-                                hljs.highlightAll();
-                            }
-                        });
-                    } else {
-                        hljs.highlightAll();
-                    }
+                    document.body.style.backgroundColor = "#222";
+                    document.body.style.color = "#fff";
+                } else {
+                    document.body.style.backgroundColor = "#f5f5f5";
+                    document.body.style.color = "#000";
                 }
             });
 
