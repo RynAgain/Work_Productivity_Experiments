@@ -1,11 +1,5 @@
-/**
- * @file auditHistoryDashboardButton.js
- * @description React-based overlay dashboard for audit history.
- * @requires React, ReactDOM, and ActivateButton API logic available as window.fetchAuditData
- */
-
 (function() {
-  // React component for the audit history dashboard overlay
+  // React component for the audit history dashboard overlay with Bootstrap integration
   function AuditHistoryDashboard() {
     const [visible, setVisible] = React.useState(false);
     const [auditData, setAuditData] = React.useState([]);
@@ -35,7 +29,7 @@
       null,
       React.createElement(
         'button',
-        { id: 'auditHistoryDashboardTrigger', onClick: openDashboard },
+        { id: 'auditHistoryDashboardTrigger', onClick: openDashboard, className: 'btn btn-primary' },
         'Audit Dashboard'
       ),
       visible &&
@@ -64,14 +58,12 @@
               } },
             React.createElement(
               'button',
-              { onClick: closeDashboard, style: {
+              { onClick: closeDashboard, className: 'btn btn-danger', style: {
                   position: 'absolute',
                   top: '10px',
                   right: '10px',
                   fontSize: '24px',
                   cursor: 'pointer',
-                  color: '#fff',
-                  backgroundColor: '#000',
                   padding: '5px'
                 } },
               'Close'
@@ -85,7 +77,8 @@
                 placeholder: 'Enter filter criteria',
                 value: filter,
                 onChange: function(e) { setFilter(e.target.value); },
-                style: { width: '100%', marginBottom: '10px' }
+                className: 'form-control',
+                style: { marginBottom: '10px' }
               })
             ),
             React.createElement(
@@ -117,16 +110,32 @@
     ReactDOM.render(React.createElement(AuditHistoryDashboard), container);
   }
 
-  // Attach event listener to the physical button id provided ('generalHelptoolsButton')
-  var btn = document.getElementById('generalHelptoolsButton');
+  // Attach event listener to the button with id 'generalHelpToolsButton'
+  var btn = document.getElementById('generalHelpToolsButton');
   if (btn) {
     btn.addEventListener('click', launchAuditDashboard);
+    // Add Bootstrap classes to ensure standardized styling
+    btn.classList.add('btn', 'btn-primary');
   } else {
-    // Fallback: create a trigger button if not already present
+    // Fallback: create a trigger button if not present
     var triggerBtn = document.createElement('button');
     triggerBtn.id = 'auditHistoryDashboardTrigger';
     triggerBtn.innerText = 'Audit Dashboard';
+    triggerBtn.className = 'btn btn-primary';
     triggerBtn.addEventListener('click', launchAuditDashboard);
     document.body.appendChild(triggerBtn);
   }
+
+  // MutationObserver to reapply Bootstrap styles and event listener if the trigger button is replaced
+  const observer = new MutationObserver(function(mutations) {
+    mutations.forEach(function(mutation) {
+      mutation.addedNodes.forEach(function(node) {
+        if (node.id === 'generalHelpToolsButton') {
+          node.classList.add('btn', 'btn-primary');
+          node.addEventListener('click', launchAuditDashboard);
+        }
+      });
+    });
+  });
+  observer.observe(document.body, { childList: true, subtree: true });
 })();
