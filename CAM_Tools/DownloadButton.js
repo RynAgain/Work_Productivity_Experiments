@@ -76,6 +76,9 @@
             formContainer.innerHTML += `
                 <h3>Download Data Options</h3>
                 <label><input type="checkbox" id="everythingCheckbox"> Everything</label><br>
+                <label>Specific PLUs</label>
+                <input type="text" id="pluInput" style="width: 100%; margin-bottom: 10px;" placeholder="Enter specific PLUs separated by commas"><br>
+                
                 <label><input type="checkbox" id="allPlusCheckbox"> All PLUs</label><br>
                 <label>By</label>
                 <select id="bySelect" style="width: 100%; margin-bottom: 10px;">
@@ -137,7 +140,7 @@
                 var allPlusChecked = document.getElementById('allPlusCheckbox').checked;
                 
                 // For PLUs, if allPlus or everything is checked, use all PLUs (empty array means no filtering)
-                const pluInput = allPlusChecked || everythingChecked ? [] : [];
+                const pluInput = allPlusChecked || everythingChecked ? [] : Array.from(new Set(document.getElementById('pluInput').value.split(',').map(plu => plu.trim()))).filter(Boolean);
                 const bySelect = document.getElementById('bySelect').value;
                 const storeRegionInput = Array.from(new Set(document.getElementById('storeRegionInput').value.split(',').map(sr => sr.trim()))).filter(Boolean);
                 
