@@ -250,7 +250,7 @@ if (allItems.length > 0) {
 
     const desiredHeadersRedrive = [
         'Store - 3 Letter Code', 'Item Name', 'Item PLU/UPC', 'Availability',
-        'Current Inventory', 'Sales Floor Capacity', 'Redrive Andon Cord', 'Tracking Start Date', 'Tracking End Date'
+        'Current Inventory', 'Sales Floor Capacity', 'Andon Cord', 'Tracking Start Date', 'Tracking End Date'
     ];
     const csvContentRedrive = desiredHeadersRedrive.join(",") + "\n" // Add headers
         + allItems.map(e => desiredHeadersRedrive.map(header => `"${e[header] || ''}"`).join(",")).join("\n");
