@@ -230,7 +230,7 @@ document.getElementById('generateUploadFileButton').addEventListener('click', fu
                             console.log(`Data for store batch:`, data);
                             return data.itemsAvailability.filter(item => pluInput.includes(item.wfmScanCode)).map(item => {
                                 return {
-                                    'Store - 3 Letter Code': item.storeCode || item.storeTLC || item.storeId || item.store || '',
+                                    'Store - 3 Letter Code': item.storeCode || item.storeTLC || item.storeId || item.store || '', //didnt remember what the actual id was.
                                     'Andon Cord': andonCord,
                                     'Item Name': item.itemName,
                                     'Item PLU/UPC': item.wfmScanCode,

@@ -66,6 +66,12 @@ addItemButton.style.borderRadius = '5px';
         // Append the button to the body
         document.body.appendChild(addItemButton);
         console.log('Add new item(s) button added to the page');
+        addItemButton.addEventListener('mouseover', function(){
+            addItemButton.style.backgroundColor = '#218838';
+        });
+        addItemButton.addEventListener('mouseout', function(){
+            addItemButton.style.backgroundColor = '#004E36';
+        });
 
         // Add click event to the add new item(s) button
         addItemButton.addEventListener('click', function() {

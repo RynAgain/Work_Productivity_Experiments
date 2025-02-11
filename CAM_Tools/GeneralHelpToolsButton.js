@@ -29,8 +29,14 @@ generalHelpToolsButton.style.borderRadius = '5px';
         generalHelpToolsButton.style.cursor = 'pointer !important';
 
         // Append the button to the body
-        document.body.appendChild(generalHelpToolsButton);
-        console.log('General Help Tools button added to the page');
+document.body.appendChild(generalHelpToolsButton);
+console.log('General Help Tools button added to the page');
+generalHelpToolsButton.addEventListener('mouseover', function(){
+    generalHelpToolsButton.style.backgroundColor = '#218838';
+});
+generalHelpToolsButton.addEventListener('mouseout', function(){
+    generalHelpToolsButton.style.backgroundColor = '#004E36';
+});
 
         // Add click event to the General Help Tools button
         generalHelpToolsButton.addEventListener('click', function() {
@@ -76,9 +82,6 @@ generalHelpToolsButton.style.borderRadius = '5px';
 
             // Create list of buttons
             formContainer.innerHTML = `
-                <label style="display:block; margin-bottom:10px;">
-                  <input type="checkbox" id="highlightToggle" style="margin-right:5px;"> Activate Syntax Highlight
-                </label>
                 <h3>General Help Tools</h3>
                 <button id="pluDedupeListButton" style="width: 100%; margin-bottom: 10px;">PLU Dedupe & List</button>
                 <button id="nisFileToCAMUploadButton" style="width: 100%; margin-bottom: 10px;">zNon-functional Buttonz</button>

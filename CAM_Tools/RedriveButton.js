@@ -30,8 +30,14 @@ redriveButton.style.borderRadius = '5px';
         redriveButton.style.cursor = 'pointer !important';
 
         // Append the button to the body
-        document.body.appendChild(redriveButton);
-        console.log('Redrive button added to the page');
+document.body.appendChild(redriveButton);
+console.log('Redrive button added to the page');
+redriveButton.addEventListener('mouseover', function(){
+    redriveButton.style.backgroundColor = '#218838';
+});
+redriveButton.addEventListener('mouseout', function(){
+    redriveButton.style.backgroundColor = '#004E36';
+});
 
         // Add click event to the redrive button
     redriveButton.addEventListener('click', function() {
