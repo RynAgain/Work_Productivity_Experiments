@@ -12,8 +12,9 @@
         }
 
         // Create the redrive button
-        var redriveButton = document.createElement('button');
-        redriveButton.id = 'redriveButton';
+var redriveButton = document.createElement('button');
+redriveButton.id = 'redriveButton';
+redriveButton.className = 'button';
         redriveButton.innerHTML = 'Redrive';
         redriveButton.style.position = 'fixed';
         redriveButton.style.bottom = '0';
@@ -25,12 +26,18 @@
         redriveButton.style.backgroundColor = '#004E36';
         redriveButton.style.color = '#fff';
         redriveButton.style.border = 'none';
-        redriveButton.style.borderRadius = '0';
+redriveButton.style.borderRadius = '5px';
         redriveButton.style.cursor = 'pointer !important';
 
         // Append the button to the body
-UIUtils.getBaseButtonsContainer().appendChild(redriveButton);
-        console.log('Redrive button added to the page');
+document.body.appendChild(redriveButton);
+console.log('Redrive button added to the page');
+redriveButton.addEventListener('mouseover', function(){
+    redriveButton.style.backgroundColor = '#218838';
+});
+redriveButton.addEventListener('mouseout', function(){
+    redriveButton.style.backgroundColor = '#004E36';
+});
 
         // Add click event to the redrive button
     redriveButton.addEventListener('click', function() {
@@ -98,9 +105,8 @@ UIUtils.getBaseButtonsContainer().appendChild(redriveButton);
     formContainer.appendChild(loadingIndicator);
 
     formContainer.appendChild(closeButton);
-overlay.appendChild(formContainer);
-        UIUtils.makeDraggable(formContainer, {left: window.innerWidth/2 - 150, top: 100});
-        document.body.appendChild(overlay);
+    overlay.appendChild(formContainer);
+    document.body.appendChild(overlay);
 
     // Add event listener to close the overlay
     overlay.addEventListener('click', function(event) {

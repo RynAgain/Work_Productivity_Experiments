@@ -1,4 +1,12 @@
 (function() {
+    // Bootstrap injection snippet
+    if (!document.getElementById('bootstrap-css')) {
+        var link = document.createElement('link');
+        link.id = 'bootstrap-css';
+        link.rel = 'stylesheet';
+        link.href = 'https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css';
+        document.head.appendChild(link);
+    }
     'use strict';
 
     // Function to add the activate/deactivate item(s) button
@@ -15,6 +23,7 @@
         var activateButton = document.createElement('button');
         activateButton.id = 'activateButton';
         activateButton.innerHTML = 'Activate/Deactivate Item(s)';
+        activateButton.className = 'btn btn-primary';
         activateButton.style.position = 'fixed';
         activateButton.style.bottom = '0';
         activateButton.style.left = '40%';
@@ -25,30 +34,28 @@
         activateButton.style.backgroundColor = '#004E36';
         activateButton.style.color = '#fff';
         activateButton.style.border = 'none';
-        activateButton.style.borderRadius = '0';
+activateButton.style.borderRadius = '5px';
         activateButton.style.cursor = 'pointer !important';
 
-        // Append the button to the base buttons container
-        UIUtils.getBaseButtonsContainer().appendChild(activateButton);
-        console.log('Activate/Deactivate item(s) button added to the page');
+        // Append the button to the body
+document.body.appendChild(activateButton);
+activateButton.addEventListener('mouseover', function(){
+    activateButton.style.backgroundColor = '#218838';
+});
+activateButton.addEventListener('mouseout', function(){
+    activateButton.style.backgroundColor = '#004E36';
+});
+console.log('Activate/Deactivate item(s) button added to the page');
 
         // Add click event to the activate/deactivate item(s) button
         activateButton.addEventListener('click', function() {
             console.log('Activate/Deactivate Item(s) button clicked');
             
-            // Create overlay
+            // Create overlay (Bootstrap modal)
             var overlay = document.createElement('div');
             overlay.id = 'activateOverlay';
-            overlay.style.position = 'fixed';
-            overlay.style.top = '0';
-            overlay.style.left = '0';
-            overlay.style.width = '100%';
-            overlay.style.height = '100%';
-            overlay.style.backgroundColor = 'rgba(0, 0, 0, 0.5)';
-            overlay.style.zIndex = '1001';
-            overlay.style.display = 'flex';
-            overlay.style.justifyContent = 'center';
-            overlay.style.alignItems = 'center';
+            overlay.className = 'modal fade show';
+            overlay.style.display = 'block';
 
             // Create close button
             var closeButton = document.createElement('span');
@@ -96,7 +103,6 @@
 
             formContainer.appendChild(closeButton);
             overlay.appendChild(formContainer);
-            UIUtils.makeDraggable(formContainer, {left: window.innerWidth/2 - 150, top: 100});
             document.body.appendChild(overlay);
 
             // Add event listener to close the overlay
@@ -224,7 +230,7 @@ document.getElementById('generateUploadFileButton').addEventListener('click', fu
                             console.log(`Data for store batch:`, data);
                             return data.itemsAvailability.filter(item => pluInput.includes(item.wfmScanCode)).map(item => {
                                 return {
-                                    'Store - 3 Letter Code': item.storeCode || item.storeTLC || item.storeId || item.store || '',
+                                    'Store - 3 Letter Code': item.storeCode || item.storeTLC || item.storeId || item.store || '', //didnt remember what the actual id was.
                                     'Andon Cord': andonCord,
                                     'Item Name': item.itemName,
                                     'Item PLU/UPC': item.wfmScanCode,

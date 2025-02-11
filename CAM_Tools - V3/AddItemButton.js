@@ -46,7 +46,8 @@ try {
         }
 
         // Create the add new item(s) button
-        var addItemButton = document.createElement('button');
+var addItemButton = document.createElement('button');
+addItemButton.className = 'button';
         addItemButton.id = 'addItemButton';
         addItemButton.innerHTML = 'Add New Item(s)';
         addItemButton.style.position = 'fixed';
@@ -59,12 +60,18 @@ try {
         addItemButton.style.backgroundColor = '#004E36';
         addItemButton.style.color = '#fff';
         addItemButton.style.border = 'none';
-        addItemButton.style.borderRadius = '0';
+addItemButton.style.borderRadius = '5px';
         addItemButton.style.cursor = 'pointer';
 
-        // Append the button to the base buttons container
-        UIUtils.getBaseButtonsContainer().appendChild(addItemButton);
+        // Append the button to the body
+        document.body.appendChild(addItemButton);
         console.log('Add new item(s) button added to the page');
+        addItemButton.addEventListener('mouseover', function(){
+            addItemButton.style.backgroundColor = '#218838';
+        });
+        addItemButton.addEventListener('mouseout', function(){
+            addItemButton.style.backgroundColor = '#004E36';
+        });
 
         // Add click event to the add new item(s) button
         addItemButton.addEventListener('click', function() {
@@ -135,7 +142,6 @@ try {
 
             formContainer.appendChild(closeButton);
             overlay.appendChild(formContainer);
-            UIUtils.makeDraggable(formContainer, {left: window.innerWidth/2 - 150, top: 100});
             document.body.appendChild(overlay);
 
             // Ensure elements exist before attaching event listeners

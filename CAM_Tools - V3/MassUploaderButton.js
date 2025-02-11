@@ -15,7 +15,7 @@
         // === Overlay ===
         const overlay = document.createElement('div');
         overlay.id = 'massUploaderOverlay';
-Object.assign(overlay.style, {
+        Object.assign(overlay.style, {
             position: 'fixed',
             top: '0',
             left: '0',
@@ -27,7 +27,6 @@ Object.assign(overlay.style, {
             justifyContent: 'center',
             alignItems: 'center'
         });
-        overlay.style.pointerEvents = 'none';
 
         // === Close button ===
         const closeButton = document.createElement('span');
@@ -45,15 +44,14 @@ Object.assign(overlay.style, {
         closeButton.addEventListener('click', () => document.body.removeChild(overlay));
 
         // === Form container ===
-const formContainer = document.createElement('div');
-Object.assign(formContainer.style, {
+        const formContainer = document.createElement('div');
+        Object.assign(formContainer.style, {
             position: 'relative',
             backgroundColor: '#fff',
             padding: '20px',
             borderRadius: '5px',
             width: '300px'
         });
-        formContainer.style.pointerEvents = 'auto';
 
         // === Inner HTML: folder input + button ===
         formContainer.innerHTML = `
@@ -62,9 +60,8 @@ Object.assign(formContainer.style, {
             <button id="massUploadButton" style="width: 100%;">Upload</button>
         `;
         formContainer.appendChild(closeButton);
-overlay.appendChild(formContainer);
-UIUtils.makeDraggable(formContainer, {left: window.innerWidth/2 - 150, top: 100});
-document.body.appendChild(overlay);
+        overlay.appendChild(formContainer);
+        document.body.appendChild(overlay);
 
         // === Create a status container to display upload progress ===
         const statusContainer = document.createElement('div');
