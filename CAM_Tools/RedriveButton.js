@@ -102,6 +102,7 @@ redriveButton.addEventListener('mouseout', function(){
     loadingIndicator.style.marginTop = '10px';
     loadingIndicator.style.fontSize = '16px';
     loadingIndicator.style.color = '#004E36';
+    loadingIndicator.style.display = 'none';
     formContainer.appendChild(loadingIndicator);
 
     formContainer.appendChild(closeButton);
