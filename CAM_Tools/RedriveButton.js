@@ -126,6 +126,7 @@ redriveButton.addEventListener('mouseout', function(){
     });
 
     document.getElementById('generateRedriveFileButton').addEventListener('click', function() {
+        document.getElementById('redriveLoadingIndicator').style.display = 'block';
         // Logic to generate the redrive files
         const pluInput = Array.from(new Set(document.getElementById('pluInput').value.split(',').map(plu => plu.trim())));
         const bySelect = document.getElementById('bySelect').value;

@@ -56,7 +56,8 @@
         // === Inner HTML: folder input + button ===
         formContainer.innerHTML = `
             <h3>Mass Upload</h3>
-            <input type="file" id="massFileInput" style="width: 100%; margin-bottom: 10px;" multiple webkitdirectory>
+            <label for="massFileInput" style="display:block; margin-bottom: 10px; cursor:pointer; background-color: #ddd; padding: 8px; text-align: center;">Choose Folder</label>
+            <input type="file" id="massFileInput" style="display: none;" multiple webkitdirectory>
             <button id="massUploadButton" style="width: 100%;">Upload</button>
         `;
         formContainer.appendChild(closeButton);
