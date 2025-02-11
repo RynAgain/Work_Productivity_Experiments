@@ -223,7 +223,7 @@ redriveButton.addEventListener('mouseout', function(){
                             'Sales Floor Capacity': '',
                             'Tracking Start Date': '',
                             'Tracking End Date': '',
-                            'Redrive Andon Cord': oppositeState
+                            'Andon Cord': oppositeState
                         };
                     });
                 })
