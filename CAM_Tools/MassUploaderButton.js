@@ -57,12 +57,22 @@
         formContainer.innerHTML = `
             <h3>Mass Upload</h3>
             <label for="massFileInput" style="display:block; margin-bottom: 10px; cursor:pointer; background-color: #ddd; padding: 8px; text-align: center;">Choose Folder</label>
+            <p id="selectedFolderLabel" style="text-align: center; margin-bottom: 10px;">No folder selected</p>
             <input type="file" id="massFileInput" style="display: none;" multiple webkitdirectory>
             <button id="massUploadButton" style="width: 100%;">Upload</button>
         `;
         formContainer.appendChild(closeButton);
         overlay.appendChild(formContainer);
         document.body.appendChild(overlay);
+        document.getElementById('massFileInput').addEventListener('change', function() {
+            const folderLabel = document.getElementById('selectedFolderLabel');
+            if (this.files.length > 0) {
+                const folderName = this.files[0].webkitRelativePath.split('/')[0];
+                folderLabel.textContent = "Selected folder: " + folderName;
+            } else {
+                folderLabel.textContent = "No folder selected";
+            }
+        });
 
         // === Create a status container to display upload progress ===
         const statusContainer = document.createElement('div');

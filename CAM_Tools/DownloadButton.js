@@ -232,24 +232,29 @@
                             credentials: 'include'
                         })
                         .then(response => response.json())
-                        .then(data => {
-                            console.log('Data for store batch:', data);
-                            return data.itemsAvailability.map(item => {
-                                item.andon = item.andon === true ? 'Enabled' : 'Disabled';
-                                if (item.inventoryStatus === 'Unlimited') {
-                                    item.currentInventoryQuantity = 0;
-                                } else if (item.inventoryStatus === 'Limited') {
-                                    const currQty = Number(item.currentInventoryQuantity);
-                                    item.currentInventoryQuantity = isNaN(currQty) ? 0 : Math.max(0, Math.min(10000, currQty));
-                                }
-                                item.reservedQuantity = (item.reservedQuantity !== undefined && item.reservedQuantity !== '') ? Number(item.reservedQuantity) : 0;
-                                item.hasAndonEnabledComponent = item.hasAndonEnabledComponent || 'FALSE';
-                                item.isMultiChannel = item.isMultiChannel || 'FALSE';
-                                item.salesFloorCapacity = (item.salesFloorCapacity !== undefined && item.salesFloorCapacity !== '') ? Number(item.salesFloorCapacity) : 0;
-                                item.wfmoaReservedQuantity = (item.wfmoaReservedQuantity !== undefined && item.wfmoaReservedQuantity !== '') ? Number(item.wfmoaReservedQuantity) : 0;
-                                return item;
-                            });
-                        })
+    .then(data => {
+        console.log('Data for store batch:', data);
+        let items = data.itemsAvailability;
+        // Filter items by PLU if user provided specific PLUs in the text field (pluInput)
+        if (pluInput.length > 0) {
+            items = items.filter(item => pluInput.includes(item.wfmScanCode));
+        }
+        return items.map(item => {
+            item.andon = item.andon === true ? 'Enabled' : 'Disabled';
+            if (item.inventoryStatus === 'Unlimited') {
+                item.currentInventoryQuantity = 0;
+            } else if (item.inventoryStatus === 'Limited') {
+                const currQty = Number(item.currentInventoryQuantity);
+                item.currentInventoryQuantity = isNaN(currQty) ? 0 : Math.max(0, Math.min(10000, currQty));
+            }
+            item.reservedQuantity = (item.reservedQuantity !== undefined && item.reservedQuantity !== '') ? Number(item.reservedQuantity) : 0;
+            item.hasAndonEnabledComponent = item.hasAndonEnabledComponent || 'FALSE';
+            item.isMultiChannel = item.isMultiChannel || 'FALSE';
+            item.salesFloorCapacity = (item.salesFloorCapacity !== undefined && item.salesFloorCapacity !== '') ? Number(item.salesFloorCapacity) : 0;
+            item.wfmoaReservedQuantity = (item.wfmoaReservedQuantity !== undefined && item.wfmoaReservedQuantity !== '') ? Number(item.wfmoaReservedQuantity) : 0;
+            return item;
+        });
+    })
                         .catch(error => {
                             console.error('Error fetching items for batch:', error);
                             return [];
