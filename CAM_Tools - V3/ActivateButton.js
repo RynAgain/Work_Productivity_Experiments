@@ -1,16 +1,23 @@
 (function() {
-    // Bootstrap injection snippet
-    if (!document.getElementById('bootstrap-css')) {
-        var link = document.createElement('link');
-        link.id = 'bootstrap-css';
-        link.rel = 'stylesheet';
-        link.href = 'https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css';
-        document.head.appendChild(link);
-    }
     'use strict';
 
+    // Helper function to create and style an element
+    const createElementWithStyles = (tag, styles = {}) => {
+        const el = document.createElement(tag);
+        Object.assign(el.style, styles);
+        return el;
+    };
+
+    // Helper to create a button with id, innerHTML and styles
+    const createButton = (id, innerHTML, styles = {}) => {
+        const btn = createElementWithStyles('button', styles);
+        btn.id = id;
+        btn.innerHTML = innerHTML;
+        return btn;
+    };
+
     // Function to add the activate/deactivate item(s) button
-    function addActivateButton() {
+    const addActivateButton = () => {
         console.log('Attempting to add activate/deactivate item(s) button');
 
         // Check if the button already exists
@@ -19,66 +26,75 @@
             return;
         }
 
-        // Create the activate/deactivate item(s) button
-        var activateButton = document.createElement('button');
-        activateButton.id = 'activateButton';
-        activateButton.innerHTML = 'Activate/Deactivate Item(s)';
-        activateButton.className = 'btn btn-primary';
-        activateButton.style.position = 'fixed';
-        activateButton.style.bottom = '0';
-        activateButton.style.left = '40%';
-        activateButton.style.width = '20%';
-        activateButton.style.height = '40px';
-        activateButton.style.zIndex = '1000';
-        activateButton.style.fontSize = '14px';
-        activateButton.style.backgroundColor = '#004E36';
-        activateButton.style.color = '#fff';
-        activateButton.style.border = 'none';
-activateButton.style.borderRadius = '5px';
-        activateButton.style.cursor = 'pointer !important';
+        const buttonStyles = {
+            position: 'fixed',
+            bottom: '0',
+            left: '40%',
+            width: '20%',
+            height: '40px',
+            zIndex: '1000',
+            fontSize: '14px',
+            backgroundColor: '#004E36',
+            color: '#fff',
+            border: 'none',
+            borderRadius: '5px'
+        };
 
-        // Append the button to the body
-document.body.appendChild(activateButton);
-activateButton.addEventListener('mouseover', function(){
-    activateButton.style.backgroundColor = '#218838';
-});
-activateButton.addEventListener('mouseout', function(){
-    activateButton.style.backgroundColor = '#004E36';
-});
-console.log('Activate/Deactivate item(s) button added to the page');
+        const activateButton = createButton('activateButton', 'Activate/Deactivate Item(s)', buttonStyles);
+        activateButton.style.setProperty('cursor', 'pointer', 'important');
+        document.body.appendChild(activateButton);
+
+        activateButton.addEventListener('mouseover', () => {
+            activateButton.style.backgroundColor = '#218838';
+        });
+        activateButton.addEventListener('mouseout', () => {
+            activateButton.style.backgroundColor = '#004E36';
+        });
+
+        console.log('Activate/Deactivate item(s) button added to the page');
 
         // Add click event to the activate/deactivate item(s) button
-        activateButton.addEventListener('click', function() {
+        activateButton.addEventListener('click', () => {
             console.log('Activate/Deactivate Item(s) button clicked');
             
-            // Create overlay (Bootstrap modal)
-            var overlay = document.createElement('div');
+            // Create overlay similar to other buttons
+            const overlay = createElementWithStyles('div', {
+                position: 'fixed',
+                top: '0',
+                left: '0',
+                width: '100%',
+                height: '100%',
+                backgroundColor: 'rgba(0, 0, 0, 0.5)',
+                zIndex: '1001',
+                display: 'flex',
+                justifyContent: 'center',
+                alignItems: 'center'
+            });
             overlay.id = 'activateOverlay';
-            overlay.className = 'modal fade show';
-            overlay.style.display = 'block';
 
-            // Create close button
-            var closeButton = document.createElement('span');
+            const closeButton = createElementWithStyles('span', {
+                position: 'absolute',
+                top: '10px',
+                right: '10px',
+                fontSize: '24px',
+                cursor: 'pointer',
+                color: '#fff',
+                backgroundColor: '#000',
+                padding: '5px',
+                borderRadius: '0'
+            });
             closeButton.innerHTML = '&times;';
-            closeButton.style.position = 'absolute';
-            closeButton.style.top = '10px';
-            closeButton.style.right = '10px';
-            closeButton.style.fontSize = '24px';
-            closeButton.style.cursor = 'pointer';
-            closeButton.style.color = '#fff';
-            closeButton.style.backgroundColor = '#000';
-            closeButton.style.padding = '5px';
-            closeButton.style.borderRadius = '0';
-            closeButton.addEventListener('click', function() {
+            closeButton.addEventListener('click', () => {
                 document.body.removeChild(overlay);
             });
 
-            var formContainer = document.createElement('div');
-            formContainer.style.position = 'relative';
-            formContainer.style.backgroundColor = '#fff';
-            formContainer.style.padding = '20px';
-            formContainer.style.borderRadius = '5px';
-            formContainer.style.width = '300px';
+            const formContainer = createElementWithStyles('div', {
+                position: 'relative',
+                backgroundColor: '#fff',
+                padding: '20px',
+                borderRadius: '5px',
+                width: '300px'
+            });
 
             // Create form elements
             formContainer.innerHTML = `
@@ -105,8 +121,8 @@ console.log('Activate/Deactivate item(s) button added to the page');
             overlay.appendChild(formContainer);
             document.body.appendChild(overlay);
 
-            // Add event listener to close the overlay
-            overlay.addEventListener('click', function(event) {
+            // Close overlay when clicking outside the form
+            overlay.addEventListener('click', (event) => {
                 if (event.target === overlay) {
                     document.body.removeChild(overlay);
                 }
@@ -121,23 +137,23 @@ console.log('Activate/Deactivate item(s) button added to the page');
                 }
             });
 
-document.getElementById('generateUploadFileButton').addEventListener('click', function() {
-                var generateButton = document.getElementById('generateUploadFileButton');
-                var originalButtonText = generateButton.innerHTML;
-                
+            document.getElementById('generateUploadFileButton').addEventListener('click', function() {
+                const generateButton = document.getElementById('generateUploadFileButton');
+                const originalButtonText = generateButton.innerHTML;
                 
                 // Logic to generate the upload file
                 const pluInput = Array.from(new Set(document.getElementById('pluInput').value.split(',').map(plu => plu.trim())));
                 const bySelect = document.getElementById('bySelect').value;
                 const storeRegionInput = Array.from(new Set(document.getElementById('storeRegionInput').value.split(',').map(sr => sr.trim())));
                 const andonCord = document.getElementById('andonCordSelect').value;
-                var loadingIndicator = document.createElement('div');
+                const loadingIndicator = createElementWithStyles('div', {
+                    textAlign: 'center',
+                    marginTop: '10px',
+                    fontSize: '16px',
+                    color: '#004E36'
+                });
                 loadingIndicator.id = 'loadingIndicator';
                 loadingIndicator.innerHTML = 'Processing...';
-                loadingIndicator.style.textAlign = 'center';
-                loadingIndicator.style.marginTop = '10px';
-                loadingIndicator.style.fontSize = '16px';
-                loadingIndicator.style.color = '#004E36';
                 formContainer.appendChild(loadingIndicator);
 
                 // Determine the environment (prod or gamma)
@@ -151,7 +167,7 @@ document.getElementById('generateUploadFileButton').addEventListener('click', fu
                     'accept-encoding': 'gzip, deflate, br',
                     'accept-language': 'en-US,en;q=0.9',
                     'content-type': 'application/x-amz-json-1.0',
-                    'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36 Edg/130.0.0.0',
+                    'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)',
                     'x-amz-target': 'WfmCamBackendService.GetStoresInformation'
                 };
 
@@ -205,7 +221,7 @@ document.getElementById('generateUploadFileButton').addEventListener('click', fu
                             'accept-encoding': 'gzip, deflate, br',
                             'accept-language': 'en-US,en;q=0.9',
                             'content-type': 'application/x-amz-json-1.0',
-                            'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36 Edg/130.0.0.0',
+                            'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)',
                             'x-amz-target': 'WfmCamBackendService.GetItemsAvailability'
                         };
 
@@ -311,7 +327,7 @@ document.getElementById('generateUploadFileButton').addEventListener('click', fu
                 });
             });
         });
-    }
+    };
 
     // Use MutationObserver to detect changes in the DOM
     const observer = new MutationObserver(addActivateButton);
