@@ -91,7 +91,7 @@ closeButton.addEventListener('click', function() {
                 <button id="executeDownloadButton" class="button" style="width: 100%; margin-top:10px;">Download</button>
                 <div id="downloadProgress" style="display:none; margin-top:10px; text-align:center; font-size:16px; color:#004E36;">Wait for Parameters</div>
                 <button id="cancelDownloadButton" class="button" style="width: 100%; margin-top:10px; background-color: #FF0000;">Cancel</button>
-            `;
+            `);
 
             // "Everything" checkbox disables all other options if checked
             formContainer.querySelector('#everythingCheckbox').addEventListener('change', function() {
