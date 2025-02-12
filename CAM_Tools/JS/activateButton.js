@@ -321,5 +321,7 @@
     addActivateButton();
 
     // Expose the function to the global scope for testing
-    window.addActivateButton = addActivateButton;
+    module.exports = {
+        addActivateButton
+    };
 })();
