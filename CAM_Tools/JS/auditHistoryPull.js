@@ -9,7 +9,6 @@
         const environment = window.location.hostname.includes('gamma') ? 'gamma' : 'prod';
         const apiUrlBase = `https://${environment}.cam.wfm.amazon.dev/api/`;
 
-
         // Define the API endpoint and headers for getting stores
         const headersStores = {
             'accept': '*/*',
@@ -117,8 +116,11 @@
                     const items = data.itemsAvailability.filter(item => item.andon === true);
                     console.log('Items with Andon Cord enabled:', items);
 
-                    // Step 4: Fetch audit history for each item
-                    items.forEach(item => {
+                    // Step 4: Fetch audit history for each item with a delay
+                    const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
+
+                    const fetchAuditHistoryWithDelay = async (item) => {
+                        await delay(500);
                         const headersAudit = {
                             'accept': '*/*',
                             'accept-language': 'en-US,en;q=0.9',
@@ -134,7 +136,7 @@
                             wfmScanCode: item.wfmScanCode
                         };
 
-                        fetch(apiUrlBase, {
+                        return fetch(apiUrlBase, {
                             method: 'POST',
                             headers: headersAudit,
                             body: JSON.stringify(payloadAudit),
@@ -151,10 +153,13 @@
                             });
                         })
                         .catch(error => {
-                    console.error('Error fetching audit history for item:', error);
-                    updateStatus('Error fetching audit history for some items.');
+                            console.error('Error fetching audit history for item:', error);
+                            updateStatus('Error fetching audit history for some items.');
                         });
-                    });
+                    };
+
+                    const auditPromises = items.map(item => fetchAuditHistoryWithDelay(item));
+                    return Promise.all(auditPromises);
                 })
                 .catch(error => {
                     console.error('Error fetching items:', error);
@@ -178,10 +183,12 @@
                 const workbook = XLSX.utils.book_new();
                 XLSX.utils.book_append_sheet(workbook, worksheet, 'AuditHistory');
                 XLSX.writeFile(workbook, 'AuditHistoryData.xlsx');
-        }).catch(error => {
+                updateStatus('Audit history data exported to Excel file.');
+            });
+        })
+        .catch(error => {
             console.error('Error fetching store data:', error);
             updateStatus('Error fetching store data.');
-        });
         });
     }
 
