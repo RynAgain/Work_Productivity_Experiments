@@ -13,7 +13,7 @@
 // @require      https://cdnjs.cloudflare.com/ajax/libs/react-dom/17.0.2/umd/react-dom.production.min.js
 
 // @require      https://github.com/RynAgain/Work_Productivity_Experiments/raw/main/CAM_Tools/JS/AddItemButton.js
-// @require      https://github.com/RynAgain/Work_Productivity_Experiments/raw/main/CAM_Tools/JS/ActivateButton.js
+// @require      https://raw.githubusercontent.com/RynAgain/Work_Productivity_Experiments/main/CAM_Tools/JS/activateButton.js
 // @require      https://github.com/RynAgain/Work_Productivity_Experiments/raw/main/CAM_Tools/JS/RedriveButton.js
 // @require      https://github.com/RynAgain/Work_Productivity_Experiments/raw/main/CAM_Tools/JS/GeneralHelpToolsButton.js
 // @require      https://github.com/RynAgain/Work_Productivity_Experiments/raw/main/CAM_Tools/JS/PLUDedupeListButton.js
