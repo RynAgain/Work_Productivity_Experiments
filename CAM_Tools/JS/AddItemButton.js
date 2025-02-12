@@ -229,9 +229,13 @@
     }
 
     // Expose the function to the global scope for testing
-    module.exports = {
-        addAddItemButton
-    };
+    try {
+        module.exports = {
+            addAddItemButton
+        };
+    } catch (e) {
+        // Handle the error if needed
+    }
     // Initialize the add item button
     addAddItemButton();
 })();

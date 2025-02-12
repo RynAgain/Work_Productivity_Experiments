@@ -1,5 +1,9 @@
-import '../jest.setup.js';
+import { JSDOM } from 'jsdom';
 import { addActivateButton } from '../JS/activateButton.js';
+
+const dom = new JSDOM('<!DOCTYPE html><html><body></body></html>', { url: 'http://localhost' });
+global.document = dom.window.document;
+global.window = dom.window;
 
 describe('activateButton module', () => {
   beforeEach(() => {

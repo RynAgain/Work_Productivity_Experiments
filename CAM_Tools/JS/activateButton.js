@@ -321,7 +321,11 @@
     addActivateButton();
 
     // Expose the function to the global scope for testing
-    module.exports = {
-        addActivateButton
-    };
+    try {
+        module.exports = {
+            addActivateButton
+        };
+    } catch (e) {
+        // Handle the error if needed
+    }
 })();
