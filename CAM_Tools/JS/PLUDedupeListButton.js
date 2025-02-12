@@ -5,7 +5,7 @@
     function addPLUDedupeListFunctionality() {
         console.log('PLU Dedupe & List button clicked');
         // Create overlay
-        var overlay = document.createElement('div');
+const overlay = document.createElement('div');
         overlay.id = 'pluDedupeOverlay';
         overlay.style.position = 'fixed';
         overlay.style.top = '0';
@@ -19,7 +19,7 @@
         overlay.style.alignItems = 'center';
 
         // Create close button
-        var closeButton = document.createElement('span');
+const closeButton = document.createElement('span');
         closeButton.innerHTML = '&times;';
         closeButton.style.position = 'absolute';
         closeButton.style.top = '10px';
@@ -76,7 +76,7 @@
         });
         });
 
-        var formContainer = document.createElement('div');
+const formContainer = document.createElement('div');
         formContainer.style.position = 'relative';
         formContainer.style.backgroundColor = '#fff';
         formContainer.style.padding = '20px';

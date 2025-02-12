@@ -1,3 +1,4 @@
+import { JSDOM } from 'jsdom';
 import { addFileChunkerFunctionality } from '../JS/FileChunker.js';
 
 describe('FileChunker module', () => {
