@@ -19,11 +19,32 @@
         // Create overlay and status elements
         const overlay = document.createElement('div');
         overlay.id = 'auditHistoryOverlay';
-        // ... (previous overlay styling remains the same)
+        overlay.style.position = 'fixed';
+        overlay.style.top = '0';
+        overlay.style.left = '0';
+        overlay.style.width = '100%';
+        overlay.style.height = '100%';
+        overlay.style.backgroundColor = 'rgba(0, 0, 0, 0.5)';
+        overlay.style.zIndex = '1001';
+        overlay.style.display = 'flex';
+        overlay.style.justifyContent = 'center';
+        overlay.style.alignItems = 'center';
 
         let isCancelled = false;
         const statusContainer = document.createElement('div');
-        // ... (previous statusContainer styling remains the same)
+        statusContainer.style.position = 'relative';
+        statusContainer.style.backgroundColor = '#fff';
+        statusContainer.style.padding = '20px';
+        statusContainer.style.borderRadius = '5px';
+        statusContainer.style.width = '300px';
+        statusContainer.style.textAlign = 'center';
+        statusContainer.innerHTML = `
+            <h3>Audit History Status</h3>
+            <p id="statusMessage">Initializing...</p>
+            <select id="storeSelect" style="margin-top: 10px; width: 100%;"></select>
+            <button id="nextRequestButton" style="margin-top: 10px; margin-right: 5px;">Next Request</button>
+            <button id="cancelButton" style="margin-top: 10px;">Cancel</button>
+        `;
 
         overlay.appendChild(statusContainer);
         document.body.appendChild(overlay);
@@ -31,13 +52,64 @@
         let compiledData = [];
 
         const updateStatus = (message) => {
-            document.getElementById('statusMessage').innerText = message;
+            const statusMessage = document.getElementById('statusMessage');
+            if (statusMessage) {
+                statusMessage.innerText = message;
+            }
         };
 
-        document.getElementById('cancelButton').addEventListener('click', function() {
-            isCancelled = true;
-            updateStatus('Cancelling...');
-        });
+        // Now that elements are created, add event listeners
+        const cancelButton = document.getElementById('cancelButton');
+        if (cancelButton) {
+            cancelButton.addEventListener('click', function() {
+                isCancelled = true;
+                updateStatus('Cancelling...');
+            });
+        }
+
+        async function fetchAuditHistoryWithDelay(item, attempt = 1) {
+            const maxAttempts = 5;
+            const delayTime = Math.pow(2, attempt) * 1000;
+
+            try {
+                await new Promise(resolve => setTimeout(resolve, 500));
+                const headersAudit = {
+                    'accept': '*/*',
+                    'accept-language': 'en-US,en;q=0.9',
+                    'content-type': 'application/x-amz-json-1.0',
+                    'x-amz-target': 'WfmCamBackendService.GetAuditHistory',
+                    'x-amz-user-agent': 'aws-sdk-js/0.0.1 os/Windows/NT_10.0 lang/js md/browser/Chrome_133.0.0.0',
+                    'Referer': `https://${environment}.cam.wfm.amazon.dev/store/${item.storeId}/item/${item.wfmScanCode}`,
+                    'Referrer-Policy': 'strict-origin-when-cross-origin'
+                };
+
+                const response = await fetch(apiUrlBase, {
+                    method: 'POST',
+                    headers: headersAudit,
+                    body: JSON.stringify({
+                        storeId: item.storeId,
+                        wfmScanCode: item.wfmScanCode
+                    }),
+                    credentials: 'include'
+                });
+
+                if (response.status === 429 && attempt < maxAttempts) {
+                    console.warn(`Rate limited, retrying in ${delayTime/1000} seconds...`);
+                    await new Promise(resolve => setTimeout(resolve, delayTime));
+                    return fetchAuditHistoryWithDelay(item, attempt + 1);
+                }
+
+                const auditData = await response.json();
+                compiledData.push({
+                    storeId: item.storeId,
+                    wfmScanCode: item.wfmScanCode,
+                    auditData: auditData
+                });
+            } catch (error) {
+                console.error('Error fetching audit history:', error);
+                updateStatus('Error fetching audit history for item.');
+            }
+        }
 
         // Fetch stores
         updateStatus('Fetching list of stores...');
@@ -53,9 +125,12 @@
                 throw new Error('Invalid store data received');
             }
 
-            // Populate store select dropdown
             const storeSelect = document.getElementById('storeSelect');
-            storeSelect.innerHTML = '';
+            if (!storeSelect) {
+                throw new Error('Store select element not found');
+            }
+
+            storeSelect.innerHTML = '<option value="">Select a store...</option>';
             updateStatus('Store information retrieved successfully.');
             
             for (const region in storeData.storesInformation) {
@@ -70,51 +145,50 @@
                 }
             }
 
-            // Handle next request button click
-            document.getElementById('nextRequestButton').addEventListener('click', function() {
-                const selectedStoreId = storeSelect.value;
-                if (!selectedStoreId) {
-                    updateStatus('Please select a store.');
-                    return;
-                }
+            const nextRequestButton = document.getElementById('nextRequestButton');
+            if (nextRequestButton) {
+                nextRequestButton.addEventListener('click', function() {
+                    const selectedStoreId = storeSelect.value;
+                    if (!selectedStoreId) {
+                        updateStatus('Please select a store.');
+                        return;
+                    }
 
-                const headersItems = {
-                    'accept': '*/*',
-                    'accept-encoding': 'gzip, deflate, br',
-                    'accept-language': 'en-US,en;q=0.9',
-                    'content-type': 'application/x-amz-json-1.0',
-                    'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)',
-                    'x-amz-target': 'WfmCamBackendService.GetItemsAvailability'
-                };
-
-                const fetchItemsForStore = () => {
-                    const payloadItems = {
-                        "filterContext": {
-                            "storeIds": [selectedStoreId]
-                        },
-                        "paginationContext": {
-                            "pageNumber": 0,
-                            "pageSize": 10000
-                        }
+                    const headersItems = {
+                        'accept': '*/*',
+                        'accept-encoding': 'gzip, deflate, br',
+                        'accept-language': 'en-US,en;q=0.9',
+                        'content-type': 'application/x-amz-json-1.0',
+                        'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)',
+                        'x-amz-target': 'WfmCamBackendService.GetItemsAvailability'
                     };
 
-                    return fetch(apiUrlBase, {
+                    updateStatus(`Fetching items for store ${selectedStoreId}...`);
+                    fetch(apiUrlBase, {
                         method: 'POST',
                         headers: headersItems,
-                        body: JSON.stringify(payloadItems),
+                        body: JSON.stringify({
+                            "filterContext": {
+                                "storeIds": [selectedStoreId]
+                            },
+                            "paginationContext": {
+                                "pageNumber": 0,
+                                "pageSize": 10000
+                            }
+                        }),
                         credentials: 'include'
                     })
                     .then(response => response.json())
                     .then(async data => {
                         const items = data.itemsAvailability.filter(item => item.andon === true);
                         console.log('Items with Andon Cord enabled:', items);
+                        updateStatus(`Found ${items.length} items with Andon Cord enabled`);
 
                         for (const item of items) {
                             if (isCancelled) break;
                             await fetchAuditHistoryWithDelay(item);
                         }
 
-                        // Export to Excel after processing all items
                         if (!isCancelled && compiledData.length > 0) {
                             const worksheet = XLSX.utils.json_to_sheet(compiledData);
                             const workbook = XLSX.utils.book_new();
@@ -127,60 +201,13 @@
                         console.error('Error fetching items:', error);
                         updateStatus('Error fetching items for store.');
                     });
-                };
-
-                fetchItemsForStore();
-            });
+                });
+            }
         })
         .catch(error => {
             console.error('Error fetching store data:', error);
             updateStatus('Error fetching store data.');
         });
-    }
-
-    // Helper function for fetching audit history with retry logic
-    async function fetchAuditHistoryWithDelay(item, attempt = 1) {
-        const maxAttempts = 5;
-        const delayTime = Math.pow(2, attempt) * 1000;
-
-        try {
-            await new Promise(resolve => setTimeout(resolve, 500));
-            const headersAudit = {
-                'accept': '*/*',
-                'accept-language': 'en-US,en;q=0.9',
-                'content-type': 'application/x-amz-json-1.0',
-                'x-amz-target': 'WfmCamBackendService.GetAuditHistory',
-                'x-amz-user-agent': 'aws-sdk-js/0.0.1 os/Windows/NT_10.0 lang/js md/browser/Chrome_133.0.0.0',
-                'Referer': `https://${environment}.cam.wfm.amazon.dev/store/${item.storeId}/item/${item.wfmScanCode}`,
-                'Referrer-Policy': 'strict-origin-when-cross-origin'
-            };
-
-            const response = await fetch(apiUrlBase, {
-                method: 'POST',
-                headers: headersAudit,
-                body: JSON.stringify({
-                    storeId: item.storeId,
-                    wfmScanCode: item.wfmScanCode
-                }),
-                credentials: 'include'
-            });
-
-            if (response.status === 429 && attempt < maxAttempts) {
-                console.warn(`Rate limited, retrying in ${delayTime/1000} seconds...`);
-                await new Promise(resolve => setTimeout(resolve, delayTime));
-                return fetchAuditHistoryWithDelay(item, attempt + 1);
-            }
-
-            const auditData = await response.json();
-            compiledData.push({
-                storeId: item.storeId,
-                wfmScanCode: item.wfmScanCode,
-                auditData: auditData
-            });
-        } catch (error) {
-            console.error('Error fetching audit history:', error);
-            updateStatus('Error fetching audit history for item.');
-        }
     }
 
     // Setup mutation observer for button
