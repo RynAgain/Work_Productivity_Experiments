@@ -12,21 +12,21 @@
 // @require      https://cdnjs.cloudflare.com/ajax/libs/react/17.0.2/umd/react.production.min.js
 // @require      https://cdnjs.cloudflare.com/ajax/libs/react-dom/17.0.2/umd/react-dom.production.min.js
 
-// @require      https://github.com/RynAgain/Work_Productivity_Experiments/raw/main/CAM_Tools/AddItemButton.js
-// @require      https://github.com/RynAgain/Work_Productivity_Experiments/raw/main/CAM_Tools/ActivateButton.js
-// @require      https://github.com/RynAgain/Work_Productivity_Experiments/raw/main/CAM_Tools/RedriveButton.js
-// @require      https://github.com/RynAgain/Work_Productivity_Experiments/raw/main/CAM_Tools/GeneralHelpToolsButton.js
-// @require      https://github.com/RynAgain/Work_Productivity_Experiments/raw/main/CAM_Tools/PLUDedupeListButton.js
-// @require      https://github.com/RynAgain/Work_Productivity_Experiments/raw/main/CAM_Tools/NISFileToCAMUploadButton.js
-// @require      https://github.com/RynAgain/Work_Productivity_Experiments/raw/main/CAM_Tools/ScanCodeTo13PLUButton.js
-// @require      https://github.com/RynAgain/Work_Productivity_Experiments/raw/main/CAM_Tools/PLUToASINButton.js
-// @require      https://github.com/RynAgain/Work_Productivity_Experiments/raw/main/CAM_Tools/DownloadButton.js
-// @require      https://github.com/RynAgain/Work_Productivity_Experiments/raw/main/CAM_Tools/GetMerchantIDFromStoreCode.js
-// @require      https://github.com/RynAgain/Work_Productivity_Experiments/raw/main/CAM_Tools/GetAllStoreInfo.js
-// @require      https://github.com/RynAgain/Work_Productivity_Experiments/raw/main/CAM_Tools/MeatInventoryToUploadConverter.js
-// @require      https://github.com/RynAgain/Work_Productivity_Experiments/raw/main/CAM_Tools/MassUploaderButton.js
-// @require      https://github.com/RynAgain/Work_Productivity_Experiments/raw/main/CAM_Tools/FileChunker.js
-// @require      https://github.com/RynAgain/Work_Productivity_Experiments/raw/main/CAM_Tools/auditHistoryDashboardButton.js
+// @require      https://github.com/RynAgain/Work_Productivity_Experiments/raw/main/CAM_Tools/JS/AddItemButton.js
+// @require      https://github.com/RynAgain/Work_Productivity_Experiments/raw/main/CAM_Tools/JS/ActivateButton.js
+// @require      https://github.com/RynAgain/Work_Productivity_Experiments/raw/main/CAM_Tools/JS/RedriveButton.js
+// @require      https://github.com/RynAgain/Work_Productivity_Experiments/raw/main/CAM_Tools/JS/GeneralHelpToolsButton.js
+// @require      https://github.com/RynAgain/Work_Productivity_Experiments/raw/main/CAM_Tools/JS/PLUDedupeListButton.js
+// @require      https://github.com/RynAgain/Work_Productivity_Experiments/raw/main/CAM_Tools/JS/NISFileToCAMUploadButton.js
+// @require      https://github.com/RynAgain/Work_Productivity_Experiments/raw/main/CAM_Tools/JS/ScanCodeTo13PLUButton.js
+// @require      https://github.com/RynAgain/Work_Productivity_Experiments/raw/main/CAM_Tools/JS/PLUToASINButton.js
+// @require      https://github.com/RynAgain/Work_Productivity_Experiments/raw/main/CAM_Tools/JS/DownloadButton.js
+// @require      https://github.com/RynAgain/Work_Productivity_Experiments/raw/main/CAM_Tools/JS/GetMerchantIDFromStoreCode.js
+// @require      https://github.com/RynAgain/Work_Productivity_Experiments/raw/main/CAM_Tools/JS/GetAllStoreInfo.js
+// @require      https://github.com/RynAgain/Work_Productivity_Experiments/raw/main/CAM_Tools/JS/MeatInventoryToUploadConverter.js
+// @require      https://github.com/RynAgain/Work_Productivity_Experiments/raw/main/CAM_Tools/JS/MassUploaderButton.js
+// @require      https://github.com/RynAgain/Work_Productivity_Experiments/raw/main/CAM_Tools/JS/FileChunker.js
+// @require      https://github.com/RynAgain/Work_Productivity_Experiments/raw/main/CAM_Tools/JS/auditHistoryDashboardButton.js
 
 
 // @run-at       document-end
