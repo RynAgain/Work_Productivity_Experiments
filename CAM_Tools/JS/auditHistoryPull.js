@@ -20,7 +20,37 @@
             'x-amz-target': 'WfmCamBackendService.GetStoresInformation'
         };
 
-        // Step 1: Get the list of stores
+        // Create a status overlay
+        const overlay = document.createElement('div');
+        overlay.id = 'auditHistoryOverlay';
+        overlay.style.position = 'fixed';
+        overlay.style.top = '0';
+        overlay.style.left = '0';
+        overlay.style.width = '100%';
+        overlay.style.height = '100%';
+        overlay.style.backgroundColor = 'rgba(0, 0, 0, 0.5)';
+        overlay.style.zIndex = '1001';
+        overlay.style.display = 'flex';
+        overlay.style.justifyContent = 'center';
+        overlay.style.alignItems = 'center';
+
+        const statusContainer = document.createElement('div');
+        statusContainer.style.position = 'relative';
+        statusContainer.style.backgroundColor = '#fff';
+        statusContainer.style.padding = '20px';
+        statusContainer.style.borderRadius = '5px';
+        statusContainer.style.width = '300px';
+        statusContainer.style.textAlign = 'center';
+        statusContainer.innerHTML = '<h3>Audit History Status</h3><p id="statusMessage">Initializing...</p>';
+
+        overlay.appendChild(statusContainer);
+        document.body.appendChild(overlay);
+
+        const updateStatus = (message) => {
+            document.getElementById('statusMessage').innerText = message;
+        };
+
+        updateStatus('Fetching list of stores...');
         fetch(apiUrlBase, {
             method: 'POST',
             headers: headersStores,
@@ -103,6 +133,20 @@
                         .then(auditData => {
                             console.log('Audit History Data for item:', auditData);
                             // Step 5: Compile the results into a data frame
+                            const compiledData = []; // Array to hold compiled data
+
+                            // Add audit data to compiledData
+                            compiledData.push({
+                                storeId: item.storeId,
+                                wfmScanCode: item.wfmScanCode,
+                                auditData: auditData // Assuming auditData is an object with relevant fields
+                            });
+
+                            // Convert compiledData to XLSX
+                            const worksheet = XLSX.utils.json_to_sheet(compiledData);
+                            const workbook = XLSX.utils.book_new();
+                            XLSX.utils.book_append_sheet(workbook, worksheet, 'AuditHistory');
+                            XLSX.writeFile(workbook, 'AuditHistoryData.xlsx');
                         })
                         .catch(error => {
                             console.error('Error fetching audit history for item:', error);
@@ -131,11 +175,20 @@
         // Handle the error if needed
     }
 
-    // Add event listener to the audit history pull button
-    const auditHistoryPullButton = document.getElementById('auditHistoryPullButton');
-    if (auditHistoryPullButton) {
-        auditHistoryPullButton.addEventListener('click', function() {
-            auditHistoryPull();
+    // Use MutationObserver to detect when the button is added to the DOM
+    const observer = new MutationObserver(function(mutations) {
+        mutations.forEach(function(mutation) {
+            if (mutation.addedNodes.length) {
+                const auditHistoryPullButton = document.getElementById('auditHistoryPullButton');
+                if (auditHistoryPullButton) {
+                    auditHistoryPullButton.addEventListener('click', function() {
+                        auditHistoryPull();
+                    });
+                    observer.disconnect(); // Stop observing once the button is found
+                }
+            }
         });
-    }
+    });
+
+    observer.observe(document.body, { childList: true, subtree: true });
 })();
