@@ -1,44 +1,124 @@
 (function() {
     'use strict';
 
-    // Function to handle the audit history pull
-    function auditHistoryPull(storeId, wfmScanCode) {
-        console.log('Audit History Pull initiated for Store:', storeId, 'PLU:', wfmScanCode);
+    // Function to handle the audit history pull for items with Andon Cord enabled
+    function auditHistoryPull() {
+        console.log('Audit History Pull initiated for items with Andon Cord enabled');
 
         // Determine the environment (prod or gamma)
         const environment = window.location.hostname.includes('gamma') ? 'gamma' : 'prod';
         const apiUrlBase = `https://${environment}.cam.wfm.amazon.dev/api/`;
 
-        // Define the API endpoint and headers for getting audit history
-        const headers = {
+
+        // Define the API endpoint and headers for getting stores
+        const headersStores = {
             'accept': '*/*',
+            'accept-encoding': 'gzip, deflate, br',
             'accept-language': 'en-US,en;q=0.9',
             'content-type': 'application/x-amz-json-1.0',
-            'x-amz-target': 'WfmCamBackendService.GetAuditHistory',
-            'x-amz-user-agent': 'aws-sdk-js/0.0.1 os/Windows/NT_10.0 lang/js md/browser/Chrome_133.0.0.0',
-            'Referer': `https://${environment}.cam.wfm.amazon.dev/store/${storeId}/item/${wfmScanCode}`,
-            'Referrer-Policy': 'strict-origin-when-cross-origin'
+            'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)',
+            'x-amz-target': 'WfmCamBackendService.GetStoresInformation'
         };
 
-        const payload = {
-            storeId: storeId,
-            wfmScanCode: wfmScanCode
-        };
-
-        // Make the API call
+        // Step 1: Get the list of stores
         fetch(apiUrlBase, {
             method: 'POST',
-            headers: headers,
-            body: JSON.stringify(payload),
+            headers: headersStores,
+            body: JSON.stringify({}),
             credentials: 'include'
         })
         .then(response => response.json())
-        .then(data => {
-            console.log('Audit History Data:', data);
-            // Handle the data received from the API
-        })
-        .catch(error => {
-            console.error('Error fetching audit history:', error);
+        .then(storeData => {
+            if (!storeData || !storeData.storesInformation) {
+                throw new Error('Invalid store data received');
+            }
+
+            const storeIds = [];
+            for (const region in storeData.storesInformation) {
+                const states = storeData.storesInformation[region];
+                for (const state in states) {
+                    const stores = states[state];
+                    stores.forEach(store => {
+                        storeIds.push(store.storeTLC);
+                    });
+                }
+            }
+
+            // Step 2: Get items in the stores
+            const headersItems = {
+                'accept': '*/*',
+                'accept-encoding': 'gzip, deflate, br',
+                'accept-language': 'en-US,en;q=0.9',
+                'content-type': 'application/x-amz-json-1.0',
+                'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)',
+                'x-amz-target': 'WfmCamBackendService.GetItemsAvailability'
+            };
+
+            const fetchItemsForStores = (storeIdsBatch) => {
+                const payloadItems = {
+                    "filterContext": {
+                        "storeIds": storeIdsBatch
+                    },
+                    "paginationContext": {
+                        "pageNumber": 0,
+                        "pageSize": 10000
+                    }
+                };
+                return fetch(apiUrlBase, {
+                    method: 'POST',
+                    headers: headersItems,
+                    body: JSON.stringify(payloadItems),
+                    credentials: 'include'
+                })
+                .then(response => response.json())
+                .then(data => {
+                    // Step 3: Filter items by Andon Cord
+                    const items = data.itemsAvailability.filter(item => item.andon === true);
+                    console.log('Items with Andon Cord enabled:', items);
+
+                    // Step 4: Fetch audit history for each item
+                    items.forEach(item => {
+                        const headersAudit = {
+                            'accept': '*/*',
+                            'accept-language': 'en-US,en;q=0.9',
+                            'content-type': 'application/x-amz-json-1.0',
+                            'x-amz-target': 'WfmCamBackendService.GetAuditHistory',
+                            'x-amz-user-agent': 'aws-sdk-js/0.0.1 os/Windows/NT_10.0 lang/js md/browser/Chrome_133.0.0.0',
+                            'Referer': `https://${environment}.cam.wfm.amazon.dev/store/${item.storeId}/item/${item.wfmScanCode}`,
+                            'Referrer-Policy': 'strict-origin-when-cross-origin'
+                        };
+
+                        const payloadAudit = {
+                            storeId: item.storeId,
+                            wfmScanCode: item.wfmScanCode
+                        };
+
+                        fetch(apiUrlBase, {
+                            method: 'POST',
+                            headers: headersAudit,
+                            body: JSON.stringify(payloadAudit),
+                            credentials: 'include'
+                        })
+                        .then(response => response.json())
+                        .then(auditData => {
+                            console.log('Audit History Data for item:', auditData);
+                            // Step 5: Compile the results into a data frame
+                        })
+                        .catch(error => {
+                            console.error('Error fetching audit history for item:', error);
+                        });
+                    });
+                })
+                .catch(error => {
+                    console.error('Error fetching items:', error);
+                });
+            };
+
+            // Process stores in batches
+            const batchSize = 10;
+            for (let i = 0; i < storeIds.length; i += batchSize) {
+                fetchItemsForStores(storeIds.slice(i, i + batchSize));
+            }
         });
     }
 
@@ -55,8 +135,7 @@
     const auditHistoryPullButton = document.getElementById('auditHistoryPullButton');
     if (auditHistoryPullButton) {
         auditHistoryPullButton.addEventListener('click', function() {
-            // Example usage: replace with actual storeId and wfmScanCode
-            auditHistoryPull('APS', '107998');
+            auditHistoryPull();
         });
     }
 })();
