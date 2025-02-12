@@ -48,6 +48,8 @@
         overlay.appendChild(statusContainer);
         document.body.appendChild(overlay);
 
+        let compiledData = []; // Array to hold compiled data
+
         const updateStatus = (message) => {
             document.getElementById('statusMessage').innerText = message;
         };
@@ -141,37 +143,45 @@
                         .then(response => response.json())
                         .then(auditData => {
                             console.log('Audit History Data for item:', auditData);
-                            // Step 5: Compile the results into a data frame
-                            const compiledData = []; // Array to hold compiled data
-
                             // Add audit data to compiledData
                             compiledData.push({
                                 storeId: item.storeId,
                                 wfmScanCode: item.wfmScanCode,
                                 auditData: auditData // Assuming auditData is an object with relevant fields
                             });
-
-                            // Convert compiledData to XLSX
-                            const worksheet = XLSX.utils.json_to_sheet(compiledData);
-                            const workbook = XLSX.utils.book_new();
-                            XLSX.utils.book_append_sheet(workbook, worksheet, 'AuditHistory');
-                            XLSX.writeFile(workbook, 'AuditHistoryData.xlsx');
                         })
                         .catch(error => {
-                            console.error('Error fetching audit history for item:', error);
+                    console.error('Error fetching audit history for item:', error);
+                    updateStatus('Error fetching audit history for some items.');
                         });
                     });
                 })
                 .catch(error => {
                     console.error('Error fetching items:', error);
+                    updateStatus('Error fetching items for some stores.');
                 });
             };
 
             // Process stores in batches
             const batchSize = 10;
+            const fetchPromises = [];
             for (let i = 0; i < storeIds.length; i += batchSize) {
-                fetchItemsForStores(storeIds.slice(i, i + batchSize));
+                fetchPromises.push(fetchItemsForStores(storeIds.slice(i, i + batchSize)));
             }
+
+            Promise.all(fetchPromises.map(p => p.catch(e => {
+                console.error('Error in fetch promise:', e);
+                return null; // Continue with other promises
+            }))).then(() => {
+                // Convert compiledData to XLSX after all data is fetched
+                const worksheet = XLSX.utils.json_to_sheet(compiledData);
+                const workbook = XLSX.utils.book_new();
+                XLSX.utils.book_append_sheet(workbook, worksheet, 'AuditHistory');
+                XLSX.writeFile(workbook, 'AuditHistoryData.xlsx');
+        }).catch(error => {
+            console.error('Error fetching store data:', error);
+            updateStatus('Error fetching store data.');
+        });
         });
     }
 
