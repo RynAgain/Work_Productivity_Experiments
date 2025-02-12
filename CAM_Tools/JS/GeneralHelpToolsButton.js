@@ -93,6 +93,7 @@ generalHelpToolsButton.addEventListener('mouseout', function(){
                 <button id ="filechunker" style = "width: 100%; margin-bottom: 10px;">File Chunker</button>
                 <button id ="massUploaderButton" style = "width: 100%; margin-bottom: 10px;">Mass File Upload</button>
                 <button id ="auditHistoryDashboardButton" style = "width: 100%; margin-bottom: 10px;">zAudit History Dashboardz</button>
+                <button id="auditHistoryPullButton" style="width: 100%; margin-bottom: 10px;">zAudit History Pullz</button>
                 <button id ="dailyInventoryTool" style = "width: 100%; margin-bottom: 10px;">zDaily Inventory Toolz</button>
                 <button id="atcpropButton" style ="width: 100%; margin-bottom: 10px;">zATC Propagation Toolz</button>
 
@@ -109,6 +110,14 @@ generalHelpToolsButton.addEventListener('mouseout', function(){
                 
             });
         });
+    }
+
+    try {
+        module.exports = {
+            addGeneralHelpToolsButton
+        };
+    } catch (e) {
+        // Handle the error if needed
     }
 
     // Use MutationObserver to detect changes in the DOM

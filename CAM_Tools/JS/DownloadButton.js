@@ -66,7 +66,8 @@
             closeButton.style.backgroundColor = '#000';
             closeButton.style.padding = '5px';
             closeButton.style.borderRadius = '0';
-            closeButton.addEventListener('click', function() {
+closeButton.addEventListener('click', function() {
+    console.log('Close button clicked');
                 document.body.removeChild(overlay);
             });
             formContainer.appendChild(closeButton);
@@ -78,7 +79,6 @@
                 <label><input type="checkbox" id="everythingCheckbox"> Everything</label><br>
                 <label>Specific PLUs</label>
                 <input type="text" id="pluInput" style="width: 100%; margin-bottom: 10px;" placeholder="Enter specific PLUs separated by commas"><br>
-                
                 <label><input type="checkbox" id="allPlusCheckbox"> All PLUs</label><br>
                 <label>By</label>
                 <select id="bySelect" style="width: 100%; margin-bottom: 10px;">
@@ -320,6 +320,14 @@
     const observer = new MutationObserver(addDownloadButton);
     observer.observe(document.body, { childList: true, subtree: true });
 
+    //expose
+    try {
+        module.exports = {
+            addDownloadButton
+        };
+    } catch (e) {
+        // Handle the error if needed
+    }
     // Initial attempt to add the download data button
     addDownloadButton();
 })();

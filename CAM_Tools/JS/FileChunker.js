@@ -199,6 +199,14 @@
         }
     }
 
+    try {
+        module.exports = {
+            addFileChunkerFunctionality
+        };
+    } catch (e) {
+        // Handle the error if needed
+    }
+
     // Use MutationObserver to detect when the filechunker button is added to the DOM
     var observer = new MutationObserver(function(mutations) {
         mutations.forEach(function(mutation) {

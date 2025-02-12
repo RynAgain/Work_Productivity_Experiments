@@ -1,3 +1,4 @@
+import { JSDOM } from 'jsdom';
 import { addDownloadButton } from '../JS/DownloadButton.js';
 
 describe('DownloadButton module', () => {
@@ -21,5 +22,21 @@ describe('DownloadButton module', () => {
     addDownloadButton();
     const buttons = document.querySelectorAll('#downloadDataButton');
     expect(buttons.length).toBe(1);
+  });
+
+  test('should remove the overlay when the close button is clicked', () => {
+    addDownloadButton();
+    const downloadButton = document.getElementById('downloadDataButton');
+    downloadButton.click();
+
+    const overlay = document.getElementById('downloadOverlay');
+    expect(overlay).not.toBeNull();
+
+    const closeButton = overlay.querySelector('span');
+    const removeChildSpy = jest.spyOn(document.body, 'removeChild');
+    closeButton.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+
+    expect(removeChildSpy).toHaveBeenCalledWith(overlay);
+    removeChildSpy.mockRestore();
   });
 });
