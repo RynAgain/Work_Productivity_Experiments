@@ -3,7 +3,7 @@ try {
     'use strict';
 
     // Add CSS styles for input fields and buttons
-    var style = document.createElement('style');
+const style = document.createElement('style');
     style.innerHTML = `
         .input-field {
             font-family: inherit;
@@ -46,7 +46,7 @@ try {
         }
 
         // Create the add new item(s) button
-var addItemButton = document.createElement('button');
+const addItemButton = document.createElement('button');
 addItemButton.className = 'button';
         addItemButton.id = 'addItemButton';
         addItemButton.innerHTML = 'Add New Item(s)';
@@ -77,7 +77,7 @@ addItemButton.style.borderRadius = '5px';
         addItemButton.addEventListener('click', function() {
             console.log('Add New Item(s) button clicked');
             // Create overlay
-            var overlay = document.createElement('div');
+const overlay = document.createElement('div');
             overlay.id = 'addItemOverlay';
             overlay.style.position = 'fixed';
             overlay.style.top = '0';
@@ -91,7 +91,7 @@ addItemButton.style.borderRadius = '5px';
             overlay.style.alignItems = 'center';
 
             // Create close button
-            var closeButton = document.createElement('span');
+const closeButton = document.createElement('span');
             closeButton.innerHTML = '&times;';
             closeButton.style.position = 'absolute';
             closeButton.style.top = '10px';

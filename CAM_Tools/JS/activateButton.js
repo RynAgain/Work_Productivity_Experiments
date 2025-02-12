@@ -12,7 +12,7 @@
         }
 
         // Create the activate/deactivate item(s) button
-        var activateButton = document.createElement('button');
+const activateButton = document.createElement('button');
         activateButton.id = 'activateButton';
         activateButton.innerHTML = 'Activate/Deactivate Item(s)';
         activateButton.className = 'button';
@@ -44,7 +44,7 @@ console.log('Activate/Deactivate item(s) button added to the page');
             console.log('Activate/Deactivate Item(s) button clicked');
             
             // Create overlay
-            var overlay = document.createElement('div');
+                const overlay = document.createElement('div');
             overlay.id = 'activateOverlay';
             overlay.style.position = 'fixed';
             overlay.style.top = '0';
@@ -58,7 +58,7 @@ console.log('Activate/Deactivate item(s) button added to the page');
             overlay.style.alignItems = 'center';
 
             // Create close button
-            var closeButton = document.createElement('span');
+                const closeButton = document.createElement('span');
             closeButton.innerHTML = '&times;';
             closeButton.style.position = 'absolute';
             closeButton.style.top = '10px';
@@ -73,7 +73,7 @@ console.log('Activate/Deactivate item(s) button added to the page');
                 document.body.removeChild(overlay);
             });
 
-            var formContainer = document.createElement('div');
+            const formContainer = document.createElement('div');
             formContainer.style.position = 'relative';
             formContainer.style.backgroundColor = '#fff';
             formContainer.style.padding = '20px';
@@ -122,7 +122,7 @@ console.log('Activate/Deactivate item(s) button added to the page');
             });
 
 document.getElementById('generateUploadFileButton').addEventListener('click', function() {
-                var generateButton = document.getElementById('generateUploadFileButton');
+                const generateButton = document.getElementById('generateUploadFileButton');
                 var originalButtonText = generateButton.innerHTML;
                 
                 
@@ -131,7 +131,7 @@ document.getElementById('generateUploadFileButton').addEventListener('click', fu
                 const bySelect = document.getElementById('bySelect').value;
                 const storeRegionInput = Array.from(new Set(document.getElementById('storeRegionInput').value.split(',').map(sr => sr.trim())));
                 const andonCord = document.getElementById('andonCordSelect').value;
-                var loadingIndicator = document.createElement('div');
+                const loadingIndicator = document.createElement('div');
                 loadingIndicator.id = 'loadingIndicator';
                 loadingIndicator.innerHTML = 'Processing...';
                 loadingIndicator.style.textAlign = 'center';

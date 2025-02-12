@@ -116,7 +116,7 @@ generalHelpToolsButton.addEventListener('mouseout', function(){
             // Add event listener for the "Credits" link
             document.getElementById('creditsLink').addEventListener('click', function(event) {
                 event.preventDefault();
-                alert('Software Version: 2.5\nLast Update Date: 2025-2-10\nAuthor: Ryan Satterfield\nThis is an unofficial tool, if it stops working and I no longer work here (currently on contract ending March 31) I dont know how it will get fixed.');
+                alert('Software Version: 2.5\nLast Update Date: 2025-2-10\nAuthor: Ryan Satterfield\nThis is an unofficial tool.');
                 
             });
         });
