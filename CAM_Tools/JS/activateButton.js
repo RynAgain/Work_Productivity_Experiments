@@ -12,7 +12,7 @@
         }
 
         // Create the activate/deactivate item(s) button
-const activateButton = document.createElement('button');
+        const activateButton = document.createElement('button');
         activateButton.id = 'activateButton';
         activateButton.innerHTML = 'Activate/Deactivate Item(s)';
         activateButton.className = 'button';
@@ -26,25 +26,25 @@ const activateButton = document.createElement('button');
         activateButton.style.backgroundColor = '#004E36';
         activateButton.style.color = '#fff';
         activateButton.style.border = 'none';
-activateButton.style.borderRadius = '5px';
+        activateButton.style.borderRadius = '5px';
         activateButton.style.cursor = 'pointer !important';
 
         // Append the button to the body
-document.body.appendChild(activateButton);
-activateButton.addEventListener('mouseover', function(){
-    activateButton.style.backgroundColor = '#218838';
-});
-activateButton.addEventListener('mouseout', function(){
-    activateButton.style.backgroundColor = '#004E36';
-});
-console.log('Activate/Deactivate item(s) button added to the page');
+        document.body.appendChild(activateButton);
+        activateButton.addEventListener('mouseover', function() {
+            activateButton.style.backgroundColor = '#218838';
+        });
+        activateButton.addEventListener('mouseout', function() {
+            activateButton.style.backgroundColor = '#004E36';
+        });
+        console.log('Activate/Deactivate item(s) button added to the page');
 
         // Add click event to the activate/deactivate item(s) button
         activateButton.addEventListener('click', function() {
             console.log('Activate/Deactivate Item(s) button clicked');
             
             // Create overlay
-                const overlay = document.createElement('div');
+            const overlay = document.createElement('div');
             overlay.id = 'activateOverlay';
             overlay.style.position = 'fixed';
             overlay.style.top = '0';
@@ -58,7 +58,7 @@ console.log('Activate/Deactivate item(s) button added to the page');
             overlay.style.alignItems = 'center';
 
             // Create close button
-                const closeButton = document.createElement('span');
+            const closeButton = document.createElement('span');
             closeButton.innerHTML = '&times;';
             closeButton.style.position = 'absolute';
             closeButton.style.top = '10px';
@@ -121,7 +121,7 @@ console.log('Activate/Deactivate item(s) button added to the page');
                 }
             });
 
-document.getElementById('generateUploadFileButton').addEventListener('click', function() {
+            document.getElementById('generateUploadFileButton').addEventListener('click', function() {
                 const generateButton = document.getElementById('generateUploadFileButton');
                 var originalButtonText = generateButton.innerHTML;
                 
@@ -319,4 +319,7 @@ document.getElementById('generateUploadFileButton').addEventListener('click', fu
 
     // Initial attempt to add the activate/deactivate item(s) button
     addActivateButton();
+
+    // Expose the function to the global scope for testing
+    window.addActivateButton = addActivateButton;
 })();

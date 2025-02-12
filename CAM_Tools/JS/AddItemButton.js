@@ -1,9 +1,8 @@
-try {
 (function() {
     'use strict';
 
     // Add CSS styles for input fields and buttons
-const style = document.createElement('style');
+    const style = document.createElement('style');
     style.innerHTML = `
         .input-field {
             font-family: inherit;
@@ -46,8 +45,8 @@ const style = document.createElement('style');
         }
 
         // Create the add new item(s) button
-const addItemButton = document.createElement('button');
-addItemButton.className = 'button';
+        const addItemButton = document.createElement('button');
+        addItemButton.className = 'button';
         addItemButton.id = 'addItemButton';
         addItemButton.innerHTML = 'Add New Item(s)';
         addItemButton.style.position = 'fixed';
@@ -60,7 +59,7 @@ addItemButton.className = 'button';
         addItemButton.style.backgroundColor = '#004E36';
         addItemButton.style.color = '#fff';
         addItemButton.style.border = 'none';
-addItemButton.style.borderRadius = '5px';
+        addItemButton.style.borderRadius = '5px';
         addItemButton.style.cursor = 'pointer';
 
         // Append the button to the body
@@ -77,7 +76,7 @@ addItemButton.style.borderRadius = '5px';
         addItemButton.addEventListener('click', function() {
             console.log('Add New Item(s) button clicked');
             // Create overlay
-const overlay = document.createElement('div');
+            const overlay = document.createElement('div');
             overlay.id = 'addItemOverlay';
             overlay.style.position = 'fixed';
             overlay.style.top = '0';
@@ -91,7 +90,7 @@ const overlay = document.createElement('div');
             overlay.style.alignItems = 'center';
 
             // Create close button
-const closeButton = document.createElement('span');
+            const closeButton = document.createElement('span');
             closeButton.innerHTML = '&times;';
             closeButton.style.position = 'absolute';
             closeButton.style.top = '10px';
@@ -170,68 +169,69 @@ const closeButton = document.createElement('span');
                 });
             }
 
-if (generateFileButton) {
-    generateFileButton.addEventListener('click', function() {
-        // Collect input values
-        var storeCode = document.getElementById('storeCode').value;
-        var plu = document.getElementById('plu').value;
-        var currentInventory = document.getElementById('currentInventory').value;
-        var availability = document.getElementById('availability').value;
-        var andonCord = document.getElementById('andonCord').value;
+            if (generateFileButton) {
+                generateFileButton.addEventListener('click', function() {
+                    // Collect input values
+                    var storeCode = document.getElementById('storeCode').value;
+                    var plu = document.getElementById('plu').value;
+                    var currentInventory = document.getElementById('currentInventory').value;
+                    var availability = document.getElementById('availability').value;
+                    var andonCord = document.getElementById('andonCord').value;
 
-        // Check if all required fields are filled
-        if (!storeCode || !plu || !availability || !andonCord) {
-            alert('Please fill in all required fields before generating the file.');
-            return;
-        }
+                    // Check if all required fields are filled
+                    if (!storeCode || !plu || !availability || !andonCord) {
+                        alert('Please fill in all required fields before generating the file.');
+                        return;
+                    }
 
-        // Check if both tracking dates are filled if one is provided
-        var trackingStartDate = document.getElementById('trackingStartDate').value;
-        var trackingEndDate = document.getElementById('trackingEndDate').value;
+                    // Check if both tracking dates are filled if one is provided
+                    var trackingStartDate = document.getElementById('trackingStartDate').value;
+                    var trackingEndDate = document.getElementById('trackingEndDate').value;
 
-        if ((trackingStartDate && !trackingEndDate) || (!trackingStartDate && trackingEndDate)) {
-            alert('Please provide both Tracking Start Date and Tracking End Date.');
-            return;
-        }
+                    if ((trackingStartDate && !trackingEndDate) || (!trackingStartDate && trackingEndDate)) {
+                        alert('Please provide both Tracking Start Date and Tracking End Date.');
+                        return;
+                    }
 
-        // Split store codes and PLUs by commas
-        var storeCodes = Array.from(new Set(storeCode.split(',').map(code => code.trim())));
-        var plus = Array.from(new Set(plu.split(',').map(p => p.trim())));
+                    // Split store codes and PLUs by commas
+                    var storeCodes = Array.from(new Set(storeCode.split(',').map(code => code.trim())));
+                    var plus = Array.from(new Set(plu.split(',').map(p => p.trim())));
 
-        // Create CSV content
-        var csvContent = 'Store - 3 Letter Code,Item Name,Item PLU/UPC,Availability,Current Inventory,Sales Floor Capacity,Andon Cord,Tracking Start Date,Tracking End Date\n';
-        
-        // Generate a row for each combination of store code and PLU
-        storeCodes.forEach(store => {
-            plus.forEach(plu => {
-                csvContent += `${store},Name_Does_Not_Matter,${plu},${availability},${currentInventory},,${andonCord},${trackingStartDate},${trackingEndDate}\n`;
-            });
-        });
+                    // Create CSV content
+                    var csvContent = 'Store - 3 Letter Code,Item Name,Item PLU/UPC,Availability,Current Inventory,Sales Floor Capacity,Andon Cord,Tracking Start Date,Tracking End Date\n';
+                    
+                    // Generate a row for each combination of store code and PLU
+                    storeCodes.forEach(store => {
+                        plus.forEach(plu => {
+                            csvContent += `${store},Name_Does_Not_Matter,${plu},${availability},${currentInventory},,${andonCord},${trackingStartDate},${trackingEndDate}\n`;
+                        });
+                    });
 
-        // Create a Blob from the CSV string
-        var blob = new Blob([csvContent], { type: 'text/csv' });
+                    // Create a Blob from the CSV string
+                    var blob = new Blob([csvContent], { type: 'text/csv' });
 
-        // Create a link element
-        var link = document.createElement('a');
-        link.href = URL.createObjectURL(blob);
-        link.download = 'add_item_data.csv';
+                    // Create a link element
+                    var link = document.createElement('a');
+                    link.href = URL.createObjectURL(blob);
+                    link.download = 'add_item_data.csv';
 
-        // Append the link to the body
-        document.body.appendChild(link);
+                    // Append the link to the body
+                    document.body.appendChild(link);
 
-        // Trigger the download
-        link.click();
+                    // Trigger the download
+                    link.click();
 
-        // Remove the link from the document
-        document.body.removeChild(link);
-    });
-}
+                    // Remove the link from the document
+                    document.body.removeChild(link);
+                });
+            }
         });
     }
 
+    // Expose the function to the global scope for testing
+    module.exports = {
+        addAddItemButton
+    };
     // Initialize the add item button
     addAddItemButton();
 })();
-} catch (error) {
-    console.error('[AddItemButton.js] Error:', error);
-}
