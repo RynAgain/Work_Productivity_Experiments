@@ -74,7 +74,7 @@ closeButton.addEventListener('click', function() {
 
             // New UI with improved layout:
             // Options first, then Download button, progress indicator, then Cancel button.
-            formContainer.innerHTML += `
+            formContainer.insertAdjacentHTML('beforeend', `
                 <h3>Download Data Options</h3>
                 <label><input type="checkbox" id="everythingCheckbox"> Everything</label><br>
                 <label>Specific PLUs</label>
