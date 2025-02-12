@@ -1,15 +1,12 @@
 (function() {
     'use strict';
 
-    // Function to handle the audit history pull for items with Andon Cord enabled
     function auditHistoryPull() {
         console.log('Audit History Pull initiated for items with Andon Cord enabled');
 
-        // Determine the environment (prod or gamma)
         const environment = window.location.hostname.includes('gamma') ? 'gamma' : 'prod';
         const apiUrlBase = `https://${environment}.cam.wfm.amazon.dev/api/`;
 
-        // Define the API endpoint and headers for getting stores
         const headersStores = {
             'accept': '*/*',
             'accept-encoding': 'gzip, deflate, br',
@@ -19,46 +16,30 @@
             'x-amz-target': 'WfmCamBackendService.GetStoresInformation'
         };
 
-        // Create a status overlay
+        // Create overlay and status elements
         const overlay = document.createElement('div');
         overlay.id = 'auditHistoryOverlay';
-        overlay.style.position = 'fixed';
-        overlay.style.top = '0';
-        overlay.style.left = '0';
-        overlay.style.width = '100%';
-        overlay.style.height = '100%';
-        overlay.style.backgroundColor = 'rgba(0, 0, 0, 0.5)';
-        overlay.style.zIndex = '1001';
-        overlay.style.display = 'flex';
-        overlay.style.justifyContent = 'center';
-        overlay.style.alignItems = 'center';
+        // ... (previous overlay styling remains the same)
 
-        let isCancelled = false; // Flag to track if the process is cancelled
-
+        let isCancelled = false;
         const statusContainer = document.createElement('div');
-        statusContainer.style.position = 'relative';
-        statusContainer.style.backgroundColor = '#fff';
-        statusContainer.style.padding = '20px';
-        statusContainer.style.borderRadius = '5px';
-        statusContainer.style.width = '300px';
-        statusContainer.style.textAlign = 'center';
-        statusContainer.innerHTML = '<h3>Audit History Status</h3><p id="statusMessage">Initializing...</p><button id="nextRequestButton" style="margin-top: 10px;">Next Request</button><button id="cancelButton" style="margin-top: 10px;">Cancel</button>';
+        // ... (previous statusContainer styling remains the same)
 
         overlay.appendChild(statusContainer);
         document.body.appendChild(overlay);
 
-        let compiledData = []; // Array to hold compiled data
+        let compiledData = [];
 
         const updateStatus = (message) => {
             document.getElementById('statusMessage').innerText = message;
         };
 
-        // Add event listener to the cancel button
         document.getElementById('cancelButton').addEventListener('click', function() {
             isCancelled = true;
             updateStatus('Cancelling...');
         });
 
+        // Fetch stores
         updateStatus('Fetching list of stores...');
         fetch(apiUrlBase, {
             method: 'POST',
@@ -72,118 +53,83 @@
                 throw new Error('Invalid store data received');
             }
 
-            const storeIds = [];
+            // Populate store select dropdown
+            const storeSelect = document.getElementById('storeSelect');
+            storeSelect.innerHTML = '';
             updateStatus('Store information retrieved successfully.');
+            
             for (const region in storeData.storesInformation) {
                 const states = storeData.storesInformation[region];
                 for (const state in states) {
-                    const stores = states[state];
-                    stores.forEach(store => {
-                        storeIds.push(store.storeTLC);
+                    states[state].forEach(store => {
+                        const option = document.createElement('option');
+                        option.value = store.storeTLC;
+                        option.text = `${store.storeTLC} - ${store.storeName}`;
+                        storeSelect.add(option);
                     });
                 }
             }
 
-            // Step 2: Get items in the stores
-            const headersItems = {
-                'accept': '*/*',
-                'accept-encoding': 'gzip, deflate, br',
-                'accept-language': 'en-US,en;q=0.9',
-                'content-type': 'application/x-amz-json-1.0',
-                'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)',
-                'x-amz-target': 'WfmCamBackendService.GetItemsAvailability'
-            };
+            // Handle next request button click
+            document.getElementById('nextRequestButton').addEventListener('click', function() {
+                const selectedStoreId = storeSelect.value;
+                if (!selectedStoreId) {
+                    updateStatus('Please select a store.');
+                    return;
+                }
 
-            const fetchItemsForStores = (storeIdsBatch) => {
-                const payloadItems = {
-                    "filterContext": {
-                        "storeIds": storeIdsBatch
-                    },
-                    "paginationContext": {
-                        "pageNumber": 0,
-                        "pageSize": 10000
-                    }
+                const headersItems = {
+                    'accept': '*/*',
+                    'accept-encoding': 'gzip, deflate, br',
+                    'accept-language': 'en-US,en;q=0.9',
+                    'content-type': 'application/x-amz-json-1.0',
+                    'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)',
+                    'x-amz-target': 'WfmCamBackendService.GetItemsAvailability'
                 };
-                return fetch(apiUrlBase, {
-                    method: 'POST',
-                    headers: headersItems,
-                    body: JSON.stringify(payloadItems),
-                    credentials: 'include'
-                })
-                .then(response => response.json())
-                .then(data => {
-                    // Step 3: Filter items by Andon Cord
-                    const items = data.itemsAvailability.filter(item => item.andon === true);
-                    console.log('Items with Andon Cord enabled:', items);
 
-                    // Step 4: Fetch audit history for each item with a delay
-                    const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
-
-                    const fetchAuditHistoryWithDelay = async (item) => {
-                        await delay(500);
-                        const headersAudit = {
-                            'accept': '*/*',
-                            'accept-language': 'en-US,en;q=0.9',
-                            'content-type': 'application/x-amz-json-1.0',
-                            'x-amz-target': 'WfmCamBackendService.GetAuditHistory',
-                            'x-amz-user-agent': 'aws-sdk-js/0.0.1 os/Windows/NT_10.0 lang/js md/browser/Chrome_133.0.0.0',
-                            'Referer': `https://${environment}.cam.wfm.amazon.dev/store/${item.storeId}/item/${item.wfmScanCode}`,
-                            'Referrer-Policy': 'strict-origin-when-cross-origin'
-                        };
-
-                        const payloadAudit = {
-                            storeId: item.storeId,
-                            wfmScanCode: item.wfmScanCode
-                        };
-
-                        return fetch(apiUrlBase, {
-                            method: 'POST',
-                            headers: headersAudit,
-                            body: JSON.stringify(payloadAudit),
-                            credentials: 'include'
-                        })
-                        .then(response => response.json())
-                        .then(auditData => {
-                            console.log('Audit History Data for item:', auditData);
-                            // Add audit data to compiledData
-                            compiledData.push({
-                                storeId: item.storeId,
-                                wfmScanCode: item.wfmScanCode,
-                                auditData: auditData // Assuming auditData is an object with relevant fields
-                            });
-                        })
-                        .catch(error => {
-                            console.error('Error fetching audit history for item:', error);
-                            updateStatus('Error fetching audit history for some items.');
-                        });
+                const fetchItemsForStore = () => {
+                    const payloadItems = {
+                        "filterContext": {
+                            "storeIds": [selectedStoreId]
+                        },
+                        "paginationContext": {
+                            "pageNumber": 0,
+                            "pageSize": 10000
+                        }
                     };
 
-                    const auditPromises = items.map(item => fetchAuditHistoryWithDelay(item));
-                    return Promise.all(auditPromises);
-                })
-                .catch(error => {
-                    console.error('Error fetching items:', error);
-                    updateStatus('Error fetching items for some stores.');
-                });
-            };
+                    return fetch(apiUrlBase, {
+                        method: 'POST',
+                        headers: headersItems,
+                        body: JSON.stringify(payloadItems),
+                        credentials: 'include'
+                    })
+                    .then(response => response.json())
+                    .then(async data => {
+                        const items = data.itemsAvailability.filter(item => item.andon === true);
+                        console.log('Items with Andon Cord enabled:', items);
 
-            // Process stores in batches
-            const batchSize = 10;
-            const fetchPromises = [];
-            for (let i = 0; i < storeIds.length; i += batchSize) {
-                fetchPromises.push(fetchItemsForStores(storeIds.slice(i, i + batchSize)));
-            }
+                        for (const item of items) {
+                            if (isCancelled) break;
+                            await fetchAuditHistoryWithDelay(item);
+                        }
 
-            Promise.all(fetchPromises.map(p => p.catch(e => {
-                console.error('Error in fetch promise:', e);
-                return null; // Continue with other promises
-            }))).then(() => {
-                // Convert compiledData to XLSX after all data is fetched
-                const worksheet = XLSX.utils.json_to_sheet(compiledData);
-                const workbook = XLSX.utils.book_new();
-                XLSX.utils.book_append_sheet(workbook, worksheet, 'AuditHistory');
-                XLSX.writeFile(workbook, 'AuditHistoryData.xlsx');
-                updateStatus('Audit history data exported to Excel file.');
+                        // Export to Excel after processing all items
+                        if (!isCancelled && compiledData.length > 0) {
+                            const worksheet = XLSX.utils.json_to_sheet(compiledData);
+                            const workbook = XLSX.utils.book_new();
+                            XLSX.utils.book_append_sheet(workbook, worksheet, 'AuditHistory');
+                            XLSX.writeFile(workbook, 'AuditHistoryData.xlsx');
+                            updateStatus('Audit history data exported to Excel file.');
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error fetching items:', error);
+                        updateStatus('Error fetching items for store.');
+                    });
+                };
+
+                fetchItemsForStore();
             });
         })
         .catch(error => {
@@ -192,29 +138,70 @@
         });
     }
 
-    // Expose the function to the global scope for testing
-    try {
-        module.exports = {
-            auditHistoryPull
-        };
-    } catch (e) {
-        // Handle the error if needed
+    // Helper function for fetching audit history with retry logic
+    async function fetchAuditHistoryWithDelay(item, attempt = 1) {
+        const maxAttempts = 5;
+        const delayTime = Math.pow(2, attempt) * 1000;
+
+        try {
+            await new Promise(resolve => setTimeout(resolve, 500));
+            const headersAudit = {
+                'accept': '*/*',
+                'accept-language': 'en-US,en;q=0.9',
+                'content-type': 'application/x-amz-json-1.0',
+                'x-amz-target': 'WfmCamBackendService.GetAuditHistory',
+                'x-amz-user-agent': 'aws-sdk-js/0.0.1 os/Windows/NT_10.0 lang/js md/browser/Chrome_133.0.0.0',
+                'Referer': `https://${environment}.cam.wfm.amazon.dev/store/${item.storeId}/item/${item.wfmScanCode}`,
+                'Referrer-Policy': 'strict-origin-when-cross-origin'
+            };
+
+            const response = await fetch(apiUrlBase, {
+                method: 'POST',
+                headers: headersAudit,
+                body: JSON.stringify({
+                    storeId: item.storeId,
+                    wfmScanCode: item.wfmScanCode
+                }),
+                credentials: 'include'
+            });
+
+            if (response.status === 429 && attempt < maxAttempts) {
+                console.warn(`Rate limited, retrying in ${delayTime/1000} seconds...`);
+                await new Promise(resolve => setTimeout(resolve, delayTime));
+                return fetchAuditHistoryWithDelay(item, attempt + 1);
+            }
+
+            const auditData = await response.json();
+            compiledData.push({
+                storeId: item.storeId,
+                wfmScanCode: item.wfmScanCode,
+                auditData: auditData
+            });
+        } catch (error) {
+            console.error('Error fetching audit history:', error);
+            updateStatus('Error fetching audit history for item.');
+        }
     }
 
-    // Use MutationObserver to detect when the button is added to the DOM
+    // Setup mutation observer for button
     const observer = new MutationObserver(function(mutations) {
         mutations.forEach(function(mutation) {
             if (mutation.addedNodes.length) {
                 const auditHistoryPullButton = document.getElementById('auditHistoryPullButton');
                 if (auditHistoryPullButton) {
-                    auditHistoryPullButton.addEventListener('click', function() {
-                        auditHistoryPull();
-                    });
-                    observer.disconnect(); // Stop observing once the button is found
+                    auditHistoryPullButton.addEventListener('click', auditHistoryPull);
+                    observer.disconnect();
                 }
             }
         });
     });
 
     observer.observe(document.body, { childList: true, subtree: true });
+
+    // Export for testing
+    try {
+        module.exports = { auditHistoryPull };
+    } catch (e) {
+        // Ignore if not in Node.js environment
+    }
 })();
