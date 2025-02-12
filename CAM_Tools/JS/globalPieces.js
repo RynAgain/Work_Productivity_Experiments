@@ -77,5 +77,5 @@ const overlayTemplate = (content) => `
     </div>
 `;
 
-// Export the functions and templates
-export { injectStyles, overlayTemplate };
+window.injectStyles = injectStyles;
+window.overlayTemplate = overlayTemplate;
