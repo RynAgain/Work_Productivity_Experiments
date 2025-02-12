@@ -34,6 +34,8 @@
         overlay.style.justifyContent = 'center';
         overlay.style.alignItems = 'center';
 
+        let isCancelled = false; // Flag to track if the process is cancelled
+
         const statusContainer = document.createElement('div');
         statusContainer.style.position = 'relative';
         statusContainer.style.backgroundColor = '#fff';
@@ -41,7 +43,7 @@
         statusContainer.style.borderRadius = '5px';
         statusContainer.style.width = '300px';
         statusContainer.style.textAlign = 'center';
-        statusContainer.innerHTML = '<h3>Audit History Status</h3><p id="statusMessage">Initializing...</p>';
+        statusContainer.innerHTML = '<h3>Audit History Status</h3><p id="statusMessage">Initializing...</p><button id="nextRequestButton" style="margin-top: 10px;">Next Request</button><button id="cancelButton" style="margin-top: 10px;">Cancel</button>';
 
         overlay.appendChild(statusContainer);
         document.body.appendChild(overlay);
@@ -49,6 +51,12 @@
         const updateStatus = (message) => {
             document.getElementById('statusMessage').innerText = message;
         };
+
+        // Add event listener to the cancel button
+        document.getElementById('cancelButton').addEventListener('click', function() {
+            isCancelled = true;
+            updateStatus('Cancelling...');
+        });
 
         updateStatus('Fetching list of stores...');
         fetch(apiUrlBase, {
@@ -64,6 +72,7 @@
             }
 
             const storeIds = [];
+            updateStatus('Store information retrieved successfully.');
             for (const region in storeData.storesInformation) {
                 const states = storeData.storesInformation[region];
                 for (const state in states) {
