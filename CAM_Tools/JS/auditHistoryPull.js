@@ -198,12 +198,34 @@
                 throw new Error('Invalid store data received');
             }
 
+            const bySelectElement = document.getElementById('bySelect');
             const storeSelect = document.getElementById('storeSelect');
+            bySelectElement.addEventListener('change', function() {
+                const bySelectValue = bySelectElement.value;
+                storeSelect.innerHTML = ''; // Clear existing options
+                storeSelect.placeholder = `Select a ${bySelectValue.toLowerCase()}...`;
+                if (bySelectValue === 'Store') {
+                    stores.forEach(store => {
+                        const option = document.createElement('option');
+                        option.value = store.value;
+                        option.text = store.text;
+                        storeSelect.add(option);
+                    });
+                } else {
+                    Object.keys(storeData.storesInformation).forEach(region => {
+                        const option = document.createElement('option');
+                        option.value = region;
+                        option.text = region;
+                        storeSelect.add(option);
+                    });
+                }
+            });
             if (!storeSelect) {
                 throw new Error('Store select element not found');
             }
 
             storeSelect.innerHTML = '<option value="">Select a store...</option>';
+            bySelectElement.dispatchEvent(new Event('change')); // Trigger change to populate initial options
             updateStatus('Store information retrieved successfully.');
             
             const stores = [];
