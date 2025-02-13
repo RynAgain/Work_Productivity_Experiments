@@ -138,7 +138,7 @@
         })
         .then(response => response.json())
         .then(storeData => {
-            if (!storeData || !storeData.storesInformation) {
+            if (!storeData || !storeData.storesInformation || Object.keys(storeData.storesInformation).length === 0) {
                 throw new Error('Invalid store data received');
             }
 
@@ -183,7 +183,7 @@
             const nextRequestButton = document.getElementById('nextRequestButton');
             if (nextRequestButton) {
                 nextRequestButton.addEventListener('click', function() {
-                    const selectedStoreId = storeSelect.value;
+                    const selectedStoreId = $(storeSelect).val(); // Use select2 method to get the value
                     if (!selectedStoreId) {
                         updateStatus('Please select a store.');
                         return;
