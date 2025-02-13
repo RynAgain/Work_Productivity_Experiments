@@ -82,9 +82,38 @@
             });
         }
 
+        async function fetchASINandAudit(storeId, plu) {
+            const apiUrlBase = `https://${environment}.cam.wfm.amazon.dev/api/`;
+            const payload = { storeId: storeId, wfmScanCode: plu };
+            await new Promise(resolve => setTimeout(resolve, 100)); // 100ms delay
+
+            try {
+                const response = await fetch(apiUrlBase, {
+                    method: 'POST',
+                    headers: {
+                        'accept': '*/*',
+                        'accept-language': 'en-US,en;q=0.9',
+                        'content-type': 'application/x-amz-json-1.0',
+                        'x-amz-target': 'WfmCamBackendService.GetItemAvailability',
+                        'x-amz-user-agent': 'aws-sdk-js/0.0.1 os/Windows/NT_10.0 lang/js md/browser/Chrome_133.0.0.0',
+                        'Referer': `https://${environment}.cam.wfm.amazon.dev/store/${storeId}/item/${plu}`,
+                        'Referrer-Policy': 'strict-origin-when-cross-origin'
+                    },
+                    body: JSON.stringify(payload),
+                    credentials: 'include'
+                });
+
+                const data = await response.json();
+                return data.itemAvailability ? data.itemAvailability.asin : 'error';
+            } catch (err) {
+                console.error(`Fetch error for PLU "${plu}":`, err);
+                return 'error';
+            }
+        }
+
         async function fetchAuditHistoryWithDelay(item, attempt = 1) {
             const maxAttempts = 5;
-            const delayTime = Math.pow(2, attempt) * 1000;
+            const delayTime = Math.pow(2, attempt) * 100;
 
             try {
                 await new Promise(resolve => setTimeout(resolve, 500));
@@ -126,7 +155,8 @@
                     ? `${Math.floor((new Date() - new Date(andonEnabledEvent.updatedAt)) / (1000 * 60 * 60 * 24))} days ago`
                     : 'N/A';
 
-                auditData.auditHistory.forEach(entry => {
+                for (const entry of auditData.auditHistory) {
+                    const asin = await fetchASINandAudit(item.storeId, item.wfmScanCode);
                     compiledData.push({
                         storeId: item.storeId,
                         wfmScanCode: item.wfmScanCode,
@@ -135,9 +165,10 @@
                         updateReason: entry.updateReason,
                         updatedAt: entry.updatedAt,
                         updatedBy: entry.updatedBy,
-                        timeSinceAndonEnabled: timeSinceAndonEnabled
+                        timeSinceAndonEnabled: timeSinceAndonEnabled,
+                        asin: asin
                     });
-                });
+                }
             } catch (error) {
                 console.error('Error fetching audit history:', error);
                 updateStatus('Error fetching audit history for item.');
