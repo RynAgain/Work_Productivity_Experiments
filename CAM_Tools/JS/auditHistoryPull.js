@@ -138,7 +138,7 @@
         })
         .then(response => response.json())
         .then(storeData => {
-            if (!storeData || !storeData.storesInformation || Object.keys(storeData.storesInformation).length === 0) {
+            if (!storeData || !storeData.storesInformation) {
                 throw new Error('Invalid store data received');
             }
 
@@ -180,6 +180,7 @@
                 allowClear: true
             });
 
+            // Ensure no actions are taken until a store is selected and "Next Request" is clicked
             const nextRequestButton = document.getElementById('nextRequestButton');
             if (nextRequestButton) {
                 nextRequestButton.addEventListener('click', function() {
