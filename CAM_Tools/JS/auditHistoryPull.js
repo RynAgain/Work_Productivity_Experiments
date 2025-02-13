@@ -115,6 +115,8 @@
                 }
 
                 const auditData = await response.json();
+                console.log('Audit Data Response:', auditData); // Log the response data
+                console.log('Compiled Data Before Push:', compiledData); // Log compiled data before pushing
                 compiledData.push({
                     storeId: item.storeId,
                     wfmScanCode: item.wfmScanCode,
@@ -148,17 +150,35 @@
             storeSelect.innerHTML = '<option value="">Select a store...</option>';
             updateStatus('Store information retrieved successfully.');
             
+            const stores = [];
             for (const region in storeData.storesInformation) {
                 const states = storeData.storesInformation[region];
                 for (const state in states) {
                     states[state].forEach(store => {
-                        const option = document.createElement('option');
-                        option.value = store.storeTLC;
-                        option.text = `${store.storeTLC} - ${store.storeName}`;
-                        storeSelect.add(option);
+                        stores.push({
+                            value: store.storeTLC,
+                            text: `${store.storeTLC} - ${store.storeName}`
+                        });
                     });
                 }
             }
+
+            // Sort stores alphabetically
+            stores.sort((a, b) => a.text.localeCompare(b.text));
+
+            // Add sorted stores to the dropdown
+            stores.forEach(store => {
+                const option = document.createElement('option');
+                option.value = store.value;
+                option.text = store.text;
+                storeSelect.add(option);
+            });
+
+            // Make the dropdown searchable
+            $(storeSelect).select2({
+                placeholder: 'Select a store...',
+                allowClear: true
+            });
 
             const nextRequestButton = document.getElementById('nextRequestButton');
             if (nextRequestButton) {
@@ -202,6 +222,7 @@
                         for (const item of items) {
                             if (isCancelled) break;
                             await fetchAuditHistoryWithDelay(item);
+                            updateStatus(`Gathering audit history... One Moment. ${item} / ${items.length}`);
                         }
 
                         if (!isCancelled && compiledData.length > 0) {
