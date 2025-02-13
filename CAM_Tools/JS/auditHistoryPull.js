@@ -46,6 +46,21 @@
             <button id="cancelButton" style="margin-top: 10px;">Cancel</button>
         `;
 
+        const closeButton = document.createElement('span');
+        closeButton.innerHTML = '&times;';
+        closeButton.style.position = 'absolute';
+        closeButton.style.top = '10px';
+        closeButton.style.right = '10px';
+        closeButton.style.fontSize = '24px';
+        closeButton.style.cursor = 'pointer';
+        closeButton.style.color = '#fff';
+        closeButton.style.backgroundColor = '#000';
+        closeButton.style.padding = '5px';
+        closeButton.style.borderRadius = '0';
+        closeButton.addEventListener('click', function() {
+            document.body.removeChild(overlay);
+        });
+        statusContainer.appendChild(closeButton);
         overlay.appendChild(statusContainer);
         document.body.appendChild(overlay);
 
@@ -103,7 +118,7 @@
                 compiledData.push({
                     storeId: item.storeId,
                     wfmScanCode: item.wfmScanCode,
-                    auditData: auditData
+                    auditData: auditData // Store the entire response data
                 });
             } catch (error) {
                 console.error('Error fetching audit history:', error);
