@@ -117,7 +117,15 @@
                 const auditData = await response.json();
                 console.log('Audit Data Response:', auditData); // Log the response data
                 console.log('Compiled Data Before Push:', compiledData); // Log compiled data before pushing
-                // Process each entry in the audit history array
+                // Determine the most recent "Andon Cord enabled" event
+                const andonEnabledEvent = auditData.auditHistory
+                    .filter(entry => entry.updateReason === "Andon Cord enabled")
+                    .sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt))[0];
+
+                const timeSinceAndonEnabled = andonEnabledEvent
+                    ? `${Math.floor((new Date() - new Date(andonEnabledEvent.updatedAt)) / (1000 * 60 * 60 * 24))} days ago`
+                    : 'N/A';
+
                 auditData.auditHistory.forEach(entry => {
                     compiledData.push({
                         storeId: item.storeId,
@@ -126,7 +134,8 @@
                         previousValue: entry.previousValue || 'N/A',
                         updateReason: entry.updateReason,
                         updatedAt: entry.updatedAt,
-                        updatedBy: entry.updatedBy
+                        updatedBy: entry.updatedBy,
+                        timeSinceAndonEnabled: timeSinceAndonEnabled
                     });
                 });
             } catch (error) {
