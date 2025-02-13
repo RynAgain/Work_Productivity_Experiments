@@ -41,7 +41,13 @@
         statusContainer.innerHTML = `
             <h3>Audit History Status</h3>
             <p id="statusMessage">Initializing...</p>
+            <label>By</label>
+            <select id="bySelect" style="margin-top: 10px; width: 100%;">
+                <option value="Store">Store</option>
+                <option value="Region">Region</option>
+            </select>
             <select id="storeSelect" style="margin-top: 10px; width: 100%;"></select>
+            <label><input type="checkbox" id="getAsinCheckbox" style="margin-top: 10px;"> Get ASIN (extra slow)</label>
             <button id="nextRequestButton" style="margin-top: 10px; margin-right: 5px;">Next Request</button>
             <button id="cancelButton" style="margin-top: 10px;">Cancel</button>
         `;
@@ -82,7 +88,7 @@
             });
         }
 
-        async function fetchASINandAudit(storeId, plu) {
+        async function fetchASIN(storeId, plu) {
             const apiUrlBase = `https://${environment}.cam.wfm.amazon.dev/api/`;
             const payload = { storeId: storeId, wfmScanCode: plu };
             await new Promise(resolve => setTimeout(resolve, 100)); // 100ms delay
@@ -156,7 +162,10 @@
                     : 'N/A';
 
                 for (const entry of auditData.auditHistory) {
-                    const asin = await fetchASINandAudit(item.storeId, item.wfmScanCode);
+                    let asin = 'Not Requested';
+                    if (document.getElementById('getAsinCheckbox').checked) {
+                        asin = await fetchASIN(item.storeId, item.wfmScanCode);
+                    }
                     compiledData.push({
                         storeId: item.storeId,
                         wfmScanCode: item.wfmScanCode,
@@ -231,9 +240,10 @@
             const nextRequestButton = document.getElementById('nextRequestButton');
             if (nextRequestButton) {
                 nextRequestButton.addEventListener('click', function() {
-                    const selectedStoreId = $(storeSelect).val(); // Use select2 method to get the value
-                    if (!selectedStoreId) {
-                        updateStatus('Please select a store.');
+                    const bySelect = document.getElementById('bySelect').value;
+                    const selectedValue = $(storeSelect).val(); // Use select2 method to get the value
+                    if (!selectedValue) {
+                        updateStatus(`Please select a ${bySelect.toLowerCase()}.`);
                         return;
                     }
 
@@ -246,13 +256,13 @@
                         'x-amz-target': 'WfmCamBackendService.GetItemsAvailability'
                     };
 
-                    updateStatus(`Fetching items for store ${selectedStoreId}...`);
+                    updateStatus(`Fetching items for ${bySelect.toLowerCase()} ${selectedValue}...`);
                     fetch(apiUrlBase, {
                         method: 'POST',
                         headers: headersItems,
                         body: JSON.stringify({
                             "filterContext": {
-                                "storeIds": [selectedStoreId]
+                                "storeIds": bySelect === 'Store' ? [selectedValue] : storeData.storesInformation[selectedValue].flatMap(state => state.map(store => store.storeTLC))
                             },
                             "paginationContext": {
                                 "pageNumber": 0,
