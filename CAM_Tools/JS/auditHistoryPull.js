@@ -117,10 +117,17 @@
                 const auditData = await response.json();
                 console.log('Audit Data Response:', auditData); // Log the response data
                 console.log('Compiled Data Before Push:', compiledData); // Log compiled data before pushing
-                compiledData.push({
-                    storeId: item.storeId,
-                    wfmScanCode: item.wfmScanCode,
-                    auditData: auditData // Store the entire response data
+                // Process each entry in the audit history array
+                auditData.auditHistory.forEach(entry => {
+                    compiledData.push({
+                        storeId: item.storeId,
+                        wfmScanCode: item.wfmScanCode,
+                        newValue: entry.newValue,
+                        previousValue: entry.previousValue || 'N/A',
+                        updateReason: entry.updateReason,
+                        updatedAt: entry.updatedAt,
+                        updatedBy: entry.updatedBy
+                    });
                 });
             } catch (error) {
                 console.error('Error fetching audit history:', error);
@@ -219,13 +226,14 @@
                         const items = data.itemsAvailability.filter(item => item.andon === true);
                         console.log('Items with Andon Cord enabled:', items);
                         updateStatus(`Found ${items.length} items with Andon Cord enabled`);
-
-                        for (const item of items) {
+                    
+                        for (let index = 0; index < items.length; index++) { // Changed to for loop for better async handling
                             if (isCancelled) break;
+                            const item = items[index];
                             await fetchAuditHistoryWithDelay(item);
-                            updateStatus(`Gathering audit history... One Moment. ${item} / ${items.length}`);
+                            updateStatus(`Gathering audit history... One Moment. ${index + 1} / ${items.length}`);
                         }
-
+                    
                         if (!isCancelled && compiledData.length > 0) {
                             const worksheet = XLSX.utils.json_to_sheet(compiledData);
                             const workbook = XLSX.utils.book_new();
@@ -234,6 +242,7 @@
                             updateStatus('Audit history data exported to Excel file.');
                         }
                     })
+                    
                     .catch(error => {
                         console.error('Error fetching items:', error);
                         updateStatus('Error fetching items for store.');
