@@ -15,18 +15,14 @@
         var generalHelpToolsButton = document.createElement('button');
         generalHelpToolsButton.id = 'generalHelpToolsButton';
         generalHelpToolsButton.innerHTML = 'General Help Tools';
+        generalHelpToolsButton.className = 'button'; // Use common button class for consistent styling
+
         generalHelpToolsButton.style.position = 'fixed';
         generalHelpToolsButton.style.bottom = '0';
         generalHelpToolsButton.style.left = '80%';
         generalHelpToolsButton.style.width = '20%';
         generalHelpToolsButton.style.height = '40px';
         generalHelpToolsButton.style.zIndex = '1000';
-        generalHelpToolsButton.style.fontSize = '14px';
-        generalHelpToolsButton.style.backgroundColor = '#004E36';
-        generalHelpToolsButton.style.color = '#fff';
-        generalHelpToolsButton.style.border = 'none';
-        generalHelpToolsButton.style.borderRadius = '5px';
-        generalHelpToolsButton.style.cursor = 'pointer !important';
 
         // Append the button to the body
 document.body.appendChild(generalHelpToolsButton);
@@ -91,9 +87,10 @@ generalHelpToolsButton.addEventListener('mouseout', function(){
                 <button id="getAllStoreInfoButton" style="width: 100%; margin-bottom: 10px;">Get All Store Info</button>
                 <button id="meatInventoryToUploadConverterButton" style="width: 100%; margin-bottom: 10px;">Meat Inventory to Upload Converter</button>
                 <button id ="filechunker" style = "width: 100%; margin-bottom: 10px;">File Chunker</button>
-                <button id ="massUploaderButton" style = "width: 100%; margin-bottom: 10px;">Mass File Upload</button>
+                <button id ="massUploaderButton" style = "width: 100%; margin-bottom: 10px;">Mass File Upload</button> 
+                <button id="auditHistoryPullButton" style="width: 100%; margin-bottom: 10px;">Audit History Pull</button>
+
                 <button id ="auditHistoryDashboardButton" style = "width: 100%; margin-bottom: 10px;">zAudit History Dashboardz</button>
-                <button id="auditHistoryPullButton" style="width: 100%; margin-bottom: 10px;">zAudit History Pullz</button>
                 <button id ="dailyInventoryTool" style = "width: 100%; margin-bottom: 10px;">zDaily Inventory Toolz</button>
                 <button id="atcpropButton" style ="width: 100%; margin-bottom: 10px;">zATC Propagation Toolz</button>
 
