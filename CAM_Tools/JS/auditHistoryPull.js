@@ -332,10 +332,10 @@
                             }
 
                             await delay(100); // Delay between batches
-                            processNextBatch();
+                            return processNextBatch();
                         };
 
-                        await processNextBatch();
+                        await Promise.all([processNextBatch()]);
 
                         if (!isCancelled && compiledData.length > 0) {
                             // Reduce to one row per unique key
