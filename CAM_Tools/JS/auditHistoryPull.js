@@ -117,6 +117,8 @@
             }
         }
 
+        const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+
         async function fetchAuditHistoryWithDelay(item, attempt = 1) {
             const maxAttempts = 5;
             const delayTime = Math.pow(2, attempt) * 100;
