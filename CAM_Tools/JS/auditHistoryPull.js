@@ -311,12 +311,12 @@
                             if (isCancelled || currentIndex >= items.length) return;
 
                             const batch = items.slice(currentIndex, currentIndex + maxConcurrentRequests);
-                            currentIndex += maxConcurrentRequests;
+                            currentIndex += batch.length;
 
                             const results = await Promise.all(batch.map(async (item, index) => {
                                 try {
                                     await fetchAuditHistoryWithDelay(item);
-                                    updateStatus(`Gathering audit history... One Moment. ${currentIndex + index + 1} / ${items.length}`);
+                                    updateStatus(`Gathering audit history... One Moment. ${currentIndex} / ${items.length}`);
                                     return true; // Indicate success
                                 } catch (error) {
                                     console.error('Error fetching audit history:', error);
@@ -340,11 +340,15 @@
                         if (!isCancelled && compiledData.length > 0) {
                             // Reduce to one row per unique key
                             const uniqueData = Array.from(new Map(compiledData.map(item => [item.uniqueKey, item])).values());
-                            const worksheet = XLSX.utils.json_to_sheet(uniqueData);
-                            const workbook = XLSX.utils.book_new();
-                            XLSX.utils.book_append_sheet(workbook, worksheet, 'AuditHistory');
-                            XLSX.writeFile(workbook, 'AuditHistoryData.xlsx');
-                            updateStatus('Audit history data exported to Excel file.');
+                            if (uniqueData.length > 0) {
+                                const worksheet = XLSX.utils.json_to_sheet(uniqueData);
+                                const workbook = XLSX.utils.book_new();
+                                XLSX.utils.book_append_sheet(workbook, worksheet, 'AuditHistory');
+                                XLSX.writeFile(workbook, 'AuditHistoryData.xlsx');
+                                updateStatus('Audit history data exported to Excel file.');
+                            } else {
+                                updateStatus('No data available to export.');
+                            }
                         }
                     })
                     
