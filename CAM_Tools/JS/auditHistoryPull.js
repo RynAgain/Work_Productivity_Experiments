@@ -48,6 +48,7 @@
             </select>
             <select id="storeSelect" style="margin-top: 10px; width: 100%;"></select>
             <label><input type="checkbox" id="getAsinCheckbox" style="margin-top: 10px;"> Get ASIN (extra slow)</label>
+            <label><input type="checkbox" id="allStoresCheckbox" style="margin-top: 10px;"> All Stores</label>
             <button id="nextRequestButton" style="margin-top: 10px; margin-right: 5px;">Next Request</button>
             <button id="cancelButton" style="margin-top: 10px;">Cancel</button>
         `;
@@ -204,6 +205,10 @@
 
             const bySelectElement = document.getElementById('bySelect');
             const storeSelect = document.getElementById('storeSelect');
+            const allStoresCheckbox = document.getElementById('allStoresCheckbox');
+            allStoresCheckbox.addEventListener('change', function() {
+                storeSelect.disabled = this.checked;
+            });
             const stores = [];
             for (const region in storeData.storesInformation) {
                 const states = storeData.storesInformation[region];
@@ -307,6 +312,7 @@
                         let maxConcurrentRequests = 5; // Start with a default batch size
                         let currentIndex = 0;
 
+                        const startTime = Date.now();
                         const processNextBatch = async () => {
                             if (isCancelled || currentIndex >= items.length) return;
 
@@ -316,7 +322,10 @@
                             const results = await Promise.all(batch.map(async (item, index) => {
                                 try {
                                     await fetchAuditHistoryWithDelay(item);
-                                    updateStatus(`Gathering audit history... One Moment. ${currentIndex} / ${items.length}`);
+                                    const elapsedTime = (Date.now() - startTime) / 1000; // in seconds
+                                    const estimatedTotalTime = (elapsedTime / currentIndex) * items.length;
+                                    const remainingTime = estimatedTotalTime - elapsedTime;
+                                    updateStatus(`Gathering audit history... ${currentIndex} / ${items.length}. Estimated time left: ${Math.round(remainingTime)} seconds`);
                                     return true; // Indicate success
                                 } catch (error) {
                                     console.error('Error fetching audit history:', error);
@@ -336,6 +345,24 @@
                         };
 
                         await Promise.all([processNextBatch()]);
+
+                        const ProgressBar = ({ progress }) => (
+                            <div className="progress" style={{ width: '100%', marginTop: '10px' }}>
+                                <div
+                                    className="progress-bar"
+                                    role="progressbar"
+                                    style={{ width: `${progress}%` }}
+                                    aria-valuenow={progress}
+                                    aria-valuemin="0"
+                                    aria-valuemax="100"
+                                >
+                                    {progress}%
+                                </div>
+                            </div>
+                        );
+
+                        const progress = (currentIndex / items.length) * 100;
+                        ReactDOM.render(<ProgressBar progress={progress} />, document.getElementById('progressContainer'));
 
                         if (!isCancelled && compiledData.length > 0) {
                             // Reduce to one row per unique key
