@@ -159,7 +159,7 @@
 
                 const timeSinceAndonEnabled = andonEnabledEvent
                     ? `${Math.floor((new Date() - new Date(andonEnabledEvent.updatedAt)) / (1000 * 60 * 60 * 24))} days ago`
-                    : 'N/A';
+                    : `${Math.floor((new Date() - new Date(auditData.auditHistory[0].updatedAt)) / (1000 * 60 * 60 * 24))} days ago (since earliest entry)`;
 
                 for (const entry of auditData.auditHistory) {
                     let asin = 'Not Requested';
@@ -284,7 +284,7 @@
                         headers: headersItems,
                         body: JSON.stringify({
                             "filterContext": {
-                                "storeIds": bySelect === 'Store' ? [selectedValue] : storeData.storesInformation[selectedValue].flatMap(state => state.map(store => store.storeTLC))
+                                "storeIds": bySelect === 'Store' ? [selectedValue] : Object.values(storeData.storesInformation[selectedValue]).flat().map(store => store.storeTLC)
                             },
                             "paginationContext": {
                                 "pageNumber": 0,
