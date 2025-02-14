@@ -335,8 +335,8 @@
                             processNextBatch();
                         };
 
-                        processNextBatch();
-                    
+                        await processNextBatch();
+
                         if (!isCancelled && compiledData.length > 0) {
                             // Reduce to one row per unique key
                             const uniqueData = Array.from(new Map(compiledData.map(item => [item.uniqueKey, item])).values());
