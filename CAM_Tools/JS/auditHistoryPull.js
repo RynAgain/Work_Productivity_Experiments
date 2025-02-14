@@ -204,6 +204,19 @@
 
             const bySelectElement = document.getElementById('bySelect');
             const storeSelect = document.getElementById('storeSelect');
+            const stores = [];
+            for (const region in storeData.storesInformation) {
+                const states = storeData.storesInformation[region];
+                for (const state in states) {
+                    states[state].forEach(store => {
+                        stores.push({
+                            value: store.storeTLC,
+                            text: `${store.storeTLC} - ${store.storeName}`
+                        });
+                    });
+                }
+            }
+
             bySelectElement.addEventListener('change', function() {
                 const bySelectValue = bySelectElement.value;
                 storeSelect.innerHTML = ''; // Clear existing options
@@ -232,18 +245,6 @@
             bySelectElement.dispatchEvent(new Event('change')); // Trigger change to populate initial options
             updateStatus('Store information retrieved successfully.');
             
-            const stores = [];
-            for (const region in storeData.storesInformation) {
-                const states = storeData.storesInformation[region];
-                for (const state in states) {
-                    states[state].forEach(store => {
-                        stores.push({
-                            value: store.storeTLC,
-                            text: `${store.storeTLC} - ${store.storeName}`
-                        });
-                    });
-                }
-            }
 
             // Sort stores alphabetically
             stores.sort((a, b) => a.text.localeCompare(b.text));
