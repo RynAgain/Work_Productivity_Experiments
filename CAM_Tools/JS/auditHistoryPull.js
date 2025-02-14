@@ -166,7 +166,9 @@
                     if (document.getElementById('getAsinCheckbox').checked) {
                         asin = await fetchASIN(item.storeId, item.wfmScanCode);
                     }
+                    const uniqueKey = `${item.storeId}-${item.wfmScanCode}`;
                     compiledData.push({
+                        uniqueKey: uniqueKey,
                         storeId: item.storeId,
                         wfmScanCode: item.wfmScanCode,
                         newValue: entry.newValue,
@@ -299,15 +301,43 @@
                         console.log('Items with Andon Cord enabled:', items);
                         updateStatus(`Found ${items.length} items with Andon Cord enabled`);
                     
-                        for (let index = 0; index < items.length; index++) { // Changed to for loop for better async handling
-                            if (isCancelled) break;
-                            const item = items[index];
-                            await fetchAuditHistoryWithDelay(item);
-                            updateStatus(`Gathering audit history... One Moment. ${index + 1} / ${items.length}`);
-                        }
+                        let maxConcurrentRequests = 5; // Start with a default batch size
+                        let currentIndex = 0;
+
+                        const processNextBatch = async () => {
+                            if (isCancelled || currentIndex >= items.length) return;
+
+                            const batch = items.slice(currentIndex, currentIndex + maxConcurrentRequests);
+                            currentIndex += maxConcurrentRequests;
+
+                            const results = await Promise.all(batch.map(async (item, index) => {
+                                try {
+                                    await fetchAuditHistoryWithDelay(item);
+                                    updateStatus(`Gathering audit history... One Moment. ${currentIndex + index + 1} / ${items.length}`);
+                                    return true; // Indicate success
+                                } catch (error) {
+                                    console.error('Error fetching audit history:', error);
+                                    return false; // Indicate failure
+                                }
+                            }));
+
+                            const successRate = results.filter(result => result).length / results.length;
+                            if (successRate < 0.8) {
+                                maxConcurrentRequests = Math.max(1, maxConcurrentRequests - 1); // Decrease batch size on failure
+                            } else if (successRate === 1) {
+                                maxConcurrentRequests = Math.min(10, maxConcurrentRequests + 1); // Increase batch size on success
+                            }
+
+                            await delay(100); // Delay between batches
+                            processNextBatch();
+                        };
+
+                        processNextBatch();
                     
                         if (!isCancelled && compiledData.length > 0) {
-                            const worksheet = XLSX.utils.json_to_sheet(compiledData);
+                            // Reduce to one row per unique key
+                            const uniqueData = Array.from(new Map(compiledData.map(item => [item.uniqueKey, item])).values());
+                            const worksheet = XLSX.utils.json_to_sheet(uniqueData);
                             const workbook = XLSX.utils.book_new();
                             XLSX.utils.book_append_sheet(workbook, worksheet, 'AuditHistory');
                             XLSX.writeFile(workbook, 'AuditHistoryData.xlsx');
