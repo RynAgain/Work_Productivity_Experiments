@@ -346,23 +346,25 @@
 
                         await Promise.all([processNextBatch()]);
 
+                        const progressContainer = document.createElement('div');
+                        progressContainer.id = 'progressContainer';
+                        statusContainer.appendChild(progressContainer);
+
                         const ProgressBar = ({ progress }) => (
-                            <div className="progress" style={{ width: '100%', marginTop: '10px' }}>
-                                <div
-                                    className="progress-bar"
-                                    role="progressbar"
-                                    style={{ width: `${progress}%` }}
-                                    aria-valuenow={progress}
-                                    aria-valuemin="0"
-                                    aria-valuemax="100"
-                                >
-                                    {progress}%
-                                </div>
-                            </div>
+                            React.createElement('div', { className: 'progress', style: { width: '100%', marginTop: '10px' } },
+                                React.createElement('div', {
+                                    className: 'progress-bar',
+                                    role: 'progressbar',
+                                    style: { width: `${progress}%` },
+                                    'aria-valuenow': progress,
+                                    'aria-valuemin': '0',
+                                    'aria-valuemax': '100'
+                                }, `${progress}%`)
+                            )
                         );
 
                         const progress = (currentIndex / items.length) * 100;
-                        ReactDOM.render(<ProgressBar progress={progress} />, document.getElementById('progressContainer'));
+                        ReactDOM.render(React.createElement(ProgressBar, { progress }), progressContainer);
 
                         if (!isCancelled && compiledData.length > 0) {
                             // Reduce to one row per unique key
