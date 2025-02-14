@@ -340,12 +340,17 @@
                         if (!isCancelled && compiledData.length > 0) {
                             // Reduce to one row per unique key
                             const uniqueData = Array.from(new Map(compiledData.map(item => [item.uniqueKey, item])).values());
+                            console.log('Unique Data Before Download:', uniqueData);
                             if (uniqueData.length > 0) {
-                                const worksheet = XLSX.utils.json_to_sheet(uniqueData);
+                                console.log('Preparing to download data...');
+                                const uniqueWorksheet = XLSX.utils.json_to_sheet(uniqueData);
+                                const compiledWorksheet = XLSX.utils.json_to_sheet(compiledData);
                                 const workbook = XLSX.utils.book_new();
-                                XLSX.utils.book_append_sheet(workbook, worksheet, 'AuditHistory');
+                                XLSX.utils.book_append_sheet(workbook, uniqueWorksheet, 'UniqueAuditHistory');
+                                XLSX.utils.book_append_sheet(workbook, compiledWorksheet, 'CompiledAuditHistory');
                                 XLSX.writeFile(workbook, 'AuditHistoryData.xlsx');
                                 updateStatus('Audit history data exported to Excel file.');
+                                console.log('Download triggered.');
                             } else {
                                 updateStatus('No data available to export.');
                             }
