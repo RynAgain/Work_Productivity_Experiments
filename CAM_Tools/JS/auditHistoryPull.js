@@ -274,7 +274,9 @@
                 nextRequestButton.addEventListener('click', function() {
                     const bySelect = document.getElementById('bySelect').value;
                     const selectedValue = $(storeSelect).val(); // Use select2 method to get the value
-                    if (!selectedValue) {
+                    const allStoresSelected = document.getElementById('allStoresCheckbox').checked;
+
+                    if (!selectedValue && !allStoresSelected) {
                         updateStatus(`Please select a ${bySelect.toLowerCase()}.`);
                         return;
                     }
@@ -288,13 +290,19 @@
                         'x-amz-target': 'WfmCamBackendService.GetItemsAvailability'
                     };
 
-                    updateStatus(`Fetching items for ${bySelect.toLowerCase()} ${selectedValue}...`);
+                    const storeIds = allStoresSelected
+                        ? stores.map(store => store.value)
+                        : bySelect === 'Store'
+                        ? [selectedValue]
+                        : Object.values(storeData.storesInformation[selectedValue]).flat().map(store => store.storeTLC);
+
+                    updateStatus(`Fetching items for ${allStoresSelected ? 'all stores' : `${bySelect.toLowerCase()} ${selectedValue}`}...`);
                     fetch(apiUrlBase, {
                         method: 'POST',
                         headers: headersItems,
                         body: JSON.stringify({
                             "filterContext": {
-                                "storeIds": bySelect === 'Store' ? [selectedValue] : Object.values(storeData.storesInformation[selectedValue]).flat().map(store => store.storeTLC)
+                                "storeIds": storeIds
                             },
                             "paginationContext": {
                                 "pageNumber": 0,
