@@ -382,6 +382,7 @@
                         ReactDOM.render(React.createElement(ProgressBar, { progress }), progressContainer);
 
                         if (!isCancelled && compiledData.length > 0) {
+                            const workbook = XLSX.utils.book_new();
                             const itemsWorksheet = XLSX.utils.json_to_sheet(itemsData);
                             XLSX.utils.book_append_sheet(workbook, itemsWorksheet, 'ItemsAvailability');
                             // Reduce to one row per unique key
