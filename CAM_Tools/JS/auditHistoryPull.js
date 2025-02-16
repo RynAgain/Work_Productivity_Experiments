@@ -314,6 +314,13 @@
                     .then(response => response.json())
                     .then(async data => {
                         const items = data.itemsAvailability.filter(item => item.andon === true);
+                        const itemsData = data.itemsAvailability.map(item => ({
+                            storeId: item.storeId,
+                            wfmScanCode: item.wfmScanCode,
+                            itemName: item.itemName,
+                            inventoryStatus: item.inventoryStatus,
+                            currentInventoryQuantity: item.currentInventoryQuantity
+                        }));
                         console.log('Items with Andon Cord enabled:', items);
                         updateStatus(`Found ${items.length} items with Andon Cord enabled`);
                     
@@ -375,6 +382,8 @@
                         ReactDOM.render(React.createElement(ProgressBar, { progress }), progressContainer);
 
                         if (!isCancelled && compiledData.length > 0) {
+                            const itemsWorksheet = XLSX.utils.json_to_sheet(itemsData);
+                            XLSX.utils.book_append_sheet(workbook, itemsWorksheet, 'ItemsAvailability');
                             // Reduce to one row per unique key
                             const uniqueData = Array.from(new Map(compiledData.map(item => [item.uniqueKey, item])).values());
                             console.log('Unique Data Before Download:', uniqueData);
