@@ -392,7 +392,6 @@
                                 console.log('Preparing to download data...');
                                 const uniqueWorksheet = XLSX.utils.json_to_sheet(uniqueData);
                                 const compiledWorksheet = XLSX.utils.json_to_sheet(compiledData);
-                                const workbook = XLSX.utils.book_new();
                                 XLSX.utils.book_append_sheet(workbook, uniqueWorksheet, 'UniqueAuditHistory');
                                 XLSX.utils.book_append_sheet(workbook, compiledWorksheet, 'CompiledAuditHistory');
                                 XLSX.writeFile(workbook, 'AuditHistoryData.xlsx');
