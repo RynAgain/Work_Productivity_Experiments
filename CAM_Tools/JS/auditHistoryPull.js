@@ -290,11 +290,12 @@
                         'x-amz-target': 'WfmCamBackendService.GetItemsAvailability'
                     };
 
-                    const storeIds = allStoresSelected
-                        ? stores.map(store => store.value)
-                        : bySelect === 'Store'
-                        ? [selectedValue]
-                        : Object.values(storeData.storesInformation[selectedValue]).flat().map(store => store.storeTLC);
+const storeIds = allStoresSelected
+    ? Object.values(storeData.storesInformation).flatMap(states => 
+        Object.values(states).flat().map(store => store.storeTLC))
+    : bySelect === 'Store'
+    ? [selectedValue]
+    : Object.values(storeData.storesInformation[selectedValue]).flat().map(store => store.storeTLC);
 
                     updateStatus(`Fetching items for ${allStoresSelected ? 'all stores' : `${bySelect.toLowerCase()} ${selectedValue}`}...`);
                     fetch(apiUrlBase, {
