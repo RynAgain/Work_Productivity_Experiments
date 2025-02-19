@@ -1,7 +1,15 @@
 (function() {
     'use strict';
 
-    // Function to add the redrive button
+    // Expose the function to the global scope for testing
+    try {
+        module.exports = {
+            addRedriveButton
+        };
+    } catch (e) {
+        // Handle the error if needed
+    }
+
     function addRedriveButton() {
         console.log('Attempting to add redrive button');
 

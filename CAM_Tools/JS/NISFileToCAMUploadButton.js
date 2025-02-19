@@ -1,7 +1,15 @@
 (function() {
     'use strict';
 
-    // Function to add the NIS File to CAM Upload button functionality
+    // Expose the function to the global scope for testing
+    try {
+        module.exports = {
+            addNISFileToCAMUploadFunctionality
+        };
+    } catch (e) {
+        // Handle the error if needed
+    }
+
     function addNISFileToCAMUploadFunctionality() {
         console.log('NIS File to CAM Upload button clicked');
         // Create overlay

@@ -1,7 +1,15 @@
 (function() {
     'use strict';
 
-    // Add CSS styles for input fields and buttons
+    // Expose the function to the global scope for testing
+    try {
+        module.exports = {
+            addAddItemButton
+        };
+    } catch (e) {
+        // Handle the error if needed
+    }
+
     const style = document.createElement('style');
     style.innerHTML = `
         .input-field {

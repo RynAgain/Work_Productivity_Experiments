@@ -2,7 +2,15 @@
     'use strict';
 
     try {
-        // Easter Egg functionality
+    // Expose the function to the global scope for testing
+    try {
+        module.exports = {
+            addEasterEggFunctionality
+        };
+    } catch (e) {
+        // Handle the error if needed
+    }
+
         console.log('EasterEgg functionality initialized.');
 
         const keySequence = ['ArrowUp', 'ArrowUp', 'ArrowDown', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'ArrowLeft', 'ArrowRight', 'b', 'a'];

@@ -1,4 +1,12 @@
-// Reusable CSS styles
+try {
+    module.exports = {
+        injectStyles,
+        overlayTemplate
+    };
+} catch (e) {
+    // Handle the error if needed
+}
+
 const styles = `
     .input-field {
         font-family: inherit;

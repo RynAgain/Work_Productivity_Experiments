@@ -1,7 +1,15 @@
 (function() {
     'use strict';
 
-    // Function to add the PLU Dedupe & List button functionality
+    // Expose the function to the global scope for testing
+    try {
+        module.exports = {
+            addPLUDedupeListFunctionality
+        };
+    } catch (e) {
+        // Handle the error if needed
+    }
+
     function addPLUDedupeListFunctionality() {
         console.log('PLU Dedupe & List button clicked');
         // Create overlay

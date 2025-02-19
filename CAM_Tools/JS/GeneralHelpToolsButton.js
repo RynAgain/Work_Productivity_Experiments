@@ -1,7 +1,15 @@
 (function() {
     'use strict';
 
-    // Function to add the General Help Tools button
+    // Expose the function to the global scope for testing
+    try {
+        module.exports = {
+            addGeneralHelpToolsButton
+        };
+    } catch (e) {
+        // Handle the error if needed
+    }
+
     function addGeneralHelpToolsButton() {
         console.log('Attempting to add General Help Tools button');
 

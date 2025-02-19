@@ -1,7 +1,15 @@
 (function () {
     'use strict';
 
-    // MAIN FUNCTION: adds our overlay and functionality for file chunking
+    // Expose the function to the global scope for testing
+    try {
+        module.exports = {
+            addFileChunkerFunctionality
+        };
+    } catch (e) {
+        // Handle the error if needed
+    }
+
     function addFileChunkerFunctionality() {
         console.log('File Chunker button clicked');
         try {

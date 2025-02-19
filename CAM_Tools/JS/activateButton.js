@@ -1,7 +1,15 @@
-(function() {
+ (function() {
     'use strict';
 
-    // Function to add the activate/deactivate item(s) button
+    // Expose the function to the global scope for testing
+    try {
+        module.exports = {
+            addActivateButton
+        };
+    } catch (e) {
+        // Handle the error if needed
+    }
+
     function addActivateButton() {
         console.log('Attempting to add activate/deactivate item(s) button');
 

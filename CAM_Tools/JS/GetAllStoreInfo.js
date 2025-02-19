@@ -1,7 +1,15 @@
 (function () {
     'use strict';
 
-    // Function to get all store information
+    // Expose the function to the global scope for testing
+    try {
+        module.exports = {
+            getAllStoreInfo
+        };
+    } catch (e) {
+        // Handle the error if needed
+    }
+
     function getAllStoreInfo() {
         console.log('[GetAllStoreInfo.js] Get All Store Info button clicked');
         try {

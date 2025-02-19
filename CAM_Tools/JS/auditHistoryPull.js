@@ -1,7 +1,18 @@
 (function() {
     'use strict';
 
-    function auditHistoryPull() {
+    // Expose the function to the global scope for testing
+    try {
+        module.exports = {
+            auditHistoryPull
+        };
+    } catch (e) {
+        // Handle the error if needed
+    }
+
+    // Define the auditHistoryPull function
+    async function auditHistoryPull() {
+
         console.log('Audit History Pull initiated for items with Andon Cord enabled');
 
         const environment = window.location.hostname.includes('gamma') ? 'gamma' : 'prod';
@@ -125,6 +136,7 @@
             const delayTime = Math.pow(2, attempt) * 100;
 
             try {
+                // Basic delay before each request
                 await new Promise(resolve => setTimeout(resolve, 500));
                 const headersAudit = {
                     'accept': '*/*',
@@ -155,6 +167,7 @@
                 const auditData = await response.json();
                 console.log('Audit Data Response:', auditData); // Log the response data
                 console.log('Compiled Data Before Push:', compiledData); // Log compiled data before pushing
+
                 // Determine the most recent "Andon Cord enabled" event
                 const andonEnabledEvent = auditData.auditHistory
                     .filter(entry => entry.updateReason === "Andon Cord enabled")
@@ -206,9 +219,12 @@
             const bySelectElement = document.getElementById('bySelect');
             const storeSelect = document.getElementById('storeSelect');
             const allStoresCheckbox = document.getElementById('allStoresCheckbox');
+
+            // Disable store dropdown if "All Stores" is checked
             allStoresCheckbox.addEventListener('change', function() {
                 storeSelect.disabled = this.checked;
             });
+
             const stores = [];
             for (const region in storeData.storesInformation) {
                 const states = storeData.storesInformation[region];
@@ -222,6 +238,7 @@
                 }
             }
 
+            // Populate store dropdown or region dropdown based on "bySelect"
             bySelectElement.addEventListener('change', function() {
                 const bySelectValue = bySelectElement.value;
                 storeSelect.innerHTML = ''; // Clear existing options
@@ -234,6 +251,7 @@
                         storeSelect.add(option);
                     });
                 } else {
+                    // Populate with region names
                     Object.keys(storeData.storesInformation).forEach(region => {
                         const option = document.createElement('option');
                         option.value = region;
@@ -242,19 +260,19 @@
                     });
                 }
             });
+
             if (!storeSelect) {
                 throw new Error('Store select element not found');
             }
 
+            // Initialize store select with a placeholder
             storeSelect.innerHTML = '<option value="">Select a store...</option>';
-            bySelectElement.dispatchEvent(new Event('change')); // Trigger change to populate initial options
+            bySelectElement.dispatchEvent(new Event('change')); // Trigger to populate initial options
             updateStatus('Store information retrieved successfully.');
-            
 
-            // Sort stores alphabetically
+            // Sort stores alphabetically for the Store dropdown
             stores.sort((a, b) => a.text.localeCompare(b.text));
-
-            // Add sorted stores to the dropdown
+            // Add sorted stores to the dropdown (Store mode)
             stores.forEach(store => {
                 const option = document.createElement('option');
                 option.value = store.value;
@@ -262,25 +280,27 @@
                 storeSelect.add(option);
             });
 
-            // Make the dropdown searchable
+            // Make the dropdown searchable (requires Select2)
             $(storeSelect).select2({
                 placeholder: 'Select a store...',
                 allowClear: true
             });
 
-            // Ensure no actions are taken until a store is selected and "Next Request" is clicked
+            // Handle the "Next Request" button
             const nextRequestButton = document.getElementById('nextRequestButton');
             if (nextRequestButton) {
                 nextRequestButton.addEventListener('click', function() {
                     const bySelect = document.getElementById('bySelect').value;
-                    const selectedValue = $(storeSelect).val(); // Use select2 method to get the value
+                    const selectedValue = $(storeSelect).val(); // Use select2 method
                     const allStoresSelected = document.getElementById('allStoresCheckbox').checked;
 
+                    // Must choose a store/region unless "All Stores" is checked
                     if (!selectedValue && !allStoresSelected) {
                         updateStatus(`Please select a ${bySelect.toLowerCase()}.`);
                         return;
                     }
 
+                    // Prepare the store list depending on "By Store", "By Region" or "All Stores"
                     const headersItems = {
                         'accept': '*/*',
                         'accept-encoding': 'gzip, deflate, br',
@@ -290,24 +310,30 @@
                         'x-amz-target': 'WfmCamBackendService.GetItemsAvailability'
                     };
 
-const storeIds = allStoresSelected
-    ? Object.values(storeData.storesInformation).flatMap(states => 
-        Object.values(states).flat().map(store => store.storeTLC))
-    : bySelect === 'Store'
-    ? [selectedValue]
-    : Object.values(storeData.storesInformation[selectedValue]).flat().map(store => store.storeTLC);
+                    // --- This is the key fix for "All Stores" ---
+                    const storeIds = allStoresSelected
+                        ? Object.values(storeData.storesInformation).flatMap(regionObj =>
+                            Object.values(regionObj).flat().map(store => store.storeTLC)
+                        )
+                        : bySelect === 'Store'
+                            ? [selectedValue]
+                            : Object.values(storeData.storesInformation[selectedValue]).flat().map(store => store.storeTLC);
+                    // ------------------------------------------
 
-                    updateStatus(`Fetching items for ${allStoresSelected ? 'all stores' : `${bySelect.toLowerCase()} ${selectedValue}`}...`);
+                    updateStatus(`Fetching items for ${
+                        allStoresSelected ? 'all stores' : `${bySelect.toLowerCase()} ${selectedValue}`
+                    }...`);
+
                     fetch(apiUrlBase, {
                         method: 'POST',
                         headers: headersItems,
                         body: JSON.stringify({
-                            "filterContext": {
-                                "storeIds": storeIds
+                            filterContext: {
+                                storeIds: storeIds
                             },
-                            "paginationContext": {
-                                "pageNumber": 0,
-                                "pageSize": 10000
+                            paginationContext: {
+                                pageNumber: 0,
+                                pageSize: 10000
                             }
                         }),
                         credentials: 'include'
@@ -324,7 +350,8 @@ const storeIds = allStoresSelected
                         }));
                         console.log('Items with Andon Cord enabled:', items);
                         updateStatus(`Found ${items.length} items with Andon Cord enabled`);
-                    
+
+                        // Concurrency control
                         let maxConcurrentRequests = 5; // Start with a default batch size
                         let currentIndex = 0;
 
@@ -349,11 +376,14 @@ const storeIds = allStoresSelected
                                 }
                             }));
 
+                            // Adjust concurrency dynamically
                             const successRate = results.filter(result => result).length / results.length;
                             if (successRate < 0.8) {
-                                maxConcurrentRequests = Math.max(1, maxConcurrentRequests - 1); // Decrease batch size on failure
+                                // Too many failures, reduce concurrency
+                                maxConcurrentRequests = Math.max(1, maxConcurrentRequests - 1);
                             } else if (successRate === 1) {
-                                maxConcurrentRequests = Math.min(10, maxConcurrentRequests + 1); // Increase batch size on success
+                                // All succeeded, we can try increasing concurrency
+                                maxConcurrentRequests = Math.min(10, maxConcurrentRequests + 1);
                             }
 
                             await delay(100); // Delay between batches
@@ -366,6 +396,7 @@ const storeIds = allStoresSelected
                         progressContainer.id = 'progressContainer';
                         statusContainer.appendChild(progressContainer);
 
+                        // Optional React-based progress bar (requires React/ReactDOM)
                         const ProgressBar = ({ progress }) => (
                             React.createElement('div', { className: 'progress', style: { width: '100%', marginTop: '10px' } },
                                 React.createElement('div', {
@@ -380,15 +411,23 @@ const storeIds = allStoresSelected
                         );
 
                         const progress = (currentIndex / items.length) * 100;
-                        ReactDOM.render(React.createElement(ProgressBar, { progress }), progressContainer);
+                        // This requires React/ReactDOM to be loaded on the page
+                        if (typeof React !== 'undefined' && typeof ReactDOM !== 'undefined') {
+                            ReactDOM.render(
+                                React.createElement(ProgressBar, { progress }),
+                                progressContainer
+                            );
+                        }
 
                         if (!isCancelled && compiledData.length > 0) {
                             const workbook = XLSX.utils.book_new();
                             const itemsWorksheet = XLSX.utils.json_to_sheet(itemsData);
                             XLSX.utils.book_append_sheet(workbook, itemsWorksheet, 'ItemsAvailability');
-                            // Reduce to one row per unique key
+
+                            // Reduce to one row per uniqueKey
                             const uniqueData = Array.from(new Map(compiledData.map(item => [item.uniqueKey, item])).values());
                             console.log('Unique Data Before Download:', uniqueData);
+
                             if (uniqueData.length > 0) {
                                 console.log('Preparing to download data...');
                                 const uniqueWorksheet = XLSX.utils.json_to_sheet(uniqueData);
@@ -403,7 +442,6 @@ const storeIds = allStoresSelected
                             }
                         }
                     })
-                    
                     .catch(error => {
                         console.error('Error fetching items:', error);
                         updateStatus('Error fetching items for store.');
@@ -432,10 +470,4 @@ const storeIds = allStoresSelected
 
     observer.observe(document.body, { childList: true, subtree: true });
 
-    // Export for testing
-    try {
-        module.exports = { auditHistoryPull };
-    } catch (e) {
-        // Ignore if not in Node.js environment
-    }
 })();

@@ -1,7 +1,15 @@
 (function () {
     'use strict';
 
-    // Function to get Merchant ID from Store Code
+    // Expose the function to the global scope for testing
+    try {
+        module.exports = {
+            getMerchantIDFromStoreCode
+        };
+    } catch (e) {
+        // Handle the error if needed
+    }
+
     function getMerchantIDFromStoreCode() {
         // Create overlay
         var overlay = document.createElement('div');

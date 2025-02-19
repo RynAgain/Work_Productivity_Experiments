@@ -1,7 +1,15 @@
 (function() {
     'use strict';
 
-    // Function to add the download data button
+    // Expose the function to the global scope for testing
+    try {
+        module.exports = {
+            addDownloadButton
+        };
+    } catch (e) {
+        // Handle the error if needed
+    }
+
     function addDownloadButton() {
         console.log('Attempting to add download data button');
 

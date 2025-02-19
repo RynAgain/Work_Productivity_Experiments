@@ -1,7 +1,15 @@
 (function () {
     'use strict';
   
-    // Function to add the PLU to ASIN button functionality
+    // Expose the function to the global scope for testing
+    try {
+        module.exports = {
+            addPLUToASINFunctionality
+        };
+    } catch (e) {
+        // Handle the error if needed
+    }
+
     function addPLUToASINFunctionality() {
       console.log('PLU to ASIN button clicked');
   

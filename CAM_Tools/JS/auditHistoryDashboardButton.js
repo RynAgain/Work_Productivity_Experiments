@@ -1,5 +1,13 @@
 (function() {
-  // React component for the audit history dashboard overlay with Bootstrap integration
+  // Expose the function to the global scope for testing
+  try {
+      module.exports = {
+          AuditHistoryDashboard
+      };
+  } catch (e) {
+      // Handle the error if needed
+  }
+
   function AuditHistoryDashboard() {
     const [visible, setVisible] = React.useState(false);
     const [auditData, setAuditData] = React.useState([]);

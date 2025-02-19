@@ -1,6 +1,15 @@
 (function() {
     'use strict';
 
+    // Expose the function to the global scope for testing
+    try {
+        module.exports = {
+            addMassUploaderFunctionality
+        };
+    } catch (e) {
+        // Handle the error if needed
+    }
+
     /**
      * This function shows an overlay to pick multiple files (or an entire folder).
      * For each chosen file, we artificially set it on the *existing* <input type="file">
@@ -9,7 +18,7 @@
      * Additionally, after processing each file, we poll for any toast/notification
      * message from the page during a 35-second window and include that in the status update.
      */
-    function addMassUploaderFunctionality() {
+    function addMassUploaderFunctionality() {  // Added function declaration
         console.log('Mass Uploader button clicked');
 
         // === Overlay ===
@@ -99,7 +108,7 @@
             // Identify the site's existing file input (the one the page actually uses)
             const siteFileInput = document.querySelector('input[type="file"]');
             if (!siteFileInput) {
-                console.error('Could not find the site’s file input. Aborting.');
+                console.error("Could not find the site's file input. Aborting.");
                 return;
             }
 
@@ -149,7 +158,6 @@
         });
     }
 
-    // === Setup: attach click listener to #massUploaderButton if present ===
     function wireUpMassUploaderButton() {
         const massUploaderButton = document.getElementById('massUploaderButton');
         if (massUploaderButton) {

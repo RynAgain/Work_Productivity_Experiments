@@ -1,8 +1,16 @@
 (function () {
     'use strict';
 
-    // MAIN FUNCTION: adds our overlay and functionality
-    function addMeatInventoryToUploadConverterFunctionality() {
+    // Expose the function to the global scope for testing
+    try {
+        module.exports = {
+            addMeatInventoryToUploadConverterFunctionality
+        };
+    } catch (e) {
+        // Handle the error if needed
+    }
+
+    function addMeatInventoryToUploadConverterFunctionality() {  // Added function declaration
         console.log('Meat Inventory to Upload Converter button clicked');
         try {
             // Create overlay
@@ -183,8 +191,8 @@
                 const trackingStartDate = document.getElementById('startDate').value || '';
                 const trackingEndDate = document.getElementById('endDate').value || '';
 
-                // For each group, convert data rows into objects using that group’s header,
-                // then “unpivot” each row (i.e. create one output row for each store code column).
+                // For each group, convert data rows into objects using that group's header,
+                // then "unpivot" each row (i.e. create one output row for each store code column).
                 let allUnpivoted = [];
                 groups.forEach(group => {
                     const keys = group.header; // already trimmed and lowercased
