@@ -103,7 +103,8 @@
         async function fetchASIN(storeId, plu) {
             const apiUrlBase = `https://${environment}.cam.wfm.amazon.dev/api/`;
             const payload = { storeId: storeId, wfmScanCode: plu };
-            await new Promise(resolve => setTimeout(resolve, 100)); // 100ms delay
+            // Short delay to avoid hammering
+            await new Promise(resolve => setTimeout(resolve, 100));
 
             try {
                 const response = await fetch(apiUrlBase, {
@@ -136,8 +137,9 @@
             const delayTime = Math.pow(2, attempt) * 100;
 
             try {
-                // Basic delay before each request
+                // Short delay between each item request
                 await new Promise(resolve => setTimeout(resolve, 500));
+
                 const headersAudit = {
                     'accept': '*/*',
                     'accept-language': 'en-US,en;q=0.9',
@@ -158,15 +160,16 @@
                     credentials: 'include'
                 });
 
+                // Handle 429 rate limiting
                 if (response.status === 429 && attempt < maxAttempts) {
-                    console.warn(`Rate limited, retrying in ${delayTime/1000} seconds...`);
+                    console.warn(`Rate limited, retrying in ${delayTime / 1000} seconds...`);
                     await new Promise(resolve => setTimeout(resolve, delayTime));
                     return fetchAuditHistoryWithDelay(item, attempt + 1);
                 }
 
                 const auditData = await response.json();
-                console.log('Audit Data Response:', auditData); // Log the response data
-                console.log('Compiled Data Before Push:', compiledData); // Log compiled data before pushing
+                console.log('Audit Data Response:', auditData);
+                console.log('Compiled Data Before Push:', compiledData);
 
                 // Determine the most recent "Andon Cord enabled" event
                 const andonEnabledEvent = auditData.auditHistory
@@ -261,10 +264,6 @@
                 }
             });
 
-            if (!storeSelect) {
-                throw new Error('Store select element not found');
-            }
-
             // Initialize store select with a placeholder
             storeSelect.innerHTML = '<option value="">Select a store...</option>';
             bySelectElement.dispatchEvent(new Event('change')); // Trigger to populate initial options
@@ -272,7 +271,6 @@
 
             // Sort stores alphabetically for the Store dropdown
             stores.sort((a, b) => a.text.localeCompare(b.text));
-            // Add sorted stores to the dropdown (Store mode)
             stores.forEach(store => {
                 const option = document.createElement('option');
                 option.value = store.value;
@@ -286,50 +284,33 @@
                 allowClear: true
             });
 
-            // Handle the "Next Request" button
-            const nextRequestButton = document.getElementById('nextRequestButton');
-            if (nextRequestButton) {
-                nextRequestButton.addEventListener('click', function() {
-                    const bySelect = document.getElementById('bySelect').value;
-                    const selectedValue = $(storeSelect).val(); // Use select2 method
-                    const allStoresSelected = document.getElementById('allStoresCheckbox').checked;
+            // ------------------------------------------------------------------
+            //  Batching logic: fetch items in groups of (say) 10 stores at a time
+            // ------------------------------------------------------------------
+            const headersItems = {
+                'accept': '*/*',
+                'accept-encoding': 'gzip, deflate, br',
+                'accept-language': 'en-US,en;q=0.9',
+                'content-type': 'application/x-amz-json-1.0',
+                'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)',
+                'x-amz-target': 'WfmCamBackendService.GetItemsAvailability'
+            };
 
-                    // Must choose a store/region unless "All Stores" is checked
-                    if (!selectedValue && !allStoresSelected) {
-                        updateStatus(`Please select a ${bySelect.toLowerCase()}.`);
-                        return;
-                    }
+            // Helper function to fetch items for store IDs in batches
+            async function fetchItemsInBatches(storeIds, batchSize=10) {
+                let allItems = [];
+                // Break the array of storeIds into slices of size "batchSize"
+                for (let i = 0; i < storeIds.length; i += batchSize) {
+                    const storeIdBatch = storeIds.slice(i, i + batchSize);
+                    updateStatus(`Fetching items for stores [${storeIdBatch.join(', ')}] ...`);
 
-                    // Prepare the store list depending on "By Store", "By Region" or "All Stores"
-                    const headersItems = {
-                        'accept': '*/*',
-                        'accept-encoding': 'gzip, deflate, br',
-                        'accept-language': 'en-US,en;q=0.9',
-                        'content-type': 'application/x-amz-json-1.0',
-                        'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)',
-                        'x-amz-target': 'WfmCamBackendService.GetItemsAvailability'
-                    };
-
-                    // --- This is the key fix for "All Stores" ---
-                    const storeIds = allStoresSelected
-                        ? Object.values(storeData.storesInformation).flatMap(regionObj =>
-                            Object.values(regionObj).flat().map(store => store.storeTLC)
-                        )
-                        : bySelect === 'Store'
-                            ? [selectedValue]
-                            : Object.values(storeData.storesInformation[selectedValue]).flat().map(store => store.storeTLC);
-                    // ------------------------------------------
-
-                    updateStatus(`Fetching items for ${
-                        allStoresSelected ? 'all stores' : `${bySelect.toLowerCase()} ${selectedValue}`
-                    }...`);
-
-                    fetch(apiUrlBase, {
+                    // Single fetch call for this batch
+                    const response = await fetch(apiUrlBase, {
                         method: 'POST',
                         headers: headersItems,
                         body: JSON.stringify({
                             filterContext: {
-                                storeIds: storeIds
+                                storeIds: storeIdBatch
                             },
                             paginationContext: {
                                 pageNumber: 0,
@@ -337,115 +318,161 @@
                             }
                         }),
                         credentials: 'include'
-                    })
-                    .then(response => response.json())
-                    .then(async data => {
-                        const items = data.itemsAvailability.filter(item => item.andon === true);
-                        const itemsData = data.itemsAvailability.map(item => ({
-                            storeId: item.storeId,
-                            wfmScanCode: item.wfmScanCode,
-                            itemName: item.itemName,
-                            inventoryStatus: item.inventoryStatus,
-                            currentInventoryQuantity: item.currentInventoryQuantity
-                        }));
-                        console.log('Items with Andon Cord enabled:', items);
-                        updateStatus(`Found ${items.length} items with Andon Cord enabled`);
+                    });
+                    const data = await response.json();
+                    if (data && data.itemsAvailability) {
+                        allItems.push(...data.itemsAvailability);
+                    }
 
-                        // Concurrency control
-                        let maxConcurrentRequests = 5; // Start with a default batch size
-                        let currentIndex = 0;
+                    // Short delay between batches to avoid overwhelming the server
+                    await delay(500);
+                }
+                return allItems;
+            }
 
-                        const startTime = Date.now();
-                        const processNextBatch = async () => {
-                            if (isCancelled || currentIndex >= items.length) return;
+            // Handle the "Next Request" button
+            const nextRequestButton = document.getElementById('nextRequestButton');
+            if (nextRequestButton) {
+                nextRequestButton.addEventListener('click', function() {
+                    const bySelectValue = document.getElementById('bySelect').value;
+                    const selectedValue = $(storeSelect).val(); // Use select2 method
+                    const allStoresSelected = document.getElementById('allStoresCheckbox').checked;
 
-                            const batch = items.slice(currentIndex, currentIndex + maxConcurrentRequests);
-                            currentIndex += batch.length;
+                    // Must choose a store/region unless "All Stores" is checked
+                    if (!selectedValue && !allStoresSelected) {
+                        updateStatus(`Please select a ${bySelectValue.toLowerCase()}.`);
+                        return;
+                    }
 
-                            const results = await Promise.all(batch.map(async (item, index) => {
-                                try {
-                                    await fetchAuditHistoryWithDelay(item);
-                                    const elapsedTime = (Date.now() - startTime) / 1000; // in seconds
-                                    const estimatedTotalTime = (elapsedTime / currentIndex) * items.length;
-                                    const remainingTime = estimatedTotalTime - elapsedTime;
-                                    updateStatus(`Gathering audit history... ${currentIndex} / ${items.length}. Estimated time left: ${Math.round(remainingTime)} seconds`);
-                                    return true; // Indicate success
-                                } catch (error) {
-                                    console.error('Error fetching audit history:', error);
-                                    return false; // Indicate failure
-                                }
+                    // Prepare the store list depending on "By Store", "By Region", or "All Stores"
+                    const storeIds = allStoresSelected
+                        ? Object.values(storeData.storesInformation).flatMap(regionObj =>
+                            Object.values(regionObj).flat().map(store => store.storeTLC)
+                          )
+                        : bySelectValue === 'Store'
+                            ? [selectedValue]
+                            : Object.values(storeData.storesInformation[selectedValue])
+                                 .flat()
+                                 .map(store => store.storeTLC);
+
+                    // Now fetch *all* items from those storeIds in batches
+                    fetchItemsInBatches(storeIds, 10)
+                        .then(async (allItemsAvailability) => {
+                            // Filter for Andon
+                            const items = allItemsAvailability.filter(item => item.andon === true);
+                            const itemsData = allItemsAvailability.map(item => ({
+                                storeId: item.storeId,
+                                wfmScanCode: item.wfmScanCode,
+                                itemName: item.itemName,
+                                inventoryStatus: item.inventoryStatus,
+                                currentInventoryQuantity: item.currentInventoryQuantity
                             }));
 
-                            // Adjust concurrency dynamically
-                            const successRate = results.filter(result => result).length / results.length;
-                            if (successRate < 0.8) {
-                                // Too many failures, reduce concurrency
-                                maxConcurrentRequests = Math.max(1, maxConcurrentRequests - 1);
-                            } else if (successRate === 1) {
-                                // All succeeded, we can try increasing concurrency
-                                maxConcurrentRequests = Math.min(10, maxConcurrentRequests + 1);
-                            }
+                            console.log('Items with Andon Cord enabled:', items);
+                            updateStatus(`Found ${items.length} items with Andon Cord enabled`);
 
-                            await delay(100); // Delay between batches
-                            return processNextBatch();
-                        };
+                            // -------------------------------
+                            // Concurrency for Audit History
+                            // -------------------------------
+                            let maxConcurrentRequests = 5; // Start with a default concurrency
+                            let currentIndex = 0;
+                            const startTime = Date.now();
 
-                        await Promise.all([processNextBatch()]);
+                            const processNextBatch = async () => {
+                                if (isCancelled || currentIndex >= items.length) return;
 
-                        const progressContainer = document.createElement('div');
-                        progressContainer.id = 'progressContainer';
-                        statusContainer.appendChild(progressContainer);
+                                const batch = items.slice(currentIndex, currentIndex + maxConcurrentRequests);
+                                currentIndex += batch.length;
 
-                        // Optional React-based progress bar (requires React/ReactDOM)
-                        const ProgressBar = ({ progress }) => (
-                            React.createElement('div', { className: 'progress', style: { width: '100%', marginTop: '10px' } },
-                                React.createElement('div', {
-                                    className: 'progress-bar',
-                                    role: 'progressbar',
-                                    style: { width: `${progress}%` },
-                                    'aria-valuenow': progress,
-                                    'aria-valuemin': '0',
-                                    'aria-valuemax': '100'
-                                }, `${progress}%`)
-                            )
-                        );
+                                const results = await Promise.all(batch.map(async (item) => {
+                                    try {
+                                        await fetchAuditHistoryWithDelay(item);
+                                        // Estimate progress/time
+                                        const elapsedTime = (Date.now() - startTime) / 1000; // in seconds
+                                        const estimatedTotalTime = (elapsedTime / currentIndex) * items.length;
+                                        const remainingTime = estimatedTotalTime - elapsedTime;
+                                        updateStatus(`Gathering audit history... ${currentIndex} / ${items.length}. Estimated time left: ${Math.round(remainingTime)} seconds`);
+                                        return true; // success
+                                    } catch (error) {
+                                        console.error('Error fetching audit history:', error);
+                                        return false; // failure
+                                    }
+                                }));
 
-                        const progress = (currentIndex / items.length) * 100;
-                        // This requires React/ReactDOM to be loaded on the page
-                        if (typeof React !== 'undefined' && typeof ReactDOM !== 'undefined') {
-                            ReactDOM.render(
-                                React.createElement(ProgressBar, { progress }),
-                                progressContainer
+                                // Dynamically adjust concurrency based on success rate
+                                const successRate = results.filter(Boolean).length / results.length;
+                                if (successRate < 0.8) {
+                                    maxConcurrentRequests = Math.max(1, maxConcurrentRequests - 1);
+                                } else if (successRate === 1) {
+                                    maxConcurrentRequests = Math.min(10, maxConcurrentRequests + 1);
+                                }
+
+                                // Short delay between batches
+                                await delay(100);
+
+                                // Continue to next batch
+                                return processNextBatch();
+                            };
+
+                            await Promise.all([processNextBatch()]);
+
+                            // Optional progress bar container
+                            const progressContainer = document.createElement('div');
+                            progressContainer.id = 'progressContainer';
+                            statusContainer.appendChild(progressContainer);
+
+                            // Example React-based progress bar (requires React/ReactDOM)
+                            const ProgressBar = ({ progress }) => (
+                                React.createElement('div', { className: 'progress', style: { width: '100%', marginTop: '10px' } },
+                                    React.createElement('div', {
+                                        className: 'progress-bar',
+                                        role: 'progressbar',
+                                        style: { width: `${progress}%` },
+                                        'aria-valuenow': progress,
+                                        'aria-valuemin': '0',
+                                        'aria-valuemax': '100'
+                                    }, `${progress}%`)
+                                )
                             );
-                        }
-
-                        if (!isCancelled && compiledData.length > 0) {
-                            const workbook = XLSX.utils.book_new();
-                            const itemsWorksheet = XLSX.utils.json_to_sheet(itemsData);
-                            XLSX.utils.book_append_sheet(workbook, itemsWorksheet, 'ItemsAvailability');
-
-                            // Reduce to one row per uniqueKey
-                            const uniqueData = Array.from(new Map(compiledData.map(item => [item.uniqueKey, item])).values());
-                            console.log('Unique Data Before Download:', uniqueData);
-
-                            if (uniqueData.length > 0) {
-                                console.log('Preparing to download data...');
-                                const uniqueWorksheet = XLSX.utils.json_to_sheet(uniqueData);
-                                const compiledWorksheet = XLSX.utils.json_to_sheet(compiledData);
-                                XLSX.utils.book_append_sheet(workbook, uniqueWorksheet, 'UniqueAuditHistory');
-                                XLSX.utils.book_append_sheet(workbook, compiledWorksheet, 'CompiledAuditHistory');
-                                XLSX.writeFile(workbook, 'AuditHistoryData.xlsx');
-                                updateStatus('Audit history data exported to Excel file.');
-                                console.log('Download triggered.');
-                            } else {
-                                updateStatus('No data available to export.');
+                            const progress = (currentIndex / items.length) * 100;
+                            if (typeof React !== 'undefined' && typeof ReactDOM !== 'undefined') {
+                                ReactDOM.render(
+                                    React.createElement(ProgressBar, { progress }),
+                                    progressContainer
+                                );
                             }
-                        }
-                    })
-                    .catch(error => {
-                        console.error('Error fetching items:', error);
-                        updateStatus('Error fetching items for store.');
-                    });
+
+                            // Final Excel export if not cancelled and we got data
+                            if (!isCancelled && compiledData.length > 0) {
+                                const workbook = XLSX.utils.book_new();
+
+                                // "ItemsAvailability" sheet
+                                const itemsWorksheet = XLSX.utils.json_to_sheet(itemsData);
+                                XLSX.utils.book_append_sheet(workbook, itemsWorksheet, 'ItemsAvailability');
+
+                                // For the audit history: reduce to one row per unique key
+                                const uniqueData = Array.from(new Map(compiledData.map(item => [item.uniqueKey, item])).values());
+                                console.log('Unique Data Before Download:', uniqueData);
+
+                                if (uniqueData.length > 0) {
+                                    console.log('Preparing to download data...');
+                                    const uniqueWorksheet = XLSX.utils.json_to_sheet(uniqueData);
+                                    const compiledWorksheet = XLSX.utils.json_to_sheet(compiledData);
+
+                                    XLSX.utils.book_append_sheet(workbook, uniqueWorksheet, 'UniqueAuditHistory');
+                                    XLSX.utils.book_append_sheet(workbook, compiledWorksheet, 'CompiledAuditHistory');
+                                    XLSX.writeFile(workbook, 'AuditHistoryData.xlsx');
+                                    updateStatus('Audit history data exported to Excel file.');
+                                    console.log('Download triggered.');
+                                } else {
+                                    updateStatus('No data available to export.');
+                                }
+                            }
+                        })
+                        .catch(error => {
+                            console.error('Error fetching items:', error);
+                            updateStatus('Error fetching items for store.');
+                        });
                 });
             }
         })
