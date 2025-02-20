@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         CAM_Admin_Tools
 // @namespace    http://tampermonkey.net/
-// @version      2.6.001
+// @version      2.6.002
 // @description  Main script to include button functionalities
 // @author       Ryan Satterfield
 // @match        https://*.cam.wfm.amazon.dev/*
@@ -31,8 +31,6 @@
 // @require      https://github.com/RynAgain/Work_Productivity_Experiments/raw/main/CAM_Tools/JS/auditHistoryDashboardButton.js
 // @require      https://github.com/RynAgain/Work_Productivity_Experiments/raw/main/CAM_Tools/JS/auditHistoryPull.js
 
-
-
 // @run-at       document-end
 // @updateURL    https://github.com/RynAgain/Work_Productivity_Experiments/raw/main/CAM_Tools/MainScript.js
 // @downloadURL  https://github.com/RynAgain/Work_Productivity_Experiments/raw/main/CAM_Tools/MainScript.js
@@ -41,5 +39,40 @@
 (function() {
     'use strict';
     console.log("MainScript Started - loading buttons");
+
+    const eventListeners = [];
+
+    function addEventListenerWithTracking(target, type, listener, options) {
+        try {
+            target.addEventListener(type, listener, options);
+            eventListeners.push({ target, type, listener, options });
+        } catch (error) {
+            console.error(`Error adding event listener: ${error.message}`, { target, type, listener, options });
+        }
+    }
+
+    function restoreEventListeners() {
+        eventListeners.forEach(({ target, type, listener, options }) => {
+            try {
+                if (!target) return;
+                target.addEventListener(type, listener, options);
+            } catch (error) {
+                console.error(`Error restoring event listener: ${error.message}`, { target, type, listener, options });
+            }
+        });
+    }
+
+    try {
+        const observer = new MutationObserver(() => {
+            restoreEventListeners();
+        });
+
+        observer.observe(document.body, { childList: true, subtree: true });
+    } catch (error) {
+        console.error(`Error setting up MutationObserver: ${error.message}`);
+    }
+
+    // Example usage:
+    // addEventListenerWithTracking(document.getElementById('someButton'), 'click', () => console.log('Clicked!'));
 
 })();
