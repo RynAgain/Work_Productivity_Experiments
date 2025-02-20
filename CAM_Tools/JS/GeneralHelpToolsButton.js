@@ -73,8 +73,31 @@ generalHelpToolsButton.addEventListener('mouseout', function(){
             closeButton.style.borderRadius = '0';
             closeButton.addEventListener('click', function() {
                 document.body.removeChild(overlay);
-            // Attach the event listener for the PLU Dedupe & List button
+            // Function to reattach event listeners for buttons in the overlay
+            function reattachEventListeners() {
+                const buttonActions = {
+                    'pluDedupeListButton': addPLUDedupeListFunctionality,
+                    'nisFileToCAMUploadButton': addNISFileToCAMUploadFunctionality,
+                    'scanCodeTo13PLUButton': addScanCodeTo13PLUFunctionality,
+                    'pluToAsinButton': addPLUToASINFunctionality,
+                    'getMerchantIdButton': getMerchantIDFromStoreCode,
+                    'getAllStoreInfoButton': getAllStoreInfo,
+                    'meatInventoryToUploadConverterButton': addMeatInventoryToUploadConverterFunctionality,
+                    'filechunker': addFileChunkerFunctionality,
+                    'massUploaderButton': addMassUploaderFunctionality,
+                    'auditHistoryPullButton': auditHistoryPull
+                };
 
+                for (const [buttonId, action] of Object.entries(buttonActions)) {
+                    const button = document.getElementById(buttonId);
+                    if (button) {
+                        button.addEventListener('click', action);
+                    }
+                }
+            }
+
+            // Reattach event listeners each time the overlay is opened
+            reattachEventListeners();
         });
 
             var formContainer = document.createElement('div');
