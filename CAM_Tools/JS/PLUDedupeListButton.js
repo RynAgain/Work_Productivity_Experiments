@@ -38,6 +38,7 @@ const closeButton = document.createElement('span');
         closeButton.style.backgroundColor = '#000';
         closeButton.style.padding = '5px';
         closeButton.style.borderRadius = '0';
+        let uniqueNumbers = [];
         closeButton.addEventListener('click', function() {
             document.body.removeChild(overlay);
             // Copy to clipboard
@@ -60,27 +61,6 @@ const closeButton = document.createElement('span');
                 }, 2000);
             }).catch(err => {
                 console.error('Failed to copy text: ', err);
-                // Copy to clipboard
-            navigator.clipboard.writeText(uniqueNumbers.join(', ')).then(() => {
-                // Display "Copied!" message
-                const copiedMessage = document.createElement('div');
-                copiedMessage.innerText = 'Copied!';
-                copiedMessage.style.position = 'fixed';
-                copiedMessage.style.bottom = '10px';
-                copiedMessage.style.right = '10px';
-                copiedMessage.style.backgroundColor = '#4CAF50';
-                copiedMessage.style.color = '#fff';
-                copiedMessage.style.padding = '10px';
-                copiedMessage.style.borderRadius = '5px';
-                document.body.appendChild(copiedMessage);
-
-                // Remove the message after 2 seconds
-                setTimeout(() => {
-                    document.body.removeChild(copiedMessage);
-                }, 2000);
-            }).catch(err => {
-                console.error('Failed to copy text: ', err);
-            });
         });
         });
 
@@ -107,7 +87,7 @@ const formContainer = document.createElement('div');
         document.getElementById('transformButton').addEventListener('click', function() {
             const input = document.getElementById('pluInput').value;
             const numbers = input.split(/\s+/).map(num => num.trim()).filter(num => num !== '');
-            const uniqueNumbers = Array.from(new Set(numbers));
+            uniqueNumbers = Array.from(new Set(numbers));
             const outputText = uniqueNumbers.join(', ');
             document.getElementById('pluOutput').innerText = outputText;
 

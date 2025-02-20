@@ -1,4 +1,4 @@
-import { addPLUDedupeListFunctionality } from '../JS/PLUDedupeListButton.js';
+import { addGeneralHelpToolsButton } from '../JS/GeneralHelpToolsButton.js';
 
 describe('PLUDedupeListButton module', () => {
   beforeEach(() => {
@@ -7,7 +7,9 @@ describe('PLUDedupeListButton module', () => {
   });
 
   test('should add the PLU Dedupe & List button to the document', () => {
-    addPLUDedupeListFunctionality();
+    addGeneralHelpToolsButton();
+    const generalHelpToolsButton = document.getElementById('generalHelpToolsButton');
+    generalHelpToolsButton.click();
     const button = document.getElementById('pluDedupeListButton');
     expect(button).not.toBeNull();
     expect(button.innerHTML).toBe('PLU Dedupe & List');
@@ -18,7 +20,9 @@ describe('PLUDedupeListButton module', () => {
     button.id = 'pluDedupeListButton';
     document.body.appendChild(button);
 
-    addPLUDedupeListFunctionality();
+    addGeneralHelpToolsButton();
+    const generalHelpToolsButton = document.getElementById('generalHelpToolsButton');
+    generalHelpToolsButton.click();
     const buttons = document.querySelectorAll('#pluDedupeListButton');
     expect(buttons.length).toBe(1);
   });
