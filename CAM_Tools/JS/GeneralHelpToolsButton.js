@@ -105,26 +105,26 @@ generalHelpToolsButton.addEventListener('mouseout', function(){
             formContainer.style.backgroundColor = '#fff';
             formContainer.style.padding = '20px';
             formContainer.style.borderRadius = '5px';
-            formContainer.style.width = '300px';
+            formContainer.style.width = '600px';
 
-            // Create list of buttons
+            // Create list of buttons in a two-column grid layout
             formContainer.innerHTML = `
                 <h3>General Help Tools</h3>
-                <button id="pluDedupeListButton" style="width: 100%; margin-bottom: 10px;">PLU Dedupe & List</button>
-                <button id="nisFileToCAMUploadButton" style="width: 100%; margin-bottom: 10px;">zNon-functional Buttonz</button>
-                <button id="scanCodeTo13PLUButton" style="width: 100%; margin-bottom: 10px;">Scan Code to 13-PLU</button>
-                <button id="pluToAsinButton" style="width: 100%; margin-bottom: 10px;">Basic PLU to ASIN</button>
-                <button id="getMerchantIdButton" style="width: 100%; margin-bottom: 10px;">Get eMerchant IDs from Store Code</button>
-                <button id="getAllStoreInfoButton" style="width: 100%; margin-bottom: 10px;">Get All Store Info</button>
-                <button id="meatInventoryToUploadConverterButton" style="width: 100%; margin-bottom: 10px;">Meat Inventory to Upload Converter</button>
-                <button id ="filechunker" style = "width: 100%; margin-bottom: 10px;">File Chunker</button>
-                <button id ="massUploaderButton" style = "width: 100%; margin-bottom: 10px;">Mass File Upload</button> 
-                <button id="auditHistoryPullButton" style="width: 100%; margin-bottom: 10px;">Audit History Pull</button>
-
-                <button id ="auditHistoryDashboardButton" style = "width: 100%; margin-bottom: 10px;">zAudit History Dashboardz</button>
-                <button id ="dailyInventoryTool" style = "width: 100%; margin-bottom: 10px;">zDaily Inventory Toolz</button>
-                <button id="atcpropButton" style ="width: 100%; margin-bottom: 10px;">zATC Propagation Toolz</button>
-
+                <div id="buttonGrid" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px;">
+                    <button id="pluDedupeListButton" style="width: 100%;">PLU Dedupe & List</button>
+                    <button id="nisFileToCAMUploadButton" style="width: 100%;">zNon-functional Buttonz</button>
+                    <button id="scanCodeTo13PLUButton" style="width: 100%;">Scan Code to 13-PLU</button>
+                    <button id="pluToAsinButton" style="width: 100%;">Basic PLU to ASIN</button>
+                    <button id="getMerchantIdButton" style="width: 100%;">Get eMerchant IDs from Store Code</button>
+                    <button id="getAllStoreInfoButton" style="width: 100%;">Get All Store Info</button>
+                    <button id="meatInventoryToUploadConverterButton" style="width: 100%;">Meat Inventory to Upload Converter</button>
+                    <button id="filechunker" style="width: 100%;">File Chunker</button>
+                    <button id="massUploaderButton" style="width: 100%;">Mass File Upload</button>
+                    <button id="auditHistoryPullButton" style="width: 100%;">Audit History Pull</button>
+                    <button id="auditHistoryDashboardButton" style="width: 100%;">zAudit History Dashboardz</button>
+                    <button id="dailyInventoryTool" style="width: 100%;">zDaily Inventory Toolz</button>
+                    <button id="atcpropButton" style="width: 100%;">zATC Propagation Toolz</button>
+                </div>
                 <a href="#" id="creditsLink" style="display: block; text-align: center; margin-top: 10px;">Credits</a>
             `;
 

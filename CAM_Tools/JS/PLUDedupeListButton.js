@@ -12,6 +12,7 @@
 
     function addPLUDedupeListFunctionality() {
         console.log('PLU Dedupe & List button clicked');
+        if(document.getElementById('pluDedupeOverlay')) return;
         // Create overlay
 const overlay = document.createElement('div');
         overlay.id = 'pluDedupeOverlay';
