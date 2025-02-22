@@ -45,6 +45,11 @@ generalHelpToolsButton.addEventListener('mouseout', function(){
         // Add click event to the General Help Tools button
         generalHelpToolsButton.addEventListener('click', function() {
             console.log('General Help Tools button clicked');
+            var existingOverlay = document.getElementById('generalHelpOverlay');
+            if(existingOverlay) {
+                existingOverlay.style.display = 'flex';
+                return;
+            }
             // Create overlay
             var overlay = document.createElement('div');
             overlay.id = 'generalHelpOverlay';
@@ -72,33 +77,8 @@ generalHelpToolsButton.addEventListener('mouseout', function(){
             closeButton.style.padding = '5px';
             closeButton.style.borderRadius = '0';
             closeButton.addEventListener('click', function() {
-                document.body.removeChild(overlay);
-            // Function to reattach event listeners for buttons in the overlay
-            function reattachEventListeners() {
-                const buttonActions = {
-                    'pluDedupeListButton': addPLUDedupeListFunctionality,
-                    'nisFileToCAMUploadButton': addNISFileToCAMUploadFunctionality,
-                    'scanCodeTo13PLUButton': addScanCodeTo13PLUFunctionality,
-                    'pluToAsinButton': addPLUToASINFunctionality,
-                    'getMerchantIdButton': getMerchantIDFromStoreCode,
-                    'getAllStoreInfoButton': getAllStoreInfo,
-                    'meatInventoryToUploadConverterButton': addMeatInventoryToUploadConverterFunctionality,
-                    'filechunker': addFileChunkerFunctionality,
-                    'massUploaderButton': addMassUploaderFunctionality,
-                    'auditHistoryPullButton': auditHistoryPull
-                };
-
-                for (const [buttonId, action] of Object.entries(buttonActions)) {
-                    const button = document.getElementById(buttonId);
-                    if (button) {
-                        button.addEventListener('click', action);
-                    }
-                }
-            }
-
-            // Reattach event listeners each time the overlay is opened
-            reattachEventListeners();
-        });
+                overlay.style.display = 'none';
+            });
 
             var formContainer = document.createElement('div');
             formContainer.style.position = 'relative';
@@ -131,6 +111,7 @@ generalHelpToolsButton.addEventListener('mouseout', function(){
             formContainer.appendChild(closeButton);
             overlay.appendChild(formContainer);
             document.body.appendChild(overlay);
+document.getElementById('pluDedupeListButton').innerText = "PLU Dedupe & List";
             // Add event listener for the "Credits" link
             document.getElementById('creditsLink').addEventListener('click', function(event) {
                 event.preventDefault();
@@ -149,7 +130,11 @@ generalHelpToolsButton.addEventListener('mouseout', function(){
     }
 
     // Use MutationObserver to detect changes in the DOM
-    const observer = new MutationObserver(addGeneralHelpToolsButton);
+    const observer = new MutationObserver(function(mutationsList, observer) {
+        if (!document.getElementById('generalHelpToolsButton')) {
+            addGeneralHelpToolsButton();
+        }
+    });
     observer.observe(document.body, { childList: true, subtree: true });
 
     // Initial attempt to add the General Help Tools button
