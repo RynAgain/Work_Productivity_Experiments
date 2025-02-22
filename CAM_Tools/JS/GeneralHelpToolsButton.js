@@ -33,14 +33,14 @@
         generalHelpToolsButton.style.zIndex = '1000';
 
         // Append the button to the body
-document.body.appendChild(generalHelpToolsButton);
-console.log('General Help Tools button added to the page');
-generalHelpToolsButton.addEventListener('mouseover', function(){
-    generalHelpToolsButton.style.backgroundColor = '#218838';
-});
-generalHelpToolsButton.addEventListener('mouseout', function(){
-    generalHelpToolsButton.style.backgroundColor = '#004E36';
-});
+        document.body.appendChild(generalHelpToolsButton);
+        console.log('General Help Tools button added to the page');
+        generalHelpToolsButton.addEventListener('mouseover', function(){
+            generalHelpToolsButton.style.backgroundColor = '#218838';
+        });
+        generalHelpToolsButton.addEventListener('mouseout', function(){
+            generalHelpToolsButton.style.backgroundColor = '#004E36';
+        });
 
         // Add click event to the General Help Tools button
         generalHelpToolsButton.addEventListener('click', function() {
@@ -87,7 +87,7 @@ generalHelpToolsButton.addEventListener('mouseout', function(){
             formContainer.style.borderRadius = '5px';
             formContainer.style.width = '600px';
 
-            // Create list of buttons in a two-column grid layout
+            // Create list of buttons in a two-column grid layout using innerHTML template
             formContainer.innerHTML = `
                 <h3>General Help Tools</h3>
                 <div id="buttonGrid" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px;">
@@ -107,16 +107,16 @@ generalHelpToolsButton.addEventListener('mouseout', function(){
                 </div>
                 <a href="#" id="creditsLink" style="display: block; text-align: center; margin-top: 10px;">Credits</a>
             `;
-
-            formContainer.appendChild(closeButton);
+            // Insert close button at the beginning of formContainer
+            formContainer.insertBefore(closeButton, formContainer.firstChild);
             overlay.appendChild(formContainer);
             document.body.appendChild(overlay);
-document.getElementById('pluDedupeListButton').innerText = "PLU Dedupe & List";
+            // Removed redundant text reset for PLU Dedupe List button
+
             // Add event listener for the "Credits" link
             document.getElementById('creditsLink').addEventListener('click', function(event) {
                 event.preventDefault();
                 alert('Software Version: 2.5\nLast Update Date: 2025-2-10\nAuthor: Ryan Satterfield\nThis is an unofficial tool.');
-                
             });
         });
     }
@@ -128,7 +128,6 @@ document.getElementById('pluDedupeListButton').innerText = "PLU Dedupe & List";
     } catch (e) {
         // Handle the error if needed
     }
-
     // Use MutationObserver to detect changes in the DOM
     const observer = new MutationObserver(function(mutationsList, observer) {
         if (!document.getElementById('generalHelpToolsButton')) {
@@ -137,6 +136,7 @@ document.getElementById('pluDedupeListButton').innerText = "PLU Dedupe & List";
     });
     observer.observe(document.body, { childList: true, subtree: true });
 
+    // Removed MutationObserver block to prevent duplicate button insertion.
     // Initial attempt to add the General Help Tools button
     addGeneralHelpToolsButton();
 })();
