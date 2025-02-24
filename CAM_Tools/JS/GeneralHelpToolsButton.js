@@ -87,12 +87,11 @@
             formContainer.style.borderRadius = '5px';
             formContainer.style.width = '600px';
 
-            // Create list of buttons in a two-column grid layout using innerHTML template
+            // Create list of buttons in a two-section layout: Main and Beta
             formContainer.innerHTML = `
                 <h3>General Help Tools</h3>
                 <div id="buttonGrid" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px;">
                     <button id="pluDedupeListButton" style="width: 100%;">PLU Dedupe & List</button>
-                    <button id="nisFileToCAMUploadButton" style="width: 100%;">zNon-functional Buttonz</button>
                     <button id="scanCodeTo13PLUButton" style="width: 100%;">Scan Code to 13-PLU</button>
                     <button id="pluToAsinButton" style="width: 100%;">Basic PLU to ASIN</button>
                     <button id="getMerchantIdButton" style="width: 100%;">Get eMerchant IDs from Store Code</button>
@@ -101,6 +100,10 @@
                     <button id="filechunker" style="width: 100%;">File Chunker</button>
                     <button id="massUploaderButton" style="width: 100%;">Mass File Upload</button>
                     <button id="auditHistoryPullButton" style="width: 100%;">Audit History Pull</button>
+                </div>
+                <h4 style="margin-top: 20px;">Beta</h4>
+                <div id="betaButtonGrid" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px;">
+                    <button id="nisFileToCAMUploadButton" style="width: 100%;">zNon-functional Buttonz</button>
                     <button id="auditHistoryDashboardButton" style="width: 100%;">zAudit History Dashboardz</button>
                     <button id="dailyInventoryTool" style="width: 100%;">zDaily Inventory Toolz</button>
                     <button id="atcpropButton" style="width: 100%;">zATC Propagation Toolz</button>

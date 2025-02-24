@@ -120,47 +120,28 @@
                         // Determine if header validation is enabled
                         var doValidation = document.getElementById('uploadValidation').checked;
                         
-                        // Use PapaParse if available for robust CSV parsing
-                        if (typeof Papa !== 'undefined') {
-                            var result = Papa.parse(csvData, { header: false, skipEmptyLines: true });
-                            if (result.errors.length > 0) {
-                                throw new Error("Error parsing CSV: " + result.errors[0].message);
-                            }
-                            var parsedData = result.data;
-                            if (parsedData.length === 0) {
-                                alert('CSV file is empty.');
-                                chunkButton.disabled = false;
-                                updateMessage('');
-                                return;
-                            }
-                            header = parsedData[0].join(',');
-                            if (doValidation && header.trim() !== expectedHeader.trim()) {
-                                alert("CSV header does not match expected format.\nExpected: " + expectedHeader);
-                                chunkButton.disabled = false;
-                                updateMessage('');
-                                return;
-                            }
-                            dataRows = [];
-                            for (var i = 1; i < parsedData.length; i++) {
-                                dataRows.push(parsedData[i].join(','));
-                            }
-                        } else {
-                            // Fallback: simple splitting by newlines
-                            var lines = csvData.split('\n').filter(function(line) { return line.trim() !== ''; });
-                            if (lines.length === 0) {
-                                alert('CSV file is empty.');
-                                chunkButton.disabled = false;
-                                updateMessage('');
-                                return;
-                            }
-                            header = lines[0];
-                            if (doValidation && header.trim() !== expectedHeader.trim()) {
-                                alert("CSV header does not match expected format.\nExpected: " + expectedHeader);
-                                chunkButton.disabled = false;
-                                updateMessage('');
-                                return;
-                            }
-                            dataRows = lines.slice(1);
+                        // Use PapaParse for robust CSV parsing
+                        var result = Papa.parse(csvData, { header: false, skipEmptyLines: true, quoteChar: '"', escapeChar: '\\' });
+                        if (result.errors.length > 0) {
+                            throw new Error("Error parsing CSV: " + result.errors[0].message);
+                        }
+                        var parsedData = result.data;
+                        if (parsedData.length === 0) {
+                            alert('CSV file is empty.');
+                            chunkButton.disabled = false;
+                            updateMessage('');
+                            return;
+                        }
+                        header = parsedData[0].join(',');
+                        if (doValidation && header.trim() !== expectedHeader.trim()) {
+                            alert("CSV header does not match expected format.\nExpected: " + expectedHeader);
+                            chunkButton.disabled = false;
+                            updateMessage('');
+                            return;
+                        }
+                        dataRows = [];
+                        for (var i = 1; i < parsedData.length; i++) {
+                            dataRows.push(parsedData[i].join(','));
                         }
                         
                         var totalChunks = Math.ceil(dataRows.length / rowsPerFile);
