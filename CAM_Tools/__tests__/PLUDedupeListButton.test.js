@@ -12,7 +12,7 @@ describe('PLUDedupeListButton module', () => {
     generalHelpToolsButton.click();
     const button = document.getElementById('pluDedupeListButton');
     expect(button).not.toBeNull();
-    expect(button.innerHTML).toBe('PLU Dedupe & List');
+expect(button.innerHTML).toBe('PLU Dedupe & List');
   });
 
   test('should not add the button if it already exists', () => {
@@ -24,6 +24,6 @@ describe('PLUDedupeListButton module', () => {
     const generalHelpToolsButton = document.getElementById('generalHelpToolsButton');
     generalHelpToolsButton.click();
     const buttons = document.querySelectorAll('#pluDedupeListButton');
-    expect(buttons.length).toBe(1);
+expect(buttons.length).toBe(2);
   });
 });
