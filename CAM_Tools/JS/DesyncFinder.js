@@ -52,7 +52,8 @@
         // Create form elements
         formContainer.innerHTML = `
             <h3>Desync Finder</h3>
-            <p>Functionality to find desync issues will be implemented here.</p>
+            <input type="file" id="dailyInventoryFileInput" style="width: 100%; margin-bottom: 10px;" accept=".csv, .xlsx">
+            <button id="findDesyncIssuesButton" style="width: 100%; margin-bottom: 10px;">Find Desync Issues</button>
         `;
 
         formContainer.appendChild(closeButton);
