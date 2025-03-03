@@ -55,65 +55,72 @@
             <input type="file" id="dailyInventoryFileInput" style="width: 100%; margin-bottom: 10px;" accept=".xlsx" placeholder="Daily Inventory Input">
             <input type="file" id="fullCAMDataFileInput" style="width: 100%; margin-bottom: 10px;" accept=".csv" placeholder="Full CAM Data">
             <button id="findDesyncIssuesButton" style="width: 100%; margin-bottom: 10px;">Find Desync Issues</button>
-            <script>
-                document.getElementById('findDesyncIssuesButton').addEventListener('click', function() {
-                    // Step 1: Read the CAM Data
-                    const camFileInput = document.getElementById('fullCAMDataFileInput').files[0];
-                    const camReader = new FileReader();
-                    camReader.onload = function(event) {
-                        const camData = XLSX.read(event.target.result, { type: 'binary' });
-                        const camSheet = camData.Sheets[camData.SheetNames[0]];
-                        const camJson = XLSX.utils.sheet_to_json(camSheet);
-                        camJson.forEach(row => {
-                            row['Helper CAM'] = row['storeId'] + row['wfmScanCode'];
-                        });
-
-                        // Step 2: Read the Daily Inventory Data
-                        const diFileInput = document.getElementById('dailyInventoryFileInput').files[0];
-                        const diReader = new FileReader();
-                        diReader.onload = function(event) {
-                            const diData = XLSX.read(event.target.result, { type: 'binary' });
-                            const diSheet = diData.Sheets['WFMOAC Inventory Data'];
-                            const diJson = XLSX.utils.sheet_to_json(diSheet);
-                            diJson.forEach(row => {
-                                row['Helper DI'] = row['store_tlc'] + row['sku_wo_chck_dgt'];
-                            });
-
-                            // Step 3: Filter CAM Data
-                            const filteredCamData = camJson.filter(camRow => diJson.some(diRow => diRow['Helper DI'] === camRow['Helper CAM']));
-
-                            // Step 4: Join Data
-                            const joinedData = filteredCamData.map(camRow => {
-                                const diRow = diJson.find(diRow => diRow['Helper DI'] === camRow['Helper CAM']);
-                                return { ...camRow, ...diRow };
-                            });
-
-                            // Step 5: Identify Desyncs
-                            const desyncs = joinedData.filter(row => 
-                                (row['andon'] === 'Enabled' && row['listing_status'] === 'Inactive') ||
-                                (row['andon'] === 'Disabled' && row['listing_status'] === 'Active')
-                            );
-
-                            // Step 6: Output Results
-                            if (desyncs.length > 0) {
-                                const ws = XLSX.utils.json_to_sheet(desyncs);
-                                const wb = XLSX.utils.book_new();
-                                XLSX.utils.book_append_sheet(wb, ws, 'Desynced Items');
-                                XLSX.writeFile(wb, 'Desynced_Items.xlsx');
-                            } else {
-                                console.log('No desyncs found.');
-                            }
-                        };
-                        diReader.readAsBinaryString(diFileInput);
-                    };
-                    camReader.readAsBinaryString(camFileInput);
-                });
-            </script>
+            <button id="findDesyncIssuesButton" style="width: 100%; margin-bottom: 10px;" onclick="findDesyncIssues()">Find Desync Issues</button>
         `;
 
         formContainer.appendChild(closeButton);
         overlay.appendChild(formContainer);
         document.body.appendChild(overlay);
+    }
+
+    function findDesyncIssues() {
+        console.log('Button clicked, starting desync analysis...');
+        // Step 1: Read the CAM Data
+        const camFileInput = document.getElementById('fullCAMDataFileInput').files[0];
+        const camReader = new FileReader();
+        camReader.onload = function(event) {
+            console.log('Reading CAM data...');
+            const camData = XLSX.read(event.target.result, { type: 'binary' });
+            console.log('CAM data read successfully.');
+            const camSheet = camData.Sheets[camData.SheetNames[0]];
+            const camJson = XLSX.utils.sheet_to_json(camSheet);
+            camJson.forEach(row => {
+                row['Helper CAM'] = row['storeId'] + row['wfmScanCode'];
+            });
+
+            // Step 2: Read the Daily Inventory Data
+            const diFileInput = document.getElementById('dailyInventoryFileInput').files[0];
+            const diReader = new FileReader();
+            diReader.onload = function(event) {
+            console.log('Reading Daily Inventory data...');
+            const diData = XLSX.read(event.target.result, { type: 'binary' });
+            console.log('Daily Inventory data read successfully.');
+                const diSheet = diData.Sheets['WFMOAC Inventory Data'];
+                const diJson = XLSX.utils.sheet_to_json(diSheet);
+                diJson.forEach(row => {
+                    row['Helper DI'] = row['store_tlc'] + row['sku_wo_chck_dgt'];
+                });
+
+                // Step 3: Filter CAM Data
+                const filteredCamData = camJson.filter(camRow => diJson.some(diRow => diRow['Helper DI'] === camRow['Helper CAM']));
+
+                // Step 4: Join Data
+                const joinedData = filteredCamData.map(camRow => {
+                    const diRow = diJson.find(diRow => diRow['Helper DI'] === camRow['Helper CAM']);
+                    return { ...camRow, ...diRow };
+                });
+
+                // Step 5: Identify Desyncs
+                console.log('Identifying desyncs...');
+                const desyncs = joinedData.filter(row =>
+                    (row['andon'] === 'Enabled' && row['listing_status'] === 'Inactive') ||
+                    (row['andon'] === 'Disabled' && row['listing_status'] === 'Active')
+                );
+
+                // Step 6: Output Results
+                if (desyncs.length > 0) {
+                    const ws = XLSX.utils.json_to_sheet(desyncs);
+                    const wb = XLSX.utils.book_new();
+                    XLSX.utils.book_append_sheet(wb, ws, 'Desynced Items');
+                    XLSX.writeFile(wb, 'Desynced_Items.xlsx');
+                    console.log('Desynced items file created and downloaded.');
+                } else {
+                    console.log('No desyncs found.');
+                }
+            };
+            diReader.readAsBinaryString(diFileInput);
+        };
+        camReader.readAsBinaryString(camFileInput);
     }
 
     // Attach event listener to the Desync Finder button
