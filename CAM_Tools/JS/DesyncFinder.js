@@ -72,10 +72,11 @@
             const camData = XLSX.read(event.target.result, { type: 'binary' });
             console.log('CAM data read successfully.');
             const camSheet = camData.Sheets[camData.SheetNames[0]];
-            const camJson = XLSX.utils.sheet_to_json(camSheet);
-            camJson.forEach(row => {
-                row['Helper CAM'] = row['storeId'] + row['wfmScanCode'];
-            });
+            const camJson = XLSX.utils.sheet_to_json(camSheet).map(row => ({
+                ...row,
+                'Helper CAM': row['storeId'] + row['wfmScanCode']
+            }));
+            console.log("Cam Helper Column Complete")
 
             // Step 2: Read the Daily Inventory Data
             const diFileInput = document.getElementById('dailyInventoryFileInput').files[0];
@@ -85,11 +86,11 @@
             const diData = XLSX.read(event.target.result, { type: 'binary' });
             console.log('Daily Inventory data read successfully.');
                 const diSheet = diData.Sheets['WFMOAC Inventory Data'];
-                const diJson = XLSX.utils.sheet_to_json(diSheet);
-                diJson.forEach(row => {
-                    row['Helper DI'] = row['store_tlc'] + row['sku_wo_chck_dgt'];
-                });
-
+                const diJson = XLSX.utils.sheet_to_json(diSheet).map(row => ({
+                    ...row,
+                    'Helper DI': row['store_tlc'] + row['sku_wo_chck_dgt']
+                }));
+                console.log("Daily Invenotry Helper Column Complete")
                 // Step 3: Filter CAM Data
                 const filteredCamData = camJson.filter(camRow => diJson.some(diRow => diRow['Helper DI'] === camRow['Helper CAM']));
 
