@@ -69,10 +69,10 @@
         const camReader = new FileReader();
         camReader.onload = function(event) {
             console.log('Reading CAM data...');
-            const camData = XLSX.read(event.target.result, { type: 'binary' });
+            const camData = XLSX.read(event.target.result, { type: 'binary', cellDates: true, cellStyles: true });
             console.log('CAM data read successfully.');
             const camSheet = camData.Sheets[camData.SheetNames[0]];
-            const camJson = XLSX.utils.sheet_to_json(camSheet).map(row => ({
+            const camJson = XLSX.utils.sheet_to_json(camSheet, { raw: false }).map(row => ({
                 ...row,
                 'Helper CAM': row['storeId'] + row['wfmScanCode']
             }));
@@ -83,10 +83,10 @@
             const diReader = new FileReader();
             diReader.onload = function(event) {
             console.log('Reading Daily Inventory data...');
-            const diData = XLSX.read(event.target.result, { type: 'binary' });
+            const diData = XLSX.read(event.target.result, { type: 'binary', cellDates: true, cellStyles: true });
             console.log('Daily Inventory data read successfully.');
                 const diSheet = diData.Sheets['WFMOAC Inventory Data'];
-                const diJson = XLSX.utils.sheet_to_json(diSheet).map(row => ({
+                const diJson = XLSX.utils.sheet_to_json(diSheet, { raw: false }).map(row => ({
                     ...row,
                     'Helper DI': row['store_tlc'] + row['sku_wo_chck_dgt']
                 }));
