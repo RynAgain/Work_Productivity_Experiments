@@ -121,7 +121,7 @@
             // Add event listener for the "Credits" link
             document.getElementById('creditsLink').addEventListener('click', function(event) {
                 event.preventDefault();
-                alert('Software Version: 2.5\nLast Update Date: 2025-2-10\nAuthor: Ryan Satterfield\nThis is an unofficial tool.');
+                alert('Software Version: 2.6.x\nLast Update Date: 2025-3-10\nAuthor: Ryan Satterfield\nThis is an unofficial tool.');
             });
         });
     }
