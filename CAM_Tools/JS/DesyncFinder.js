@@ -104,8 +104,8 @@
                 // Step 5: Identify Desyncs efficiently
                 console.log('Identifying desyncs...');
                 const desyncs = joinedData.reduce((acc, row) => {
-                    if ((row['andon'] === 'Enabled' && row['listing_status'] === 'Inactive') ||
-                        (row['andon'] === 'Disabled' && row['listing_status'] === 'Active')) {
+                    if ((row['andon'] === 'Disabled' && row['listing_status'] === 'Inactive') ||
+                        (row['andon'] === 'Enabled' && row['listing_status'] === 'Active')) {
                         acc.push(row);
                     }
                     return acc;
