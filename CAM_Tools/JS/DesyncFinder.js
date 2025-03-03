@@ -94,18 +94,22 @@
                 // Step 3: Filter CAM Data
                 const filteredCamData = camJson.filter(camRow => diJson.some(diRow => diRow['Helper DI'] === camRow['Helper CAM']));
 
-                // Step 4: Join Data
+                // Step 4: Join Data using a Map for faster lookups
+                const diMap = new Map(diJson.map(row => [row['Helper DI'], row]));
                 const joinedData = filteredCamData.map(camRow => {
-                    const diRow = diJson.find(diRow => diRow['Helper DI'] === camRow['Helper CAM']);
-                    return { ...camRow, ...diRow };
-                });
+                    const diRow = diMap.get(camRow['Helper CAM']);
+                    return diRow ? { ...camRow, ...diRow } : null;
+                }).filter(row => row !== null);
 
-                // Step 5: Identify Desyncs
+                // Step 5: Identify Desyncs efficiently
                 console.log('Identifying desyncs...');
-                const desyncs = joinedData.filter(row =>
-                    (row['andon'] === 'Enabled' && row['listing_status'] === 'Inactive') ||
-                    (row['andon'] === 'Disabled' && row['listing_status'] === 'Active')
-                );
+                const desyncs = joinedData.reduce((acc, row) => {
+                    if ((row['andon'] === 'Enabled' && row['listing_status'] === 'Inactive') ||
+                        (row['andon'] === 'Disabled' && row['listing_status'] === 'Active')) {
+                        acc.push(row);
+                    }
+                    return acc;
+                }, []);
 
                 // Step 6: Output Results
                 if (desyncs.length > 0) {
