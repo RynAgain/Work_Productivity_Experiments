@@ -62,8 +62,16 @@
     }
 
     // Attach event listener to the Desync Finder button
-    const desyncFinderButton = document.getElementById('desyncFinderButton');
-    if (desyncFinderButton) {
-        desyncFinderButton.addEventListener('click', addDesyncFinderFunctionality);
-    }
+    var observer = new MutationObserver(function(mutations) {
+        mutations.forEach(function(mutation) {
+            if (mutation.addedNodes.length) {
+                const desyncFinder = document.getElementById('desyncFinderButton');
+                if (desyncFinder) {
+                    desyncFinder.addEventListener('click', addDesyncFinderFunctionality);
+                    observer.disconnect(); // Stop observing once the button is found
+                }
+            }
+        });
+    });
+    observer.observe(document.body, { childList: true, subtree: true });
 })();
