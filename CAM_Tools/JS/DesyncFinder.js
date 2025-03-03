@@ -73,7 +73,7 @@
                         const diReader = new FileReader();
                         diReader.onload = function(event) {
                             const diData = XLSX.read(event.target.result, { type: 'binary' });
-                            const diSheet = diData.Sheets[diData.SheetNames[0]];
+                            const diSheet = diData.Sheets['WFMOAC Inventory Data'];
                             const diJson = XLSX.utils.sheet_to_json(diSheet);
                             diJson.forEach(row => {
                                 row['Helper DI'] = row['store_tlc'] + row['sku_wo_chck_dgt'];
@@ -89,10 +89,20 @@
                             });
 
                             // Step 5: Identify Desyncs
-                            const desyncs = joinedData.filter(row => row['camStatus'] !== row['diStatus']);
+                            const desyncs = joinedData.filter(row => 
+                                (row['andon'] === 'Enabled' && row['listing_status'] === 'Inactive') ||
+                                (row['andon'] === 'Disabled' && row['listing_status'] === 'Active')
+                            );
 
                             // Step 6: Output Results
-                            console.log('Desyncs:', desyncs);
+                            if (desyncs.length > 0) {
+                                const ws = XLSX.utils.json_to_sheet(desyncs);
+                                const wb = XLSX.utils.book_new();
+                                XLSX.utils.book_append_sheet(wb, ws, 'Desynced Items');
+                                XLSX.writeFile(wb, 'Desynced_Items.xlsx');
+                            } else {
+                                console.log('No desyncs found.');
+                            }
                         };
                         diReader.readAsBinaryString(diFileInput);
                     };
