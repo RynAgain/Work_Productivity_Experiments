@@ -54,7 +54,6 @@
             <h3>Desync Finder</h3>
             <input type="file" id="dailyInventoryFileInput" style="width: 100%; margin-bottom: 10px;" accept=".xlsx" placeholder="Daily Inventory Input">
             <input type="file" id="fullCAMDataFileInput" style="width: 100%; margin-bottom: 10px;" accept=".csv" placeholder="Full CAM Data">
-            <button id="findDesyncIssuesButton" style="width: 100%; margin-bottom: 10px;">Find Desync Issues</button>
             <button id="findDesyncIssuesButton" style="width: 100%; margin-bottom: 10px;" onclick="findDesyncIssues()">Find Desync Issues</button>
         `;
 
@@ -63,7 +62,7 @@
         document.body.appendChild(overlay);
     }
 
-    function findDesyncIssues() {
+    window.findDesyncIssues = function() {
         console.log('Button clicked, starting desync analysis...');
         // Step 1: Read the CAM Data
         const camFileInput = document.getElementById('fullCAMDataFileInput').files[0];
