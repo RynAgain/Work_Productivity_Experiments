@@ -71,31 +71,36 @@
         console.log('Button clicked, starting desync analysis...');
         // Step 1: Read the CAM Data
         const camFileInput = document.getElementById('fullCAMDataFileInput').files[0];
-        const camReader = new FileReader();
-        camReader.onload = function(event) {
-            console.log('Reading CAM data...');
-            statusMessage.innerText = 'Reading CAM data...';
-            const camData = XLSX.read(event.target.result, { type: 'binary', cellDates: true, cellStyles: true });
-            statusMessage.innerText = 'CAM data read successfully.';
-            console.log('CAM data read successfully.');
-            const camSheet = camData.Sheets[camData.SheetNames[0]];
-            statusMessage.innerText = 'Processing CAM data...';
-            const camJson = XLSX.utils.sheet_to_json(camSheet, { raw: false }).map(row => ({
-                ...row,
-                'Helper CAM': row['storeId'] + row['wfmScanCode']
-            }));
-            console.log("Cam Helper Column Complete");
-            statusMessage.innerText = 'Cam Helper Column Complete';
+        const readFileAsync = (file) => {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = () => resolve(reader.result);
+                reader.onerror = reject;
+                reader.readAsBinaryString(file);
+            });
+        };
 
-            // Step 2: Read the Daily Inventory Data
-            const diFileInput = document.getElementById('dailyInventoryFileInput').files[0];
-            const diReader = new FileReader();
-            diReader.onload = function(event) {
-            console.log('Reading Daily Inventory data...');
-            statusMessage.innerText = 'Reading Daily Inventory data...';
-            const diData = XLSX.read(event.target.result, { type: 'binary', cellDates: true, cellStyles: true });
-            statusMessage.innerText = 'Daily Inventory data read successfully.';
-            console.log('Daily Inventory data read successfully.');
+        const processFiles = async () => {
+            try {
+                console.log('Reading CAM data...');
+                statusMessage.innerText = 'Reading CAM data...';
+                const camData = XLSX.read(await readFileAsync(camFileInput), { type: 'binary', cellDates: true, cellStyles: true });
+                statusMessage.innerText = 'CAM data read successfully.';
+                console.log('CAM data read successfully.');
+                const camSheet = camData.Sheets[camData.SheetNames[0]];
+                statusMessage.innerText = 'Processing CAM data...';
+                const camJson = XLSX.utils.sheet_to_json(camSheet, { raw: false }).map(row => ({
+                    ...row,
+                    'Helper CAM': row['storeId'] + row['wfmScanCode']
+                }));
+                console.log("Cam Helper Column Complete");
+                statusMessage.innerText = 'Cam Helper Column Complete';
+
+                console.log('Reading Daily Inventory data...');
+                statusMessage.innerText = 'Reading Daily Inventory data...';
+                const diData = XLSX.read(await readFileAsync(diFileInput), { type: 'binary', cellDates: true, cellStyles: true });
+                statusMessage.innerText = 'Daily Inventory data read successfully.';
+                console.log('Daily Inventory data read successfully.');
                 const diSheet = diData.Sheets['WFMOAC Inventory Data'];
                 statusMessage.innerText = 'Processing Daily Inventory data...';
                 const diJson = XLSX.utils.sheet_to_json(diSheet, { raw: false }).map(row => ({
@@ -104,6 +109,7 @@
                 }));
                 console.log("Daily Inventory Helper Column Complete");
                 statusMessage.innerText = 'Daily Inventory Helper Column Complete';
+
                 // Step 3: Filter CAM Data
                 const filteredCamData = camJson.filter(camRow => diJson.some(diRow => diRow['Helper DI'] === camRow['Helper CAM']));
 
@@ -137,10 +143,13 @@
                     console.log('No desyncs found.');
                     statusMessage.innerText = 'No desyncs found.';
                 }
-            };
-            diReader.readAsBinaryString(diFileInput);
+            } catch (error) {
+                console.error('Error processing files:', error);
+                statusMessage.innerText = 'Error processing files.';
+            }
         };
-        camReader.readAsBinaryString(camFileInput);
+
+        processFiles();
     }
 
     // Attach event listener to the Desync Finder button

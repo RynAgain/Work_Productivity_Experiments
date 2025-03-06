@@ -1,5 +1,6 @@
+// removed, without purpose built data connections the api can never handle the goals of this script.
 (function() {
-  // Expose the function to the global scope for testing
+  // Expose the function to the global scope for testing, 
   try {
       module.exports = {
           AuditHistoryDashboard
