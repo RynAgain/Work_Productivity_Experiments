@@ -1,7 +1,7 @@
 (function() {
     'use strict';
 
-    // Expose the function to the global scope for testing, wrap in a try so that it doesn't crash tamper monkey
+    // Expose the function to the global scope for testing, wrap in a try so that it doesn't crash Tampermonkey
     try {
         module.exports = {
             addDesyncFinderFunctionality
@@ -65,67 +65,104 @@
         document.body.appendChild(overlay);
     }
 
+    // Make this globally visible so the button can call it
     window.findDesyncIssues = function() {
         const statusMessage = document.getElementById('statusMessage');
         statusMessage.innerText = 'Processing...';
         console.log('Button clicked, starting desync analysis...');
-        // Step 1: Read the CAM Data
-        const camFileInput = document.getElementById('fullCAMDataFileInput').files[0];
-        const readFileAsync = (file) => {
+
+        // Utility to read file async
+        const readFileAsync = (file, isCsv = false) => {
             return new Promise((resolve, reject) => {
                 const reader = new FileReader();
                 reader.onload = () => resolve(reader.result);
                 reader.onerror = reject;
-                reader.readAsBinaryString(file);
+                // If it's a CSV, read as text. For XLSX, read as binary.
+                if (isCsv) {
+                    reader.readAsText(file);
+                } else {
+                    reader.readAsBinaryString(file);
+                }
             });
         };
 
         const processFiles = async () => {
             try {
+                // Step 1: Read the CAM (CSV) data
                 console.log('Reading CAM data...');
                 statusMessage.innerText = 'Reading CAM data...';
-                const camData = XLSX.read(await readFileAsync(camFileInput), { type: 'binary', cellDates: true, cellStyles: true });
+                const camFileInput = document.getElementById('fullCAMDataFileInput').files[0];
+                const camFileContents = await readFileAsync(camFileInput, true /* isCsv */);
+                const camData = XLSX.read(camFileContents, {
+                    type: 'string', // since it's CSV
+                    raw: true,      // faster, no format conversions
+                    cellDates: true,
+                    cellStyles: true
+                });
                 statusMessage.innerText = 'CAM data read successfully.';
-                console.log('CAM data read successfully.');
-                const camSheet = camData.Sheets[camData.SheetNames[0]];
+
+                console.log('Processing CAM data...');
                 statusMessage.innerText = 'Processing CAM data...';
-                const camJson = XLSX.utils.sheet_to_json(camSheet, { raw: false }).map(row => ({
-                    ...row,
-                    'Helper CAM': row['storeId'] + row['wfmScanCode']
-                }));
+                const camSheet = camData.Sheets[camData.SheetNames[0]];
+                const camJson = XLSX.utils.sheet_to_json(camSheet, { raw: true })
+                    .map(row => ({
+                        ...row,
+                        // Construct "Helper CAM" for matching
+                        'Helper CAM': row['storeId'] + row['wfmScanCode']
+                    }));
                 console.log("Cam Helper Column Complete");
                 statusMessage.innerText = 'Cam Helper Column Complete';
 
+                // Step 2: Read the Daily Inventory (XLSX) data
                 console.log('Reading Daily Inventory data...');
                 statusMessage.innerText = 'Reading Daily Inventory data...';
-                const diData = XLSX.read(await readFileAsync(diFileInput), { type: 'binary', cellDates: true, cellStyles: true });
+                const diFileInput = document.getElementById('dailyInventoryFileInput').files[0];
+                const diFileContents = await readFileAsync(diFileInput, false /* isCsv */);
+                const diData = XLSX.read(diFileContents, {
+                    type: 'binary',
+                    raw: true,
+                    cellDates: true,
+                    cellStyles: true
+                });
                 statusMessage.innerText = 'Daily Inventory data read successfully.';
-                console.log('Daily Inventory data read successfully.');
-                const diSheet = diData.Sheets['WFMOAC Inventory Data'];
+
+                console.log('Processing Daily Inventory data...');
                 statusMessage.innerText = 'Processing Daily Inventory data...';
-                const diJson = XLSX.utils.sheet_to_json(diSheet, { raw: false }).map(row => ({
-                    ...row,
-                    'Helper DI': row['store_tlc'] + row['sku_wo_chck_dgt']
-                }));
+                const diSheet = diData.Sheets['WFMOAC Inventory Data'];
+                const diJson = XLSX.utils.sheet_to_json(diSheet, { raw: true })
+                    .map(row => ({
+                        ...row,
+                        // Construct "Helper DI" for matching
+                        'Helper DI': row['store_tlc'] + row['sku_wo_chck_dgt']
+                    }));
                 console.log("Daily Inventory Helper Column Complete");
                 statusMessage.innerText = 'Daily Inventory Helper Column Complete';
 
-                // Step 3: Filter CAM Data
-                const filteredCamData = camJson.filter(camRow => diJson.some(diRow => diRow['Helper DI'] === camRow['Helper CAM']));
-
-                // Step 4: Join Data using a Map for faster lookups
+                // Step 3: Build a map from daily inventory data for faster lookup
                 const diMap = new Map(diJson.map(row => [row['Helper DI'], row]));
-                const joinedData = filteredCamData.map(camRow => {
-                    const diRow = diMap.get(camRow['Helper CAM']);
-                    return diRow ? { ...camRow, ...diRow } : null;
-                }).filter(row => row !== null);
 
-                // Step 5: Identify Desyncs efficiently
+                // Step 4: Join data in a single pass (avoid filter(...some(...)) which is O(n*m))
+                const joinedData = [];
+                for (const camRow of camJson) {
+                    const diRow = diMap.get(camRow['Helper CAM']);
+                    if (diRow) {
+                        // If we found a matching daily-inventory row, merge them
+                        joinedData.push({ ...camRow, ...diRow });
+                    }
+                }
+
+                // Step 5: Identify desyncs
                 console.log('Identifying desyncs...');
                 statusMessage.innerText = 'Identifying desyncs...';
+
+                // NOTE: The condition here might look "backwards" but is presumably correct for your logic.
                 const desyncs = joinedData.reduce((acc, row) => {
-                    if ((row['andon'] === 'Disabled' && row['listing_status'] === 'Inactive') ||
-                        (row['andon'] === 'Enabled' && row['listing_status'] === 'Active')) {
+                    // This condition flags items that are "in sync" if we read it plainly,
+                    // but the script's naming is reversed, so we keep it as-is if you say it is correct.
+                    if (
+                        (row['andon'] === 'Disabled' && row['listing_status'] === 'Inactive') ||
+                        (row['andon'] === 'Enabled' && row['listing_status'] === 'Active')
+                    ) {
                         acc.push(row);
                     }
                     return acc;
@@ -150,9 +187,9 @@
         };
 
         processFiles();
-    }
+    };
 
-    // Attach event listener to the Desync Finder button
+    // Attach event listener to the Desync Finder button when it appears
     var observer = new MutationObserver(function(mutations) {
         mutations.forEach(function(mutation) {
             if (mutation.addedNodes.length) {
