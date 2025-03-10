@@ -11,7 +11,7 @@ describe('DownloadButton module', () => {
     addDownloadButton();
     const button = document.getElementById('downloadDataButton');
     expect(button).not.toBeNull();
-    expect(button.innerHTML).toBe('Download Data');
+    expect(button.innerHTML).toBe('<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-download" viewBox="0 0 16 16"><path d="M.5 9.9a.5.5 0 0 1 .5-.5h4.5V1.5a.5.5 0 0 1 1 0v7.9h4.5a.5.5 0 0 1 .5.5v.5a.5.5 0 0 1-.5.5H6.5v4.5a.5.5 0 0 1-1 0V10.9H1a.5.5 0 0 1-.5-.5v-.5z"></path><path d="M5.5 10.9V1.5a.5.5 0 0 1 1 0v9.4h4.5a.5.5 0 0 1 .5.5v.5a.5.5 0 0 1-.5.5H6.5v4.5a.5.5 0 0 1-1 0V11.9H1a.5.5 0 0 1-.5-.5v-.5a.5.5 0 0 1 .5-.5h4.5z"></path></svg> Download Data');
   });
 
   test('should not add the button if it already exists', () => {
