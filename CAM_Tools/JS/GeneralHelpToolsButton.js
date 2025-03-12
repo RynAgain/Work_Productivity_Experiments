@@ -101,6 +101,7 @@
                     <button id="massUploaderButton" style="width: 100%;">Mass File Upload</button>
                     <button id="auditHistoryPullButton" style="width: 100%;">Audit History Pull</button>
                     <button id="desyncFinderButton" style="width: 100%;">Desync Finder</button>
+                    <button id="componentUploadBuilderButton" style="width: 100%;">Component Upload Builder</button>
                 </div>
                 <h4 style="margin-top: 20px;">Beta</h4>
                 <div id="betaButtonGrid" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px;">

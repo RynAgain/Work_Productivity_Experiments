@@ -12,7 +12,7 @@ describe('PLUDedupeListButton module', () => {
     generalHelpToolsButton.click();
     const button = document.getElementById('pluDedupeListButton');
     expect(button).not.toBeNull();
-expect(button.innerHTML).toBe('PLU Dedupe & List');
+expect(button.innerHTML).toBe('PLU Dedupe &amp; List');
   });
 
   test('should not add the button if it already exists', () => {
