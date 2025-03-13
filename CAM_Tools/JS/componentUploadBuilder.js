@@ -52,8 +52,10 @@
         // Create form elements
         formContainer.innerHTML = `
             <h3>Component Builder & Propagator</h3>
-            <input type="file" id="itemListInput" accept=".xlsx" style="width: 100%; margin-bottom: 10px;">
-            <input type="file" id="storeMapInput" accept=".csv" style="width: 100%; margin-bottom: 10px;">
+            <label for="itemListInput">Item List (.xlsx, .csv)</label>
+            <input type="file" id="itemListInput" accept=".xlsx, .csv" style="width: 100%; margin-bottom: 10px;">
+            <label for="storeMapInput">Store Map (.xlsx, .csv)</label>
+            <input type="file" id="storeMapInput" accept=".xlsx, .csv" style="width: 100%; margin-bottom: 10px;">
             <button id="processFilesButton" style="width: 100%; margin-bottom: 10px;">Process Files</button>
             <div id="statusMessage" style="text-align: center; font-size: 14px; color: #004E36;"></div>
         `;
