@@ -129,12 +129,10 @@
                         
                             lines.forEach(line => {
                                 let fields = line.split(',');
-                                while (fields.length > expectedColumns) {
-                                    for (let i = 0; i < fields.length; i++) {
-                                        if (isNaN(fields[2])) { // Assuming "Item PLU/UPC" is the third column
-                                            fields[i] = fields[i] + ',' + fields[i + 1];
-                                            fields.splice(i + 1, 1);
-                                        }
+                                for (let i = 0; i < fields.length - 1; i++) {
+                                    if (fields[i].endsWith(',') && fields[i + 1].startsWith(' ')) {
+                                        fields[i] = fields[i] + fields[i + 1];
+                                        fields.splice(i + 1, 1);
                                     }
                                 }
                                 while (fields.length < expectedColumns) {
