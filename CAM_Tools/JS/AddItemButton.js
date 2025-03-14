@@ -181,6 +181,14 @@
                 generateFileButton.addEventListener('click', function() {
                     // Collect input values
                     var storeCode = document.getElementById('storeCode').value;
+                    if (document.getElementById('allStoresCheckbox').checked) {
+                        // Fetch all store codes
+                        fetchAllStoreCodes().then(allStoreCodes => {
+                            storeCode = allStoreCodes.join(',');
+                            generateCSV(storeCode, plu, currentInventory, availability, andonCord, trackingStartDate, trackingEndDate);
+                        });
+                        return;
+                    }
                     var plu = document.getElementById('plu').value;
                     var currentInventory = document.getElementById('currentInventory').value;
                     var availability = document.getElementById('availability').value;
