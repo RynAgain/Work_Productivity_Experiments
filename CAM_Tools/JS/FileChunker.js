@@ -31,6 +31,7 @@
             // Create close button
             var closeButton = document.createElement('span');
             closeButton.innerHTML = '&times;';
+            closeButton.className = 'close-button';
             closeButton.style.position = 'absolute';
             closeButton.style.top = '10px';
             closeButton.style.right = '10px';
@@ -121,11 +122,31 @@
                         var doValidation = document.getElementById('uploadValidation').checked;
                         
                         // Use PapaParse for robust CSV parsing
-                        var result = Papa.parse(csvData, { header: false, skipEmptyLines: true, quoteChar: '"', escapeChar: '\\' });
-                        if (result.errors.length > 0) {
-                            throw new Error("Error parsing CSV: " + result.errors[0].message);
+                        function customParseCSV(data) {
+                            const lines = data.split('\n');
+                            const parsedData = [];
+                            const expectedColumns = 9; // Adjust based on your CSV structure
+                        
+                            lines.forEach(line => {
+                                let fields = line.split(',');
+                                while (fields.length > expectedColumns) {
+                                    for (let i = 0; i < fields.length; i++) {
+                                        if (isNaN(fields[2])) { // Assuming "Item PLU/UPC" is the third column
+                                            fields[i] = fields[i] + ',' + fields[i + 1];
+                                            fields.splice(i + 1, 1);
+                                        }
+                                    }
+                                }
+                                while (fields.length < expectedColumns) {
+                                    fields.push(''); // Fill with blanks if necessary
+                                }
+                                parsedData.push(fields);
+                            });
+                        
+                            return parsedData;
                         }
-                        var parsedData = result.data;
+                        
+                        var parsedData = customParseCSV(csvData);
                         if (parsedData.length === 0) {
                             alert('CSV file is empty.');
                             chunkButton.disabled = false;
