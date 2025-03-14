@@ -187,7 +187,7 @@
                     var andonCord = document.getElementById('andonCord').value;
 
                     // Check if all required fields are filled
-                    if (!storeCode || !plu || !availability || !andonCord) {
+                    if ((!storeCode && !document.getElementById('allStoresCheckbox').checked) || !plu || !availability || !andonCord) {
                         alert('Please fill in all required fields before generating the file.');
                         return;
                     }
