@@ -60,30 +60,42 @@
             <div id="statusMessage" style="text-align: center; font-size: 14px; color: #004E36;"></div>
         `;
 
-        document.getElementById('downloadItemListTemplate').addEventListener('click', function(event) {
-            event.preventDefault();
-            const headers = ['sku', 'itemName', 'region'];
-            const csvContent = "data:text/csv;charset=utf-8," + headers.join(",") + "\n";
-            const encodedUri = encodeURI(csvContent);
-            const link = document.createElement("a");
-            link.setAttribute("href", encodedUri);
-            link.setAttribute("download", "ItemListTemplate.csv");
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-        });
-
-        document.getElementById('downloadStoreMapTemplate').addEventListener('click', function(event) {
-            event.preventDefault();
-            const headers = ['Store ID', 'Region', 'Merchant ID', 'WFMOA Merchant ID'];
-            const csvContent = "data:text/csv;charset=utf-8," + headers.join(",") + "\n";
-            const encodedUri = encodeURI(csvContent);
-            const link = document.createElement("a");
-            link.setAttribute("href", encodedUri);
-            link.setAttribute("download", "StoreMapTemplate.csv");
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
+        document.addEventListener('DOMContentLoaded', function() {
+            const downloadItemListTemplate = document.getElementById('downloadItemListTemplate');
+            if (downloadItemListTemplate) {
+                downloadItemListTemplate.addEventListener('click', function(event) {
+                    event.preventDefault();
+                    const headers = ['sku', 'itemName', 'region'];
+                    const csvContent = "data:text/csv;charset=utf-8," + headers.join(",") + "\n";
+                    const encodedUri = encodeURI(csvContent);
+                    const link = document.createElement("a");
+                    link.setAttribute("href", encodedUri);
+                    link.setAttribute("download", "ItemListTemplate.csv");
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                });
+            } else {
+                console.warn('downloadItemListTemplate not found in the DOM.');
+            }
+        
+            const downloadStoreMapTemplate = document.getElementById('downloadStoreMapTemplate');
+            if (downloadStoreMapTemplate) {
+                downloadStoreMapTemplate.addEventListener('click', function(event) {
+                    event.preventDefault();
+                    const headers = ['Store ID', 'Region', 'Merchant ID', 'WFMOA Merchant ID'];
+                    const csvContent = "data:text/csv;charset=utf-8," + headers.join(",") + "\n";
+                    const encodedUri = encodeURI(csvContent);
+                    const link = document.createElement("a");
+                    link.setAttribute("href", encodedUri);
+                    link.setAttribute("download", "StoreMapTemplate.csv");
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                });
+            } else {
+                console.warn('downloadStoreMapTemplate not found in the DOM.');
+            }
         });
 
         formContainer.appendChild(closeButton);
