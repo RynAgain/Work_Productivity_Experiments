@@ -10,10 +10,19 @@
         // Handle the error if needed
     }
 
+    document.addEventListener('DOMContentLoaded', function() {
+        const atcpropButton = document.getElementById('atcpropButton');
+        if (atcpropButton) {
+            atcpropButton.addEventListener('click', function() {
+                addATCPropagationToolButton();
+            });
+        }
+    });
+
     function addATCPropagationToolButton() {
         console.log('ATC Propagation Tool button clicked');
         // Check if the button already exists
-        if (document.getElementById('atcpropButton')) {
+        if (document.getElementById('atcPropagationToolButton')) {
             console.log('ATC Propagation Tool button already exists');
             return;
         }
@@ -142,14 +151,5 @@
         // Implement the logic to process data from both files
         // This is a placeholder function and should be replaced with actual logic
         return data1.concat(data2);
-    }
-
-    // Expose the function to the global scope for testing
-    try {
-        module.exports = {
-            addATCPropagationToolButton
-        };
-    } catch (e) {
-        // Handle the error if needed
     }
 })();
