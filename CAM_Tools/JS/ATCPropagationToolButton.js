@@ -22,14 +22,14 @@
     function addATCPropagationToolButton() {
         console.log('ATC Propagation Tool button clicked');
         // Check if the button already exists
-        if (document.getElementById('atcPropagationToolButton')) {
+        if (document.getElementById('atcpropButton')) {
             console.log('ATC Propagation Tool button already exists');
             return;
         }
 
         // Create the ATC Propagation Tool button
         const atcButton = document.createElement('button');
-        atcButton.id = 'atcPropagationToolButton';
+        atcButton.id = 'atcpropButton';
         atcButton.innerHTML = 'ATC Propagation Tool';
         atcButton.className = 'button';
         atcButton.style.position = 'fixed';
