@@ -1,3 +1,31 @@
+function generateCSV(storeCodes, plu, currentInventory, availability, andonCord, trackingStartDate, trackingEndDate) {
+    // Create CSV content
+    let csvContent = 'Store - 3 Letter Code,Item Name,Item PLU/UPC,Availability,Current Inventory,Sales Floor Capacity,Andon Cord,Tracking Start Date,Tracking End Date\n';
+    
+    // Generate a row for each combination of store code and PLU
+    storeCodes.forEach(store => {
+        plu.forEach(pluCode => {
+            csvContent += `${store},Name_Does_Not_Matter,${pluCode},${availability},${currentInventory},,${andonCord},${trackingStartDate},${trackingEndDate}\n`;
+        });
+    });
+
+    // Create a Blob from the CSV string
+    const blob = new Blob([csvContent], { type: 'text/csv' });
+
+    // Create a link element
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = 'add_item_data.csv';
+
+    // Append the link to the body
+    document.body.appendChild(link);
+
+    // Trigger the download
+    link.click();
+
+    // Remove the link from the document
+    document.body.removeChild(link);
+}
 function fetchAllStoreCodes() {
     return new Promise((resolve, reject) => {
         const environment = window.location.hostname.includes('gamma') ? 'gamma' : 'prod';
