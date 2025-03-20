@@ -256,7 +256,7 @@ function fetchAllStoreCodes() {
                     if (document.getElementById('allStoresCheckbox').checked) {
                         // Fetch all store codes
                         fetchAllStoreCodes().then(allStoreCodes => {
-                            storeCode = allStoreCodes.join(',');
+                            storeCode = allStoreCodes;
                             generateCSV(storeCode, plu, currentInventory, availability, andonCord, trackingStartDate, trackingEndDate);
                         });
                         return;
