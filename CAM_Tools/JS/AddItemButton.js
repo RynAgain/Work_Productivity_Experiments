@@ -1,3 +1,47 @@
+function fetchAllStoreCodes() {
+    return new Promise((resolve, reject) => {
+        const environment = window.location.hostname.includes('gamma') ? 'gamma' : 'prod';
+        const apiUrlBase = `https://${environment}.cam.wfm.amazon.dev/api/`;
+
+        const headersStores = {
+            'accept': '*/*',
+            'accept-encoding': 'gzip, deflate, br',
+            'accept-language': 'en-US,en;q=0.9',
+            'content-type': 'application/x-amz-json-1.0',
+            'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36 Edg/130.0.0.0',
+            'x-amz-target': 'WfmCamBackendService.GetStoresInformation'
+        };
+
+        fetch(apiUrlBase, {
+            method: 'POST',
+            headers: headersStores,
+            body: JSON.stringify({}),
+            credentials: 'include'
+        })
+        .then(response => response.json())
+        .then(storeData => {
+            if (!storeData || !storeData.storesInformation) {
+                throw new Error('Invalid store data received');
+            }
+
+            const storeCodes = [];
+            for (const region in storeData.storesInformation) {
+                const states = storeData.storesInformation[region];
+                for (const state in states) {
+                    const stores = states[state];
+                    stores.forEach(store => {
+                        storeCodes.push(store.storeTLC);
+                    });
+                }
+            }
+            resolve(storeCodes);
+        })
+        .catch(error => {
+            console.error('Error fetching store codes:', error);
+            reject(error);
+        });
+    });
+}
 (function() {
     'use strict';
 
