@@ -256,8 +256,18 @@ function fetchAllStoreCodes() {
                     if (document.getElementById('allStoresCheckbox').checked) {
                         // Fetch all store codes
                         fetchAllStoreCodes().then(allStoreCodes => {
-                            storeCode = allStoreCodes;
-                            generateCSV(storeCode, plu, currentInventory, availability, andonCord, trackingStartDate, trackingEndDate);
+                            if (!Array.isArray(allStoreCodes)) {
+                                console.error('Error: storeCodes is not an array');
+                                return;
+                            }
+                            const plu = Array.from(new Set(document.getElementById('plu').value.split(',').map(p => p.trim())));
+                            if (!Array.isArray(plu)) {
+                                console.error('Error: plu is not an array');
+                                return;
+                            }
+                            generateCSV(allStoreCodes, plu, currentInventory, availability, andonCord, trackingStartDate, trackingEndDate);
+                        }).catch(error => {
+                            console.error('Error fetching store codes:', error);
                         });
                         return;
                     }
