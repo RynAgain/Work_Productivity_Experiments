@@ -256,11 +256,13 @@ function fetchAllStoreCodes() {
                     if (document.getElementById('allStoresCheckbox').checked) {
                         // Fetch all store codes
                         fetchAllStoreCodes().then(allStoreCodes => {
+                            console.log('All Store Codes:', allStoreCodes);
                             if (!Array.isArray(allStoreCodes)) {
                                 console.error('Error: storeCodes is not an array');
                                 return;
                             }
                             const plu = Array.from(new Set(document.getElementById('plu').value.split(',').map(p => p.trim())));
+                            console.log('PLU Array:', plu);
                             if (!Array.isArray(plu)) {
                                 console.error('Error: plu is not an array');
                                 return;
@@ -275,6 +277,11 @@ function fetchAllStoreCodes() {
                     var currentInventory = document.getElementById('currentInventory').value;
                     var availability = document.getElementById('availability').value;
                     var andonCord = document.getElementById('andonCord').value;
+                    
+                    console.log('PLU:', plu);
+                    console.log('Current Inventory:', currentInventory);
+                    console.log('Availability:', availability);
+                    console.log('Andon Cord:', andonCord);
 
                     // Check if all required fields are filled
                     if ((!storeCode && !document.getElementById('allStoresCheckbox').checked) || !plu || !availability || !andonCord) {
