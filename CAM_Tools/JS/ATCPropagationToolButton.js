@@ -10,14 +10,28 @@
         // Handle the error if needed
     }
 
-    document.addEventListener('DOMContentLoaded', function() {
+    function attachATCPropagationToolButtonListener() {
         const atcpropButton = document.getElementById('atcpropButton');
         if (atcpropButton) {
             atcpropButton.addEventListener('click', function() {
                 addATCPropagationToolButton();
             });
         }
+    }
+
+    // Use MutationObserver to detect changes in the DOM
+    const observer = new MutationObserver(function(mutations) {
+        mutations.forEach(function(mutation) {
+            if (mutation.addedNodes.length) {
+                attachATCPropagationToolButtonListener();
+            }
+        });
     });
+
+    observer.observe(document.body, { childList: true, subtree: true });
+
+    // Initial attempt to add the ATC Propagation Tool button
+    attachATCPropagationToolButtonListener();
 
     function addATCPropagationToolButton() {
         console.log('ATC Propagation Tool button clicked');
