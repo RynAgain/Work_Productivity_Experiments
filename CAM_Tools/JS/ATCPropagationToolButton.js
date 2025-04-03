@@ -162,8 +162,8 @@
         });
 
         // Create the ATC Propagation Tool button
-        const atcButton = document.createElement('button');
-        atcButton.id = 'atcpropButton';
+        const atcButtonDuplicate = document.createElement('button');
+        atcButtonDuplicate.id = 'atcpropButton';
         atcButton.innerHTML = 'ATC Propagation Tool';
         atcButton.className = 'button';
         atcButton.style.position = 'fixed';
