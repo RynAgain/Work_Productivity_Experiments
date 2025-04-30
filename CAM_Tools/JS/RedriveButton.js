@@ -225,15 +225,15 @@ redriveButton.addEventListener('mouseout', function(){
                         const oppositeState = item.andonCordState ? 'Disabled' : 'Enabled';
                         return {
                             'Store - 3 Letter Code': storeId,
-                            'Andon Cord': currentState,
+                            'originalAndonCord': currentState,
+                            'oppositeAndonCord': oppositeState,
                             'Item Name': item.itemName,
                             'Item PLU/UPC': item.wfmScanCode,
                             'Availability': item.inventoryStatus,
                             'Current Inventory': item.inventoryStatus === 'Unlimited' ? "0" : (Math.max(0, Math.min(10000, parseInt(item.currentInventoryQuantity) || 0))).toString(),
                             'Sales Floor Capacity': '',
                             'Tracking Start Date': '',
-                            'Tracking End Date': '',
-                            'Andon Cord': oppositeState
+                            'Tracking End Date': ''
                         };
                     });
                 })
@@ -255,15 +255,24 @@ if (allItems.length > 0) {
         'Store - 3 Letter Code', 'Item Name', 'Item PLU/UPC', 'Availability',
         'Current Inventory', 'Sales Floor Capacity', 'Andon Cord', 'Tracking Start Date', 'Tracking End Date'
     ];
-    const csvContentRestore = desiredHeaders.join(",") + "\n" // Add headers
-        + allItems.map(e => desiredHeaders.map(header => `"${e[header] || ''}"`).join(",")).join("\n");
 
-    const desiredHeadersRedrive = [
-        'Store - 3 Letter Code', 'Item Name', 'Item PLU/UPC', 'Availability',
-        'Current Inventory', 'Sales Floor Capacity', 'Andon Cord', 'Tracking Start Date', 'Tracking End Date'
-    ];
-    const csvContentRedrive = desiredHeadersRedrive.join(",") + "\n" // Add headers
-        + allItems.map(e => desiredHeadersRedrive.map(header => `"${e[header] || ''}"`).join(",")).join("\n");
+    // For restore: use originalAndonCord
+    const csvContentRestore = desiredHeaders.join(",") + "\n"
+        + allItems.map(e =>
+            desiredHeaders.map(header => {
+                if (header === 'Andon Cord') return `"${e['originalAndonCord'] || ''}"`;
+                return `"${e[header] || ''}"`;
+            }).join(",")
+        ).join("\n");
+
+    // For redrive: use oppositeAndonCord
+    const csvContentRedrive = desiredHeaders.join(",") + "\n"
+        + allItems.map(e =>
+            desiredHeaders.map(header => {
+                if (header === 'Andon Cord') return `"${e['oppositeAndonCord'] || ''}"`;
+                return `"${e[header] || ''}"`;
+            }).join(",")
+        ).join("\n");
 
     // Use JSZip to create a zip file containing both CSV files
     const zip = new JSZip();
