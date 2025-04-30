@@ -267,6 +267,12 @@ function fetchAllStoreCodes() {
                                 console.error('Error: plu is not an array');
                                 return;
                             }
+                            // Extract all other values from the DOM here
+                            const currentInventory = document.getElementById('currentInventory').value;
+                            const availability = document.getElementById('availability').value;
+                            const andonCord = document.getElementById('andonCord').value;
+                            const trackingStartDate = document.getElementById('trackingStartDate').value;
+                            const trackingEndDate = document.getElementById('trackingEndDate').value;
                             generateCSV(allStoreCodes, plu, currentInventory, availability, andonCord, trackingStartDate, trackingEndDate);
                         }).catch(error => {
                             console.error('Error fetching store codes:', error);
