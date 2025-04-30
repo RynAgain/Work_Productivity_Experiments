@@ -158,11 +158,18 @@
                             updateMessage('');
                             return;
                         }
+                        // Filter out blank rows (all fields empty or whitespace, or row is just commas)
                         dataRows = [];
                         for (var i = 1; i < parsedData.length; i++) {
-                            dataRows.push(parsedData[i].join(','));
+                            // Check if all fields are empty/whitespace
+                            var isBlank = parsedData[i].every(field => field.trim() === "");
+                            // Or if the joined row is just commas (e.g., ",,,,,,,")
+                            var joined = parsedData[i].join(',').replace(/[\s,]/g, "");
+                            if (!isBlank && joined.length > 0) {
+                                dataRows.push(parsedData[i].join(','));
+                            }
                         }
-                        
+
                         var totalChunks = Math.ceil(dataRows.length / rowsPerFile);
                         console.log('Total chunks to create:', totalChunks);
 
