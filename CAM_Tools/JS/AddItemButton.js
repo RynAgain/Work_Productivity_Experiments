@@ -261,18 +261,26 @@ function fetchAllStoreCodes() {
                                 console.error('Error: storeCodes is not an array');
                                 return;
                             }
-                            const plu = Array.from(new Set(document.getElementById('plu').value.split(',').map(p => p.trim())));
+                            // Extract all values from the DOM inside the .then() callback to ensure correct context
+                            const plu = Array.from(new Set((document.getElementById('plu').value || '').split(',').map(p => p.trim())));
+                            const currentInventory = document.getElementById('currentInventory') ? document.getElementById('currentInventory').value : '';
+                            const availability = document.getElementById('availability') ? document.getElementById('availability').value : '';
+                            const andonCord = document.getElementById('andonCord') ? document.getElementById('andonCord').value : '';
+                            const trackingStartDate = document.getElementById('trackingStartDate') ? document.getElementById('trackingStartDate').value : '';
+                            const trackingEndDate = document.getElementById('trackingEndDate') ? document.getElementById('trackingEndDate').value : '';
+
+                            // Debug log for all values
                             console.log('PLU Array:', plu);
+                            console.log('Current Inventory:', currentInventory);
+                            console.log('Availability:', availability);
+                            console.log('Andon Cord:', andonCord);
+                            console.log('Tracking Start Date:', trackingStartDate);
+                            console.log('Tracking End Date:', trackingEndDate);
+
                             if (!Array.isArray(plu)) {
                                 console.error('Error: plu is not an array');
                                 return;
                             }
-                            // Extract all other values from the DOM here
-                            const currentInventory = document.getElementById('currentInventory').value;
-                            const availability = document.getElementById('availability').value;
-                            const andonCord = document.getElementById('andonCord').value;
-                            const trackingStartDate = document.getElementById('trackingStartDate').value;
-                            const trackingEndDate = document.getElementById('trackingEndDate').value;
                             generateCSV(allStoreCodes, plu, currentInventory, availability, andonCord, trackingStartDate, trackingEndDate);
                         }).catch(error => {
                             console.error('Error fetching store codes:', error);
