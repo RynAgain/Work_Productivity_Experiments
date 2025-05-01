@@ -7,17 +7,24 @@
         scratchpadButton.id = 'scratchpad-toggle-btn';
         scratchpadButton.innerText = 'Scratchpad';
         scratchpadButton.style.position = 'fixed';
-        scratchpadButton.style.bottom = '20px';
-        scratchpadButton.style.right = '20px';
+        scratchpadButton.style.left = '0';
+        scratchpadButton.style.top = '10vh';
         scratchpadButton.style.zIndex = '2000';
         scratchpadButton.style.background = '#004E36';
         scratchpadButton.style.color = '#fff';
         scratchpadButton.style.border = 'none';
-        scratchpadButton.style.borderRadius = '5px 5px 0 0';
-        scratchpadButton.style.padding = '10px 20px';
+        scratchpadButton.style.borderRadius = '0 5px 5px 0';
+        scratchpadButton.style.padding = '10px 0';
         scratchpadButton.style.cursor = 'pointer';
         scratchpadButton.style.fontSize = '16px';
-        scratchpadButton.style.boxShadow = '0 2px 8px rgba(0,0,0,0.2)';
+        scratchpadButton.style.boxShadow = '2px 2px 8px rgba(0,0,0,0.2)';
+        scratchpadButton.style.height = '140px';
+        scratchpadButton.style.width = '36px';
+        scratchpadButton.style.writingMode = 'vertical-rl';
+        scratchpadButton.style.textOrientation = 'mixed';
+        scratchpadButton.style.letterSpacing = '2px';
+        scratchpadButton.style.textAlign = 'center';
+        scratchpadButton.style.userSelect = 'none';
 
         // Create the scratchpad container
         const scratchpadContainer = document.createElement('div');
@@ -107,21 +114,17 @@
 
         header.addEventListener('mousedown', function(e) {
             isDragging = true;
-            // Get the current mouse position and container position
             const rect = scratchpadContainer.getBoundingClientRect();
             dragOffsetX = e.clientX - rect.left;
             dragOffsetY = e.clientY - rect.top;
-            // Bring to front
             scratchpadContainer.style.zIndex = '3000';
             document.body.style.userSelect = 'none';
         });
 
         document.addEventListener('mousemove', function(e) {
             if (isDragging) {
-                // Move the container to follow the mouse, keep within viewport
                 let left = e.clientX - dragOffsetX;
                 let top = e.clientY - dragOffsetY;
-                // Clamp to viewport
                 left = Math.max(0, Math.min(window.innerWidth - scratchpadContainer.offsetWidth, left));
                 top = Math.max(0, Math.min(window.innerHeight - scratchpadContainer.offsetHeight, top));
                 scratchpadContainer.style.left = left + 'px';
