@@ -279,6 +279,53 @@
         scratchpadContainer.appendChild(header);
         scratchpadContainer.appendChild(tabBar);
         scratchpadContainer.appendChild(textarea);
+        // Add toggle bottom buttons button
+        const toggleBottomButtonsBtn = document.createElement('button');
+        toggleBottomButtonsBtn.id = 'toggle-bottom-buttons';
+        toggleBottomButtonsBtn.style.display = 'block';
+        toggleBottomButtonsBtn.style.margin = '10px auto 0 auto';
+        toggleBottomButtonsBtn.style.width = '90%';
+        toggleBottomButtonsBtn.style.background = '#eee';
+        toggleBottomButtonsBtn.style.color = '#333';
+        toggleBottomButtonsBtn.style.border = '1px solid #bbb';
+        toggleBottomButtonsBtn.style.borderRadius = '4px';
+        toggleBottomButtonsBtn.style.padding = '8px';
+        toggleBottomButtonsBtn.style.fontSize = '14px';
+        toggleBottomButtonsBtn.style.cursor = 'pointer';
+
+        // List of bottom button IDs to toggle
+        const bottomButtonIds = [
+            'addItemButton', 'activateButton', 'redriveButton', 'generalHelpToolsButton', 'downloadDataButton',
+            'massUploaderButton', 'filechunker', 'pluDedupeListButton', 'scanCodeTo13PLUButton', 'pluToAsinButton',
+            'getMerchantIdButton', 'getAllStoreInfoButton', 'meatInventoryToUploadConverterButton',
+            'nisFileToCAMUploadButton', 'atcpropButton', 'componentUploadBuilderButton', 'auditHistoryPullButton',
+            'desyncFinderButton', 'auditHistoryDashboardButton'
+        ];
+
+        // Helper to set visibility of all bottom buttons
+        function setBottomButtonsVisible(visible) {
+            bottomButtonIds.forEach(id => {
+                const el = document.getElementById(id);
+                if (el) {
+                    el.style.display = visible ? '' : 'none';
+                }
+            });
+            localStorage.setItem('bottomButtonsVisible', visible ? '1' : '0');
+            toggleBottomButtonsBtn.innerText = visible ? 'Hide Bottom Buttons' : 'Show Bottom Buttons';
+        }
+
+        // Initial state from localStorage (default: visible)
+        let bottomButtonsVisible = localStorage.getItem('bottomButtonsVisible');
+        if (bottomButtonsVisible === null) bottomButtonsVisible = '1';
+        setBottomButtonsVisible(bottomButtonsVisible === '1');
+
+        toggleBottomButtonsBtn.addEventListener('click', function() {
+            const currentlyVisible = localStorage.getItem('bottomButtonsVisible') === '1';
+            setBottomButtonsVisible(!currentlyVisible);
+        });
+
+        scratchpadContainer.appendChild(toggleBottomButtonsBtn);
+
         document.body.appendChild(scratchpadButton);
         document.body.appendChild(scratchpadContainer);
 
