@@ -243,6 +243,19 @@
                                 });
                         };
 
+                        // Helper to split CSV into chunks of up to 1000 data rows (plus header)
+                        function splitCsvIntoChunks(csvString, maxRowsPerChunk) {
+                            const lines = csvString.split('\n');
+                            const header = lines[0];
+                            const dataRows = lines.slice(1);
+                            const chunks = [];
+                            for (let i = 0; i < dataRows.length; i += maxRowsPerChunk) {
+                                const chunkRows = dataRows.slice(i, i + maxRowsPerChunk);
+                                chunks.push([header, ...chunkRows].join('\n'));
+                            }
+                            return chunks;
+                        }
+
                         // Fetch items for all stores and compile results
                         Promise.all(storeIds.map(storeId => fetchItemsForStore(storeId)))
                             .then(results => {
@@ -278,6 +291,27 @@
                                     const zip = new JSZip();
                                     zip.file("Redrive Restore.csv", csvContentRestore);
                                     zip.file("Redrive.csv", csvContentRedrive);
+
+                                    // Chunking logic for large files
+                                    const maxRowsPerChunk = 1000;
+                                    // For Restore
+                                    const restoreRows = csvContentRestore.split('\n').length - 1;
+                                    if (restoreRows > maxRowsPerChunk) {
+                                        const restoreChunks = splitCsvIntoChunks(csvContentRestore, maxRowsPerChunk);
+                                        const restoreFolder = zip.folder("Redrive Restore Chunks");
+                                        restoreChunks.forEach((chunk, idx) => {
+                                            restoreFolder.file(`chunk_${idx + 1}.csv`, chunk);
+                                        });
+                                    }
+                                    // For Redrive
+                                    const redriveRows = csvContentRedrive.split('\n').length - 1;
+                                    if (redriveRows > maxRowsPerChunk) {
+                                        const redriveChunks = splitCsvIntoChunks(csvContentRedrive, maxRowsPerChunk);
+                                        const redriveFolder = zip.folder("Redrive Chunks");
+                                        redriveChunks.forEach((chunk, idx) => {
+                                            redriveFolder.file(`chunk_${idx + 1}.csv`, chunk);
+                                        });
+                                    }
 
                                     zip.generateAsync({ type: "blob" })
                                         .then(function (content) {
