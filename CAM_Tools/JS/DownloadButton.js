@@ -23,10 +23,7 @@
         var downloadButton = document.createElement('button');
         downloadButton.id = 'downloadDataButton';
         downloadButton.innerHTML = `
-        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
-            <path d="M8 0a.5.5 0 0 1 .5.5v11.793l3.146-3.147a.5.5 0 0 1 .708.708l-4 4a.5.5 0 0 1-.708 0l-4-4a.5.5 0 0 1 .708-.708L7.5 12.293V.5A.5.5 0 0 1 8 0z"/>
-            <path d="M1.5 14a.5.5 0 0 1 .5-.5h12a.5.5 0 0 1 0 1H2a.5.5 0 0 1-.5-.5z"/>
-        </svg> Download Data`;
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-download" viewBox="0 0 16 16"><path d="M.5 9.9a.5.5 0 0 1 .5-.5h4.5V1.5a.5.5 0 0 1 1 0v7.9h4.5a.5.5 0 0 1 .5.5v.5a.5.5 0 0 1-.5.5H6.5v4.5a.5.5 0 0 1-1 0V10.9H1a.5.5 0 0 1-.5-.5v-.5z"></path><path d="M5.5 10.9V1.5a.5.5 0 0 1 1 0v9.4h4.5a.5.5 0 0 1 .5.5v.5a.5.5 0 0 1-.5.5H6.5v4.5a.5.5 0 0 1-1 0V11.9H1a.5.5 0 0 1-.5-.5v-.5a.5.5 0 0 1 .5-.5h4.5z"></path></svg> Download Data`;
         downloadButton.className = 'button'; // Use common button class for consistent styling
 
         // Set positioning to align with other UI elements (e.g., AddItemButton)
@@ -87,6 +84,7 @@
             // Close button
             var closeButton = document.createElement('span');
             closeButton.innerHTML = '&times;';
+            closeButton.id = 'downloadOverlayCloseButton';
             closeButton.style.fontSize = '28px';
             closeButton.style.cursor = 'pointer';
             closeButton.style.marginLeft = '16px';
