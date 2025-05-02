@@ -2,7 +2,28 @@
     try {
         'use strict';
 
-        // Create the floating button
+        // --- Persistent State Helpers ---
+        function getTabs() {
+            try {
+                return JSON.parse(localStorage.getItem('scratchpad-tabs')) || [
+                    { name: 'Tab 1', content: '' }
+                ];
+            } catch {
+                return [{ name: 'Tab 1', content: '' }];
+            }
+        }
+        function setTabs(tabs) {
+            localStorage.setItem('scratchpad-tabs', JSON.stringify(tabs));
+        }
+        function getActiveTab() {
+            return parseInt(localStorage.getItem('scratchpad-active-tab') || '0', 10);
+        }
+        function setActiveTab(idx) {
+            localStorage.setItem('scratchpad-active-tab', idx);
+        }
+
+        // --- UI Elements ---
+        // Button
         const scratchpadButton = document.createElement('button');
         scratchpadButton.id = 'scratchpad-toggle-btn';
         scratchpadButton.innerText = 'Scratchpad';
@@ -26,14 +47,14 @@
         scratchpadButton.style.textAlign = 'center';
         scratchpadButton.style.userSelect = 'none';
 
-        // Create the scratchpad container
+        // Container
         const scratchpadContainer = document.createElement('div');
         scratchpadContainer.id = 'scratchpad-container';
         scratchpadContainer.style.position = 'fixed';
         scratchpadContainer.style.bottom = '60px';
         scratchpadContainer.style.right = '20px';
-        scratchpadContainer.style.width = '320px';
-        scratchpadContainer.style.maxWidth = '90vw';
+        scratchpadContainer.style.width = '340px';
+        scratchpadContainer.style.maxWidth = '95vw';
         scratchpadContainer.style.background = '#fff';
         scratchpadContainer.style.border = '1px solid #888';
         scratchpadContainer.style.borderRadius = '8px';
@@ -41,7 +62,7 @@
         scratchpadContainer.style.display = 'none';
         scratchpadContainer.style.zIndex = '2000';
 
-        // Header with collapse/close
+        // Header
         const header = document.createElement('div');
         header.style.display = 'flex';
         header.style.justifyContent = 'space-between';
@@ -65,7 +86,17 @@
         header.appendChild(title);
         header.appendChild(closeBtn);
 
-        // The textarea
+        // Tab Bar
+        const tabBar = document.createElement('div');
+        tabBar.id = 'scratchpad-tab-bar';
+        tabBar.style.display = 'flex';
+        tabBar.style.alignItems = 'center';
+        tabBar.style.background = '#f2f2f2';
+        tabBar.style.borderBottom = '1px solid #ccc';
+        tabBar.style.padding = '0 4px';
+        tabBar.style.overflowX = 'auto';
+
+        // Textarea
         const textarea = document.createElement('textarea');
         textarea.id = 'scratchpad-textarea';
         textarea.style.width = '96%';
@@ -80,19 +111,120 @@
         textarea.style.boxSizing = 'border-box';
         textarea.placeholder = 'Type or paste anything here...';
 
-        // Load from localStorage if available
-        textarea.value = localStorage.getItem('scratchpad-content') || '';
+        // --- Tab Logic ---
+        let tabs = getTabs();
+        let activeTab = Math.min(getActiveTab(), tabs.length - 1);
 
-        // Save to localStorage on change
+        function renderTabs() {
+            // Remove all children
+            while (tabBar.firstChild) tabBar.removeChild(tabBar.firstChild);
+
+            tabs.forEach((tab, idx) => {
+                const tabBtn = document.createElement('div');
+                tabBtn.innerText = tab.name;
+                tabBtn.style.padding = '4px 10px';
+                tabBtn.style.margin = '4px 2px 4px 0';
+                tabBtn.style.borderRadius = '5px 5px 0 0';
+                tabBtn.style.background = idx === activeTab ? '#e0e0e0' : 'transparent';
+                tabBtn.style.cursor = 'pointer';
+                tabBtn.style.position = 'relative';
+                tabBtn.style.fontWeight = idx === activeTab ? 'bold' : 'normal';
+                tabBtn.style.userSelect = 'none';
+                tabBtn.title = 'Double-click to rename';
+
+                // Switch tab
+                tabBtn.addEventListener('click', function() {
+                    saveCurrentTabContent();
+                    activeTab = idx;
+                    setActiveTab(activeTab);
+                    renderTabs();
+                    textarea.value = tabs[activeTab].content;
+                    textarea.focus();
+                });
+
+                // Rename tab on double-click
+                tabBtn.addEventListener('dblclick', function(e) {
+                    e.stopPropagation();
+                    const newName = prompt('Rename tab:', tab.name);
+                    if (newName && newName.trim()) {
+                        tabs[idx].name = newName.trim();
+                        setTabs(tabs);
+                        renderTabs();
+                    }
+                });
+
+                // Close tab button (if more than 1 tab)
+                if (tabs.length > 1) {
+                    const closeTabBtn = document.createElement('span');
+                    closeTabBtn.innerHTML = '&times;';
+                    closeTabBtn.style.position = 'absolute';
+                    closeTabBtn.style.right = '2px';
+                    closeTabBtn.style.top = '2px';
+                    closeTabBtn.style.fontSize = '13px';
+                    closeTabBtn.style.color = '#888';
+                    closeTabBtn.style.cursor = 'pointer';
+                    closeTabBtn.title = 'Close tab';
+                    closeTabBtn.addEventListener('click', function(e) {
+                        e.stopPropagation();
+                        tabs.splice(idx, 1);
+                        if (activeTab >= tabs.length) activeTab = tabs.length - 1;
+                        setTabs(tabs);
+                        setActiveTab(activeTab);
+                        renderTabs();
+                        textarea.value = tabs[activeTab].content;
+                    });
+                    tabBtn.appendChild(closeTabBtn);
+                }
+
+                tabBar.appendChild(tabBtn);
+            });
+
+            // Add tab button
+            const addTabBtn = document.createElement('div');
+            addTabBtn.innerText = '+';
+            addTabBtn.style.padding = '4px 10px';
+            addTabBtn.style.margin = '4px 2px 4px 0';
+            addTabBtn.style.borderRadius = '5px 5px 0 0';
+            addTabBtn.style.background = 'transparent';
+            addTabBtn.style.cursor = 'pointer';
+            addTabBtn.style.fontWeight = 'bold';
+            addTabBtn.title = 'Add new tab';
+            addTabBtn.addEventListener('click', function() {
+                saveCurrentTabContent();
+                const newTabName = `Tab ${tabs.length + 1}`;
+                tabs.push({ name: newTabName, content: '' });
+                activeTab = tabs.length - 1;
+                setTabs(tabs);
+                setActiveTab(activeTab);
+                renderTabs();
+                textarea.value = '';
+                textarea.focus();
+            });
+            tabBar.appendChild(addTabBtn);
+        }
+
+        function saveCurrentTabContent() {
+            if (tabs[activeTab]) {
+                tabs[activeTab].content = textarea.value;
+                setTabs(tabs);
+            }
+        }
+
+        // --- Textarea Persistence ---
+        textarea.value = tabs[activeTab] ? tabs[activeTab].content : '';
         textarea.addEventListener('input', function() {
-            localStorage.setItem('scratchpad-content', textarea.value);
+            if (tabs[activeTab]) {
+                tabs[activeTab].content = textarea.value;
+                setTabs(tabs);
+            }
         });
 
-        // Collapse/expand logic
+        // --- UI Logic ---
         scratchpadButton.addEventListener('click', function() {
             scratchpadContainer.style.display = scratchpadContainer.style.display === 'none' ? 'block' : 'none';
         });
         closeBtn.addEventListener('click', function() {
+            saveCurrentTabContent();
             scratchpadContainer.style.display = 'none';
         });
 
@@ -143,11 +275,17 @@
             }
         });
 
-        // Assemble and add to DOM
+        // --- Assemble and add to DOM ---
         scratchpadContainer.appendChild(header);
+        scratchpadContainer.appendChild(tabBar);
         scratchpadContainer.appendChild(textarea);
         document.body.appendChild(scratchpadButton);
         document.body.appendChild(scratchpadContainer);
+
+        // Initial render
+        renderTabs();
+        textarea.value = tabs[activeTab] ? tabs[activeTab].content : '';
+
     } catch (err) {
         // Log error but do not break the rest of the page
         console.error('[Scratchpad] Error initializing scratchpad:', err);

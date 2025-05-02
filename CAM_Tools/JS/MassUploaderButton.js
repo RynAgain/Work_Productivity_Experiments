@@ -87,6 +87,10 @@
         const statusContainer = document.createElement('div');
         statusContainer.id = 'statusContainer';
         statusContainer.style.marginTop = '10px';
+        statusContainer.style.maxHeight = '200px';
+        statusContainer.style.overflowY = 'auto';
+        statusContainer.style.border = '1px solid #eee';
+        statusContainer.style.padding = '4px';
         formContainer.appendChild(statusContainer);
 
         document.getElementById('massUploadButton').addEventListener('click', () => {
@@ -99,10 +103,33 @@
 
             // Display file names and initial status
             Array.from(files).forEach(file => {
+                // Container for each file status
+                const fileStatusRow = document.createElement('div');
+                fileStatusRow.style.display = 'flex';
+                fileStatusRow.style.alignItems = 'center';
+                fileStatusRow.style.marginBottom = '2px';
+                fileStatusRow.style.gap = '6px';
+
+                // Checkbox
+                const checkbox = document.createElement('input');
+                checkbox.type = 'checkbox';
+                checkbox.title = 'Mark complete/incomplete';
+                checkbox.style.margin = '0 4px 0 0';
+                // No persistence, just UI toggle
+
+                // Status text
                 const fileStatus = document.createElement('div');
-                fileStatus.id = `status-${CSS.escape(file.name)}`; // Use CSS.escape for safer ID
+                fileStatus.id = `status-${CSS.escape(file.name)}`;
                 fileStatus.innerText = `${file.name} - Waiting`;
-                statusContainer.appendChild(fileStatus);
+                fileStatus.style.flex = '1 1 auto';
+                fileStatus.style.fontSize = '13px';
+                fileStatus.style.overflow = 'hidden';
+                fileStatus.style.textOverflow = 'ellipsis';
+                fileStatus.style.whiteSpace = 'nowrap';
+
+                fileStatusRow.appendChild(checkbox);
+                fileStatusRow.appendChild(fileStatus);
+                statusContainer.appendChild(fileStatusRow);
             });
 
             // Identify the site's existing file input (the one the page actually uses)
@@ -147,7 +174,7 @@
                         elapsed += pollingInterval;
                         if (elapsed >= maxPollingTime) {
                             if (fileStatusDiv && fileStatusDiv.innerText.indexOf("Status:") === -1) {
-                                fileStatusDiv.innerText = `${file.name} - Injected. Status: No toast detected`;
+                                fileStatusDiv.innerText = `${file.name} - Injected.`;
                             }
                             clearInterval(poll);
                         }
