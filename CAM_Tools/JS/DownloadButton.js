@@ -50,9 +50,9 @@
             overlay.style.position = 'fixed';
             overlay.style.top = '0';
             overlay.style.left = '0';
-            overlay.style.width = '100%';
-            overlay.style.height = '100%';
-            overlay.style.backgroundColor = 'rgba(0, 0, 0, 0.5)';
+            overlay.style.width = '100vw';
+            overlay.style.height = '100vh';
+            overlay.style.background = 'linear-gradient(120deg, rgba(0,78,54,0.85) 0%, rgba(34,139,106,0.85) 100%)';
             overlay.style.zIndex = '1001';
             overlay.style.display = 'flex';
             overlay.style.justifyContent = 'center';
@@ -61,49 +61,85 @@
             // Create form container for options
             var formContainer = document.createElement('div');
             formContainer.style.position = 'relative';
-            formContainer.style.backgroundColor = '#fff';
-            formContainer.style.padding = '20px';
-            formContainer.style.borderRadius = '5px';
-            formContainer.style.width = '300px';
+            formContainer.style.background = '#fff';
+            formContainer.style.padding = '0';
+            formContainer.style.borderRadius = '12px';
+            formContainer.style.width = '360px';
+            formContainer.style.boxShadow = '0 8px 32px rgba(0,0,0,0.18), 0 1.5px 6px rgba(0,78,54,0.10)';
+            formContainer.style.border = '1.5px solid #e0e0e0';
+            formContainer.style.fontFamily = 'Segoe UI, Arial, sans-serif';
+            formContainer.style.overflow = 'hidden';
 
-            // Create close button styled similarly to AddItemButton's close button
+            // Header bar
+            var headerBar = document.createElement('div');
+            headerBar.style.background = '#004E36';
+            headerBar.style.color = '#fff';
+            headerBar.style.padding = '16px 24px 12px 24px';
+            headerBar.style.fontSize = '20px';
+            headerBar.style.fontWeight = 'bold';
+            headerBar.style.letterSpacing = '0.5px';
+            headerBar.style.display = 'flex';
+            headerBar.style.alignItems = 'center';
+            headerBar.style.justifyContent = 'space-between';
+
+            headerBar.innerHTML = `<span>Download Data Options</span>`;
+
+            // Close button
             var closeButton = document.createElement('span');
             closeButton.innerHTML = '&times;';
-            closeButton.style.position = 'absolute';
-            closeButton.style.top = '10px';
-            closeButton.style.right = '10px';
-            closeButton.style.fontSize = '24px';
+            closeButton.style.fontSize = '28px';
             closeButton.style.cursor = 'pointer';
+            closeButton.style.marginLeft = '16px';
             closeButton.style.color = '#fff';
-            closeButton.style.backgroundColor = '#000';
-            closeButton.style.padding = '5px';
-            closeButton.style.borderRadius = '0';
-closeButton.addEventListener('click', function() {
-    console.log('Close button clicked');
+            closeButton.style.background = 'transparent';
+            closeButton.style.border = 'none';
+            closeButton.style.padding = '0 4px';
+            closeButton.style.borderRadius = '4px';
+            closeButton.style.transition = 'background 0.2s';
+            closeButton.addEventListener('mouseenter', function() {
+                closeButton.style.background = 'rgba(0,0,0,0.12)';
+            });
+            closeButton.addEventListener('mouseleave', function() {
+                closeButton.style.background = 'transparent';
+            });
+            closeButton.addEventListener('click', function() {
                 document.body.removeChild(overlay);
             });
-            formContainer.appendChild(closeButton);
+            headerBar.appendChild(closeButton);
+            formContainer.appendChild(headerBar);
 
-            // New UI with improved layout:
-            // Options first, then Download button, progress indicator, then Cancel button.
-            formContainer.insertAdjacentHTML('beforeend', `
-                <h3>Download Data Options</h3>
-                <label><input type="checkbox" id="everythingCheckbox"> Everything</label><br>
-                <label>Specific PLUs</label>
-                <input type="text" id="pluInput" style="width: 100%; margin-bottom: 10px;" placeholder="Enter specific PLUs separated by commas"><br>
-                <label><input type="checkbox" id="allPlusCheckbox"> All PLUs</label><br>
-                <label>By</label>
-                <select id="bySelect" style="width: 100%; margin-bottom: 10px;">
+            // Content area
+            var contentArea = document.createElement('div');
+            contentArea.style.padding = '20px 24px 18px 24px';
+            contentArea.style.display = 'flex';
+            contentArea.style.flexDirection = 'column';
+            contentArea.style.gap = '10px';
+
+            // Main content HTML
+            contentArea.innerHTML = `
+                <label style="font-weight:500;display:flex;align-items:center;gap:8px;">
+                    <input type="checkbox" id="everythingCheckbox" style="margin-right:8px;"> Everything
+                </label>
+                <label style="margin-top:2px;">Specific PLUs</label>
+                <input type="text" id="pluInput" style="width:100%;margin-bottom:2px;padding:8px 10px;border:1px solid #ccc;border-radius:5px;font-size:15px;" placeholder="Enter specific PLUs separated by commas">
+                <label style="font-weight:500;display:flex;align-items:center;gap:8px;">
+                    <input type="checkbox" id="allPlusCheckbox" style="margin-right:8px;"> All PLUs
+                </label>
+                <label style="margin-top:2px;">By</label>
+                <select id="bySelect" style="width:100%;margin-bottom:2px;padding:8px 10px;border:1px solid #ccc;border-radius:5px;font-size:15px;">
                     <option value="Store">Store</option>
                     <option value="Region">Region</option>
                 </select>
-                <label>Store/Region</label>
-                <input type="text" id="storeRegionInput" style="width: 100%; margin-bottom: 10px;" placeholder="Enter Store/Region codes separated by commas">
-                <label><input type="checkbox" id="allStoresCheckbox"> All Stores/Regions</label><br>
-                <button id="executeDownloadButton" class="button" style="width: 100%; margin-top:10px;">Download</button>
-                <div id="downloadProgress" style="display:none; margin-top:10px; text-align:center; font-size:16px; color:#004E36;">Wait for Parameters</div>
-                <button id="cancelDownloadButton" class="button" style="width: 100%; margin-top:10px; background-color: #FF0000;">Cancel</button>
-            `);
+                <label style="margin-top:2px;">Store/Region</label>
+                <input type="text" id="storeRegionInput" style="width:100%;margin-bottom:2px;padding:8px 10px;border:1px solid #ccc;border-radius:5px;font-size:15px;" placeholder="Enter Store/Region codes separated by commas">
+                <label style="font-weight:500;display:flex;align-items:center;gap:8px;">
+                    <input type="checkbox" id="allStoresCheckbox" style="margin-right:8px;"> All Stores/Regions
+                </label>
+                <button id="executeDownloadButton" class="button" style="width:100%;margin-top:12px;background:#004E36;color:#fff;border:none;border-radius:5px;padding:10px 0;font-size:16px;cursor:pointer;transition:background 0.2s;">Download</button>
+                <div id="downloadProgress" style="display:none;margin-top:10px;text-align:center;font-size:16px;color:#004E36;">Wait for Parameters</div>
+                <button id="cancelDownloadButton" class="button" style="width:100%;margin-top:10px;background:#e74c3c;color:#fff;border:none;border-radius:5px;padding:10px 0;font-size:16px;cursor:pointer;transition:background 0.2s;">Cancel</button>
+            `;
+            formContainer.appendChild(contentArea);
 
             // "Everything" checkbox disables all other options if checked
             formContainer.querySelector('#everythingCheckbox').addEventListener('change', function() {
