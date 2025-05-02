@@ -279,20 +279,6 @@
         scratchpadContainer.appendChild(header);
         scratchpadContainer.appendChild(tabBar);
         scratchpadContainer.appendChild(textarea);
-        // Add toggle bottom buttons button
-        const toggleBottomButtonsBtn = document.createElement('button');
-        toggleBottomButtonsBtn.id = 'toggle-bottom-buttons';
-        toggleBottomButtonsBtn.style.display = 'block';
-        toggleBottomButtonsBtn.style.margin = '10px auto 0 auto';
-        toggleBottomButtonsBtn.style.width = '90%';
-        toggleBottomButtonsBtn.style.background = '#eee';
-        toggleBottomButtonsBtn.style.color = '#333';
-        toggleBottomButtonsBtn.style.border = '1px solid #bbb';
-        toggleBottomButtonsBtn.style.borderRadius = '4px';
-        toggleBottomButtonsBtn.style.padding = '8px';
-        toggleBottomButtonsBtn.style.fontSize = '14px';
-        toggleBottomButtonsBtn.style.cursor = 'pointer';
-
         // List of bottom button IDs to toggle
         const bottomButtonIds = [
             'addItemButton', 'activateButton', 'redriveButton', 'generalHelpToolsButton', 'downloadDataButton',
@@ -311,7 +297,36 @@
                 }
             });
             localStorage.setItem('bottomButtonsVisible', visible ? '1' : '0');
-            toggleBottomButtonsBtn.innerText = visible ? 'Hide Bottom Buttons' : 'Show Bottom Buttons';
+            updateEyeIcon(visible);
+        }
+
+        // Create the eye icon toggle button
+        const toggleBottomButtonsBtn = document.createElement('button');
+        toggleBottomButtonsBtn.id = 'toggle-bottom-buttons';
+        toggleBottomButtonsBtn.style.position = 'fixed';
+        toggleBottomButtonsBtn.style.left = '0';
+        toggleBottomButtonsBtn.style.top = 'calc(10vh + 150px)';
+        toggleBottomButtonsBtn.style.zIndex = '2000';
+        toggleBottomButtonsBtn.style.width = '36px';
+        toggleBottomButtonsBtn.style.height = '36px';
+        toggleBottomButtonsBtn.style.background = '#fff';
+        toggleBottomButtonsBtn.style.border = '1px solid #bbb';
+        toggleBottomButtonsBtn.style.borderRadius = '0 5px 5px 0';
+        toggleBottomButtonsBtn.style.display = 'flex';
+        toggleBottomButtonsBtn.style.alignItems = 'center';
+        toggleBottomButtonsBtn.style.justifyContent = 'center';
+        toggleBottomButtonsBtn.style.padding = '0';
+        toggleBottomButtonsBtn.style.cursor = 'pointer';
+        toggleBottomButtonsBtn.style.boxShadow = '2px 2px 8px rgba(0,0,0,0.2)';
+        toggleBottomButtonsBtn.title = 'Hide Bottom Buttons';
+
+        // SVGs for open/closed eye
+        const eyeOpenSVG = `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#333" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="12" rx="9" ry="5"/><circle cx="12" cy="12" r="2.5"/></svg>`;
+        const eyeClosedSVG = `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#333" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 1l22 22"/><path d="M17.94 17.94C16.12 19.25 14.13 20 12 20c-5 0-9-4-9-8 0-1.61.5-3.13 1.38-4.42"/><path d="M6.06 6.06C7.88 4.75 9.87 4 12 4c5 0 9 4 9 8 0 1.61-.5 3.13-1.38 4.42"/><path d="M9.5 9.5a3 3 0 0 1 4.5 4.5"/></svg>`;
+
+        function updateEyeIcon(visible) {
+            toggleBottomButtonsBtn.innerHTML = visible ? eyeOpenSVG : eyeClosedSVG;
+            toggleBottomButtonsBtn.title = visible ? 'Hide Bottom Buttons' : 'Show Bottom Buttons';
         }
 
         // Initial state from localStorage (default: visible)
@@ -324,9 +339,8 @@
             setBottomButtonsVisible(!currentlyVisible);
         });
 
-        scratchpadContainer.appendChild(toggleBottomButtonsBtn);
-
         document.body.appendChild(scratchpadButton);
+        document.body.appendChild(toggleBottomButtonsBtn);
         document.body.appendChild(scratchpadContainer);
 
         // Initial render
