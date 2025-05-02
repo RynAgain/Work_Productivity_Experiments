@@ -300,7 +300,7 @@
             updateEyeIcon(visible);
         }
 
-        // Create the eye icon toggle button
+        // Create the eye icon toggle button with scratchpad-matching style
         const toggleBottomButtonsBtn = document.createElement('button');
         toggleBottomButtonsBtn.id = 'toggle-bottom-buttons';
         toggleBottomButtonsBtn.style.position = 'fixed';
@@ -309,8 +309,9 @@
         toggleBottomButtonsBtn.style.zIndex = '2000';
         toggleBottomButtonsBtn.style.width = '36px';
         toggleBottomButtonsBtn.style.height = '36px';
-        toggleBottomButtonsBtn.style.background = '#fff';
-        toggleBottomButtonsBtn.style.border = '1px solid #bbb';
+        toggleBottomButtonsBtn.style.background = '#004E36';
+        toggleBottomButtonsBtn.style.color = '#fff';
+        toggleBottomButtonsBtn.style.border = 'none';
         toggleBottomButtonsBtn.style.borderRadius = '0 5px 5px 0';
         toggleBottomButtonsBtn.style.display = 'flex';
         toggleBottomButtonsBtn.style.alignItems = 'center';
@@ -318,11 +319,21 @@
         toggleBottomButtonsBtn.style.padding = '0';
         toggleBottomButtonsBtn.style.cursor = 'pointer';
         toggleBottomButtonsBtn.style.boxShadow = '2px 2px 8px rgba(0,0,0,0.2)';
+        toggleBottomButtonsBtn.style.fontSize = '16px';
         toggleBottomButtonsBtn.title = 'Hide Bottom Buttons';
+        toggleBottomButtonsBtn.style.transition = 'background 0.3s';
 
-        // SVGs for open/closed eye
-        const eyeOpenSVG = `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#333" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="12" rx="9" ry="5"/><circle cx="12" cy="12" r="2.5"/></svg>`;
-        const eyeClosedSVG = `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#333" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 1l22 22"/><path d="M17.94 17.94C16.12 19.25 14.13 20 12 20c-5 0-9-4-9-8 0-1.61.5-3.13 1.38-4.42"/><path d="M6.06 6.06C7.88 4.75 9.87 4 12 4c5 0 9 4 9 8 0 1.61-.5 3.13-1.38 4.42"/><path d="M9.5 9.5a3 3 0 0 1 4.5 4.5"/></svg>`;
+        // Hover effect to match scratchpad button
+        toggleBottomButtonsBtn.addEventListener('mouseenter', function() {
+            toggleBottomButtonsBtn.style.background = '#218838';
+        });
+        toggleBottomButtonsBtn.addEventListener('mouseleave', function() {
+            toggleBottomButtonsBtn.style.background = '#004E36';
+        });
+
+        // SVGs for open/closed eye (white stroke)
+        const eyeOpenSVG = `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="12" rx="9" ry="5"/><circle cx="12" cy="12" r="2.5"/></svg>`;
+        const eyeClosedSVG = `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 1l22 22"/><path d="M17.94 17.94C16.12 19.25 14.13 20 12 20c-5 0-9-4-9-8 0-1.61.5-3.13 1.38-4.42"/><path d="M6.06 6.06C7.88 4.75 9.87 4 12 4c5 0 9 4 9 8 0 1.61-.5 3.13-1.38 4.42"/><path d="M9.5 9.5a3 3 0 0 1 4.5 4.5"/></svg>`;
 
         function updateEyeIcon(visible) {
             toggleBottomButtonsBtn.innerHTML = visible ? eyeOpenSVG : eyeClosedSVG;
