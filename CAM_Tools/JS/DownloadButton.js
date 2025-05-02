@@ -49,7 +49,7 @@
             overlay.style.left = '0';
             overlay.style.width = '100vw';
             overlay.style.height = '100vh';
-            overlay.style.background = 'linear-gradient(120deg, rgba(0,78,54,0.85) 0%, rgba(34,139,106,0.85) 100%)';
+            overlay.style.background = 'rgba(0, 0, 0, 0.5)';
             overlay.style.zIndex = '1001';
             overlay.style.display = 'flex';
             overlay.style.justifyContent = 'center';
@@ -116,7 +116,7 @@
             // Main content HTML
             contentArea.innerHTML = `
                 <label style="font-weight:500;display:flex;align-items:center;gap:8px;">
-                    <input type="checkbox" id="everythingCheckbox" style="margin-right:8px;"> Everything
+                    <input type="checkbox" id="everythingCheckbox" style="margin-right:8px;"> Everything, Everywhere
                 </label>
                 <label style="margin-top:2px;">Specific PLUs</label>
                 <input type="text" id="pluInput" style="width:100%;margin-bottom:2px;padding:8px 10px;border:1px solid #ccc;border-radius:5px;font-size:15px;" placeholder="Enter specific PLUs separated by commas">
