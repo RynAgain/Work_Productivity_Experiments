@@ -72,7 +72,7 @@
             formContainer.style.padding = '0';
             formContainer.style.borderRadius = '12px';
             formContainer.style.width = '300px';
-            formContainer.style.maxWidth = '95vw';
+            formContainer.style.maxWidth = '120vw';
             formContainer.style.boxShadow = '0 8px 32px rgba(0,0,0,0.18), 0 1.5px 6px rgba(0,78,54,0.10)';
             formContainer.style.border = '1.5px solid #e0e0e0';
             formContainer.style.fontFamily = 'Segoe UI, Arial, sans-serif';
@@ -127,22 +127,22 @@
 
             // Main content HTML
             contentArea.innerHTML = `
-                <div style="display:flex;align-items:center;gap:8px;">
-                    <div style="flex:1;">
-                        <label style="margin-bottom:2px;display:block;">PLU(s)</label>
-                        <input type="text" id="pluInput" style="width:100%;padding:6px 8px;border:1px solid #ccc;border-radius:5px;font-size:14px;" placeholder="Enter PLU(s) separated by commas">
-                    </div>
-                    <label style="font-weight:500;display:flex;align-items:center;gap:4px;margin-top:18px;">
-                        <input type="checkbox" id="allStoresCheckbox" style="margin-right:4px;"> All Stores
-                    </label>
-                </div>
+                <label style="margin-bottom:2px;">PLU(s)</label>
+                <input type="text" id="pluInput" style="width:100%;padding:6px 8px;border:1px solid #ccc;border-radius:5px;font-size:14px;" placeholder="Enter PLU(s) separated by commas">
                 <label style="margin-bottom:2px;">By</label>
                 <select id="bySelect" style="width:100%;padding:6px 8px;border:1px solid #ccc;border-radius:5px;font-size:14px;">
                     <option value="Store">Store</option>
                     <option value="Region">Region</option>
                 </select>
-                <label style="margin-bottom:2px;">Store/Region</label>
-                <input type="text" id="storeRegionInput" style="width:100%;padding:6px 8px;border:1px solid #ccc;border-radius:5px;font-size:14px;" placeholder="Enter Store/Region codes separated by commas">
+                <div style="display:flex;align-items:center;gap:8px;">
+                    <div style="flex:1;">
+                        <label style="margin-bottom:2px;display:block;">Store/Region</label>
+                        <input type="text" id="storeRegionInput" style="width:100%;padding:6px 8px;border:1px solid #ccc;border-radius:5px;font-size:14px;" placeholder="Enter Store/Region codes separated by commas">
+                    </div>
+                    <label style="font-weight:500;display:flex;align-items:center;gap:4px;margin-top:18px;">
+                        <input type="checkbox" id="allStoresCheckbox" style="margin-right:4px;"> All Stores
+                    </label>
+                </div>
                 <label style="margin-bottom:2px;">Andon Cord</label>
                 <select id="andonCordSelect" style="width:100%;padding:6px 8px;border:1px solid #ccc;border-radius:5px;font-size:14px;">
                     <option value="Enabled">Enabled</option>
