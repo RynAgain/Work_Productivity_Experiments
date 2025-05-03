@@ -185,8 +185,8 @@ function fetchAllStoreCodes() {
             var headerBar = document.createElement('div');
             headerBar.style.background = '#004E36';
             headerBar.style.color = '#fff';
-            headerBar.style.padding = '16px 24px 12px 24px';
-            headerBar.style.fontSize = '20px';
+            headerBar.style.padding = '10px 16px 8px 16px';
+            headerBar.style.fontSize = '17px';
             headerBar.style.fontWeight = 'bold';
             headerBar.style.letterSpacing = '0.5px';
             headerBar.style.display = 'flex';
@@ -198,9 +198,9 @@ function fetchAllStoreCodes() {
             const closeButton = document.createElement('span');
             closeButton.innerHTML = '&times;';
             closeButton.id = 'addItemOverlayCloseButton';
-            closeButton.style.fontSize = '28px';
+            closeButton.style.fontSize = '22px';
             closeButton.style.cursor = 'pointer';
-            closeButton.style.marginLeft = '16px';
+            closeButton.style.marginLeft = '8px';
             closeButton.style.color = '#fff';
             closeButton.style.background = 'transparent';
             closeButton.style.border = 'none';
@@ -221,37 +221,43 @@ function fetchAllStoreCodes() {
 
             // Content area
             var contentArea = document.createElement('div');
-            contentArea.style.padding = '20px 24px 18px 24px';
+            contentArea.style.padding = '12px 16px';
             contentArea.style.display = 'flex';
             contentArea.style.flexDirection = 'column';
-            contentArea.style.gap = '10px';
+            contentArea.style.gap = '6px';
+            contentArea.style.maxHeight = '80vh';
+            contentArea.style.overflowY = 'auto';
 
             // Main content HTML
             contentArea.innerHTML = `
-                <label style="margin-bottom:2px;">Store - 3 Letter Code</label>
-                <input type="text" id="storeCode" style="width:100%;margin-bottom:2px;padding:8px 10px;border:1px solid #ccc;border-radius:5px;font-size:15px;" placeholder="AAA">
-                <label style="font-weight:500;display:flex;align-items:center;gap:8px;">
-                    <input type="checkbox" id="allStoresCheckbox" style="margin-right:8px;"> All Stores
-                </label>
+                <div style="display:flex;align-items:center;gap:8px;">
+                    <div style="flex:1;">
+                        <label style="margin-bottom:2px;display:block;">Store - 3 Letter Code</label>
+                        <input type="text" id="storeCode" style="width:100%;padding:6px 8px;border:1px solid #ccc;border-radius:5px;font-size:14px;" placeholder="AAA">
+                    </div>
+                    <label style="font-weight:500;display:flex;align-items:center;gap:4px;margin-top:18px;">
+                        <input type="checkbox" id="allStoresCheckbox" style="margin-right:4px;"> All Stores
+                    </label>
+                </div>
                 <label style="margin-bottom:2px;">PLU</label>
-                <input type="text" id="plu" style="width:100%;margin-bottom:2px;padding:8px 10px;border:1px solid #ccc;border-radius:5px;font-size:15px;" placeholder="Enter PLU(s) separated by commas">
+                <input type="text" id="plu" style="width:100%;padding:6px 8px;border:1px solid #ccc;border-radius:5px;font-size:14px;" placeholder="Enter PLU(s) separated by commas">
                 <label style="margin-bottom:2px;">Current Inventory</label>
-                <input type="number" id="currentInventory" style="width:100%;margin-bottom:2px;padding:8px 10px;border:1px solid #ccc;border-radius:5px;font-size:15px;" placeholder="0">
+                <input type="number" id="currentInventory" style="width:100%;padding:6px 8px;border:1px solid #ccc;border-radius:5px;font-size:14px;" placeholder="0">
                 <label style="margin-bottom:2px;">Availability</label>
-                <select id="availability" style="width:100%;margin-bottom:2px;padding:8px 10px;border:1px solid #ccc;border-radius:5px;font-size:15px;">
+                <select id="availability" style="width:100%;padding:6px 8px;border:1px solid #ccc;border-radius:5px;font-size:14px;">
                     <option value="Limited">Limited</option>
                     <option value="Unlimited">Unlimited</option>
                 </select>
                 <label style="margin-bottom:2px;">Andon Cord</label>
-                <select id="andonCord" style="width:100%;margin-bottom:2px;padding:8px 10px;border:1px solid #ccc;border-radius:5px;font-size:15px;">
+                <select id="andonCord" style="width:100%;padding:6px 8px;border:1px solid #ccc;border-radius:5px;font-size:14px;">
                     <option value="Enabled">Enabled</option>
                     <option value="Disabled">Disabled</option>
                 </select>
                 <label style="margin-bottom:2px;">Tracking Start Date</label>
-                <input type="date" id="trackingStartDate" style="width:100%;margin-bottom:2px;padding:8px 10px;border:1px solid #ccc;border-radius:5px;font-size:15px;">
+                <input type="date" id="trackingStartDate" style="width:100%;padding:6px 8px;border:1px solid #ccc;border-radius:5px;font-size:14px;">
                 <label style="margin-bottom:2px;">Tracking End Date</label>
-                <input type="date" id="trackingEndDate" style="width:100%;margin-bottom:2px;padding:8px 10px;border:1px solid #ccc;border-radius:5px;font-size:15px;">
-                <button id="generateFileButton" style="width:100%;margin-top:12px;background:#004E36;color:#fff;border:none;border-radius:5px;padding:10px 0;font-size:16px;cursor:pointer;transition:background 0.2s;">Generate File</button>
+                <input type="date" id="trackingEndDate" style="width:100%;padding:6px 8px;border:1px solid #ccc;border-radius:5px;font-size:14px;">
+                <button id="generateFileButton" style="width:100%;margin-top:10px;background:#004E36;color:#fff;border:none;border-radius:5px;padding:8px 0;font-size:15px;cursor:pointer;transition:background 0.2s;">Generate File</button>
             `;
             formContainer.appendChild(contentArea);
             overlay.appendChild(formContainer);
