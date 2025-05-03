@@ -161,65 +161,99 @@ function fetchAllStoreCodes() {
             overlay.style.position = 'fixed';
             overlay.style.top = '0';
             overlay.style.left = '0';
-            overlay.style.width = '100%';
-            overlay.style.height = '100%';
-            overlay.style.backgroundColor = 'rgba(0, 0, 0, 0.5)';
+            overlay.style.width = '100vw';
+            overlay.style.height = '100vh';
+            overlay.style.background = 'rgba(0,0,0,0.5)';
             overlay.style.zIndex = '1001';
             overlay.style.display = 'flex';
             overlay.style.justifyContent = 'center';
             overlay.style.alignItems = 'center';
 
-            // Create close button
+            // Card container
+            var formContainer = document.createElement('div');
+            formContainer.style.position = 'relative';
+            formContainer.style.background = '#fff';
+            formContainer.style.padding = '0';
+            formContainer.style.borderRadius = '12px';
+            formContainer.style.width = '360px';
+            formContainer.style.boxShadow = '0 8px 32px rgba(0,0,0,0.18), 0 1.5px 6px rgba(0,78,54,0.10)';
+            formContainer.style.border = '1.5px solid #e0e0e0';
+            formContainer.style.fontFamily = 'Segoe UI, Arial, sans-serif';
+            formContainer.style.overflow = 'hidden';
+
+            // Header bar
+            var headerBar = document.createElement('div');
+            headerBar.style.background = '#004E36';
+            headerBar.style.color = '#fff';
+            headerBar.style.padding = '16px 24px 12px 24px';
+            headerBar.style.fontSize = '20px';
+            headerBar.style.fontWeight = 'bold';
+            headerBar.style.letterSpacing = '0.5px';
+            headerBar.style.display = 'flex';
+            headerBar.style.alignItems = 'center';
+            headerBar.style.justifyContent = 'space-between';
+            headerBar.innerHTML = `<span>Add New Item</span>`;
+
+            // Close button
             const closeButton = document.createElement('span');
             closeButton.innerHTML = '&times;';
-            closeButton.style.position = 'absolute';
-            closeButton.style.top = '10px';
-            closeButton.style.right = '10px';
-            closeButton.style.fontSize = '24px';
+            closeButton.id = 'addItemOverlayCloseButton';
+            closeButton.style.fontSize = '28px';
             closeButton.style.cursor = 'pointer';
+            closeButton.style.marginLeft = '16px';
             closeButton.style.color = '#fff';
-            closeButton.style.backgroundColor = '#000';
-            closeButton.style.padding = '5px';
-            closeButton.style.borderRadius = '0';
+            closeButton.style.background = 'transparent';
+            closeButton.style.border = 'none';
+            closeButton.style.padding = '0 4px';
+            closeButton.style.borderRadius = '4px';
+            closeButton.style.transition = 'background 0.2s';
+            closeButton.addEventListener('mouseenter', function() {
+                closeButton.style.background = 'rgba(0,0,0,0.12)';
+            });
+            closeButton.addEventListener('mouseleave', function() {
+                closeButton.style.background = 'transparent';
+            });
             closeButton.addEventListener('click', function() {
                 document.body.removeChild(overlay);
             });
+            headerBar.appendChild(closeButton);
+            formContainer.appendChild(headerBar);
 
-            var formContainer = document.createElement('div');
-            formContainer.style.position = 'relative';
-            formContainer.style.backgroundColor = '#fff';
-            formContainer.style.padding = '20px';
-            formContainer.style.borderRadius = '5px';
-            formContainer.style.width = '300px';
+            // Content area
+            var contentArea = document.createElement('div');
+            contentArea.style.padding = '20px 24px 18px 24px';
+            contentArea.style.display = 'flex';
+            contentArea.style.flexDirection = 'column';
+            contentArea.style.gap = '10px';
 
-            // Create form elements
-            formContainer.innerHTML = `
-                <h3>Add New Item</h3>
-                <label>Store - 3 Letter Code</label>
-                <input type="text" id="storeCode" style="width: 100%; margin-bottom: 10px;" placeholder="AAA">
-                <label><input type="checkbox" id="allStoresCheckbox"> All Stores<br></label>
-                <label>PLU</label>
-                <input type="text" id="plu" style="width: 100%; margin-bottom: 10px;" placeholder="Enter PLU(s) separated by commas">
-                <label>Current Inventory</label>
-                <input type="number" id="currentInventory" style="width: 100%; margin-bottom: 10px;" placeholder="0">
-                <label>Availability</label>
-                <select id="availability" style="width: 100%; margin-bottom: 10px;">
+            // Main content HTML
+            contentArea.innerHTML = `
+                <label style="margin-bottom:2px;">Store - 3 Letter Code</label>
+                <input type="text" id="storeCode" style="width:100%;margin-bottom:2px;padding:8px 10px;border:1px solid #ccc;border-radius:5px;font-size:15px;" placeholder="AAA">
+                <label style="font-weight:500;display:flex;align-items:center;gap:8px;">
+                    <input type="checkbox" id="allStoresCheckbox" style="margin-right:8px;"> All Stores
+                </label>
+                <label style="margin-bottom:2px;">PLU</label>
+                <input type="text" id="plu" style="width:100%;margin-bottom:2px;padding:8px 10px;border:1px solid #ccc;border-radius:5px;font-size:15px;" placeholder="Enter PLU(s) separated by commas">
+                <label style="margin-bottom:2px;">Current Inventory</label>
+                <input type="number" id="currentInventory" style="width:100%;margin-bottom:2px;padding:8px 10px;border:1px solid #ccc;border-radius:5px;font-size:15px;" placeholder="0">
+                <label style="margin-bottom:2px;">Availability</label>
+                <select id="availability" style="width:100%;margin-bottom:2px;padding:8px 10px;border:1px solid #ccc;border-radius:5px;font-size:15px;">
                     <option value="Limited">Limited</option>
                     <option value="Unlimited">Unlimited</option>
                 </select>
-                <label>Andon Cord</label>
-                <select id="andonCord" style="width: 100%; margin-bottom: 10px;">
+                <label style="margin-bottom:2px;">Andon Cord</label>
+                <select id="andonCord" style="width:100%;margin-bottom:2px;padding:8px 10px;border:1px solid #ccc;border-radius:5px;font-size:15px;">
                     <option value="Enabled">Enabled</option>
                     <option value="Disabled">Disabled</option>
                 </select>
-                <label>Tracking Start Date</label>
-                <input type="date" id="trackingStartDate" style="width: 100%; margin-bottom: 10px;">
-                <label>Tracking End Date</label>
-                <input type="date" id="trackingEndDate" style="width: 100%; margin-bottom: 10px;">
-                <button id="generateFileButton" style="width: 100%;">Generate File</button>
+                <label style="margin-bottom:2px;">Tracking Start Date</label>
+                <input type="date" id="trackingStartDate" style="width:100%;margin-bottom:2px;padding:8px 10px;border:1px solid #ccc;border-radius:5px;font-size:15px;">
+                <label style="margin-bottom:2px;">Tracking End Date</label>
+                <input type="date" id="trackingEndDate" style="width:100%;margin-bottom:2px;padding:8px 10px;border:1px solid #ccc;border-radius:5px;font-size:15px;">
+                <button id="generateFileButton" style="width:100%;margin-top:12px;background:#004E36;color:#fff;border:none;border-radius:5px;padding:10px 0;font-size:16px;cursor:pointer;transition:background 0.2s;">Generate File</button>
             `;
-
-            formContainer.appendChild(closeButton);
+            formContainer.appendChild(contentArea);
             overlay.appendChild(formContainer);
             document.body.appendChild(overlay);
 
