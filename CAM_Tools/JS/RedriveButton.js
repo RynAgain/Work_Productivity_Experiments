@@ -57,52 +57,96 @@
             overlay.style.position = 'fixed';
             overlay.style.top = '0';
             overlay.style.left = '0';
-            overlay.style.width = '100%';
-            overlay.style.height = '100%';
-            overlay.style.backgroundColor = 'rgba(0, 0, 0, 0.5)';
+            overlay.style.width = '100vw';
+            overlay.style.height = '100vh';
+            overlay.style.background = 'rgba(0,0,0,0.5)';
             overlay.style.zIndex = '1001';
             overlay.style.display = 'flex';
             overlay.style.justifyContent = 'center';
             overlay.style.alignItems = 'center';
 
-            // Create close button
+            // Card container
+            var formContainer = document.createElement('div');
+            formContainer.style.position = 'relative';
+            formContainer.style.background = '#fff';
+            formContainer.style.padding = '0';
+            formContainer.style.borderRadius = '12px';
+            formContainer.style.width = '300px';
+            formContainer.style.maxWidth = '95vw';
+            formContainer.style.boxShadow = '0 8px 32px rgba(0,0,0,0.18), 0 1.5px 6px rgba(0,78,54,0.10)';
+            formContainer.style.border = '1.5px solid #e0e0e0';
+            formContainer.style.fontFamily = 'Segoe UI, Arial, sans-serif';
+            formContainer.style.overflow = 'hidden';
+
+            // Header bar
+            var headerBar = document.createElement('div');
+            headerBar.style.background = '#004E36';
+            headerBar.style.color = '#fff';
+            headerBar.style.padding = '10px 16px 8px 16px';
+            headerBar.style.fontSize = '17px';
+            headerBar.style.fontWeight = 'bold';
+            headerBar.style.letterSpacing = '0.5px';
+            headerBar.style.display = 'flex';
+            headerBar.style.alignItems = 'center';
+            headerBar.style.justifyContent = 'space-between';
+            headerBar.innerHTML = `<span>Redrive Item(s)</span>`;
+
+            // Close button
             var closeButton = document.createElement('span');
             closeButton.innerHTML = '&times;';
-            closeButton.style.position = 'absolute';
-            closeButton.style.top = '10px';
-            closeButton.style.right = '10px';
-            closeButton.style.fontSize = '24px';
+            closeButton.id = 'redriveOverlayCloseButton';
+            closeButton.style.fontSize = '22px';
             closeButton.style.cursor = 'pointer';
+            closeButton.style.marginLeft = '8px';
             closeButton.style.color = '#fff';
-            closeButton.style.backgroundColor = '#000';
-            closeButton.style.padding = '5px';
-            closeButton.style.borderRadius = '0';
+            closeButton.style.background = 'transparent';
+            closeButton.style.border = 'none';
+            closeButton.style.padding = '0 4px';
+            closeButton.style.borderRadius = '4px';
+            closeButton.style.transition = 'background 0.2s';
+            closeButton.addEventListener('mouseenter', function() {
+                closeButton.style.background = 'rgba(0,0,0,0.12)';
+            });
+            closeButton.addEventListener('mouseleave', function() {
+                closeButton.style.background = 'transparent';
+            });
             closeButton.addEventListener('click', function () {
                 document.body.removeChild(overlay);
             });
+            headerBar.appendChild(closeButton);
+            formContainer.appendChild(headerBar);
 
-            var formContainer = document.createElement('div');
-            formContainer.style.position = 'relative';
-            formContainer.style.backgroundColor = '#fff';
-            formContainer.style.padding = '20px';
-            formContainer.style.borderRadius = '5px';
-            formContainer.style.width = '300px';
+            // Content area
+            var contentArea = document.createElement('div');
+            contentArea.style.padding = '12px 16px';
+            contentArea.style.display = 'flex';
+            contentArea.style.flexDirection = 'column';
+            contentArea.style.gap = '6px';
+            contentArea.style.maxHeight = '80vh';
+            contentArea.style.overflowY = 'auto';
 
-            // Create form elements
-            formContainer.innerHTML = `
-        <h3>Redrive Item(s)</h3>
-        <label>PLU(s)</label>
-        <input type="text" id="pluInput" style="width: 100%; margin-bottom: 10px;" placeholder="Enter PLU(s) separated by commas">
-        <label>By</label>
-        <select id="bySelect" style="width: 100%; margin-bottom: 10px;">
-            <option value="Store">Store</option>
-            <option value="Region">Region</option>
-        </select>
-        <label>Store/Region</label>
-        <input type="text" id="storeRegionInput" style="width: 100%; margin-bottom: 10px;" placeholder="Enter Store/Region codes separated by commas">
-        <label><input type="checkbox" id="allStoresCheckbox"> All Stores</label><br>
-        <button id="generateRedriveFileButton" style="width: 100%;">Generate Redrive Files</button>
-    `;
+            // Main content HTML
+            contentArea.innerHTML = `
+                <label style="margin-bottom:2px;">PLU(s)</label>
+                <input type="text" id="pluInput" style="width:100%;padding:6px 8px;border:1px solid #ccc;border-radius:5px;font-size:14px;" placeholder="Enter PLU(s) separated by commas">
+                <label style="margin-bottom:2px;">By</label>
+                <select id="bySelect" style="width:100%;padding:6px 8px;border:1px solid #ccc;border-radius:5px;font-size:14px;">
+                    <option value="Store">Store</option>
+                    <option value="Region">Region</option>
+                </select>
+                <div style="display:flex;align-items:center;gap:8px;">
+                    <div style="flex:1;">
+                        <label style="margin-bottom:2px;display:block;">Store/Region</label>
+                        <input type="text" id="storeRegionInput" style="width:100%;padding:6px 8px;border:1px solid #ccc;border-radius:5px;font-size:14px;" placeholder="Enter Store/Region codes separated by commas">
+                    </div>
+                    <label style="font-weight:500;display:flex;align-items:center;gap:4px;margin-top:18px;">
+                        <input type="checkbox" id="allStoresCheckbox" style="margin-right:4px;"> All Stores
+                    </label>
+                </div>
+                <button id="generateRedriveFileButton" style="width:100%;margin-top:10px;background:#004E36;color:#fff;border:none;border-radius:5px;padding:8px 0;font-size:15px;cursor:pointer;transition:background 0.2s;">Generate Redrive Files</button>
+            `;
+            formContainer.appendChild(contentArea);
+
             var loadingIndicator = document.createElement('div');
             loadingIndicator.id = 'redriveLoadingIndicator';
             loadingIndicator.innerHTML = 'Processing...';
@@ -113,7 +157,6 @@
             loadingIndicator.style.display = 'none';
             formContainer.appendChild(loadingIndicator);
 
-            formContainer.appendChild(closeButton);
             overlay.appendChild(formContainer);
             document.body.appendChild(overlay);
 
