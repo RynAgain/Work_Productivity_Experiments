@@ -134,7 +134,7 @@
                     <option value="Store">Store</option>
                     <option value="Region">Region</option>
                 </select>
-                <div style="display:flex;align-items:center;gap:8px;">
+                <div style="display:flex;align-items:center;gap:18px;">
                     <div style="flex:1;">
                         <label style="margin-bottom:2px;display:block;">Store/Region</label>
                         <input type="text" id="storeRegionInput" style="width:100%;padding:6px 8px;border:1px solid #ccc;border-radius:5px;font-size:14px;" placeholder="Enter Store/Region codes separated by commas">
