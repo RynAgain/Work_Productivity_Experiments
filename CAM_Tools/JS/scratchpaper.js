@@ -342,6 +342,21 @@
         });
 
         // Side menu
+        // Overlay for closing menu by clicking outside
+        const sideMenuOverlay = document.createElement('div');
+        sideMenuOverlay.id = 'bottom-buttons-side-menu-overlay';
+        sideMenuOverlay.style.position = 'fixed';
+        sideMenuOverlay.style.left = '36px';
+        sideMenuOverlay.style.top = '0';
+        sideMenuOverlay.style.width = 'calc(100vw - 36px)';
+        sideMenuOverlay.style.height = '100vh';
+        sideMenuOverlay.style.background = 'rgba(0,0,0,0.15)';
+        sideMenuOverlay.style.zIndex = '2999';
+        sideMenuOverlay.style.display = 'none';
+        sideMenuOverlay.addEventListener('click', function() {
+            setMenuOpen(false);
+        });
+
         const sideMenu = document.createElement('div');
         sideMenu.id = 'bottom-buttons-side-menu';
         sideMenu.style.position = 'fixed';
@@ -361,9 +376,30 @@
         sideMenu.style.borderBottomRightRadius = '12px';
         sideMenu.style.gap = '10px';
 
+        // Close button for side menu
+        const sideMenuCloseBtn = document.createElement('button');
+        sideMenuCloseBtn.innerHTML = '&times;';
+        sideMenuCloseBtn.style.position = 'absolute';
+        sideMenuCloseBtn.style.top = '8px';
+        sideMenuCloseBtn.style.right = '10px';
+        sideMenuCloseBtn.style.background = 'none';
+        sideMenuCloseBtn.style.border = 'none';
+        sideMenuCloseBtn.style.color = '#888';
+        sideMenuCloseBtn.style.fontSize = '22px';
+        sideMenuCloseBtn.style.cursor = 'pointer';
+        sideMenuCloseBtn.style.zIndex = '3001';
+        sideMenuCloseBtn.title = 'Close Menu';
+        sideMenuCloseBtn.addEventListener('click', function(e) {
+            e.stopPropagation();
+            setMenuOpen(false);
+        });
+        sideMenu.appendChild(sideMenuCloseBtn);
+
         // Helper to move bottom buttons into the menu
         function moveBottomButtonsToMenu() {
+            // Keep the close button at the top
             sideMenu.innerHTML = '';
+            sideMenu.appendChild(sideMenuCloseBtn);
             bottomButtonIds.forEach(id => {
                 const btn = document.getElementById(id);
                 if (btn) {
@@ -406,6 +442,7 @@
             updateHamburgerIcon(open);
             if (open) {
                 moveBottomButtonsToMenu();
+                sideMenuOverlay.style.display = 'block';
                 sideMenu.style.display = 'flex';
                 sideMenu.style.left = '0';
                 // Hide original bottom buttons
@@ -416,7 +453,10 @@
             } else {
                 sideMenu.style.left = '-220px';
                 setTimeout(() => {
-                    if (!menuOpen) sideMenu.style.display = 'none';
+                    if (!menuOpen) {
+                        sideMenu.style.display = 'none';
+                        sideMenuOverlay.style.display = 'none';
+                    }
                 }, 250);
                 // Show original bottom buttons
                 bottomButtonIds.forEach(id => {
@@ -432,6 +472,7 @@
 
         document.body.appendChild(scratchpadButton);
         document.body.appendChild(toggleMenuBtn);
+        document.body.appendChild(sideMenuOverlay);
         document.body.appendChild(sideMenu);
         document.body.appendChild(scratchpadContainer);
 
