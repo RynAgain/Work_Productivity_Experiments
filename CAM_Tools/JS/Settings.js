@@ -183,15 +183,36 @@ document.head.appendChild(style);
     height: 'calc(100vh - (10vh + 192px))',
     background: '#fff',
     boxShadow: '2px 0 12px rgba(0,0,0,.18)',
-    borderTopRightRadius: '12px',
-    borderBottomRightRadius: '12px',
-    padding: '18px 10px 10px',
-    display: 'flex',
-    flexDirection: 'column',
     gap: '10px',
     transition: 'left .25s cubic-bezier(.4,0,.2,1)',
     zIndex: '3000'
   });
+
+  // ------------------------------------------------------------------
+  //  STATIC SIDE MENU CONFIGURATION (RELIABLE APPROACH)
+  // ------------------------------------------------------------------
+  const sideMenuItems = [
+    {
+      label: 'Redrive',
+      action: () => document.getElementById('redriveButton')?.click()
+    },
+    {
+      label: 'Add Item',
+      action: () => document.getElementById('addItemButton')?.click()
+    },
+    {
+      label: 'Download Data',
+      action: () => document.getElementById('downloadDataButton')?.click()
+    },
+    {
+      label: 'Activate',
+      action: () => document.getElementById('activateButton')?.click()
+    },
+    {
+      label: 'General Help Tools',
+      action: () => document.getElementById('generalHelpToolsButton')?.click()
+    }
+  ];
   const drawerClose = createButton({
     html: '&times;',
     style: {
@@ -238,52 +259,30 @@ document.head.appendChild(style);
         const el = document.getElementById(id);
         if (el) el.classList.add('nav-bar-hidden');
       });
-      // Populate drawer with nav bar buttons
+      // Populate drawer from static config (sideMenuItems)
       drawer.innerHTML = '';
       drawer.setAttribute('role', 'menu');
       drawer.setAttribute('aria-label', 'Side Navigation');
       drawer.setAttribute('aria-hidden', state.sideMenuOpen ? 'false' : 'true');
       drawer.appendChild(drawerClose);
-      if (bottomButtonIds.length === 0) {
-        const warn = document.createElement('div');
-        warn.textContent = 'No button IDs set in bottomButtonIds!';
-        warn.style.color = 'red';
-        warn.style.padding = '10px';
-        drawer.appendChild(warn);
-      } else {
-        // Debug log for which IDs are being used
-        console.debug('Populating drawer with IDs:', bottomButtonIds);
-        bottomButtonIds.forEach(id => {
-          const src = document.getElementById(id);
-          if (!src) {
-            // Show a warning in the drawer for missing elements
-            const missing = document.createElement('div');
-            missing.textContent = `Button with ID "${id}" not found`;
-            missing.style.color = 'orange';
-            missing.style.fontSize = '12px';
-            drawer.appendChild(missing);
-            return;
-          }
-          const clone = src.cloneNode(true);
-          clone.classList.add('drawer-item');
-          // Copy inline onclick handler if present
-          if (src.onclick) clone.onclick = src.onclick;
-          // Optionally, copy data-* attributes or ARIA
-          Object.assign(clone.style, {
-            position: 'static', width: '100%', height: '40px',
-            borderRadius: '6px', fontSize: '15px',
-            background: '#004E36', color: '#fff', boxShadow: 'none',
-            cursor: 'pointer'
-          });
-          clone.setAttribute('role', 'menuitem');
-          clone.setAttribute('tabindex', '0');
-          clone.onmouseenter = () => clone.style.background = '#218838';
-          clone.onmouseleave = () => clone.style.background = '#004E36';
-          // If no inline handler, delegate click to original
-          if (!clone.onclick) clone.onclick = () => src.click();
-          drawer.appendChild(clone);
+
+      sideMenuItems.forEach(item => {
+        const btn = document.createElement('button');
+        btn.className = 'drawer-item';
+        btn.setAttribute('role', 'menuitem');
+        btn.setAttribute('tabindex', '0');
+        btn.textContent = item.label;
+        Object.assign(btn.style, {
+          position: 'static', width: '100%', height: '40px',
+          borderRadius: '6px', fontSize: '15px',
+          background: '#004E36', color: '#fff', boxShadow: 'none',
+          cursor: 'pointer', marginBottom: '8px'
         });
-      }
+        btn.onmouseenter = () => btn.style.background = '#218838';
+        btn.onmouseleave = () => btn.style.background = '#004E36';
+        btn.onclick = item.action;
+        drawer.appendChild(btn);
+      });
       if (state.sideMenuOpen) {
         drawerOverlay.style.display = 'block';
         drawer.setAttribute('aria-hidden', 'false');
