@@ -21,6 +21,15 @@
         function setActiveTab(idx) {
             localStorage.setItem('scratchpad-active-tab', idx);
         }
+        // --- Settings Helpers ---
+        function getMenuStyleSetting() {
+            try {
+                const settings = JSON.parse(localStorage.getItem('cam_tools_settings'));
+                return settings && settings.menuStyle ? settings.menuStyle : 'side';
+            } catch {
+                return 'side';
+            }
+        }
 
         // --- UI Elements ---
         // Button
@@ -476,9 +485,41 @@
         document.body.appendChild(sideMenu);
         document.body.appendChild(scratchpadContainer);
 
+        // --- Layout Control based on Settings ---
+        function updateMenuLayout() {
+            const menuStyle = getMenuStyleSetting();
+            if (menuStyle === 'side') {
+                // Show hamburger and side menu, hide bottom bar
+                toggleMenuBtn.style.display = '';
+                sideMenu.style.display = menuOpen ? 'flex' : 'none';
+                sideMenuOverlay.style.display = menuOpen ? 'block' : 'none';
+                // Hide all bottom buttons (they will be shown in side menu)
+                bottomButtonIds.forEach(id => {
+                    const el = document.getElementById(id);
+                    if (el) el.style.display = 'none';
+                });
+            } else {
+                // Hide hamburger and side menu, show bottom bar
+                toggleMenuBtn.style.display = 'none';
+                sideMenu.style.display = 'none';
+                sideMenuOverlay.style.display = 'none';
+                // Show all bottom buttons
+                bottomButtonIds.forEach(id => {
+                    const el = document.getElementById(id);
+                    if (el) el.style.display = '';
+                });
+            }
+        }
+
+        // Listen for settings changes
+        window.addEventListener('camToolsSettingsChanged', function(e) {
+            updateMenuLayout();
+        });
+
         // Initial render
         renderTabs();
         textarea.value = tabs[activeTab] ? tabs[activeTab].content : '';
+        updateMenuLayout();
 
     } catch (err) {
         // Log error but do not break the rest of the page
