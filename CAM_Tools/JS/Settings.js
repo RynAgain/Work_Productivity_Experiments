@@ -1,6 +1,20 @@
 /* eslint-env browser */
 (function () {
   'use strict';
+  // Expose internals for testing
+  try {
+    module.exports = {
+      getSettings,
+      setSettings,
+      persistSettings,
+      setState,
+      state,
+      render,
+      sideMenuItems
+    };
+  } catch (e) {
+    // Ignore if not in a module environment
+  }
 
   // ------------------------------------------------------------------
   //  SETTINGS STORAGE
@@ -18,14 +32,24 @@
   // ------------------------------------------------------------------
   //  CENTRALIZED STATE
   // ------------------------------------------------------------------
-  const defaultSettings = { menuStyle: 'side', themeColor: '#004E36' };
-  const state = {
+  const SETTINGS_VERSION = 1;
+  const defaultSettings = { menuStyle: 'side', themeColor: '#004E36', __version: SETTINGS_VERSION };
+  let state = {
     settingsMenuOpen: false,
     sideMenuOpen: false,
     bottomBarVisible: false,
     ...defaultSettings,
     ...getSettings()
   };
+  // Proxy for state to auto-persist and re-render
+  state = new Proxy(state, {
+    set(target, prop, value) {
+      target[prop] = value;
+      if (['menuStyle', 'themeColor'].includes(prop)) persistSettings();
+      render();
+      return true;
+    }
+  });
 
   // Only persist these keys
   function persistSettings() {
@@ -37,10 +61,18 @@
 
   // Central state update
   function setState(partial) {
-    Object.assign(state, partial);
-    // Persist only relevant settings
-    persistSettings();
-    render();
+    let changed = false;
+    for (const k in partial) {
+      if (state[k] !== partial[k]) {
+        state[k] = partial[k];
+        changed = true;
+      }
+    }
+    if (changed) {
+      // Persist only relevant settings
+      persistSettings();
+      render();
+    }
   }
 
   // ------------------------------------------------------------------
@@ -231,23 +263,30 @@ document.head.appendChild(style);
   function render() {
     // Settings Button
     settingsBtn.style.background = state.themeColor;
-
+  
     // Settings Menu
     if (state.settingsMenuOpen) {
       renderSettingsMenu();
       settingsMenu.style.transform = 'translateX(0)';
       settingsMenu.style.boxShadow = '2px 0 12px rgba(0,0,0,.18)';
       settingsMenu.style.pointerEvents = 'auto';
+      settingsMenu.setAttribute('aria-hidden', 'false');
+      // Focus first input for accessibility
+      setTimeout(() => {
+        const firstInput = settingsMenu.querySelector('select, input[type="color"]');
+        if (firstInput) firstInput.focus();
+      }, 100);
     } else {
       settingsMenu.style.transform = 'translateX(-100%)';
       settingsMenu.style.boxShadow = 'none';
       settingsMenu.style.pointerEvents = 'none';
+      settingsMenu.setAttribute('aria-hidden', 'true');
     }
-
+  
     // Hamburger/Close Button
     toggleBtn.innerHTML = (state.sideMenuOpen || state.bottomBarVisible) ? closeSVG : hamburgerSVG;
     toggleBtn.title = (state.sideMenuOpen || state.bottomBarVisible) ? 'Hide Menu' : 'Show Menu';
-
+  
     // Drawer and Overlay (side menu)
     if (state.menuStyle === 'side') {
       // Always hide bottom bar in side menu mode
@@ -265,7 +304,7 @@ document.head.appendChild(style);
       drawer.setAttribute('aria-label', 'Side Navigation');
       drawer.setAttribute('aria-hidden', state.sideMenuOpen ? 'false' : 'true');
       drawer.appendChild(drawerClose);
-
+  
       sideMenuItems.forEach(item => {
         const btn = document.createElement('button');
         btn.className = 'drawer-item';
@@ -286,7 +325,13 @@ document.head.appendChild(style);
       if (state.sideMenuOpen) {
         drawerOverlay.style.display = 'block';
         drawer.setAttribute('aria-hidden', 'false');
+        drawer.style.display = 'flex';
         setTimeout(() => { drawer.style.left = '0'; }, 0);
+        // Focus first drawer item for accessibility
+        setTimeout(() => {
+          const firstBtn = drawer.querySelector('button.drawer-item');
+          if (firstBtn) firstBtn.focus();
+        }, 100);
       } else {
         drawer.setAttribute('aria-hidden', 'true');
         drawer.style.left = '-220px';
@@ -353,7 +398,7 @@ document.head.appendChild(style);
   settingsBtn.onmouseenter = () => settingsBtn.style.background = '#218838';
   settingsBtn.onmouseleave = () => settingsBtn.style.background = state.themeColor;
   settingsBtn.onclick = () => setState({ settingsMenuOpen: !state.settingsMenuOpen });
-
+  
   toggleBtn.onmouseenter = () => toggleBtn.style.background = '#218838';
   toggleBtn.onmouseleave = () => toggleBtn.style.background = '#004E36';
   toggleBtn.onclick = () => {
@@ -363,7 +408,7 @@ document.head.appendChild(style);
       setState({ bottomBarVisible: !state.bottomBarVisible, sideMenuOpen: false });
     }
   };
-
+  
   drawerOverlay.onclick = () => setState({ sideMenuOpen: false });
   drawerClose.onclick = e => {
     e.stopPropagation();
@@ -373,6 +418,31 @@ document.head.appendChild(style);
       setState({ bottomBarVisible: false });
     }
   };
+  
+  // Keyboard accessibility: ESC closes menus, trap focus
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+      if (state.settingsMenuOpen) setState({ settingsMenuOpen: false });
+      if (state.sideMenuOpen) setState({ sideMenuOpen: false });
+      if (state.bottomBarVisible) setState({ bottomBarVisible: false });
+    }
+    // Trap focus in open menus
+    if (state.settingsMenuOpen || state.sideMenuOpen) {
+      const focusable = Array.from(document.querySelectorAll('button, [tabindex="0"], select, input'));
+      const visible = focusable.filter(el => el.offsetParent !== null);
+      if (!visible.length) return;
+      const first = visible[0], last = visible[visible.length - 1];
+      if (e.key === 'Tab') {
+        if (e.shiftKey && document.activeElement === first) {
+          last.focus();
+          e.preventDefault();
+        } else if (!e.shiftKey && document.activeElement === last) {
+          first.focus();
+          e.preventDefault();
+        }
+      }
+    }
+  });
 
   // Listen for settings changes from other tabs/windows
   window.addEventListener('camToolsSettingsChanged', () => {
@@ -387,6 +457,20 @@ document.head.appendChild(style);
     settingsBtn, settingsMenu,
     toggleBtn, drawerOverlay, drawer
   );
+  
+  // Add smooth transitions for menus/drawer
+  const transitionStyle = document.createElement('style');
+  transitionStyle.textContent = `
+    #settings-btn, #settings-btn:focus { outline: none; }
+    .drawer, #settings-btn, #settings-btn, #settingsMenu {
+      transition: box-shadow .25s, background .3s, left .25s, transform .25s;
+    }
+    .drawer[aria-hidden="false"] { transition: left .25s cubic-bezier(.4,0,.2,1); }
+    .drawer[aria-hidden="true"] { transition: left .25s cubic-bezier(.4,0,.2,1); }
+    #settingsMenu[aria-hidden="false"] { transition: transform .25s cubic-bezier(.4,0,.2,1); }
+    #settingsMenu[aria-hidden="true"] { transition: transform .25s cubic-bezier(.4,0,.2,1); }
+  `;
+  document.head.appendChild(transitionStyle);
 
   // Initial render
 // ------------------------------------------------------------------
