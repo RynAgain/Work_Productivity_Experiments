@@ -55,6 +55,25 @@
     if (onClick) btn.onclick = onClick;
     return btn;
   }
+// ------------------------------------------------------------------
+//  CSS FOR VISUAL HIDING OF NAV BAR BUTTONS IN SIDE MENU MODE
+// ------------------------------------------------------------------
+const style = document.createElement('style');
+style.textContent = `
+  .nav-bar-hidden {
+    opacity: 0 !important;
+    pointer-events: none !important;
+    position: absolute !important;
+    left: -9999px !important;
+  }
+  .drawer[aria-hidden="true"] {
+    display: none !important;
+  }
+  .drawer[aria-hidden="false"] {
+    display: flex !important;
+  }
+`;
+document.head.appendChild(style);
 
   // ------------------------------------------------------------------
   //  UI ELEMENTS
@@ -214,8 +233,16 @@
       if (state.bottomBarVisible) {
         state.bottomBarVisible = false;
       }
+      // Visually hide nav bar buttons using CSS class
+      bottomButtonIds.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.classList.add('nav-bar-hidden');
+      });
       // Populate drawer with nav bar buttons
       drawer.innerHTML = '';
+      drawer.setAttribute('role', 'menu');
+      drawer.setAttribute('aria-label', 'Side Navigation');
+      drawer.setAttribute('aria-hidden', state.sideMenuOpen ? 'false' : 'true');
       drawer.appendChild(drawerClose);
       if (bottomButtonIds.length === 0) {
         const warn = document.createElement('div');
@@ -239,40 +266,46 @@
           }
           const clone = src.cloneNode(true);
           clone.classList.add('drawer-item');
+          // Copy inline onclick handler if present
+          if (src.onclick) clone.onclick = src.onclick;
+          // Optionally, copy data-* attributes or ARIA
           Object.assign(clone.style, {
             position: 'static', width: '100%', height: '40px',
             borderRadius: '6px', fontSize: '15px',
             background: '#004E36', color: '#fff', boxShadow: 'none',
             cursor: 'pointer'
           });
+          clone.setAttribute('role', 'menuitem');
+          clone.setAttribute('tabindex', '0');
           clone.onmouseenter = () => clone.style.background = '#218838';
           clone.onmouseleave = () => clone.style.background = '#004E36';
-          clone.onclick = () => src.click();
+          // If no inline handler, delegate click to original
+          if (!clone.onclick) clone.onclick = () => src.click();
           drawer.appendChild(clone);
         });
       }
       if (state.sideMenuOpen) {
         drawerOverlay.style.display = 'block';
-        drawer.style.display = 'flex';
+        drawer.setAttribute('aria-hidden', 'false');
         setTimeout(() => { drawer.style.left = '0'; }, 0);
       } else {
+        drawer.setAttribute('aria-hidden', 'true');
         drawer.style.left = '-220px';
         drawerOverlay.style.display = 'none';
         setTimeout(() => { drawer.style.display = 'none'; }, 250);
       }
-      // Do not hide or remove bottom bar buttons in side mode.
-      // Let CSS or layout handle their visibility if needed.
-      // This prevents accidental removal and ensures drawer can always clone them.
     } else {
-      // Hide drawer in bottom mode
-      drawerOverlay.style.display = 'none';
-      drawer.style.display = 'none';
-      drawer.style.left = '-220px';
-      // Show/hide bottom bar buttons
+      // Show nav bar buttons in bottom mode
       bottomButtonIds.forEach(id => {
         const el = document.getElementById(id);
+        if (el) el.classList.remove('nav-bar-hidden');
         if (el) el.style.display = state.bottomBarVisible ? '' : 'none';
       });
+      // Hide drawer in bottom mode
+      drawerOverlay.style.display = 'none';
+      drawer.setAttribute('aria-hidden', 'true');
+      drawer.style.display = 'none';
+      drawer.style.left = '-220px';
     }
   }
 
