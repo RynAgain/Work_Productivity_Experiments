@@ -359,6 +359,22 @@
   );
 
   // Initial render
+// ------------------------------------------------------------------
+//  DYNAMIC BUTTON OBSERVER FOR DRAWER POPULATION
+// ------------------------------------------------------------------
+(function observeNavButtons() {
+  if (!Array.isArray(bottomButtonIds) || bottomButtonIds.length === 0) return;
+  const found = () => bottomButtonIds.every(id => document.getElementById(id));
+  if (found()) return; // All buttons already present
+
+  const observer = new MutationObserver(() => {
+    if (found()) {
+      render();
+      observer.disconnect();
+    }
+  });
+  observer.observe(document.body, { childList: true, subtree: true });
+})();
   render();
 
 })();
