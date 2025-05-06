@@ -452,10 +452,10 @@
                 });
             } else {
                 sideMenu.style.left = '-220px';
+                sideMenuOverlay.style.display = 'none';
                 setTimeout(() => {
                     if (!menuOpen) {
                         sideMenu.style.display = 'none';
-                        sideMenuOverlay.style.display = 'none';
                     }
                 }, 250);
                 // Show original bottom buttons
