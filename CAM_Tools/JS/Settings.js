@@ -197,42 +197,57 @@ document.head.appendChild(style);
     zIndex: '2999',
     display: 'none'
   });
-  const drawer = document.createElement('div');
-  Object.assign(drawer.style, {
+  /** Icon Bar for Side Menu **/
+  const iconBar = document.createElement('div');
+  Object.assign(iconBar.style, {
     position: 'fixed',
-    left: '-220px',
-    top: 'calc(10vh + 192px)',
-    width: '220px',
-    height: 'calc(100vh - (10vh + 192px))',
-    background: '#fff',
-    boxShadow: '2px 0 12px rgba(0,0,0,.18)',
+    left: '0',
+    top: 'calc(10vh + 192px + 36px)', // settings button + margin
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
     gap: '10px',
-    transition: 'left .25s cubic-bezier(.4,0,.2,1)',
-    zIndex: '3000'
+    zIndex: '3100',
+    background: 'transparent',
+    padding: '8px 0',
+    width: '36px',
+    pointerEvents: 'auto'
   });
+  iconBar.setAttribute('aria-label', 'Quick Tools');
+  iconBar.setAttribute('role', 'menu');
 
   // ------------------------------------------------------------------
   //  STATIC SIDE MENU CONFIGURATION (RELIABLE APPROACH)
   // ------------------------------------------------------------------
   const sideMenuItems = [
     {
-      label: 'Redrive',
-      action: () => document.getElementById('redriveButton')?.click()
-    },
-    {
-      label: 'Add Item',
-      action: () => document.getElementById('addItemButton')?.click()
-    },
-    {
-      label: 'Download Data',
+      label: 'Download',
+      tooltip: 'Download Data',
+      icon: `<svg width="22" height="22" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M12 3v14m0 0l-5-5m5 5l5-5"/><rect x="4" y="19" width="16" height="2" rx="1" fill="#fff" stroke="none"/></svg>`,
       action: () => document.getElementById('downloadDataButton')?.click()
     },
     {
+      label: 'Add',
+      tooltip: 'Add Item',
+      icon: `<svg width="22" height="22" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>`,
+      action: () => document.getElementById('addItemButton')?.click()
+    },
+    {
       label: 'Activate',
+      tooltip: 'Activate/Deactivate',
+      icon: `<svg width="22" height="22" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="7" rx="2"/><circle cx="12" cy="8" r="3"/></svg>`,
       action: () => document.getElementById('activateButton')?.click()
     },
     {
-      label: 'General Help Tools',
+      label: 'Redrive',
+      tooltip: 'Redrive',
+      icon: `<svg width="22" height="22" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="6" rx="2"/><circle cx="7" cy="17" r="2"/><circle cx="17" cy="17" r="2"/><path d="M5 11V7a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v4"/></svg>`,
+      action: () => document.getElementById('redriveButton')?.click()
+    },
+    {
+      label: 'Help',
+      tooltip: 'General Help Tools',
+      icon: `<svg width="22" height="22" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 1 1 5.82 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12" y2="17"/></svg>`,
       action: () => document.getElementById('generalHelpToolsButton')?.click()
     }
   ];
@@ -262,7 +277,6 @@ document.head.appendChild(style);
       settingsMenu.style.boxShadow = '2px 0 12px rgba(0,0,0,.18)';
       settingsMenu.style.pointerEvents = 'auto';
       settingsMenu.setAttribute('aria-hidden', 'false');
-      // Focus first input for accessibility
       setTimeout(() => {
         const firstInput = settingsMenu.querySelector('select, input[type="color"]');
         if (firstInput) firstInput.focus();
@@ -278,7 +292,7 @@ document.head.appendChild(style);
     toggleBtn.innerHTML = (state.sideMenuOpen || state.bottomBarVisible) ? closeSVG : hamburgerSVG;
     toggleBtn.title = (state.sideMenuOpen || state.bottomBarVisible) ? 'Hide Menu' : 'Show Menu';
   
-    // Drawer and Overlay (side menu)
+    // Icon Bar (side menu mode)
     if (state.menuStyle === 'side') {
       // Always hide bottom bar in side menu mode
       if (state.bottomBarVisible) {
@@ -289,46 +303,38 @@ document.head.appendChild(style);
         const el = document.getElementById(id);
         if (el) el.classList.add('nav-bar-hidden');
       });
-      // Populate drawer from static config (sideMenuItems)
-      drawer.innerHTML = '';
-      drawer.setAttribute('role', 'menu');
-      drawer.setAttribute('aria-label', 'Side Navigation');
-      drawer.setAttribute('aria-hidden', state.sideMenuOpen ? 'false' : 'true');
-      drawer.appendChild(drawerClose);
-  
+      // Render icon bar
+      iconBar.innerHTML = '';
       sideMenuItems.forEach(item => {
         const btn = document.createElement('button');
-        btn.className = 'drawer-item';
+        btn.className = 'iconbar-item';
         btn.setAttribute('role', 'menuitem');
         btn.setAttribute('tabindex', '0');
-        btn.textContent = item.label;
+        btn.setAttribute('aria-label', item.tooltip || item.label);
+        btn.title = item.tooltip || item.label;
+        btn.innerHTML = item.icon;
         Object.assign(btn.style, {
-          position: 'static', width: '100%', height: '40px',
-          borderRadius: '6px', fontSize: '15px',
-          background: '#004E36', color: '#fff', boxShadow: 'none',
-          cursor: 'pointer', marginBottom: '8px'
+          width: '36px',
+          height: '36px',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          background: '#004E36',
+          color: '#fff',
+          border: 'none',
+          borderRadius: '6px',
+          cursor: 'pointer',
+          margin: '0',
+          padding: '0',
+          boxShadow: '0 2px 8px rgba(0,0,0,0.10)',
+          transition: 'background .2s'
         });
         btn.onmouseenter = () => btn.style.background = '#218838';
         btn.onmouseleave = () => btn.style.background = '#004E36';
         btn.onclick = item.action;
-        drawer.appendChild(btn);
+        iconBar.appendChild(btn);
       });
-      if (state.sideMenuOpen) {
-        drawerOverlay.style.display = 'block';
-        drawer.setAttribute('aria-hidden', 'false');
-        drawer.style.display = 'flex';
-        setTimeout(() => { drawer.style.left = '0'; }, 0);
-        // Focus first drawer item for accessibility
-        setTimeout(() => {
-          const firstBtn = drawer.querySelector('button.drawer-item');
-          if (firstBtn) firstBtn.focus();
-        }, 100);
-      } else {
-        drawer.setAttribute('aria-hidden', 'true');
-        drawer.style.left = '-220px';
-        drawerOverlay.style.display = 'none';
-        setTimeout(() => { drawer.style.display = 'none'; }, 250);
-      }
+      iconBar.style.display = '';
     } else {
       // Show nav bar buttons in bottom mode
       bottomButtonIds.forEach(id => {
@@ -336,11 +342,7 @@ document.head.appendChild(style);
         if (el) el.classList.remove('nav-bar-hidden');
         if (el) el.style.display = state.bottomBarVisible ? '' : 'none';
       });
-      // Hide drawer in bottom mode
-      drawerOverlay.style.display = 'none';
-      drawer.setAttribute('aria-hidden', 'true');
-      drawer.style.display = 'none';
-      drawer.style.left = '-220px';
+      iconBar.style.display = 'none';
     }
   }
 
@@ -454,7 +456,7 @@ document.head.appendChild(style);
   // ------------------------------------------------------------------
   document.body.append(
     settingsBtn, settingsMenu,
-    toggleBtn, drawerOverlay, drawer
+    toggleBtn, iconBar
   );
   
   // Add smooth transitions for menus/drawer
