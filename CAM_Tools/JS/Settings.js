@@ -122,6 +122,10 @@
             renderSettingsMenu();
             settingsMenu.style.display = 'flex';
             settingsMenu.style.left = '0';
+            settingsMenu.style.width = '260px';
+            settingsMenu.style.padding = '22px 18px 18px 18px';
+            settingsMenu.style.boxShadow = '2px 0 12px rgba(0,0,0,0.18)';
+            settingsMenu.style.background = '#fff';
             settingsMenu.setAttribute('aria-hidden', 'false');
             settingsMenu.removeAttribute('tabindex');
         } else {
@@ -129,6 +133,10 @@
             settingsMenu.setAttribute('tabindex', '-1');
             settingsMenu.style.display = 'none';
             settingsMenu.style.left = '-260px';
+            settingsMenu.style.width = '0';
+            settingsMenu.style.padding = '0';
+            settingsMenu.style.boxShadow = 'none';
+            settingsMenu.style.background = 'transparent';
         }
     }
 
