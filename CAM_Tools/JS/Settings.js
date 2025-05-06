@@ -246,19 +246,24 @@
      * ------------------------------------------------------------------ */
     function refreshLayout() {
       const { menuStyle = 'side' } = getSettings();
-  
+
       // always show hamburger
       toggleBtn.style.display = '';
-  
+
+      // Always reset both states to false on menuStyle change for consistency
+      sideMenuOpen = false;
+      bottomBarVisible = false;
+
       if (menuStyle === 'side') {
         setBottomBarVisible(false);
-        drawerOverlay.style.display = sideMenuOpen ? 'block' : 'none';
+        setSideDrawerOpen(false); // ensure drawer is closed initially
+        drawerOverlay.style.display = 'none';
         drawer.style.display = 'flex';
       } else {  // bottom layout
         setSideDrawerOpen(false);
+        setBottomBarVisible(false); // ensure bottom bar is hidden initially
         drawerOverlay.style.display = 'none';
         drawer.style.display = 'none';
-        setBottomBarVisible(bottomBarVisible);  // keep previous state
       }
     }
     window.addEventListener('camToolsSettingsChanged', refreshLayout);
