@@ -62,12 +62,24 @@
      * ------------------------------------------------------------------ */
     const settingsMenu = document.createElement('div');
     Object.assign(settingsMenu.style, {
-      position: 'fixed', left: '0', top: '0', width: '260px', height: '100vh',
-      background: '#fff', display: 'flex', flexDirection: 'column', gap: '18px',
-      padding: '22px 18px 18px', fontFamily: 'Segoe UI, Arial, sans-serif',
-      borderTopRightRadius: '12px', borderBottomRightRadius: '12px',
-      transform: 'translateX(-100%)', transition: 'transform .25s cubic-bezier(.4,0,.2,1)',
-      boxShadow: 'none', pointerEvents: 'none', zIndex: '3001'
+      position: 'fixed',
+      left: '0',
+      top: 'calc(10vh + 192px)',
+      width: '260px',
+      height: 'calc(100vh - (10vh + 192px))',
+      background: '#fff',
+      display: 'flex',
+      flexDirection: 'column',
+      gap: '18px',
+      padding: '22px 18px 18px',
+      fontFamily: 'Segoe UI, Arial, sans-serif',
+      borderTopRightRadius: '12px',
+      borderBottomRightRadius: '12px',
+      transform: 'translateX(-100%)',
+      transition: 'transform .25s cubic-bezier(.4,0,.2,1)',
+      boxShadow: 'none',
+      pointerEvents: 'none',
+      zIndex: '3001'
     });
   
     function renderSettingsMenu() {
@@ -222,14 +234,22 @@
       if (open) {
         populateDrawer();
         drawerOverlay.style.display = 'block';
-        drawer.style.left = '0';
+        drawer.style.display = 'flex';
+        // Animate in
+        setTimeout(() => {
+          drawer.style.left = '0';
+        }, 0);
         bottomButtonIds.forEach(id => {
           const el = document.getElementById(id);
           if (el) el.style.display = 'none';
         });
       } else {
+        // Animate out, then hide
         drawer.style.left = '-220px';
         drawerOverlay.style.display = 'none';
+        setTimeout(() => {
+          drawer.style.display = 'none';
+        }, 250); // match transition duration
         bottomButtonIds.forEach(id => {
           const el = document.getElementById(id);
           if (el) el.style.display = 'none';  // stay hidden in side mode
@@ -237,7 +257,15 @@
       }
     }
     drawerOverlay.onclick = () => setSideDrawerOpen(false);
-    drawerClose.onclick = e => { e.stopPropagation(); setSideDrawerOpen(false); };
+    drawerClose.onclick = e => {
+      e.stopPropagation();
+      const { menuStyle = 'side' } = getSettings();
+      if (menuStyle === 'side') {
+        setSideDrawerOpen(false);
+      } else {
+        setBottomBarVisible(false);
+      }
+    };
   
     /* -------------------- bottom bar toggle (for menuStyle = "bottom") ----------- */
     function setBottomBarVisible(visible) {
