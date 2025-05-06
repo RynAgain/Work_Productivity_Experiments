@@ -183,7 +183,7 @@
   drawer.appendChild(drawerClose);
 
   // IDs for bottom bar buttons
-  const bottomButtonIds = [ /* 'homeBtn', 'searchBtn', ... */ ];
+  const bottomButtonIds = ['redriveButton', 'addItemButton', 'downloadButton', 'activateButton', 'generalHelpToolsButton'];
 
   // ------------------------------------------------------------------
   //  RENDER FUNCTION
@@ -210,6 +210,29 @@
 
     // Drawer and Overlay (side menu)
     if (state.menuStyle === 'side') {
+      // Always hide bottom bar in side menu mode
+      if (state.bottomBarVisible) {
+        state.bottomBarVisible = false;
+      }
+      // Populate drawer with nav bar buttons
+      drawer.innerHTML = '';
+      drawer.appendChild(drawerClose);
+      bottomButtonIds.forEach(id => {
+        const src = document.getElementById(id);
+        if (!src) return;
+        const clone = src.cloneNode(true);
+        clone.classList.add('drawer-item');
+        Object.assign(clone.style, {
+          position: 'static', width: '100%', height: '40px',
+          borderRadius: '6px', fontSize: '15px',
+          background: '#004E36', color: '#fff', boxShadow: 'none',
+          cursor: 'pointer'
+        });
+        clone.onmouseenter = () => clone.style.background = '#218838';
+        clone.onmouseleave = () => clone.style.background = '#004E36';
+        clone.onclick = () => src.click();
+        drawer.appendChild(clone);
+      });
       if (state.sideMenuOpen) {
         drawerOverlay.style.display = 'block';
         drawer.style.display = 'flex';
