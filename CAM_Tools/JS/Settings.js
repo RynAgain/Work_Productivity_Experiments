@@ -122,7 +122,11 @@
             renderSettingsMenu();
             settingsMenu.style.display = 'flex';
             settingsMenu.style.left = '0';
+            settingsMenu.setAttribute('aria-hidden', 'false');
+            settingsMenu.removeAttribute('tabindex');
         } else {
+            settingsMenu.setAttribute('aria-hidden', 'true');
+            settingsMenu.setAttribute('tabindex', '-1');
             settingsMenu.style.left = '-260px';
             setTimeout(() => {
                 if (!menuOpen) settingsMenu.style.display = 'none';
