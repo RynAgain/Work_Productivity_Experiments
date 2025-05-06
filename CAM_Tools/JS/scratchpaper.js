@@ -406,6 +406,7 @@
             updateHamburgerIcon(open);
             if (open) {
                 moveBottomButtonsToMenu();
+                sideMenu.style.display = 'flex';
                 sideMenu.style.left = '0';
                 // Hide original bottom buttons
                 bottomButtonIds.forEach(id => {
@@ -414,6 +415,9 @@
                 });
             } else {
                 sideMenu.style.left = '-220px';
+                setTimeout(() => {
+                    if (!menuOpen) sideMenu.style.display = 'none';
+                }, 250);
                 // Show original bottom buttons
                 bottomButtonIds.forEach(id => {
                     const el = document.getElementById(id);
