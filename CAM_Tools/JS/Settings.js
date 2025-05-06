@@ -260,11 +260,9 @@
         drawerOverlay.style.display = 'none';
         setTimeout(() => { drawer.style.display = 'none'; }, 250);
       }
-      // Hide bottom bar buttons in side mode
-      bottomButtonIds.forEach(id => {
-        const el = document.getElementById(id);
-        if (el) el.style.display = 'none';
-      });
+      // Do not hide or remove bottom bar buttons in side mode.
+      // Let CSS or layout handle their visibility if needed.
+      // This prevents accidental removal and ensures drawer can always clone them.
     } else {
       // Hide drawer in bottom mode
       drawerOverlay.style.display = 'none';
