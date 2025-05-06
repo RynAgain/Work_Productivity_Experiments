@@ -162,16 +162,31 @@
     const drawerOverlay = document.createElement('div');
     const drawer = document.createElement('div');
     Object.assign(drawerOverlay.style, {
-      position: 'fixed', left: '36px', top: '0', width: 'calc(100vw - 36px)', height: '100vh',
-      background: 'rgba(0,0,0,.15)', zIndex: '2999', display: 'none'
+      position: 'fixed',
+      left: '36px',
+      top: 'calc(10vh + 192px)',
+      width: 'calc(100vw - 36px)',
+      height: 'calc(100vh - (10vh + 192px))',
+      background: 'rgba(0,0,0,.15)',
+      zIndex: '2999',
+      display: 'none'
     });
     Object.assign(drawer.style, {
-      position: 'fixed', left: '-220px', top: '0',
-      width: '220px', height: '100vh', background: '#fff',
-      boxShadow: '2px 0 12px rgba(0,0,0,.18)', borderTopRightRadius: '12px',
-      borderBottomRightRadius: '12px', padding: '18px 10px 10px',
-      display: 'flex', flexDirection: 'column', gap: '10px',
-      transition: 'left .25s cubic-bezier(.4,0,.2,1)', zIndex: '3000'
+      position: 'fixed',
+      left: '-220px',
+      top: 'calc(10vh + 192px)',
+      width: '220px',
+      height: 'calc(100vh - (10vh + 192px))',
+      background: '#fff',
+      boxShadow: '2px 0 12px rgba(0,0,0,.18)',
+      borderTopRightRadius: '12px',
+      borderBottomRightRadius: '12px',
+      padding: '18px 10px 10px',
+      display: 'flex',
+      flexDirection: 'column',
+      gap: '10px',
+      transition: 'left .25s cubic-bezier(.4,0,.2,1)',
+      zIndex: '3000'
     });
     const drawerClose = document.createElement('button');
     Object.assign(drawerClose.style, {
