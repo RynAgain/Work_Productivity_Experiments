@@ -18,17 +18,17 @@
     /* ------------------------------------------------------------------ *
      *  SETTINGS GEAR (opens side panel)
      * ------------------------------------------------------------------ */
-    let settingsMenuOpen = false;               // <‑‑ fixed
+    let settingsMenuOpen = false;
     const settingsBtn = document.createElement('button');
     Object.assign(settingsBtn.style, {
-      position:'fixed', left:'0', top:'calc(10vh + 192px)',
-      width:'36px', height:'36px', zIndex:'2000',
-      display:'flex', alignItems:'center', justifyContent:'center',
-      background:getSettings().themeColor, color:'#fff',
-      border:'none', borderRadius:'0 5px 5px 0',
-      boxShadow:'2px 2px 8px rgba(0,0,0,.2)',
-      cursor:'pointer', fontSize:'16px', padding:'0',
-      transition:'background .3s'
+      position: 'fixed', left: '0', top: 'calc(10vh + 192px)',
+      width: '36px', height: '36px', zIndex: '3100',               // ↑ keep above drawer
+      display: 'flex', alignItems: 'center', justifyContent: 'center',
+      background: getSettings().themeColor, color: '#fff',
+      border: 'none', borderRadius: '0 5px 5px 0',
+      boxShadow: '2px 2px 8px rgba(0,0,0,.2)',
+      cursor: 'pointer', fontSize: '16px', padding: '0',
+      transition: 'background .3s'
     });
     settingsBtn.id = 'settings-btn';
     settingsBtn.title = 'Settings';
@@ -49,7 +49,7 @@
                  0 8 4.6a1.65 1.65 0 0 0 1-1.51V3a2
                  2 0 1 1 4 0v.09A1.65 1.65 0 0 0
                  16 4.6a1.65 1.65 0 0 0 1.82-.33l.06-.06a2
-                 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0
+                 2 0 1 1 2.83 2.83l-.06-.06A1.65 1.65 0 0
                  0 19.4 8c.14.31.22.65.22 1v.09A1.65
                  1.65 0 0 0 21 12c0 .35-.08.69-.22 1z"/>
       </svg>`;
@@ -62,16 +62,16 @@
      * ------------------------------------------------------------------ */
     const settingsMenu = document.createElement('div');
     Object.assign(settingsMenu.style, {
-      position:'fixed', left:'0', top:'0', width:'260px', height:'100vh',
-      background:'#fff', display:'flex', flexDirection:'column', gap:'18px',
-      padding:'22px 18px 18px', fontFamily:'Segoe UI, Arial, sans-serif',
-      borderTopRightRadius:'12px', borderBottomRightRadius:'12px',
-      transform:'translateX(-100%)', transition:'transform .25s cubic-bezier(.4,0,.2,1)',
-      boxShadow:'none', pointerEvents:'none', zIndex:'3001'
+      position: 'fixed', left: '0', top: '0', width: '260px', height: '100vh',
+      background: '#fff', display: 'flex', flexDirection: 'column', gap: '18px',
+      padding: '22px 18px 18px', fontFamily: 'Segoe UI, Arial, sans-serif',
+      borderTopRightRadius: '12px', borderBottomRightRadius: '12px',
+      transform: 'translateX(-100%)', transition: 'transform .25s cubic-bezier(.4,0,.2,1)',
+      boxShadow: 'none', pointerEvents: 'none', zIndex: '3001'
     });
   
     function renderSettingsMenu() {
-      const s = { menuStyle:'side', themeColor:'#004E36', ...getSettings() };
+      const s = { menuStyle: 'side', themeColor: '#004E36', ...getSettings() };
       settingsMenu.innerHTML = `
         <div style="font-size:18px;font-weight:bold;color:#004E36;
                     display:flex;align-items:center;gap:8px;margin-bottom:8px">
@@ -83,8 +83,8 @@
         <label style="margin-bottom:10px;display:block">
           <span style="font-weight:500;display:block;margin-bottom:4px">Bottom Button Layout</span>
           <select id="menuStyle" style="width:100%;padding:7px 10px;border:1px solid #ccc;border-radius:5px">
-            <option value="side"   ${s.menuStyle==='side'   ? 'selected': ''}>Side Pop‑out Menu</option>
-            <option value="bottom" ${s.menuStyle==='bottom' ? 'selected': ''}>Bottom Nav Bar</option>
+            <option value="side"   ${s.menuStyle === 'side' ? 'selected' : ''}>Side Pop‑out Menu</option>
+            <option value="bottom" ${s.menuStyle === 'bottom' ? 'selected' : ''}>Bottom Nav Bar</option>
           </select>
         </label>
   
@@ -97,11 +97,11 @@
       /* wiring */
       settingsMenu.querySelector('#settings-close').onclick = () => setSettingsPanelOpen(false);
       settingsMenu.querySelector('#menuStyle').onchange = e => {
-        const ns = { ...getSettings(), menuStyle:e.target.value };
+        const ns = { ...getSettings(), menuStyle: e.target.value };
         setSettings(ns);
       };
       settingsMenu.querySelector('#themeColor').oninput = e => {
-        const ns = { ...getSettings(), themeColor:e.target.value };
+        const ns = { ...getSettings(), themeColor: e.target.value };
         setSettings(ns);
         settingsBtn.style.background = ns.themeColor;
         settingsMenu.querySelector('span:last-of-type').textContent = ns.themeColor;
@@ -125,16 +125,16 @@
     /* ------------------------------------------------------------------ *
      *  UNIVERSAL HAMBURGER (toggles nav)
      * ------------------------------------------------------------------ */
-    const bottomButtonIds = [ /* your button IDs here */ ];
+    const bottomButtonIds = [ /* 'homeBtn', 'searchBtn', ... */ ];
   
     const toggleBtn = document.createElement('button');
     Object.assign(toggleBtn.style, {
-      position:'fixed', left:'0', top:'calc(10vh + 150px)',
-      width:'36px', height:'36px', zIndex:'2000',
-      display:'flex', alignItems:'center', justifyContent:'center',
-      background:'#004E36', color:'#fff', border:'none',
-      borderRadius:'0 5px 5px 0', boxShadow:'2px 2px 8px rgba(0,0,0,.2)',
-      cursor:'pointer', fontSize:'16px', padding:'0', transition:'background .3s'
+      position: 'fixed', left: '0', top: 'calc(10vh + 150px)',
+      width: '36px', height: '36px', zIndex: '3100',              // ↑ keep above drawer
+      display: 'flex', alignItems: 'center', justifyContent: 'center',
+      background: '#004E36', color: '#fff', border: 'none',
+      borderRadius: '0 5px 5px 0', boxShadow: '2px 2px 8px rgba(0,0,0,.2)',
+      cursor: 'pointer', fontSize: '16px', padding: '0', transition: 'background .3s'
     });
     toggleBtn.title = 'Show Menu';
     const hamburgerSVG = `<svg width="22" height="22" viewBox="0 0 24 24" fill="none"
@@ -142,7 +142,7 @@
                             <line x1="4" y1="7"  x2="20" y2="7"/>
                             <line x1="4" y1="12" x2="20" y2="12"/>
                             <line x1="4" y1="17" x2="20" y2="17"/></svg>`;
-    const closeSVG     = `<svg width="22" height="22" viewBox="0 0 24 24" fill="none"
+    const closeSVG = `<svg width="22" height="22" viewBox="0 0 24 24" fill="none"
                              stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                             <line x1="5"  y1="5"  x2="19" y2="19"/>
                             <line x1="19" y1="5"  x2="5"  y2="19"/></svg>`;
@@ -154,29 +154,29 @@
     let bottomBarVisible = true;
     function updateHamburger(open) {
       toggleBtn.innerHTML = open ? closeSVG : hamburgerSVG;
-      toggleBtn.title     = open ? 'Hide Menu' : 'Show Menu';
+      toggleBtn.title = open ? 'Hide Menu' : 'Show Menu';
     }
     updateHamburger(false);
   
     /* -------------------- side‑drawer (for menuStyle = "side") -------------------- */
     const drawerOverlay = document.createElement('div');
-    const drawer        = document.createElement('div');
+    const drawer = document.createElement('div');
     Object.assign(drawerOverlay.style, {
-      position:'fixed', left:'36px', top:'0', width:'calc(100vw - 36px)', height:'100vh',
-      background:'rgba(0,0,0,.15)', zIndex:'2999', display:'none'
+      position: 'fixed', left: '36px', top: '0', width: 'calc(100vw - 36px)', height: '100vh',
+      background: 'rgba(0,0,0,.15)', zIndex: '2999', display: 'none'
     });
     Object.assign(drawer.style, {
-      position:'fixed', left:'-220px', top:'0',
-      width:'220px', height:'100vh', background:'#fff',
-      boxShadow:'2px 0 12px rgba(0,0,0,.18)', borderTopRightRadius:'12px',
-      borderBottomRightRadius:'12px', padding:'18px 10px 10px',
-      display:'flex', flexDirection:'column', gap:'10px',
-      transition:'left .25s cubic-bezier(.4,0,.2,1)', zIndex:'3000'
+      position: 'fixed', left: '-220px', top: '0',
+      width: '220px', height: '100vh', background: '#fff',
+      boxShadow: '2px 0 12px rgba(0,0,0,.18)', borderTopRightRadius: '12px',
+      borderBottomRightRadius: '12px', padding: '18px 10px 10px',
+      display: 'flex', flexDirection: 'column', gap: '10px',
+      transition: 'left .25s cubic-bezier(.4,0,.2,1)', zIndex: '3000'
     });
     const drawerClose = document.createElement('button');
     Object.assign(drawerClose.style, {
-      position:'absolute', top:'8px', right:'10px',
-      background:'none', border:'none', fontSize:'22px', color:'#888', cursor:'pointer'
+      position: 'absolute', top: '8px', right: '10px',
+      background: 'none', border: 'none', fontSize: '22px', color: '#888', cursor: 'pointer'
     });
     drawerClose.innerHTML = '&times;';
     drawer.appendChild(drawerClose);
@@ -189,14 +189,14 @@
         const clone = src.cloneNode(true);
         clone.classList.add('drawer-item');
         Object.assign(clone.style, {
-          position:'static', width:'100%', height:'40px',
-          borderRadius:'6px', fontSize:'15px',
-          background:'#004E36', color:'#fff', boxShadow:'none',
-          cursor:'pointer'
+          position: 'static', width: '100%', height: '40px',
+          borderRadius: '6px', fontSize: '15px',
+          background: '#004E36', color: '#fff', boxShadow: 'none',
+          cursor: 'pointer'
         });
         clone.onmouseenter = () => clone.style.background = '#218838';
         clone.onmouseleave = () => clone.style.background = '#004E36';
-        clone.onclick      = () => src.click();
+        clone.onclick = () => src.click();
         drawer.appendChild(clone);
       });
     }
@@ -217,12 +217,12 @@
         drawerOverlay.style.display = 'none';
         bottomButtonIds.forEach(id => {
           const el = document.getElementById(id);
-          if (el) el.style.display = 'none';          // stay hidden in side mode
+          if (el) el.style.display = 'none';  // stay hidden in side mode
         });
       }
     }
     drawerOverlay.onclick = () => setSideDrawerOpen(false);
-    drawerClose.onclick   = e => { e.stopPropagation(); setSideDrawerOpen(false); };
+    drawerClose.onclick = e => { e.stopPropagation(); setSideDrawerOpen(false); };
   
     /* -------------------- bottom bar toggle (for menuStyle = "bottom") ----------- */
     function setBottomBarVisible(visible) {
@@ -237,8 +237,8 @@
     /* -------------------- hamburger click dispatcher ----------------------------- */
     toggleBtn.onclick = () => {
       const { menuStyle = 'side' } = getSettings();
-      if (menuStyle === 'side')   setSideDrawerOpen(!sideMenuOpen);
-      else                        setBottomBarVisible(!bottomBarVisible);
+      if (menuStyle === 'side') setSideDrawerOpen(!sideMenuOpen);
+      else setBottomBarVisible(!bottomBarVisible);
     };
   
     /* ------------------------------------------------------------------ *
@@ -253,15 +253,14 @@
       if (menuStyle === 'side') {
         setBottomBarVisible(false);
         drawerOverlay.style.display = sideMenuOpen ? 'block' : 'none';
-        drawer.style.display        = 'flex';
-      } else {          // bottom layout
+        drawer.style.display = 'flex';
+      } else {  // bottom layout
         setSideDrawerOpen(false);
         drawerOverlay.style.display = 'none';
-        drawer.style.display        = 'none';
-        setBottomBarVisible(bottomBarVisible);   // keep previous state
+        drawer.style.display = 'none';
+        setBottomBarVisible(bottomBarVisible);  // keep previous state
       }
     }
-    refreshLayout();
     window.addEventListener('camToolsSettingsChanged', refreshLayout);
   
     /* ------------------------------------------------------------------ *
@@ -271,6 +270,9 @@
       settingsBtn, settingsMenu,
       toggleBtn, drawerOverlay, drawer
     );
+  
+    // first layout pass *after* the nodes exist
+    refreshLayout();
   
   })();
   
