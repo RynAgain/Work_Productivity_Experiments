@@ -41,15 +41,7 @@
     ...defaultSettings,
     ...getSettings()
   };
-  // Proxy for state to auto-persist and re-render
-  state = new Proxy(state, {
-    set(target, prop, value) {
-      target[prop] = value;
-      if (['menuStyle', 'themeColor'].includes(prop)) persistSettings();
-      render();
-      return true;
-    }
-  });
+  // DO NOT use Proxy for state: all state changes must go through setState to avoid infinite render loops.
 
   // Only persist these keys
   function persistSettings() {
@@ -69,7 +61,6 @@
       }
     }
     if (changed) {
-      // Persist only relevant settings
       persistSettings();
       render();
     }
@@ -446,8 +437,16 @@ document.head.appendChild(style);
 
   // Listen for settings changes from other tabs/windows
   window.addEventListener('camToolsSettingsChanged', () => {
-    Object.assign(state, getSettings());
-    render();
+    // Only update persisted keys to avoid triggering render loops
+    const newSettings = getSettings();
+    let changed = false;
+    ['menuStyle', 'themeColor'].forEach(k => {
+      if (state[k] !== newSettings[k]) {
+        state[k] = newSettings[k];
+        changed = true;
+      }
+    });
+    if (changed) render();
   });
 
   // ------------------------------------------------------------------
