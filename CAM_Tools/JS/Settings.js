@@ -164,7 +164,8 @@ document.head.appendChild(style);
     fontFamily: 'Segoe UI, Arial, sans-serif',
     borderTopRightRadius: '12px',
     borderBottomRightRadius: '12px',
-    transform: 'translateX(-270px)', // hide to the left of the button (width + margin)
+    // When closed, move fully off-screen to the left (not just -270px, but -260px - 36px - 8px margin)
+    transform: 'translateX(-304px)', // 260px menu + 36px button + 8px margin
     transition: 'transform .25s cubic-bezier(.4,0,.2,1)',
     boxShadow: 'none',
     pointerEvents: 'none',
@@ -261,7 +262,7 @@ document.head.appendChild(style);
         if (firstInput) firstInput.focus();
       }, 100);
     } else {
-      settingsMenu.style.transform = 'translateX(-270px)'; // Hide to the left of the button (width + margin)
+      settingsMenu.style.transform = 'translateX(-300px)'; // Hide to the left of the button (width + margin)
       settingsMenu.style.boxShadow = 'none';
       settingsMenu.style.pointerEvents = 'none';
       settingsMenu.setAttribute('aria-hidden', 'true');
