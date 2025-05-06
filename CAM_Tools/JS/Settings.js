@@ -27,7 +27,7 @@
     ...defaultSettings,
     ...getSettings()
   };
-  // DO NOT use Proxy for state: all state changes must go through setState to avoid infinite render loops.
+  // DO NOT use Proxy for state: all state changes must go through setState to avoid infinite render loops. dang crashed the website last time
 
   // Only persist these keys
   function persistSettings() {
@@ -249,10 +249,10 @@ document.head.appendChild(style);
     // Settings Button
     settingsBtn.style.background = state.themeColor;
   
-    // Settings Menu
+    // Settings Menu 
     if (state.settingsMenuOpen) {
       renderSettingsMenu();
-      settingsMenu.style.transform = 'translateX(0)';
+      settingsMenu.style.transform = 'translateX(23)';
       settingsMenu.style.boxShadow = '2px 0 12px rgba(0,0,0,.18)';
       settingsMenu.style.pointerEvents = 'auto';
       settingsMenu.setAttribute('aria-hidden', 'false');
