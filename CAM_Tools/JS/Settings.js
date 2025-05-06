@@ -183,7 +183,7 @@
   drawer.appendChild(drawerClose);
 
   // IDs for bottom bar buttons
-  const bottomButtonIds = ['redriveButton', 'addItemButton', 'downloadButton', 'activateButton', 'generalHelpToolsButton'];
+  const bottomButtonIds = ['redriveButton', 'addItemButton', 'downloadDataButton', 'activateButton', 'generalHelpToolsButton'];
 
   // ------------------------------------------------------------------
   //  RENDER FUNCTION
@@ -217,22 +217,40 @@
       // Populate drawer with nav bar buttons
       drawer.innerHTML = '';
       drawer.appendChild(drawerClose);
-      bottomButtonIds.forEach(id => {
-        const src = document.getElementById(id);
-        if (!src) return;
-        const clone = src.cloneNode(true);
-        clone.classList.add('drawer-item');
-        Object.assign(clone.style, {
-          position: 'static', width: '100%', height: '40px',
-          borderRadius: '6px', fontSize: '15px',
-          background: '#004E36', color: '#fff', boxShadow: 'none',
-          cursor: 'pointer'
+      if (bottomButtonIds.length === 0) {
+        const warn = document.createElement('div');
+        warn.textContent = 'No button IDs set in bottomButtonIds!';
+        warn.style.color = 'red';
+        warn.style.padding = '10px';
+        drawer.appendChild(warn);
+      } else {
+        // Debug log for which IDs are being used
+        console.debug('Populating drawer with IDs:', bottomButtonIds);
+        bottomButtonIds.forEach(id => {
+          const src = document.getElementById(id);
+          if (!src) {
+            // Show a warning in the drawer for missing elements
+            const missing = document.createElement('div');
+            missing.textContent = `Button with ID "${id}" not found`;
+            missing.style.color = 'orange';
+            missing.style.fontSize = '12px';
+            drawer.appendChild(missing);
+            return;
+          }
+          const clone = src.cloneNode(true);
+          clone.classList.add('drawer-item');
+          Object.assign(clone.style, {
+            position: 'static', width: '100%', height: '40px',
+            borderRadius: '6px', fontSize: '15px',
+            background: '#004E36', color: '#fff', boxShadow: 'none',
+            cursor: 'pointer'
+          });
+          clone.onmouseenter = () => clone.style.background = '#218838';
+          clone.onmouseleave = () => clone.style.background = '#004E36';
+          clone.onclick = () => src.click();
+          drawer.appendChild(clone);
         });
-        clone.onmouseenter = () => clone.style.background = '#218838';
-        clone.onmouseleave = () => clone.style.background = '#004E36';
-        clone.onclick = () => src.click();
-        drawer.appendChild(clone);
-      });
+      }
       if (state.sideMenuOpen) {
         drawerOverlay.style.display = 'block';
         drawer.style.display = 'flex';
@@ -287,7 +305,15 @@
     `;
     // Wiring
     settingsMenu.querySelector('#settings-close').onclick = () => setState({ settingsMenuOpen: false });
-    settingsMenu.querySelector('#menuStyle').onchange = e => setState({ menuStyle: e.target.value, sideMenuOpen: false, bottomBarVisible: false });
+    settingsMenu.querySelector('#menuStyle').onchange = e => {
+      // Always reset both menu states when switching menuStyle
+      setState({
+        menuStyle: e.target.value,
+        sideMenuOpen: false,
+        bottomBarVisible: false,
+        settingsMenuOpen: false // Optionally close settings menu on switch
+      });
+    };
     settingsMenu.querySelector('#themeColor').oninput = e => setState({ themeColor: e.target.value });
   }
 
