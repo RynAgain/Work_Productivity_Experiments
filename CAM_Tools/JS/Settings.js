@@ -127,10 +127,8 @@
         } else {
             settingsMenu.setAttribute('aria-hidden', 'true');
             settingsMenu.setAttribute('tabindex', '-1');
+            settingsMenu.style.display = 'none';
             settingsMenu.style.left = '-260px';
-            setTimeout(() => {
-                if (!menuOpen) settingsMenu.style.display = 'none';
-            }, 250);
         }
     }
 
