@@ -300,58 +300,135 @@
             updateEyeIcon(visible);
         }
 
-        // Create the eye icon toggle button with scratchpad-matching style
-        const toggleBottomButtonsBtn = document.createElement('button');
-        toggleBottomButtonsBtn.id = 'toggle-bottom-buttons';
-        toggleBottomButtonsBtn.style.position = 'fixed';
-        toggleBottomButtonsBtn.style.left = '0';
-        toggleBottomButtonsBtn.style.top = 'calc(10vh + 150px)';
-        toggleBottomButtonsBtn.style.zIndex = '2000';
-        toggleBottomButtonsBtn.style.width = '36px';
-        toggleBottomButtonsBtn.style.height = '36px';
-        toggleBottomButtonsBtn.style.background = '#004E36';
-        toggleBottomButtonsBtn.style.color = '#fff';
-        toggleBottomButtonsBtn.style.border = 'none';
-        toggleBottomButtonsBtn.style.borderRadius = '0 5px 5px 0';
-        toggleBottomButtonsBtn.style.display = 'flex';
-        toggleBottomButtonsBtn.style.alignItems = 'center';
-        toggleBottomButtonsBtn.style.justifyContent = 'center';
-        toggleBottomButtonsBtn.style.padding = '0';
-        toggleBottomButtonsBtn.style.cursor = 'pointer';
-        toggleBottomButtonsBtn.style.boxShadow = '2px 2px 8px rgba(0,0,0,0.2)';
-        toggleBottomButtonsBtn.style.fontSize = '16px';
-        toggleBottomButtonsBtn.title = 'Hide Bottom Buttons';
-        toggleBottomButtonsBtn.style.transition = 'background 0.3s';
+        // Create the hamburger toggle button with scratchpad-matching style
+        const toggleMenuBtn = document.createElement('button');
+        toggleMenuBtn.id = 'toggle-bottom-buttons';
+        toggleMenuBtn.style.position = 'fixed';
+        toggleMenuBtn.style.left = '0';
+        toggleMenuBtn.style.top = 'calc(10vh + 150px)';
+        toggleMenuBtn.style.zIndex = '2000';
+        toggleMenuBtn.style.width = '36px';
+        toggleMenuBtn.style.height = '36px';
+        toggleMenuBtn.style.background = '#004E36';
+        toggleMenuBtn.style.color = '#fff';
+        toggleMenuBtn.style.border = 'none';
+        toggleMenuBtn.style.borderRadius = '0 5px 5px 0';
+        toggleMenuBtn.style.display = 'flex';
+        toggleMenuBtn.style.alignItems = 'center';
+        toggleMenuBtn.style.justifyContent = 'center';
+        toggleMenuBtn.style.padding = '0';
+        toggleMenuBtn.style.cursor = 'pointer';
+        toggleMenuBtn.style.boxShadow = '2px 2px 8px rgba(0,0,0,0.2)';
+        toggleMenuBtn.style.fontSize = '16px';
+        toggleMenuBtn.title = 'Show Menu';
+        toggleMenuBtn.style.transition = 'background 0.3s';
 
-        // Hover effect to match scratchpad button
-        toggleBottomButtonsBtn.addEventListener('mouseenter', function() {
-            toggleBottomButtonsBtn.style.background = '#218838';
+        // Hamburger SVG
+        const hamburgerSVG = `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="7" x2="20" y2="7"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="17" x2="20" y2="17"/></svg>`;
+        const closeSVG = `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="5" x2="19" y2="19"/><line x1="19" y1="5" x2="5" y2="19"/></svg>`;
+
+        let menuOpen = false;
+        function updateHamburgerIcon(open) {
+            toggleMenuBtn.innerHTML = open ? closeSVG : hamburgerSVG;
+            toggleMenuBtn.title = open ? 'Hide Menu' : 'Show Menu';
+        }
+        updateHamburgerIcon(false);
+
+        toggleMenuBtn.addEventListener('mouseenter', function() {
+            toggleMenuBtn.style.background = '#218838';
         });
-        toggleBottomButtonsBtn.addEventListener('mouseleave', function() {
-            toggleBottomButtonsBtn.style.background = '#004E36';
+        toggleMenuBtn.addEventListener('mouseleave', function() {
+            toggleMenuBtn.style.background = '#004E36';
         });
 
-        // SVGs for open/closed eye (white stroke)
-        const eyeOpenSVG = `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="12" rx="9" ry="5"/><circle cx="12" cy="12" r="2.5"/></svg>`;
-        const eyeClosedSVG = `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 1l22 22"/><path d="M17.94 17.94C16.12 19.25 14.13 20 12 20c-5 0-9-4-9-8 0-1.61.5-3.13 1.38-4.42"/><path d="M6.06 6.06C7.88 4.75 9.87 4 12 4c5 0 9 4 9 8 0 1.61-.5 3.13-1.38 4.42"/><path d="M9.5 9.5a3 3 0 0 1 4.5 4.5"/></svg>`;
+        // Side menu
+        const sideMenu = document.createElement('div');
+        sideMenu.id = 'bottom-buttons-side-menu';
+        sideMenu.style.position = 'fixed';
+        sideMenu.style.left = '-220px';
+        sideMenu.style.top = '0';
+        sideMenu.style.width = '220px';
+        sideMenu.style.height = '100vh';
+        sideMenu.style.background = '#fff';
+        sideMenu.style.boxShadow = '2px 0 12px rgba(0,0,0,0.18)';
+        sideMenu.style.zIndex = '3000';
+        sideMenu.style.display = 'flex';
+        sideMenu.style.flexDirection = 'column';
+        sideMenu.style.alignItems = 'stretch';
+        sideMenu.style.padding = '18px 10px 10px 10px';
+        sideMenu.style.transition = 'left 0.25s cubic-bezier(.4,0,.2,1)';
+        sideMenu.style.borderTopRightRadius = '12px';
+        sideMenu.style.borderBottomRightRadius = '12px';
+        sideMenu.style.gap = '10px';
 
-        function updateEyeIcon(visible) {
-            toggleBottomButtonsBtn.innerHTML = visible ? eyeOpenSVG : eyeClosedSVG;
-            toggleBottomButtonsBtn.title = visible ? 'Hide Bottom Buttons' : 'Show Bottom Buttons';
+        // Helper to move bottom buttons into the menu
+        function moveBottomButtonsToMenu() {
+            sideMenu.innerHTML = '';
+            bottomButtonIds.forEach(id => {
+                const btn = document.getElementById(id);
+                if (btn) {
+                    // Clone the button for the menu
+                    const menuBtn = btn.cloneNode(true);
+                    menuBtn.style.position = 'static';
+                    menuBtn.style.width = '100%';
+                    menuBtn.style.left = '';
+                    menuBtn.style.bottom = '';
+                    menuBtn.style.margin = '0';
+                    menuBtn.style.borderRadius = '6px';
+                    menuBtn.style.height = '40px';
+                    menuBtn.style.fontSize = '15px';
+                    menuBtn.style.zIndex = '1';
+                    menuBtn.style.background = '#004E36';
+                    menuBtn.style.color = '#fff';
+                    menuBtn.style.boxShadow = 'none';
+                    menuBtn.style.cursor = 'pointer';
+                    menuBtn.addEventListener('mouseover', function() {
+                        menuBtn.style.background = '#218838';
+                    });
+                    menuBtn.addEventListener('mouseout', function() {
+                        menuBtn.style.background = '#004E36';
+                    });
+                    // Remove any duplicate event listeners by replacing node
+                    btn.parentNode && btn.parentNode.replaceChild(btn.cloneNode(true), btn);
+                    // Attach the original click event
+                    menuBtn.addEventListener('click', function(e) {
+                        btn.click();
+                        // Optionally close menu after click
+                        // setMenuOpen(false);
+                    });
+                    sideMenu.appendChild(menuBtn);
+                }
+            });
         }
 
-        // Initial state from localStorage (default: visible)
-        let bottomButtonsVisible = localStorage.getItem('bottomButtonsVisible');
-        if (bottomButtonsVisible === null) bottomButtonsVisible = '1';
-        setBottomButtonsVisible(bottomButtonsVisible === '1');
+        function setMenuOpen(open) {
+            menuOpen = open;
+            updateHamburgerIcon(open);
+            if (open) {
+                moveBottomButtonsToMenu();
+                sideMenu.style.left = '0';
+                // Hide original bottom buttons
+                bottomButtonIds.forEach(id => {
+                    const el = document.getElementById(id);
+                    if (el) el.style.display = 'none';
+                });
+            } else {
+                sideMenu.style.left = '-220px';
+                // Show original bottom buttons
+                bottomButtonIds.forEach(id => {
+                    const el = document.getElementById(id);
+                    if (el) el.style.display = '';
+                });
+            }
+        }
 
-        toggleBottomButtonsBtn.addEventListener('click', function() {
-            const currentlyVisible = localStorage.getItem('bottomButtonsVisible') === '1';
-            setBottomButtonsVisible(!currentlyVisible);
+        toggleMenuBtn.addEventListener('click', function() {
+            setMenuOpen(!menuOpen);
         });
 
         document.body.appendChild(scratchpadButton);
-        document.body.appendChild(toggleBottomButtonsBtn);
+        document.body.appendChild(toggleMenuBtn);
+        document.body.appendChild(sideMenu);
         document.body.appendChild(scratchpadContainer);
 
         // Initial render
