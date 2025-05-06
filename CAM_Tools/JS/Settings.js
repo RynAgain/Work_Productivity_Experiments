@@ -1,21 +1,7 @@
 /* eslint-env browser */
 (function () {
   'use strict';
-  // Expose internals for testing
-  try {
-    module.exports = {
-      getSettings,
-      setSettings,
-      persistSettings,
-      setState,
-      state,
-      render,
-      sideMenuItems
-    };
-  } catch (e) {
-    // Ignore if not in a module environment
-  }
-
+  //001
   // ------------------------------------------------------------------
   //  SETTINGS STORAGE
   // ------------------------------------------------------------------
@@ -251,14 +237,7 @@ document.head.appendChild(style);
       action: () => document.getElementById('generalHelpToolsButton')?.click()
     }
   ];
-  const drawerClose = createButton({
-    html: '&times;',
-    style: {
-      position: 'absolute', top: '8px', right: '10px',
-      background: 'none', border: 'none', fontSize: '22px', color: '#888', cursor: 'pointer'
-    }
-  });
-  drawer.appendChild(drawerClose);
+  // (drawerClose and drawer removed: no longer needed)
 
   // IDs for bottom bar buttons
   const bottomButtonIds = ['redriveButton', 'addItemButton', 'downloadDataButton', 'activateButton', 'generalHelpToolsButton'];
@@ -402,15 +381,7 @@ document.head.appendChild(style);
     }
   };
   
-  drawerOverlay.onclick = () => setState({ sideMenuOpen: false });
-  drawerClose.onclick = e => {
-    e.stopPropagation();
-    if (state.menuStyle === 'side') {
-      setState({ sideMenuOpen: false });
-    } else {
-      setState({ bottomBarVisible: false });
-    }
-  };
+  // (drawerOverlay and drawerClose event handlers removed: no longer needed)
   
   // Keyboard accessibility: ESC closes menus, trap focus
   document.addEventListener('keydown', function(e) {
@@ -454,10 +425,11 @@ document.head.appendChild(style);
   // ------------------------------------------------------------------
   //  MOUNT EVERYTHING
   // ------------------------------------------------------------------
-  document.body.append(
-    settingsBtn, settingsMenu,
-    toggleBtn, iconBar
-  );
+  // Only append if not already in DOM (prevents moving/removing other UI like scratchpad)
+  if (!document.body.contains(settingsBtn)) document.body.appendChild(settingsBtn);
+  if (!document.body.contains(settingsMenu)) document.body.appendChild(settingsMenu);
+  if (!document.body.contains(toggleBtn)) document.body.appendChild(toggleBtn);
+  if (!document.body.contains(iconBar)) document.body.appendChild(iconBar);
   
   // Add smooth transitions for menus/drawer
   const transitionStyle = document.createElement('style');
@@ -470,6 +442,11 @@ document.head.appendChild(style);
     .drawer[aria-hidden="true"] { transition: left .25s cubic-bezier(.4,0,.2,1); }
     #settingsMenu[aria-hidden="false"] { transition: transform .25s cubic-bezier(.4,0,.2,1); }
     #settingsMenu[aria-hidden="true"] { transition: transform .25s cubic-bezier(.4,0,.2,1); }
+    /* Ensure icon bar does not overlap scratchpad button (z-index: 3100 for iconBar, 3200 for scratchpad) */
+    #scratchpad-toggle-btn { z-index: 3200 !important; }
+    [id^="scratchpad-toggle-btn"] { z-index: 3200 !important; }
+    /* Make sure iconBar is always visible but below scratchpad */
+    .iconbar-item { outline: none; }
   `;
   document.head.appendChild(transitionStyle);
 
@@ -490,6 +467,7 @@ document.head.appendChild(style);
   });
   observer.observe(document.body, { childList: true, subtree: true });
 })();
+// Remove any references to drawer/drawerOverlay in the rest of the codebase.
   render();
 
 })();
