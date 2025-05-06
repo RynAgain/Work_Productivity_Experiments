@@ -246,6 +246,8 @@ document.head.appendChild(style);
   // ------------------------------------------------------------------
   //  RENDER FUNCTION
   // ------------------------------------------------------------------
+// Debug log for menu transform and event listeners
+console.debug('[Settings.js] render: settingsMenuOpen=', state.settingsMenuOpen, 'transform=', settingsMenu.style.transform, 'menu width:', settingsMenu.offsetWidth, 'button width:', settingsBtn.offsetWidth);
   function render() {
     // Settings Button
     settingsBtn.style.background = state.themeColor;
@@ -262,7 +264,8 @@ document.head.appendChild(style);
         if (firstInput) firstInput.focus();
       }, 100);
     } else {
-      settingsMenu.style.transform = 'translateX(-300px)'; // Hide to the left of the button (width + margin)
+      // Move fully off-screen to the left (menu width + button width + margin)
+      settingsMenu.style.transform = 'translateX(-296px)'; // 260px menu + 36px button = 296px
       settingsMenu.style.boxShadow = 'none';
       settingsMenu.style.pointerEvents = 'none';
       settingsMenu.setAttribute('aria-hidden', 'true');
