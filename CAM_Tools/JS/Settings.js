@@ -152,7 +152,7 @@ document.head.appendChild(style);
   const settingsMenu = document.createElement('div');
   Object.assign(settingsMenu.style, {
     position: 'fixed',
-    left: '0',
+    left: '36px', // settings button width
     top: 'calc(10vh + 192px)',
     width: '260px',
     height: 'calc(100vh - (10vh + 192px))',
@@ -164,7 +164,7 @@ document.head.appendChild(style);
     fontFamily: 'Segoe UI, Arial, sans-serif',
     borderTopRightRadius: '12px',
     borderBottomRightRadius: '12px',
-    transform: 'translateX(-100%)',
+    transform: 'translateX(-270px)', // hide to the left of the button (width + margin)
     transition: 'transform .25s cubic-bezier(.4,0,.2,1)',
     boxShadow: 'none',
     pointerEvents: 'none',
@@ -252,7 +252,7 @@ document.head.appendChild(style);
     // Settings Menu 
     if (state.settingsMenuOpen) {
       renderSettingsMenu();
-      settingsMenu.style.transform = 'translateX(23)';
+      settingsMenu.style.transform = 'translateX(0)'; // Now pops out to the right of the button
       settingsMenu.style.boxShadow = '2px 0 12px rgba(0,0,0,.18)';
       settingsMenu.style.pointerEvents = 'auto';
       settingsMenu.setAttribute('aria-hidden', 'false');
@@ -261,7 +261,7 @@ document.head.appendChild(style);
         if (firstInput) firstInput.focus();
       }, 100);
     } else {
-      settingsMenu.style.transform = 'translateX(-100%)';
+      settingsMenu.style.transform = 'translateX(-270px)'; // Hide to the left of the button (width + margin)
       settingsMenu.style.boxShadow = 'none';
       settingsMenu.style.pointerEvents = 'none';
       settingsMenu.setAttribute('aria-hidden', 'true');
