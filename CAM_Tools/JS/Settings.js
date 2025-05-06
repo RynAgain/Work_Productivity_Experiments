@@ -120,9 +120,13 @@
         menuOpen = open;
         if (open) {
             renderSettingsMenu();
+            settingsMenu.style.display = 'flex';
             settingsMenu.style.left = '0';
         } else {
             settingsMenu.style.left = '-260px';
+            setTimeout(() => {
+                if (!menuOpen) settingsMenu.style.display = 'none';
+            }, 250);
         }
     }
 
