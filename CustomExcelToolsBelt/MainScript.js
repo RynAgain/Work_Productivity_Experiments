@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Modular Tampermonkey UI System
 // @namespace    http://tampermonkey.net/
-// @version      0.107
+// @version      0.108
 // @description  Modular UI system for /editor page, with feature panel registration
 // @match        https://*.cam.wfm.amazon.dev/editor*
 // @require      https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.17.0/xlsx.full.min.js
@@ -15,6 +15,7 @@
 // @grant        none
 // @updateURL    https://github.com/RynAgain/Work_Productivity_Experiments/raw/main/CustomExcelToolsBelt/MainScript.js
 // @downloadURL    https://github.com/RynAgain/Work_Productivity_Experiments/raw/main/CustomExcelToolsBelt/MainScript.js
+// @run-at document-end
 // ==/UserScript==
 
 (function() {
@@ -116,7 +117,18 @@
   `;
   document.head.appendChild(style);
 
-  // --- Main Container ---
+  // --- Main content area ---
+  const mainContent = document.createElement('div');
+  mainContent.id = 'tm-ui-main-content';
+  mainContent.style.flex = '1 1 0%';
+  mainContent.style.display = 'flex';
+  mainContent.style.flexDirection = 'column';
+  mainContent.style.background = '#fff';
+  mainContent.style.margin = '24px 24px 24px 0';
+  mainContent.style.borderRadius = '12px';
+  mainContent.style.boxShadow = '0 4px 24px rgba(0,0,0,0.07)';
+  mainContent.style.overflow = 'auto';
+
   // --- Sidebar (tool navigation) ---
   const sidebar = document.createElement('div');
   sidebar.id = 'tm-ui-sidebar';
@@ -129,11 +141,10 @@
   const panels = document.createElement('div');
   panels.id = 'tm-ui-panels';
 
-  // Move panels into mainContent instead of sidebar
+  // Append panels to mainContent
   mainContent.appendChild(panels);
 
   sidebar.appendChild(tabs);
-  sidebar.appendChild(panels);
   // Add Reset/Clear button
   const resetBtn = document.createElement('button');
   resetBtn.textContent = 'Reset/Clear File';
@@ -158,16 +169,6 @@
   };
   sidebar.appendChild(resetBtn);
 
-  // --- Main content area ---
-  const mainContent = document.createElement('div');
-  mainContent.id = 'tm-ui-main-content';
-  mainContent.style.flex = '1 1 0%';
-  mainContent.style.display = 'flex';
-  mainContent.style.flexDirection = 'column';
-  mainContent.style.background = '#fff';
-  mainContent.style.margin = '24px 24px 24px 0';
-  mainContent.style.borderRadius = '12px';
-  mainContent.style.boxShadow = '0 4px 24px rgba(0,0,0,0.07)';
   mainContent.style.overflow = 'auto';
 
   // --- Persistent Preview Area (right) ---
