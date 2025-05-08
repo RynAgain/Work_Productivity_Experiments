@@ -4,6 +4,37 @@
     const BUTTON_ID = 'embed-excel-btn';
     const OVERLAY_ID = 'embed-excel-overlay';
 
+    // Inject Luckysheet CSS/JS if not already present
+    function injectLuckysheetAssets() {
+        if (!document.getElementById('luckysheet-css')) {
+            const link = document.createElement('link');
+            link.id = 'luckysheet-css';
+            link.rel = 'stylesheet';
+            link.href = 'https://cdn.jsdelivr.net/npm/luckysheet@2.2.11/dist/plugins/css/pluginsCss.css';
+            document.head.appendChild(link);
+
+            const link2 = document.createElement('link');
+            link2.rel = 'stylesheet';
+            link2.href = 'https://cdn.jsdelivr.net/npm/luckysheet@2.2.11/dist/plugins/plugins.css';
+            document.head.appendChild(link2);
+
+            const link3 = document.createElement('link');
+            link3.rel = 'stylesheet';
+            link3.href = 'https://cdn.jsdelivr.net/npm/luckysheet@2.2.11/dist/css/luckysheet.css';
+            document.head.appendChild(link3);
+        }
+        if (!window.luckysheet) {
+            const script = document.createElement('script');
+            script.src = 'https://cdn.jsdelivr.net/npm/luckysheet@2.2.11/dist/luckysheet.umd.js';
+            document.body.appendChild(script);
+        }
+        if (!window.XLSX) {
+            const xlsxScript = document.createElement('script');
+            xlsxScript.src = 'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.17.0/xlsx.full.min.js';
+            document.body.appendChild(xlsxScript);
+        }
+    }
+
     // Inject styles for button and overlay
     const style = document.createElement('style');
     style.textContent = `
@@ -43,11 +74,11 @@
             background: #fff;
             border-radius: 12px;
             box-shadow: 0 8px 32px rgba(0,0,0,0.18), 0 1.5px 6px rgba(0,78,54,0.10);
-            padding: 24px 28px 20px 28px;
-            min-width: 520px;
-            min-height: 420px;
-            max-width: 95vw;
-            max-height: 95vh;
+            padding: 18px 18px 12px 18px;
+            min-width: 900px;
+            min-height: 600px;
+            max-width: 98vw;
+            max-height: 98vh;
             display: flex;
             flex-direction: column;
             position: relative;
@@ -67,46 +98,45 @@
             cursor: pointer;
         }
         #embed-excel-controls {
-            margin-bottom: 12px;
+            margin-bottom: 10px;
             display: flex;
-            flex-direction: column;
-            gap: 8px;
+            flex-direction: row;
+            gap: 10px;
+            align-items: center;
         }
-        #embed-excel-iframe {
-            width: 800px;
-            height: 500px;
-            max-width: 80vw;
-            max-height: 60vh;
-            border: 1px solid #ccc;
-            border-radius: 6px;
-            margin-top: 8px;
-            background: #f8f8f8;
-        }
-        #embed-excel-link-input {
-            width: 100%;
-            padding: 6px 8px;
-            border: 1px solid #ccc;
-            border-radius: 5px;
+        #embed-excel-upload {
             font-size: 15px;
         }
-        #embed-excel-open-btn, #embed-excel-blank-btn {
+        #embed-excel-export-btn {
             background: #004E36;
             color: #fff;
             border: none;
             border-radius: 5px;
-            padding: 8px 0;
+            padding: 8px 16px;
             font-size: 15px;
             cursor: pointer;
             transition: background 0.2s;
-            width: 100%;
         }
-        #embed-excel-open-btn:hover, #embed-excel-blank-btn:hover {
+        #embed-excel-export-btn:hover {
             background: #218838;
         }
-        #embed-excel-instructions {
+        #luckysheet-container {
+            width: 860px;
+            height: 480px;
+            min-width: 300px;
+            min-height: 200px;
+            max-width: 90vw;
+            max-height: 60vh;
+            margin-top: 8px;
+            background: #f8f8f8;
+            border-radius: 6px;
+            overflow: hidden;
+        }
+        #embed-excel-status {
+            color: #004E36;
             font-size: 14px;
-            color: #333;
-            margin-bottom: 4px;
+            min-height: 18px;
+            margin-top: 4px;
         }
     `;
     document.head.appendChild(style);
@@ -115,7 +145,7 @@
         if (document.getElementById(BUTTON_ID)) return;
         const btn = document.createElement('button');
         btn.id = BUTTON_ID;
-        btn.title = 'Embed Microsoft Excel Online';
+        btn.title = 'Embed Local Excel Editor (Luckysheet)';
         btn.innerHTML = `
             <svg width="22" height="22" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
                 <rect x="3" y="4" width="18" height="16" rx="2" fill="#fff" stroke="none"/>
@@ -132,61 +162,128 @@
 
     function showEmbedExcelOverlay() {
         if (document.getElementById(OVERLAY_ID)) return;
+        injectLuckysheetAssets();
+
         const overlay = document.createElement('div');
         overlay.id = OVERLAY_ID;
 
         overlay.innerHTML = `
             <div id="embed-excel-modal">
                 <button id="embed-excel-close" title="Close">&times;</button>
-                <h3>Microsoft Excel Online Editor</h3>
+                <h3>Local Excel Editor (Luckysheet)</h3>
                 <div id="embed-excel-controls">
-                    <button id="embed-excel-blank-btn">Open Blank Excel Online</button>
-                    <div id="embed-excel-instructions">
-                        <b>To edit your own file:</b><br>
-                        1. Upload your Excel file to <a href="https://onedrive.live.com/" target="_blank" rel="noopener">OneDrive</a> or <a href="https://sharepoint.com/" target="_blank" rel="noopener">SharePoint</a>.<br>
-                        2. Get the sharing link for the file (must be a direct link to the .xlsx file).<br>
-                        3. Paste the link below and click "Open from Link".
-                    </div>
-                    <input type="text" id="embed-excel-link-input" placeholder="Paste OneDrive/SharePoint Excel file link here..." />
-                    <button id="embed-excel-open-btn">Open from Link</button>
+                    <input type="file" id="embed-excel-upload" accept=".xlsx,.xls,.csv" />
+                    <button id="embed-excel-export-btn" disabled>Export as .xlsx</button>
+                    <span style="font-size:13px;color:#666;">All editing is local. No data leaves your browser.</span>
                 </div>
-                <iframe id="embed-excel-iframe" style="display:none"></iframe>
+                <div id="luckysheet-container"></div>
+                <div id="embed-excel-status"></div>
             </div>
         `;
         document.body.appendChild(overlay);
 
         // Close logic
         document.getElementById('embed-excel-close').onclick = () => {
+            // Destroy Luckysheet instance to free memory
+            if (window.luckysheet) {
+                try { window.luckysheet.destroy(); } catch (e) {}
+            }
             document.body.removeChild(overlay);
         };
         overlay.onclick = (e) => {
-            if (e.target === overlay) document.body.removeChild(overlay);
-        };
-
-        const iframe = document.getElementById('embed-excel-iframe');
-        const openBtn = document.getElementById('embed-excel-open-btn');
-        const blankBtn = document.getElementById('embed-excel-blank-btn');
-        const linkInput = document.getElementById('embed-excel-link-input');
-
-        // Open blank Excel Online (new workbook)
-        blankBtn.onclick = function () {
-            // This opens a blank workbook in Excel Online (in the user's SSO context)
-            iframe.style.display = '';
-            iframe.src = "https://excel.office.com/?auth=2";
-        };
-
-        // Open from OneDrive/SharePoint link
-        openBtn.onclick = function () {
-            const url = linkInput.value.trim();
-            if (!url) {
-                alert("Please paste a OneDrive or SharePoint Excel file link.");
-                return;
+            if (e.target === overlay) {
+                if (window.luckysheet) {
+                    try { window.luckysheet.destroy(); } catch (e) {}
+                }
+                document.body.removeChild(overlay);
             }
-            // The embed URL for Excel Online is:
-            // https://excel.office.com/embed?resurl={encoded file url}
-            // The file must be accessible to the user (SSO will prompt if not signed in)
-            iframe.style.display = '';
-            iframe.src = "https://excel.office.com/embed?resurl=" + encodeURIComponent(url);
+        };
+
+        const uploadInput = document.getElementById('embed-excel-upload');
+        const exportBtn = document.getElementById('embed-excel-export-btn');
+        const statusDiv = document.getElementById('embed-excel-status');
+        const container = document.getElementById('luckysheet-container');
+
+        // Wait for Luckysheet and XLSX to be loaded
+        function waitForLibs(cb) {
+            if (window.luckysheet && window.XLSX) {
+                cb();
+            } else {
+                setTimeout(() => waitForLibs(cb), 100);
+            }
+        }
+
+        // File upload logic
+        uploadInput.addEventListener('change', function () {
+            const file = uploadInput.files[0];
+            if (!file) return;
+            statusDiv.textContent = 'Reading file...';
+            waitForLibs(() => {
+                const reader = new FileReader();
+                reader.onload = function (e) {
+                    let data = e.target.result;
+                    let workbook;
+                    try {
+                        if (file.name.endsWith('.csv')) {
+                            // Parse CSV to workbook
+                            workbook = window.XLSX.read(data, { type: 'string' });
+                        } else {
+                            workbook = window.XLSX.read(data, { type: 'array' });
+                        }
+                        // Convert workbook to Luckysheet data
+                        const luckysheetData = window.luckysheet.transToLuckyBySheet(workbook.Sheets, workbook.SheetNames);
+                        // Destroy previous instance if any
+                        try { window.luckysheet.destroy(); } catch (e) {}
+                        // Render Luckysheet
+                        window.luckysheet.create({
+                            container: 'luckysheet-container',
+                            data: luckysheetData,
+                            showinfobar: true,
+                            lang: 'en',
+                            allowEdit: true,
+                            allowUpdate: true,
+                            showtoolbar: true,
+                            showstatbar: true,
+                            showSheetbar: true,
+                            enableAddRow: true,
+                            enableAddCol: true,
+                            enableAddBackTop: true,
+                            enableAddBackBottom: true,
+                        });
+                        exportBtn.disabled = false;
+                        statusDiv.textContent = 'File loaded. Edit and export as needed.';
+                    } catch (err) {
+                        statusDiv.textContent = 'Error reading file: ' + err.message;
+                        exportBtn.disabled = true;
+                    }
+                };
+                if (file.name.endsWith('.csv')) {
+                    reader.readAsText(file);
+                } else {
+                    reader.readAsArrayBuffer(file);
+                }
+            });
+        });
+
+        // Export logic
+        exportBtn.onclick = function () {
+            waitForLibs(() => {
+                try {
+                    const luckysheetData = window.luckysheet.getAllSheets();
+                    const wb = window.luckysheet.luckysheetToXlsx(luckysheetData);
+                    const wbout = window.XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
+                    const blob = new Blob([wbout], { type: "application/octet-stream" });
+                    const a = document.createElement('a');
+                    a.href = URL.createObjectURL(blob);
+                    a.download = 'edited.xlsx';
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    statusDiv.textContent = 'Exported as edited.xlsx';
+                } catch (err) {
+                    statusDiv.textContent = 'Export failed: ' + err.message;
+                }
+            });
         };
     }
 
