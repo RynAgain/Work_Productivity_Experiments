@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Modular Tampermonkey UI System
 // @namespace    http://tampermonkey.net/
-// @version      0.106
+// @version      0.107
 // @description  Modular UI system for /editor page, with feature panel registration
 // @match        https://*.cam.wfm.amazon.dev/editor*
 // @require      https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.17.0/xlsx.full.min.js
@@ -22,6 +22,22 @@
 
   // Only run on /editor
   if (!/\/editor($|\?)/.test(window.location.pathname)) return;
+
+  // --- FULL PAGE APP OVERWRITE ---
+  // Remove all existing content and set up a new root
+  document.body.innerHTML = '';
+  document.body.style.margin = '0';
+  document.body.style.padding = '0';
+  document.body.style.background = '#f7f7f7';
+
+  // Create app root
+  const appRoot = document.createElement('div');
+  appRoot.id = 'tm-app-root';
+  appRoot.style.display = 'flex';
+  appRoot.style.height = '100vh';
+  appRoot.style.width = '100vw';
+  appRoot.style.overflow = 'hidden';
+  document.body.appendChild(appRoot);
 
   // --- Styles ---
   const style = document.createElement('style');
@@ -71,10 +87,37 @@
       overflow-y: auto;
       min-height: 120px;
     }
+    #tm-ui-main-content {
+      flex: 1 1 0%;
+      display: flex;
+      flex-direction: column;
+      background: #fff;
+      margin: 24px 24px 24px 0;
+      border-radius: 12px;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.07);
+      overflow: auto;
+    }
+    #tm-file-preview {
+      width: 420px;
+      background: #fff;
+      border: 2px solid #004E36;
+      border-radius: 10px;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.13);
+      font-family: 'Segoe UI', Arial, sans-serif;
+      padding: 18px 20px 16px 20px;
+      margin: 24px 24px 24px 0;
+      min-height: 120px;
+      max-height: calc(100vh - 48px);
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
   `;
   document.head.appendChild(style);
 
   // --- Main Container ---
+  // --- Sidebar (tool navigation) ---
   const sidebar = document.createElement('div');
   sidebar.id = 'tm-ui-sidebar';
 
@@ -85,6 +128,9 @@
   // Panels
   const panels = document.createElement('div');
   panels.id = 'tm-ui-panels';
+
+  // Move panels into mainContent instead of sidebar
+  mainContent.appendChild(panels);
 
   sidebar.appendChild(tabs);
   sidebar.appendChild(panels);
@@ -112,7 +158,40 @@
   };
   sidebar.appendChild(resetBtn);
 
-  document.body.appendChild(sidebar);
+  // --- Main content area ---
+  const mainContent = document.createElement('div');
+  mainContent.id = 'tm-ui-main-content';
+  mainContent.style.flex = '1 1 0%';
+  mainContent.style.display = 'flex';
+  mainContent.style.flexDirection = 'column';
+  mainContent.style.background = '#fff';
+  mainContent.style.margin = '24px 24px 24px 0';
+  mainContent.style.borderRadius = '12px';
+  mainContent.style.boxShadow = '0 4px 24px rgba(0,0,0,0.07)';
+  mainContent.style.overflow = 'auto';
+
+  // --- Persistent Preview Area (right) ---
+  const previewPanel = document.createElement('div');
+  previewPanel.id = 'tm-file-preview';
+  previewPanel.style.width = '420px';
+  previewPanel.style.background = '#fff';
+  previewPanel.style.border = '2px solid #004E36';
+  previewPanel.style.borderRadius = '10px';
+  previewPanel.style.boxShadow = '0 4px 24px rgba(0,0,0,0.13)';
+  previewPanel.style.fontFamily = "'Segoe UI', Arial, sans-serif";
+  previewPanel.style.padding = '18px 20px 16px 20px';
+  previewPanel.style.margin = '24px 24px 24px 0';
+  previewPanel.style.minHeight = '120px';
+  previewPanel.style.maxHeight = 'calc(100vh - 48px)';
+  previewPanel.style.overflowY = 'auto';
+  previewPanel.style.display = 'flex';
+  previewPanel.style.flexDirection = 'column';
+  previewPanel.style.gap = '8px';
+
+  // Layout: sidebar | mainContent | previewPanel
+  appRoot.appendChild(sidebar);
+  appRoot.appendChild(mainContent);
+  appRoot.appendChild(previewPanel);
 
   // --- UI System ---
   const panelRegistry = [];
@@ -311,30 +390,9 @@
   }
 
   onReady(function() {
-    // Create preview container
-    let preview = document.getElementById('tm-file-preview');
-    if (!preview) {
-      preview = document.createElement('div');
-      preview.id = 'tm-file-preview';
-      preview.style.position = 'fixed';
-      preview.style.top = '60px';
-      preview.style.left = '40px';
-      preview.style.width = '420px';
-      preview.style.background = '#fff';
-      preview.style.border = '2px solid #004E36';
-      preview.style.borderRadius = '10px';
-      preview.style.boxShadow = '0 4px 24px rgba(0,0,0,0.13)';
-      preview.style.zIndex = '9999';
-      preview.style.fontFamily = "'Segoe UI', Arial, sans-serif";
-      preview.style.padding = '18px 20px 16px 20px';
-      preview.style.minHeight = '120px';
-      preview.style.maxHeight = '70vh';
-      preview.style.overflowY = 'auto';
-      preview.style.display = 'flex';
-      preview.style.flexDirection = 'column';
-      preview.style.gap = '8px';
-      document.body.appendChild(preview);
-    }
+    // Use the preview panel created in the app layout
+    const preview = document.getElementById('tm-file-preview');
+    if (!preview) return; // Should always exist in the new layout
 
     // Add styles
     if (!document.getElementById('tm-file-preview-style')) {
@@ -395,7 +453,7 @@
     preview.appendChild(tableDiv);
 
     // Render preview table
-    function renderTable(state) {
+    function renderTable() {
       tableDiv.innerHTML = '';
       // Use lazy preview: only parse first 30 rows for preview
       const previewRows = 30;
@@ -483,9 +541,9 @@
     let unsub = null;
     function subscribe() {
       if (unsub) window.TM_FileState.unsubscribe(unsub);
-      unsub = function(state) { renderTable(state); };
+      unsub = function() { renderTable(); };
       window.TM_FileState.subscribe(unsub);
-      renderTable(window.TM_FileState.getState());
+      renderTable();
     }
     subscribe();
 
