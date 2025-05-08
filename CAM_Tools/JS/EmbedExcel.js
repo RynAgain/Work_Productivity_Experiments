@@ -4,28 +4,18 @@
     const BUTTON_ID = 'embed-excel-btn';
     const OVERLAY_ID = 'embed-excel-overlay';
 
-    // Inject Luckysheet CSS/JS if not already present
-    function injectLuckysheetAssets() {
-        if (!document.getElementById('luckysheet-css')) {
+    // Inject x-spreadsheet CSS/JS if not already present
+    function injectXSpreadsheetAssets() {
+        if (!document.getElementById('xspreadsheet-css')) {
             const link = document.createElement('link');
-            link.id = 'luckysheet-css';
+            link.id = 'xspreadsheet-css';
             link.rel = 'stylesheet';
-            link.href = 'https://cdn.jsdelivr.net/npm/luckysheet@2.2.11/dist/plugins/css/pluginsCss.css';
+            link.href = 'https://cdn.jsdelivr.net/npm/x-data-spreadsheet@1.1.5/dist/xspreadsheet.css';
             document.head.appendChild(link);
-
-            const link2 = document.createElement('link');
-            link2.rel = 'stylesheet';
-            link2.href = 'https://cdn.jsdelivr.net/npm/luckysheet@2.2.11/dist/plugins/plugins.css';
-            document.head.appendChild(link2);
-
-            const link3 = document.createElement('link');
-            link3.rel = 'stylesheet';
-            link3.href = 'https://cdn.jsdelivr.net/npm/luckysheet@2.2.11/dist/css/luckysheet.css';
-            document.head.appendChild(link3);
         }
-        if (!window.luckysheet) {
+        if (!window.x_spreadsheet) {
             const script = document.createElement('script');
-            script.src = 'https://cdn.jsdelivr.net/npm/luckysheet@2.2.11/dist/luckysheet.umd.js';
+            script.src = 'https://cdn.jsdelivr.net/npm/x-data-spreadsheet@1.1.5/dist/xspreadsheet.js';
             document.body.appendChild(script);
         }
         if (!window.XLSX) {
@@ -75,8 +65,8 @@
             border-radius: 12px;
             box-shadow: 0 8px 32px rgba(0,0,0,0.18), 0 1.5px 6px rgba(0,78,54,0.10);
             padding: 18px 18px 12px 18px;
-            min-width: 900px;
-            min-height: 600px;
+            min-width: 700px;
+            min-height: 500px;
             max-width: 98vw;
             max-height: 98vh;
             display: flex;
@@ -120,9 +110,9 @@
         #embed-excel-export-btn:hover {
             background: #218838;
         }
-        #luckysheet-container {
-            width: 860px;
-            height: 480px;
+        #xspreadsheet-container {
+            width: 650px;
+            height: 380px;
             min-width: 300px;
             min-height: 200px;
             max-width: 90vw;
@@ -145,7 +135,7 @@
         if (document.getElementById(BUTTON_ID)) return;
         const btn = document.createElement('button');
         btn.id = BUTTON_ID;
-        btn.title = 'Embed Local Excel Editor (Luckysheet)';
+        btn.title = 'Embed Local Excel Editor (x-spreadsheet)';
         btn.innerHTML = `
             <svg width="22" height="22" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
                 <rect x="3" y="4" width="18" height="16" rx="2" fill="#fff" stroke="none"/>
@@ -162,7 +152,7 @@
 
     function showEmbedExcelOverlay() {
         if (document.getElementById(OVERLAY_ID)) return;
-        injectLuckysheetAssets();
+        injectXSpreadsheetAssets();
 
         const overlay = document.createElement('div');
         overlay.id = OVERLAY_ID;
@@ -170,13 +160,13 @@
         overlay.innerHTML = `
             <div id="embed-excel-modal">
                 <button id="embed-excel-close" title="Close">&times;</button>
-                <h3>Local Excel Editor (Luckysheet)</h3>
+                <h3>Local Excel Editor (x-spreadsheet)</h3>
                 <div id="embed-excel-controls">
                     <input type="file" id="embed-excel-upload" accept=".xlsx,.xls,.csv" />
                     <button id="embed-excel-export-btn" disabled>Export as .xlsx</button>
                     <span style="font-size:13px;color:#666;">All editing is local. No data leaves your browser.</span>
                 </div>
-                <div id="luckysheet-container"></div>
+                <div id="xspreadsheet-container"></div>
                 <div id="embed-excel-status"></div>
             </div>
         `;
@@ -184,17 +174,10 @@
 
         // Close logic
         document.getElementById('embed-excel-close').onclick = () => {
-            // Destroy Luckysheet instance to free memory
-            if (window.luckysheet) {
-                try { window.luckysheet.destroy(); } catch (e) {}
-            }
             document.body.removeChild(overlay);
         };
         overlay.onclick = (e) => {
             if (e.target === overlay) {
-                if (window.luckysheet) {
-                    try { window.luckysheet.destroy(); } catch (e) {}
-                }
                 document.body.removeChild(overlay);
             }
         };
@@ -202,11 +185,13 @@
         const uploadInput = document.getElementById('embed-excel-upload');
         const exportBtn = document.getElementById('embed-excel-export-btn');
         const statusDiv = document.getElementById('embed-excel-status');
-        const container = document.getElementById('luckysheet-container');
+        const container = document.getElementById('xspreadsheet-container');
+        let xs = null;
+        let sheetData = null;
 
-        // Wait for Luckysheet and XLSX to be loaded
+        // Wait for x-spreadsheet and XLSX to be loaded
         function waitForLibs(cb) {
-            if (window.luckysheet && window.XLSX) {
+            if (window.x_spreadsheet && window.XLSX) {
                 cb();
             } else {
                 setTimeout(() => waitForLibs(cb), 100);
@@ -225,30 +210,22 @@
                     let workbook;
                     try {
                         if (file.name.endsWith('.csv')) {
-                            // Parse CSV to workbook
                             workbook = window.XLSX.read(data, { type: 'string' });
                         } else {
                             workbook = window.XLSX.read(data, { type: 'array' });
                         }
-                        // Convert workbook to Luckysheet data
-                        const luckysheetData = window.luckysheet.transToLuckyBySheet(workbook.Sheets, workbook.SheetNames);
+                        // Convert workbook to x-spreadsheet data
+                        const sheets = workbook.SheetNames.map(name => window.XLSX.utils.sheet_to_json(workbook.Sheets[name], { header: 1 }));
+                        // Only support first sheet for simplicity
+                        sheetData = sheets[0];
                         // Destroy previous instance if any
-                        try { window.luckysheet.destroy(); } catch (e) {}
-                        // Render Luckysheet
-                        window.luckysheet.create({
-                            container: 'luckysheet-container',
-                            data: luckysheetData,
-                            showinfobar: true,
-                            lang: 'en',
-                            allowEdit: true,
-                            allowUpdate: true,
-                            showtoolbar: true,
-                            showstatbar: true,
-                            showSheetbar: true,
-                            enableAddRow: true,
-                            enableAddCol: true,
-                            enableAddBackTop: true,
-                            enableAddBackBottom: true,
+                        if (xs && xs.destroy) xs.destroy();
+                        container.innerHTML = '';
+                        xs = window.x_spreadsheet(container, { showToolbar: true, showGrid: true }).loadData({
+                            name: file.name,
+                            rows: sheetData.map(row => ({
+                                cells: row.map(cell => ({ text: cell == null ? '' : String(cell) }))
+                            }))
                         });
                         exportBtn.disabled = false;
                         statusDiv.textContent = 'File loaded. Edit and export as needed.';
@@ -269,8 +246,17 @@
         exportBtn.onclick = function () {
             waitForLibs(() => {
                 try {
-                    const luckysheetData = window.luckysheet.getAllSheets();
-                    const wb = window.luckysheet.luckysheetToXlsx(luckysheetData);
+                    if (!xs) throw new Error('No spreadsheet loaded');
+                    // Get data from x-spreadsheet
+                    const data = xs.getData();
+                    // Convert to worksheet
+                    const ws = window.XLSX.utils.aoa_to_sheet(
+                        data.rows.map(row =>
+                            (row.cells || []).map(cell => cell && cell.text ? cell.text : '')
+                        )
+                    );
+                    const wb = window.XLSX.utils.book_new();
+                    window.XLSX.utils.book_append_sheet(wb, ws, 'Sheet1');
                     const wbout = window.XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
                     const blob = new Blob([wbout], { type: "application/octet-stream" });
                     const a = document.createElement('a');
