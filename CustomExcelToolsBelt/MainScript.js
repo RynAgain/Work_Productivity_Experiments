@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Modular Tampermonkey UI System
 // @namespace    http://tampermonkey.net/
-// @version      0.103
+// @version      0.104
 // @description  Modular UI system for /editor page, with feature panel registration
 // @match        https://*.cam.wfm.amazon.dev/editor*
 // @require      https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.17.0/xlsx.full.min.js
@@ -106,6 +106,7 @@
   resetBtn.onclick = function() {
     if (window.TM_FileState) {
       window.TM_FileState.setWorkbook(null, null);
+      try { localStorage.removeItem('tm_excel_file_state_v2'); } catch (e) {}
       alert('File state cleared.');
     }
   };
@@ -138,15 +139,24 @@
 // --- Shared File State Manager ---
 (function() {
   // Holds the current workbook and sheet data
-  let fileState = {
-    workbook: null, // XLSX workbook object
-    sheetName: null, // string
-    sheetData: null  // array of row objects
-  };
-  const listeners = [];
+  // (see above for new definition and restore logic)
 
   window.TM_FileState = {
-    getState() {
+    getState({ previewRows = null } = {}) {
+      // If previewRows is set, only parse that many rows for sheetData
+      if (
+        fileState.workbook &&
+        fileState.sheetName &&
+        typeof previewRows === 'number' &&
+        previewRows > 0
+      ) {
+        const ws = fileState.workbook.Sheets[fileState.sheetName];
+        const allRows = XLSX.utils.sheet_to_json(ws, { defval: '' });
+        return {
+          ...fileState,
+          sheetData: allRows.slice(0, previewRows)
+        };
+      }
       return { ...fileState };
     },
     setWorkbook(wb, sheetName) {
@@ -155,6 +165,24 @@
       fileState.sheetData = wb && fileState.sheetName
         ? XLSX.utils.sheet_to_json(wb.Sheets[fileState.sheetName], { defval: '' })
         : null;
+      // Persist workbook as base64 if present
+      if (wb) {
+        try {
+          const wbout = XLSX.write(wb, { bookType: 'xlsx', type: 'binary' });
+          const b64 = btoa(wbout.split('').map(c => String.fromCharCode(c.charCodeAt(0) & 0xff)).join(''));
+          fileState.workbookB64 = b64;
+          localStorage.setItem(FILESTATE_KEY, JSON.stringify({
+            workbookB64: b64,
+            sheetName: fileState.sheetName
+          }));
+        } catch (e) {
+          // Fallback: clear persisted state
+          localStorage.removeItem(FILESTATE_KEY);
+        }
+      } else {
+        fileState.workbookB64 = null;
+        localStorage.removeItem(FILESTATE_KEY);
+      }
       notify();
     },
     setSheetData(data) {
@@ -166,6 +194,15 @@
       fileState.sheetData = fileState.workbook && name
         ? XLSX.utils.sheet_to_json(fileState.workbook.Sheets[name], { defval: '' })
         : null;
+      // Persist sheet name if workbook is present
+      if (fileState.workbookB64) {
+        try {
+          localStorage.setItem(FILESTATE_KEY, JSON.stringify({
+            workbookB64: fileState.workbookB64,
+            sheetName: fileState.sheetName
+          }));
+        } catch (e) {}
+      }
       notify();
     },
     subscribe(fn) {
@@ -328,28 +365,33 @@
     // Render preview table
     function renderTable(state) {
       tableDiv.innerHTML = '';
-      if (!state.workbook || !state.sheetData || !state.sheetName) {
+      // Use lazy preview: only parse first 30 rows for preview
+      const previewRows = 30;
+      const previewState = window.TM_FileState.getState({ previewRows });
+      if (!previewState.workbook || !previewState.sheetData || !previewState.sheetName) {
         statusDiv.textContent = 'No file loaded.';
         return;
       }
-      statusDiv.textContent = `Previewing: "${state.sheetName}" (${state.sheetData.length} rows)`;
-      if (state.sheetData.length === 0) {
+      statusDiv.textContent = `Previewing: "${previewState.sheetName}" (showing up to ${previewRows} rows)`;
+      if (previewState.sheetData.length === 0) {
         tableDiv.innerHTML = '<div style="color:#888;">Sheet is empty.</div>';
         return;
       }
       // Large file warning
-      if (state.sheetData.length > 1000) {
+      const ws = previewState.workbook.Sheets[previewState.sheetName];
+      const allRowsCount = XLSX.utils.sheet_to_json(ws, { defval: '' }).length;
+      if (allRowsCount > 1000) {
         const warn = document.createElement('div');
         warn.style.color = '#b85c00';
         warn.style.fontWeight = 'bold';
         warn.style.marginBottom = '8px';
-        warn.textContent = `Warning: This sheet has ${state.sheetData.length} rows. Preview and operations may be slow.`;
+        warn.textContent = `Warning: This sheet has ${allRowsCount} rows. Preview and operations may be slow.`;
         tableDiv.appendChild(warn);
       }
       const table = document.createElement('table');
       const thead = document.createElement('thead');
       const headerRow = document.createElement('tr');
-      Object.keys(state.sheetData[0]).forEach(col => {
+      Object.keys(previewState.sheetData[0]).forEach(col => {
         const th = document.createElement('th');
         th.textContent = col;
         headerRow.appendChild(th);
@@ -358,9 +400,9 @@
       table.appendChild(thead);
 
       const tbody = document.createElement('tbody');
-      state.sheetData.slice(0, 20).forEach(row => {
+      previewState.sheetData.forEach(row => {
         const tr = document.createElement('tr');
-        Object.keys(state.sheetData[0]).forEach(col => {
+        Object.keys(previewState.sheetData[0]).forEach(col => {
           const td = document.createElement('td');
           td.textContent = row[col];
           tr.appendChild(td);
@@ -370,11 +412,11 @@
       table.appendChild(tbody);
       tableDiv.appendChild(table);
 
-      if (state.sheetData.length > 20) {
+      if (allRowsCount > previewRows) {
         const more = document.createElement('div');
         more.style.color = '#888';
         more.style.fontSize = '12px';
-        more.textContent = `...showing first 20 of ${state.sheetData.length} rows.`;
+        more.textContent = `...showing first ${previewRows} of ${allRowsCount} rows.`;
         tableDiv.appendChild(more);
       }
     }
