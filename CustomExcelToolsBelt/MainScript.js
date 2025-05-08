@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Modular Tampermonkey UI System
 // @namespace    http://tampermonkey.net/
-// @version      0.108
+// @version      0.109
 // @description  Modular UI system for /editor page, with feature panel registration
 // @match        https://*.cam.wfm.amazon.dev/editor*
 // @require      https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.17.0/xlsx.full.min.js
@@ -43,20 +43,29 @@
   // --- Styles ---
   const style = document.createElement('style');
   style.textContent = `
+    #tm-app-root {
+      display: flex;
+      flex-direction: row;
+      height: 100vh;
+      width: 100vw;
+      background: #f7f7f7;
+      overflow: hidden;
+    }
     #tm-ui-sidebar {
-      position: fixed;
-      top: 60px;
-      right: 40px;
-      width: 370px;
-      min-height: 200px;
+      width: 320px;
+      min-width: 220px;
+      max-width: 340px;
+      height: 100vh;
       background: #fff;
-      border: 2px solid #004E36;
-      border-radius: 10px;
-      box-shadow: 0 4px 24px rgba(0,0,0,0.13);
-      z-index: 9999;
+      border-right: 2px solid #004E36;
+      border-radius: 0 12px 12px 0;
+      box-shadow: 2px 0 16px rgba(0,0,0,0.07);
       font-family: 'Segoe UI', Arial, sans-serif;
       display: flex;
       flex-direction: column;
+      z-index: 1;
+      margin: 0;
+      padding: 0;
     }
     #tm-ui-tabs {
       display: flex;
@@ -87,32 +96,40 @@
       padding: 18px 20px 16px 20px;
       overflow-y: auto;
       min-height: 120px;
+      box-sizing: border-box;
     }
     #tm-ui-main-content {
       flex: 1 1 0%;
       display: flex;
       flex-direction: column;
       background: #fff;
-      margin: 24px 24px 24px 0;
       border-radius: 12px;
       box-shadow: 0 4px 24px rgba(0,0,0,0.07);
       overflow: auto;
+      min-width: 0;
+      min-height: 0;
+      height: 100vh;
+      margin: 0;
+      box-sizing: border-box;
     }
     #tm-file-preview {
       width: 420px;
+      min-width: 260px;
+      max-width: 520px;
+      height: 100vh;
       background: #fff;
-      border: 2px solid #004E36;
-      border-radius: 10px;
-      box-shadow: 0 4px 24px rgba(0,0,0,0.13);
+      border-left: 2px solid #004E36;
+      border-radius: 12px 0 0 12px;
+      box-shadow: -2px 0 16px rgba(0,0,0,0.07);
       font-family: 'Segoe UI', Arial, sans-serif;
       padding: 18px 20px 16px 20px;
-      margin: 24px 24px 24px 0;
       min-height: 120px;
-      max-height: calc(100vh - 48px);
       overflow-y: auto;
       display: flex;
       flex-direction: column;
       gap: 8px;
+      margin: 0;
+      box-sizing: border-box;
     }
   `;
   document.head.appendChild(style);
@@ -476,6 +493,13 @@
         warn.style.color = '#b85c00';
         warn.style.fontWeight = 'bold';
         warn.style.marginBottom = '8px';
+// Periodic refresh every 10 seconds
+      setInterval(() => {
+        renderTable();
+      }, 10000);
+
+      // Expose manual refresh for tools
+      window.TM_RefreshPreview = renderTable;
         warn.textContent = `Warning: This sheet has ${allRowsCount} rows. Preview and operations may be slow.`;
         tableDiv.appendChild(warn);
       }
