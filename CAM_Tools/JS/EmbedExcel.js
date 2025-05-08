@@ -172,7 +172,7 @@
                     <select id="embed-excel-sheet-picker" style="display:none"></select>
                     <button id="embed-excel-export-btn" disabled>Export as .xlsx</button>
                     <button id="embed-excel-export-csv-btn" disabled>Export current sheet as .csv</button>
-                    <span style="font-size:13px;color:#666;">All editing is local. No data leaves your browser.</span>
+                    <span style="font-size:13px;color:#666;">All editing is local. This is in Beta.</span>
                 </div>
                 <div id="xspreadsheet-container"></div>
                 <div id="embed-excel-status"></div>
