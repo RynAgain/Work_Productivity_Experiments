@@ -66,7 +66,7 @@
             box-shadow: 0 8px 32px rgba(0,0,0,0.18), 0 1.5px 6px rgba(0,78,54,0.10);
             padding: 18px 18px 12px 18px;
             min-width: 700px;
-            min-height: 500px;
+            min-height: 540px;
             max-width: 98vw;
             max-height: 98vh;
             display: flex;
@@ -97,7 +97,7 @@
         #embed-excel-upload {
             font-size: 15px;
         }
-        #embed-excel-export-btn {
+        #embed-excel-export-btn, #embed-excel-export-csv-btn {
             background: #004E36;
             color: #fff;
             border: none;
@@ -107,7 +107,7 @@
             cursor: pointer;
             transition: background 0.2s;
         }
-        #embed-excel-export-btn:hover {
+        #embed-excel-export-btn:hover, #embed-excel-export-csv-btn:hover {
             background: #218838;
         }
         #xspreadsheet-container {
@@ -127,6 +127,12 @@
             font-size: 14px;
             min-height: 18px;
             margin-top: 4px;
+        }
+        #embed-excel-sheet-picker {
+            font-size: 15px;
+            padding: 4px 8px;
+            border-radius: 4px;
+            border: 1px solid #ccc;
         }
     `;
     document.head.appendChild(style);
@@ -163,7 +169,9 @@
                 <h3>Local Excel Editor (x-spreadsheet)</h3>
                 <div id="embed-excel-controls">
                     <input type="file" id="embed-excel-upload" accept=".xlsx,.xls,.csv" />
+                    <select id="embed-excel-sheet-picker" style="display:none"></select>
                     <button id="embed-excel-export-btn" disabled>Export as .xlsx</button>
+                    <button id="embed-excel-export-csv-btn" disabled>Export current sheet as .csv</button>
                     <span style="font-size:13px;color:#666;">All editing is local. No data leaves your browser.</span>
                 </div>
                 <div id="xspreadsheet-container"></div>
@@ -184,10 +192,15 @@
 
         const uploadInput = document.getElementById('embed-excel-upload');
         const exportBtn = document.getElementById('embed-excel-export-btn');
+        const exportCsvBtn = document.getElementById('embed-excel-export-csv-btn');
         const statusDiv = document.getElementById('embed-excel-status');
         const container = document.getElementById('xspreadsheet-container');
+        const sheetPicker = document.getElementById('embed-excel-sheet-picker');
         let xs = null;
-        let sheetData = null;
+        let workbook = null;
+        let sheetNames = [];
+        let sheetDataArr = [];
+        let currentSheetIdx = 0;
 
         // Wait for x-spreadsheet and XLSX to be loaded
         function waitForLibs(cb) {
@@ -196,6 +209,21 @@
             } else {
                 setTimeout(() => waitForLibs(cb), 100);
             }
+        }
+
+        // Render a sheet in x-spreadsheet
+        function renderSheet(idx) {
+            if (!sheetDataArr[idx]) return;
+            if (xs && xs.destroy) xs.destroy();
+            container.innerHTML = '';
+            xs = window.x_spreadsheet(container, { showToolbar: true, showGrid: true }).loadData({
+                name: sheetNames[idx],
+                rows: sheetDataArr[idx].map(row => ({
+                    cells: row.map(cell => ({ text: cell == null ? '' : String(cell) }))
+                }))
+            });
+            currentSheetIdx = idx;
+            statusDiv.textContent = `Editing sheet: "${sheetNames[idx]}"`;
         }
 
         // File upload logic
@@ -207,31 +235,37 @@
                 const reader = new FileReader();
                 reader.onload = function (e) {
                     let data = e.target.result;
-                    let workbook;
                     try {
                         if (file.name.endsWith('.csv')) {
+                            // Single sheet CSV
                             workbook = window.XLSX.read(data, { type: 'string' });
                         } else {
                             workbook = window.XLSX.read(data, { type: 'array' });
                         }
-                        // Convert workbook to x-spreadsheet data
-                        const sheets = workbook.SheetNames.map(name => window.XLSX.utils.sheet_to_json(workbook.Sheets[name], { header: 1 }));
-                        // Only support first sheet for simplicity
-                        sheetData = sheets[0];
-                        // Destroy previous instance if any
-                        if (xs && xs.destroy) xs.destroy();
-                        container.innerHTML = '';
-                        xs = window.x_spreadsheet(container, { showToolbar: true, showGrid: true }).loadData({
-                            name: file.name,
-                            rows: sheetData.map(row => ({
-                                cells: row.map(cell => ({ text: cell == null ? '' : String(cell) }))
-                            }))
-                        });
+                        sheetNames = workbook.SheetNames;
+                        sheetDataArr = sheetNames.map(name => window.XLSX.utils.sheet_to_json(workbook.Sheets[name], { header: 1 }));
+                        // Populate sheet picker if more than one sheet
+                        if (sheetNames.length > 1) {
+                            sheetPicker.innerHTML = '';
+                            sheetNames.forEach((name, idx) => {
+                                const opt = document.createElement('option');
+                                opt.value = idx;
+                                opt.textContent = name;
+                                sheetPicker.appendChild(opt);
+                            });
+                            sheetPicker.style.display = '';
+                        } else {
+                            sheetPicker.style.display = 'none';
+                        }
+                        sheetPicker.value = 0;
+                        renderSheet(0);
                         exportBtn.disabled = false;
-                        statusDiv.textContent = 'File loaded. Edit and export as needed.';
+                        exportCsvBtn.disabled = false;
+                        statusDiv.textContent = `Editing sheet: "${sheetNames[0]}"`;
                     } catch (err) {
                         statusDiv.textContent = 'Error reading file: ' + err.message;
                         exportBtn.disabled = true;
+                        exportCsvBtn.disabled = true;
                     }
                 };
                 if (file.name.endsWith('.csv')) {
@@ -242,21 +276,36 @@
             });
         });
 
-        // Export logic
+        // Sheet picker logic
+        sheetPicker.addEventListener('change', function () {
+            const idx = parseInt(sheetPicker.value, 10);
+            // Before switching, save current edits
+            if (xs && sheetDataArr[currentSheetIdx]) {
+                const data = xs.getData();
+                sheetDataArr[currentSheetIdx] = data.rows.map(row =>
+                    (row.cells || []).map(cell => cell && cell.text ? cell.text : '')
+                );
+            }
+            renderSheet(idx);
+        });
+
+        // Export as XLSX (all sheets)
         exportBtn.onclick = function () {
             waitForLibs(() => {
                 try {
-                    if (!xs) throw new Error('No spreadsheet loaded');
-                    // Get data from x-spreadsheet
-                    const data = xs.getData();
-                    // Convert to worksheet
-                    const ws = window.XLSX.utils.aoa_to_sheet(
-                        data.rows.map(row =>
+                    // Save current edits
+                    if (xs && sheetDataArr[currentSheetIdx]) {
+                        const data = xs.getData();
+                        sheetDataArr[currentSheetIdx] = data.rows.map(row =>
                             (row.cells || []).map(cell => cell && cell.text ? cell.text : '')
-                        )
-                    );
+                        );
+                    }
+                    // Build workbook
                     const wb = window.XLSX.utils.book_new();
-                    window.XLSX.utils.book_append_sheet(wb, ws, 'Sheet1');
+                    sheetNames.forEach((name, idx) => {
+                        const ws = window.XLSX.utils.aoa_to_sheet(sheetDataArr[idx]);
+                        window.XLSX.utils.book_append_sheet(wb, ws, name);
+                    });
                     const wbout = window.XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
                     const blob = new Blob([wbout], { type: "application/octet-stream" });
                     const a = document.createElement('a');
@@ -268,6 +317,33 @@
                     statusDiv.textContent = 'Exported as edited.xlsx';
                 } catch (err) {
                     statusDiv.textContent = 'Export failed: ' + err.message;
+                }
+            });
+        };
+
+        // Export current sheet as CSV
+        exportCsvBtn.onclick = function () {
+            waitForLibs(() => {
+                try {
+                    // Save current edits
+                    if (xs && sheetDataArr[currentSheetIdx]) {
+                        const data = xs.getData();
+                        sheetDataArr[currentSheetIdx] = data.rows.map(row =>
+                            (row.cells || []).map(cell => cell && cell.text ? cell.text : '')
+                        );
+                    }
+                    const ws = window.XLSX.utils.aoa_to_sheet(sheetDataArr[currentSheetIdx]);
+                    const csv = window.XLSX.utils.sheet_to_csv(ws);
+                    const blob = new Blob([csv], { type: "text/csv" });
+                    const a = document.createElement('a');
+                    a.href = URL.createObjectURL(blob);
+                    a.download = (sheetNames[currentSheetIdx] || 'Sheet1') + '.csv';
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    statusDiv.textContent = 'Exported as ' + (sheetNames[currentSheetIdx] || 'Sheet1') + '.csv';
+                } catch (err) {
+                    statusDiv.textContent = 'CSV export failed: ' + err.message;
                 }
             });
         };
