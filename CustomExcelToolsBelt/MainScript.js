@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Modular Tampermonkey UI System
 // @namespace    http://tampermonkey.net/
-// @version      0.104
+// @version      0.105
 // @description  Modular UI system for /editor page, with feature panel registration
 // @match        https://*.cam.wfm.amazon.dev/editor*
 // @require      https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.17.0/xlsx.full.min.js
@@ -138,8 +138,40 @@
         panels.appendChild(panelContent);
 // --- Shared File State Manager ---
 (function() {
+  // Persisted file state key
+  const FILESTATE_KEY = 'tm_excel_file_state_v2';
+
   // Holds the current workbook and sheet data
-  // (see above for new definition and restore logic)
+  let fileState = {
+    workbook: null, // XLSX workbook object
+    workbookB64: null, // base64 string for persistence
+    sheetName: null, // string
+    sheetData: null  // array of row objects
+  };
+  const listeners = [];
+
+  // Restore from localStorage if available
+  (function restoreState() {
+    try {
+      const saved = localStorage.getItem(FILESTATE_KEY);
+      if (saved) {
+        const obj = JSON.parse(saved);
+        if (obj && obj.workbookB64 && obj.sheetName) {
+          // Reconstruct workbook from base64
+          const data = Uint8Array.from(atob(obj.workbookB64), c => c.charCodeAt(0));
+          const wb = XLSX.read(data, { type: 'array' });
+          fileState.workbook = wb;
+          fileState.workbookB64 = obj.workbookB64;
+          fileState.sheetName = obj.sheetName;
+          fileState.sheetData = wb && obj.sheetName
+            ? XLSX.utils.sheet_to_json(wb.Sheets[obj.sheetName], { defval: '' })
+            : null;
+        }
+      }
+    } catch (e) {
+      // Ignore errors
+    }
+  })();
 
   window.TM_FileState = {
     getState({ previewRows = null } = {}) {
