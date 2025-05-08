@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Modular Tampermonkey UI System
 // @namespace    http://tampermonkey.net/
-// @version      0.101
+// @version      0.102
 // @description  Modular UI system for /editor page, with feature panel registration
 // @match        https://*.cam.wfm.amazon.dev/editor*
 // @require      https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.17.0/xlsx.full.min.js
@@ -87,6 +87,29 @@
 
   sidebar.appendChild(tabs);
   sidebar.appendChild(panels);
+  // Add Reset/Clear button
+  const resetBtn = document.createElement('button');
+  resetBtn.textContent = 'Reset/Clear File';
+  resetBtn.style.background = '#fff';
+  resetBtn.style.color = '#004E36';
+  resetBtn.style.border = '1.5px solid #004E36';
+  resetBtn.style.borderRadius = '5px';
+  resetBtn.style.padding = '7px 0';
+  resetBtn.style.fontSize = '15px';
+  resetBtn.style.cursor = 'pointer';
+  resetBtn.style.margin = '10px 20px 0 20px';
+  resetBtn.style.transition = 'background 0.2s';
+  resetBtn.setAttribute('aria-label', 'Reset or clear the current file');
+  resetBtn.onmouseenter = () => { resetBtn.style.background = '#e6f2ef'; };
+  resetBtn.onmouseleave = () => { resetBtn.style.background = '#fff'; };
+  resetBtn.onclick = function() {
+    if (window.TM_FileState) {
+      window.TM_FileState.setWorkbook(null, null);
+      alert('File state cleared.');
+    }
+  };
+  sidebar.appendChild(resetBtn);
+
   document.body.appendChild(sidebar);
 
   // --- UI System ---
@@ -312,6 +335,15 @@
       if (state.sheetData.length === 0) {
         tableDiv.innerHTML = '<div style="color:#888;">Sheet is empty.</div>';
         return;
+      }
+      // Large file warning
+      if (state.sheetData.length > 1000) {
+        const warn = document.createElement('div');
+        warn.style.color = '#b85c00';
+        warn.style.fontWeight = 'bold';
+        warn.style.marginBottom = '8px';
+        warn.textContent = `Warning: This sheet has ${state.sheetData.length} rows. Preview and operations may be slow.`;
+        tableDiv.appendChild(warn);
       }
       const table = document.createElement('table');
       const thead = document.createElement('thead');

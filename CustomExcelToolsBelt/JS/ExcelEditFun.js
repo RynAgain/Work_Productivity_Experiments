@@ -72,20 +72,20 @@
         root.innerHTML = `
           <h3 style="margin-top:0;margin-bottom:12px;">Excel Explode Column</h3>
           <label for="eef-file">Excel File (.xlsx, .xls, .csv)</label>
-          <input type="file" id="eef-file" accept=".xlsx,.xls,.csv" />
+          <input type="file" id="eef-file" accept=".xlsx,.xls,.csv" aria-label="Excel file input" />
           <label for="eef-sheet">Sheet</label>
-          <select id="eef-sheet" disabled>
+          <select id="eef-sheet" disabled aria-label="Sheet select">
             <option value="">Select sheet</option>
           </select>
           <label for="eef-column">Column</label>
-          <select id="eef-column" disabled>
+          <select id="eef-column" disabled aria-label="Column select">
             <option value="">Select column</option>
           </select>
           <label for="eef-delim">Delimiter</label>
-          <input type="text" id="eef-delim" value="," maxlength="5" />
+          <input type="text" id="eef-delim" value="," maxlength="5" aria-label="Delimiter" />
           <label for="eef-filename">Output File Name</label>
-          <input type="text" id="eef-filename" value="exploded.xlsx" />
-          <button id="eef-explode" disabled>Explode & Download</button>
+          <input type="text" id="eef-filename" value="exploded.xlsx" aria-label="Output file name" />
+          <button id="eef-explode" disabled aria-label="Explode and download">Explode & Download</button>
           <div id="eef-panel-status"></div>
         `;
 
@@ -117,6 +117,10 @@
                 wb = XLSX.read(data, { type: 'array' });
               }
               workbook = wb;
+              // Update shared file state (default to first sheet)
+              if (window.TM_FileState) {
+                window.TM_FileState.setWorkbook(wb, wb.SheetNames[0]);
+              }
               // Populate sheet dropdown
               sheetSelect.innerHTML = '<option value="">Select sheet</option>';
               wb.SheetNames.forEach(name => {
@@ -149,6 +153,10 @@
             columnSelect.disabled = true;
             explodeBtn.disabled = true;
             return;
+          }
+          // Update shared file state for sheet selection
+          if (window.TM_FileState) {
+            window.TM_FileState.setSheetName(sheetName);
           }
           // Get data
           const ws = workbook.Sheets[sheetName];

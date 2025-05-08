@@ -78,12 +78,12 @@
         root.innerHTML = `
           <h3 style="margin-top:0;margin-bottom:12px;">Split File By Column</h3>
           <label for="split-by-column">Column to split by</label>
-          <select id="split-by-column">
+          <select id="split-by-column" aria-label="Column to split by">
             <option value="">Select column</option>
           </select>
           <label for="split-by-suffix">File name suffix</label>
-          <input type="text" id="split-by-suffix" value="part" />
-          <button id="split-by-go" disabled>Split & Download Zip</button>
+          <input type="text" id="split-by-suffix" value="part" aria-label="File name suffix" />
+          <button id="split-by-go" disabled aria-label="Split and download zip">Split & Download Zip</button>
           <div id="split-by-status"></div>
         `;
 
@@ -133,10 +133,9 @@
           const col = columnSelect.value;
           const suffix = suffixInput.value.trim() || 'part';
           if (!state.sheetData || !col) {
-            statusDiv.textContent = 'No data or column selected.';
+            statusDiv.textContent = 'No data or column selected. Please upload a file and select a column.';
             return;
           }
-          statusDiv.textContent = 'Splitting and zipping...';
 
           // Group rows by column value
           const groups = {};
@@ -146,15 +145,28 @@
             groups[key].push(row);
           });
 
+          const groupCount = Object.keys(groups).length;
+          if (groupCount > 100) {
+            if (!confirm(`Warning: This will create ${groupCount} files. Continue?`)) {
+              statusDiv.textContent = 'Operation cancelled by user.';
+              return;
+            }
+          }
+
+          statusDiv.textContent = 'Splitting and zipping...';
+
           // Create zip
           const zip = new JSZip();
           let fileCount = 0;
+          function sanitizeFilename(name) {
+            return String(name).replace(/[^a-zA-Z0-9_\-\.]/g, '_').slice(0, 50);
+          }
           for (const key in groups) {
             const rows = groups[key];
             const wb = XLSX.utils.book_new();
             const ws = XLSX.utils.json_to_sheet(rows);
             XLSX.utils.book_append_sheet(wb, ws, 'Sheet1');
-            const fname = `${key}-${suffix}.xlsx`;
+            const fname = `${sanitizeFilename(key)}-${sanitizeFilename(suffix)}.xlsx`;
             const wbout = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
             zip.file(fname, wbout);
             fileCount++;
@@ -165,7 +177,7 @@
             const content = await zip.generateAsync({ type: 'blob' });
             const a = document.createElement('a');
             a.href = URL.createObjectURL(content);
-            a.download = `split-by-${col}.zip`;
+            a.download = `split-by-${sanitizeFilename(col)}.zip`;
             document.body.appendChild(a);
             a.click();
             setTimeout(() => document.body.removeChild(a), 100);
