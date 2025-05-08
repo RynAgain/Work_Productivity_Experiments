@@ -1,8 +1,6 @@
 (function () {
     'use strict';
 
-    // Only run on /editor or all pages? We'll show on all pages for now.
-    // Position above the scratchpad button (which is at top: 10vh, left: 0)
     const BUTTON_ID = 'embed-excel-btn';
     const OVERLAY_ID = 'embed-excel-overlay';
 
@@ -46,10 +44,10 @@
             border-radius: 12px;
             box-shadow: 0 8px 32px rgba(0,0,0,0.18), 0 1.5px 6px rgba(0,78,54,0.10);
             padding: 24px 28px 20px 28px;
-            min-width: 420px;
-            min-height: 320px;
-            max-width: 90vw;
-            max-height: 90vh;
+            min-width: 520px;
+            min-height: 420px;
+            max-width: 95vw;
+            max-height: 95vh;
             display: flex;
             flex-direction: column;
             position: relative;
@@ -68,29 +66,30 @@
             border: none;
             cursor: pointer;
         }
-        #embed-excel-upload {
+        #embed-excel-controls {
             margin-bottom: 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
         }
-        #embed-excel-table-container {
-            overflow: auto;
-            max-height: 45vh;
-            margin-bottom: 12px;
+        #embed-excel-iframe {
+            width: 800px;
+            height: 500px;
+            max-width: 80vw;
+            max-height: 60vh;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            margin-top: 8px;
+            background: #f8f8f8;
         }
-        #embed-excel-table {
-            border-collapse: collapse;
+        #embed-excel-link-input {
             width: 100%;
+            padding: 6px 8px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
             font-size: 15px;
         }
-        #embed-excel-table th, #embed-excel-table td {
-            border: 1px solid #ccc;
-            padding: 4px 8px;
-            min-width: 60px;
-            text-align: left;
-        }
-        #embed-excel-table th {
-            background: #f2f2f2;
-        }
-        #embed-excel-save {
+        #embed-excel-open-btn, #embed-excel-blank-btn {
             background: #004E36;
             color: #fff;
             border: none;
@@ -100,20 +99,23 @@
             cursor: pointer;
             transition: background 0.2s;
             width: 100%;
-            margin-bottom: 6px;
         }
-        #embed-excel-save:hover {
+        #embed-excel-open-btn:hover, #embed-excel-blank-btn:hover {
             background: #218838;
+        }
+        #embed-excel-instructions {
+            font-size: 14px;
+            color: #333;
+            margin-bottom: 4px;
         }
     `;
     document.head.appendChild(style);
 
-    // Add the button if not already present
     function addEmbedExcelButton() {
         if (document.getElementById(BUTTON_ID)) return;
         const btn = document.createElement('button');
         btn.id = BUTTON_ID;
-        btn.title = 'Embed Excel Editor';
+        btn.title = 'Embed Microsoft Excel Online';
         btn.innerHTML = `
             <svg width="22" height="22" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
                 <rect x="3" y="4" width="18" height="16" rx="2" fill="#fff" stroke="none"/>
@@ -128,7 +130,6 @@
         document.body.appendChild(btn);
     }
 
-    // Show the overlay/modal
     function showEmbedExcelOverlay() {
         if (document.getElementById(OVERLAY_ID)) return;
         const overlay = document.createElement('div');
@@ -137,11 +138,19 @@
         overlay.innerHTML = `
             <div id="embed-excel-modal">
                 <button id="embed-excel-close" title="Close">&times;</button>
-                <h3>Embedded Excel Editor</h3>
-                <input type="file" id="embed-excel-upload" accept=".xlsx,.xls,.csv" />
-                <div id="embed-excel-table-container"></div>
-                <button id="embed-excel-save" disabled>Download Edited File</button>
-                <div id="embed-excel-status" style="color:#004E36;font-size:14px;min-height:18px;"></div>
+                <h3>Microsoft Excel Online Editor</h3>
+                <div id="embed-excel-controls">
+                    <button id="embed-excel-blank-btn">Open Blank Excel Online</button>
+                    <div id="embed-excel-instructions">
+                        <b>To edit your own file:</b><br>
+                        1. Upload your Excel file to <a href="https://onedrive.live.com/" target="_blank" rel="noopener">OneDrive</a> or <a href="https://sharepoint.com/" target="_blank" rel="noopener">SharePoint</a>.<br>
+                        2. Get the sharing link for the file (must be a direct link to the .xlsx file).<br>
+                        3. Paste the link below and click "Open from Link".
+                    </div>
+                    <input type="text" id="embed-excel-link-input" placeholder="Paste OneDrive/SharePoint Excel file link here..." />
+                    <button id="embed-excel-open-btn">Open from Link</button>
+                </div>
+                <iframe id="embed-excel-iframe" style="display:none"></iframe>
             </div>
         `;
         document.body.appendChild(overlay);
@@ -154,97 +163,30 @@
             if (e.target === overlay) document.body.removeChild(overlay);
         };
 
-        // File upload logic
-        const uploadInput = document.getElementById('embed-excel-upload');
-        const tableContainer = document.getElementById('embed-excel-table-container');
-        const saveBtn = document.getElementById('embed-excel-save');
-        const statusDiv = document.getElementById('embed-excel-status');
-        let sheetData = [];
-        let headers = [];
-        let fileName = 'edited.xlsx';
+        const iframe = document.getElementById('embed-excel-iframe');
+        const openBtn = document.getElementById('embed-excel-open-btn');
+        const blankBtn = document.getElementById('embed-excel-blank-btn');
+        const linkInput = document.getElementById('embed-excel-link-input');
 
-        uploadInput.addEventListener('change', function () {
-            const file = uploadInput.files[0];
-            if (!file) return;
-            statusDiv.textContent = 'Reading file...';
-            fileName = file.name.replace(/\.(xlsx|xls|csv)$/i, '') + '_edited.xlsx';
-            const reader = new FileReader();
-            reader.onload = function (e) {
-                try {
-                    let data = e.target.result;
-                    let wb;
-                    if (file.name.endsWith('.csv')) {
-                        wb = XLSX.read(data, { type: 'string' });
-                    } else {
-                        wb = XLSX.read(data, { type: 'array' });
-                    }
-                    // Use the first sheet
-                    const ws = wb.Sheets[wb.SheetNames[0]];
-                    sheetData = XLSX.utils.sheet_to_json(ws, { defval: '' });
-                    if (sheetData.length === 0) {
-                        statusDiv.textContent = 'Sheet is empty.';
-                        tableContainer.innerHTML = '';
-                        saveBtn.disabled = true;
-                        return;
-                    }
-                    headers = Object.keys(sheetData[0]);
-                    renderTable();
-                    saveBtn.disabled = false;
-                    statusDiv.textContent = 'File loaded. Click any cell to edit.';
-                } catch (err) {
-                    statusDiv.textContent = 'Error reading file: ' + err.message;
-                    tableContainer.innerHTML = '';
-                    saveBtn.disabled = true;
-                }
-            };
-            if (file.name.endsWith('.csv')) {
-                reader.readAsText(file);
-            } else {
-                reader.readAsArrayBuffer(file);
+        // Open blank Excel Online (new workbook)
+        blankBtn.onclick = function () {
+            // This opens a blank workbook in Excel Online (in the user's SSO context)
+            iframe.style.display = '';
+            iframe.src = "https://excel.office.com/?auth=2";
+        };
+
+        // Open from OneDrive/SharePoint link
+        openBtn.onclick = function () {
+            const url = linkInput.value.trim();
+            if (!url) {
+                alert("Please paste a OneDrive or SharePoint Excel file link.");
+                return;
             }
-        });
-
-        // Render editable table
-        function renderTable() {
-            let html = '<table id="embed-excel-table"><thead><tr>';
-            headers.forEach(h => {
-                html += `<th>${h}</th>`;
-            });
-            html += '</tr></thead><tbody>';
-            sheetData.forEach((row, rowIdx) => {
-                html += '<tr>';
-                headers.forEach((h, colIdx) => {
-                    html += `<td contenteditable="true" data-row="${rowIdx}" data-col="${h}">${row[h]}</td>`;
-                });
-                html += '</tr>';
-            });
-            html += '</tbody></table>';
-            tableContainer.innerHTML = html;
-
-            // Add cell edit listeners
-            const cells = tableContainer.querySelectorAll('td[contenteditable]');
-            cells.forEach(cell => {
-                cell.addEventListener('input', function () {
-                    const rowIdx = parseInt(cell.getAttribute('data-row'), 10);
-                    const col = cell.getAttribute('data-col');
-                    sheetData[rowIdx][col] = cell.textContent;
-                });
-            });
-        }
-
-        // Save/download logic
-        saveBtn.onclick = function () {
-            if (!sheetData.length) return;
-            statusDiv.textContent = 'Preparing file...';
-            try {
-                const ws = XLSX.utils.json_to_sheet(sheetData);
-                const wb = XLSX.utils.book_new();
-                XLSX.utils.book_append_sheet(wb, ws, 'Sheet1');
-                XLSX.writeFile(wb, fileName);
-                statusDiv.textContent = 'File downloaded: ' + fileName;
-            } catch (err) {
-                statusDiv.textContent = 'Error saving file: ' + err.message;
-            }
+            // The embed URL for Excel Online is:
+            // https://excel.office.com/embed?resurl={encoded file url}
+            // The file must be accessible to the user (SSO will prompt if not signed in)
+            iframe.style.display = '';
+            iframe.src = "https://excel.office.com/embed?resurl=" + encodeURIComponent(url);
         };
     }
 
