@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Modular Tampermonkey UI System
 // @namespace    http://tampermonkey.net/
-// @version      0.109
+// @version      0.110
 // @description  Modular UI system for /editor page, with feature panel registration
 // @match        https://*.cam.wfm.amazon.dev/editor*
 // @require      https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.17.0/xlsx.full.min.js
@@ -162,6 +162,59 @@
   mainContent.appendChild(panels);
 
   sidebar.appendChild(tabs);
+// Add File Upload button above reset
+const uploadLabel = document.createElement('label');
+uploadLabel.textContent = 'Upload Excel File';
+uploadLabel.style.fontWeight = 'bold';
+uploadLabel.style.margin = '18px 20px 6px 20px';
+uploadLabel.style.display = 'block';
+
+const uploadInput = document.createElement('input');
+uploadInput.type = 'file';
+uploadInput.accept = '.xlsx,.xls,.csv';
+uploadInput.style.margin = '0 20px 10px 20px';
+uploadInput.style.width = 'calc(100% - 40px)';
+uploadInput.setAttribute('aria-label', 'Upload Excel file');
+
+uploadInput.addEventListener('change', function() {
+  const file = uploadInput.files[0];
+  if (!file) return;
+  const statusMsg = document.createElement('div');
+  statusMsg.style.margin = '0 20px 10px 20px';
+  statusMsg.style.color = '#004E36';
+  statusMsg.textContent = 'Reading file...';
+  sidebar.insertBefore(statusMsg, resetBtn);
+
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    try {
+      let data = e.target.result;
+      let wb;
+      if (file.name.endsWith('.csv')) {
+        wb = XLSX.read(data, { type: 'string' });
+      } else {
+        wb = XLSX.read(data, { type: 'array' });
+      }
+      if (window.TM_FileState) {
+        window.TM_FileState.setWorkbook(wb, wb.SheetNames[0]);
+      }
+      if (window.TM_RefreshPreview) window.TM_RefreshPreview();
+      statusMsg.textContent = 'File loaded: ' + file.name;
+      setTimeout(() => statusMsg.remove(), 2000);
+    } catch (err) {
+      statusMsg.textContent = 'Error reading file: ' + err.message;
+      setTimeout(() => statusMsg.remove(), 4000);
+    }
+  };
+  if (file.name.endsWith('.csv')) {
+    reader.readAsText(file);
+  } else {
+    reader.readAsArrayBuffer(file);
+  }
+});
+
+sidebar.appendChild(uploadLabel);
+sidebar.appendChild(uploadInput);
   // Add Reset/Clear button
   const resetBtn = document.createElement('button');
   resetBtn.textContent = 'Reset/Clear File';
@@ -179,10 +232,11 @@
   resetBtn.onmouseleave = () => { resetBtn.style.background = '#fff'; };
   resetBtn.onclick = function() {
     if (window.TM_FileState) {
-      window.TM_FileState.setWorkbook(null, null);
-      try { localStorage.removeItem('tm_excel_file_state_v2'); } catch (e) {}
-      alert('File state cleared.');
-    }
+  window.TM_FileState.setWorkbook(null, null);
+  try { localStorage.removeItem('tm_excel_file_state_v2'); } catch (e) {}
+  if (window.TM_RefreshPreview) window.TM_RefreshPreview();
+  alert('File state cleared.');
+}
   };
   sidebar.appendChild(resetBtn);
 
