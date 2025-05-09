@@ -112,6 +112,20 @@
         const mapInput = root.querySelector('#split-to-upload-map');
         const mapStatus = root.querySelector('#split-to-upload-map-status');
         let mapData = null;
+        const MAP_STORAGE_KEY = "splitToUploadFiles_mapData";
+        // Try to load persisted map on panel load
+        (function loadPersistedMap() {
+          try {
+            const saved = localStorage.getItem(MAP_STORAGE_KEY);
+            if (saved) {
+              const parsed = JSON.parse(saved);
+              if (Array.isArray(parsed) && parsed.length > 0) {
+                mapData = parsed;
+                mapStatus.textContent = `Loaded persisted map file (${parsed.length} rows)`;
+              }
+            }
+          } catch (e) {}
+        })();
 
         // Validation logic
         function isValidInput(state) {
@@ -206,6 +220,10 @@
                 return;
               }
               mapData = rows;
+              // Persist to localStorage
+              try {
+                localStorage.setItem(MAP_STORAGE_KEY, JSON.stringify(rows));
+              } catch (e) {}
               mapStatus.textContent = `Loaded map file: ${file.name} (${rows.length} rows)`;
             } catch (err) {
               mapData = null;
