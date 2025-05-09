@@ -163,19 +163,20 @@
             return;
           }
           mapStatus.textContent = 'Reading map file...';
+          const requiredMapCols = ["Acro", "Region", "Store name", "MID"];
           const reader = new FileReader();
           reader.onload = function(e) {
             try {
               let data = e.target.result;
-              let rows;
+              let rows, headers;
               if (file.name.endsWith('.csv')) {
                 // Parse CSV
                 const lines = data.split(/\r?\n/).filter(Boolean);
-                const headers = lines[0].split(',');
+                headers = lines[0].split(',').map(h => h.trim());
                 rows = lines.slice(1).map(line => {
                   const vals = line.split(',');
                   const obj = {};
-                  headers.forEach((h, i) => obj[h.trim()] = vals[i] ? vals[i].trim() : "");
+                  headers.forEach((h, i) => obj[h] = vals[i] ? vals[i].trim() : "");
                   return obj;
                 });
               } else {
@@ -183,6 +184,14 @@
                 const wb = XLSX.read(data, { type: 'array' });
                 const ws = wb.Sheets[wb.SheetNames[0]];
                 rows = XLSX.utils.sheet_to_json(ws, { defval: '' });
+                headers = rows.length > 0 ? Object.keys(rows[0]) : [];
+              }
+              // Validate required columns
+              const missing = requiredMapCols.filter(col => !headers.includes(col));
+              if (missing.length > 0) {
+                mapData = null;
+                mapStatus.textContent = `Error: Map file missing columns: ${missing.join(', ')}`;
+                return;
               }
               mapData = rows;
               mapStatus.textContent = `Loaded map file: ${file.name} (${rows.length} rows)`;
@@ -222,9 +231,13 @@
             statusDiv.textContent = 'No data or column selected. Please upload a file and select a column.';
             return;
           }
+          if (!mapData) {
+            statusDiv.textContent = 'No valid Store-Region-MID map file loaded.';
+            return;
+          }
           statusDiv.textContent = 'Splitting and zipping...';
 
-          // Group rows by column value
+          // Group rows by region (split column)
           const groups = {};
           state.sheetData.forEach(row => {
             const key = row[col] || 'EMPTY';
@@ -232,21 +245,65 @@
             groups[key].push(row);
           });
 
-          // Create zip
+          // Create zip with folders for each region
           const zip = new JSZip();
           let fileCount = 0;
           function sanitizeFilename(name) {
             return String(name).replace(/[^a-zA-Z0-9_\-\.]/g, '_').slice(0, 50);
           }
-          for (const key in groups) {
-            const rows = groups[key];
+
+          for (const region in groups) {
+            const regionRows = groups[region];
+            const regionFolder = zip.folder(sanitizeFilename(region));
+
+            // 1. Split upload file (XLSX)
             const wb = XLSX.utils.book_new();
-            const ws = XLSX.utils.json_to_sheet(rows);
+            const ws = XLSX.utils.json_to_sheet(regionRows);
             XLSX.utils.book_append_sheet(wb, ws, 'Sheet1');
-            const fname = `${sanitizeFilename(key)}-${sanitizeFilename(suffix)}.xlsx`;
+            const uploadFname = `${sanitizeFilename(region)}-${sanitizeFilename(suffix)}.xlsx`;
             const wbout = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
-            zip.file(fname, wbout);
-            fileCount++;
+            regionFolder.file(uploadFname, wbout);
+
+            // 2. List of MIDs for the region (CSV)
+            const mids = mapData
+              .filter(m => m.Region === region)
+              .map(m => m.MID)
+              .filter(mid => mid && mid.trim() !== "");
+            const midsCsv = "MID\n" + mids.join("\n");
+            regionFolder.file("region-mids.csv", midsCsv);
+
+            // 3. Cartesian product: region MIDs × SKUs
+            // Output columns: catering_mid, asin, sku, alternate_tax_code
+            // - catering_mid: MID from map
+            // - asin: external_product_id from upload
+            // - sku: item_sku from upload
+            // - alternate_tax_code: alternate_tax_code from upload
+            const regionSkus = regionRows.map(r => ({
+              asin: r.external_product_id,
+              sku: r.item_sku,
+              alternate_tax_code: r.alternate_tax_code
+            }));
+            const cartesianRows = [];
+            mids.forEach(mid => {
+              regionSkus.forEach(skuRow => {
+                cartesianRows.push({
+                  catering_mid: mid,
+                  asin: skuRow.asin,
+                  sku: skuRow.sku,
+                  alternate_tax_code: skuRow.alternate_tax_code
+                });
+              });
+            });
+            // Write as CSV
+            const cartesianCsv = [
+              "catering_mid,asin,sku,alternate_tax_code",
+              ...cartesianRows.map(row =>
+                [row.catering_mid, row.asin, row.sku, row.alternate_tax_code].join(",")
+              )
+            ].join("\n");
+            regionFolder.file("region-cartesian.csv", cartesianCsv);
+
+            fileCount += 3;
           }
 
           // Generate and download zip
@@ -258,7 +315,7 @@
             document.body.appendChild(a);
             a.click();
             setTimeout(() => document.body.removeChild(a), 100);
-            statusDiv.textContent = `Downloaded ${fileCount} files in zip.`;
+            statusDiv.textContent = `Downloaded ${fileCount} files in zip (folders for each region).`;
           } catch (err) {
             statusDiv.textContent = 'Error creating zip: ' + err.message;
           }
