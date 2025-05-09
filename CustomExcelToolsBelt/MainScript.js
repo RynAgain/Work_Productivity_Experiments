@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Modular Tampermonkey UI System
 // @namespace    http://tampermonkey.net/
-// @version      0.110
+// @version      0.111
 // @description  Modular UI system for /editor page, with feature panel registration
 // @match        https://*.cam.wfm.amazon.dev/editor*
 // @require      https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.17.0/xlsx.full.min.js
@@ -10,6 +10,7 @@
 // @require      https://github.com/RynAgain/Work_Productivity_Experiments/raw/main/CustomExcelToolsBelt/JS/ExcelEditFun.js
 // @require      https://github.com/RynAgain/Work_Productivity_Experiments/raw/main/CustomExcelToolsBelt/JS/previewFile.js
 // @require      https://github.com/RynAgain/Work_Productivity_Experiments/raw/main/CustomExcelToolsBelt/JS/SplitBy.js
+// @require      https://github.com/RynAgain/Work_Productivity_Experiments/raw/main/CustomExcelToolsBelt/JS/SplitToUploadFiles.js
 
 
 // @grant        none
@@ -488,6 +489,10 @@ sidebar.appendChild(uploadInput);
         }
         #tm-file-preview th {
           background: #f2f2f2;
+// Debug: log every time preview is refreshed
+      function debugPreviewUpdate(reason) {
+        console.log('[TM Preview] Refreshed preview:', reason, new Date().toISOString());
+      }
           font-weight: 600;
         }
         #tm-file-preview .preview-actions {
@@ -543,6 +548,17 @@ sidebar.appendChild(uploadInput);
       const ws = previewState.workbook.Sheets[previewState.sheetName];
       const allRowsCount = XLSX.utils.sheet_to_json(ws, { defval: '' }).length;
       if (allRowsCount > 1000) {
+// Periodic refresh every 10 seconds
+      setInterval(() => {
+        debugPreviewUpdate('interval');
+        renderTable();
+      }, 10000);
+
+      // Expose manual refresh for tools
+      window.TM_RefreshPreview = function() {
+        debugPreviewUpdate('manual');
+        renderTable();
+      };
         const warn = document.createElement('div');
         warn.style.color = '#b85c00';
         warn.style.fontWeight = 'bold';
