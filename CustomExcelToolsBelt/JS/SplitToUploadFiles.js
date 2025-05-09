@@ -84,6 +84,9 @@
         root.innerHTML = `
           <h3 style="margin-top:0;margin-bottom:12px;">Split To Upload Files</h3>
           <div id="split-to-upload-warning" style="color:#b85c00;font-weight:bold;margin-bottom:8px;display:none;"></div>
+          <label for="split-to-upload-map">Store-Region-ID Map File (.csv, .xlsx, .xls)</label>
+          <input type="file" id="split-to-upload-map" accept=".csv,.xlsx,.xls" aria-label="Store-Region-ID Map File" />
+          <div id="split-to-upload-map-status" style="font-size:13px;color:#004E36;margin-bottom:8px;"></div>
           <label for="split-to-upload-column">Column to split by</label>
           <select id="split-to-upload-column" aria-label="Column to split by">
             <option value="">Select column</option>
@@ -100,17 +103,30 @@
         const goBtn = root.querySelector('#split-to-upload-go');
         const statusDiv = root.querySelector('#split-to-upload-status');
         const warningDiv = root.querySelector('#split-to-upload-warning');
+        const mapInput = root.querySelector('#split-to-upload-map');
+        const mapStatus = root.querySelector('#split-to-upload-map-status');
+        let mapData = null;
 
         // Validation logic
         function isValidInput(state) {
-          // TODO: Replace with actual strict requirements
-          // Example: require at least 1 row, at least 2 columns, and a specific column name
+          // Require all specified columns to be present
+          const requiredCols = [
+            "feed_product_type",
+            "item_sku",
+            "update_delete",
+            "standard_price",
+            "offering_start_date",
+            "offering_end_date",
+            "condition_type",
+            "main_image_url",
+            "external_product_id",
+            "external_product_id_type",
+            "quantity",
+            "alternate_tax_code"
+          ];
           if (!state.sheetData || state.sheetData.length === 0) return false;
           const cols = state.sheetData[0] ? Object.keys(state.sheetData[0]) : [];
-          if (cols.length < 2) return false;
-          // Example: require a column named "ID"
-          // if (!cols.includes("ID")) return false;
-          return true;
+          return requiredCols.every(col => cols.includes(col));
         }
 
         // Populate columns from file state and validate
@@ -137,6 +153,50 @@
             warningDiv.style.display = '';
           }
         }
+
+        // Handle map file upload
+        mapInput.addEventListener('change', function() {
+          const file = mapInput.files[0];
+          if (!file) {
+            mapStatus.textContent = 'No map file selected.';
+            mapData = null;
+            return;
+          }
+          mapStatus.textContent = 'Reading map file...';
+          const reader = new FileReader();
+          reader.onload = function(e) {
+            try {
+              let data = e.target.result;
+              let rows;
+              if (file.name.endsWith('.csv')) {
+                // Parse CSV
+                const lines = data.split(/\r?\n/).filter(Boolean);
+                const headers = lines[0].split(',');
+                rows = lines.slice(1).map(line => {
+                  const vals = line.split(',');
+                  const obj = {};
+                  headers.forEach((h, i) => obj[h.trim()] = vals[i] ? vals[i].trim() : "");
+                  return obj;
+                });
+              } else {
+                // Parse XLSX
+                const wb = XLSX.read(data, { type: 'array' });
+                const ws = wb.Sheets[wb.SheetNames[0]];
+                rows = XLSX.utils.sheet_to_json(ws, { defval: '' });
+              }
+              mapData = rows;
+              mapStatus.textContent = `Loaded map file: ${file.name} (${rows.length} rows)`;
+            } catch (err) {
+              mapData = null;
+              mapStatus.textContent = 'Error reading map file: ' + err.message;
+            }
+          };
+          if (file.name.endsWith('.csv')) {
+            reader.readAsText(file);
+          } else {
+            reader.readAsArrayBuffer(file);
+          }
+        });
 
         // Enable/disable button
         columnSelect.addEventListener('change', function() {
