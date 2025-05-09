@@ -418,6 +418,16 @@
               fileCount++;
             }
 
+            // 4. Summary .txt file
+            const uniqueSkus = new Set(regionRows.map(r => r.item_sku)).size;
+            const uniqueMIDs = new Set(midsArr.map(m => String(m))).size;
+            const summaryTxt =
+              `Region: ${region}\n` +
+              `Number of SKUs in upload file: ${uniqueSkus}\n` +
+              `Number of unique MIDs in region: ${uniqueMIDs}\n`;
+            regionFolder.file("Summary.txt", summaryTxt);
+            fileCount++;
+
             // 3. Cartesian product: region MIDs × SKUs
             if (cartesian) {
               statusDiv.innerHTML = `Processing region ${regionIndex} of ${Object.keys(groups).length}: <b>${region}</b> (cartesian rows: ${midsArr.length * regionRows.length})...`;
