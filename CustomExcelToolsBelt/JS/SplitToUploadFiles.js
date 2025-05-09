@@ -246,7 +246,6 @@
             statusDiv.textContent = 'No valid Store-Region-MID map file loaded.';
             return;
           }
-          statusDiv.textContent = 'Generating zip...';
 
           // Group rows by region (split column)
           const groups = {};
@@ -256,6 +255,26 @@
             groups[key].push(row);
           });
 
+          // Pre-calculate summary
+          let totalCartesian = 0;
+          let totalUploadRows = 0;
+          let totalMIDs = 0;
+          for (const region in groups) {
+            const regionRows = groups[region];
+            const midsArr = mapData
+              .filter(m => m.Region === region)
+              .map(m => m.MID)
+              .filter(mid => typeof mid === "string" ? mid.trim() !== "" : (mid !== null && mid !== undefined && String(mid).trim() !== ""));
+            totalUploadRows += regionRows.length;
+            totalMIDs += midsArr.length;
+            totalCartesian += regionRows.length * midsArr.length;
+          }
+          statusDiv.innerHTML = `Preparing to process ${Object.keys(groups).length} regions.<br>
+            Total upload rows: ${totalUploadRows}<br>
+            Total MIDs: ${totalMIDs}<br>
+            Total cartesian rows: ${totalCartesian}<br>
+            <b>Processing...</b>`;
+
           // Create zip with folders for each region
           const zip = new JSZip();
           let fileCount = 0;
@@ -263,12 +282,16 @@
             return String(name).replace(/[^a-zA-Z0-9_\-\.]/g, '_').slice(0, 50);
           }
 
+          let regionIndex = 0;
           for (const region in groups) {
+            regionIndex++;
             const regionRows = groups[region];
             const regionFolder = zip.folder(sanitizeFilename(region));
 
             // 1. Split upload file (XLSX)
             if (uploads) {
+              statusDiv.innerHTML = `Processing region ${regionIndex} of ${Object.keys(groups).length}: <b>${region}</b> (upload rows: ${regionRows.length})...`;
+              await new Promise(r => setTimeout(r, 0));
               const wb = XLSX.utils.book_new();
               const ws = XLSX.utils.json_to_sheet(regionRows);
               XLSX.utils.book_append_sheet(wb, ws, 'Sheet1');
@@ -282,20 +305,19 @@
             const midsArr = mapData
               .filter(m => m.Region === region)
               .map(m => m.MID)
-              .filter(mid => mid && mid.trim() !== "");
+              .filter(mid => typeof mid === "string" ? mid.trim() !== "" : (mid !== null && mid !== undefined && String(mid).trim() !== ""));
             if (mids) {
+              statusDiv.innerHTML = `Processing region ${regionIndex} of ${Object.keys(groups).length}: <b>${region}</b> (MIDs: ${midsArr.length})...`;
+              await new Promise(r => setTimeout(r, 0));
               const midsCsv = "MID\n" + midsArr.join("\n");
               regionFolder.file("region-mids.csv", midsCsv);
               fileCount++;
             }
 
             // 3. Cartesian product: region MIDs × SKUs
-            // Output columns: catering_mid, asin, sku, alternate_tax_code
-            // - catering_mid: MID from map
-            // - asin: external_product_id from upload
-            // - sku: item_sku from upload
-            // - alternate_tax_code: alternate_tax_code from upload
             if (cartesian) {
+              statusDiv.innerHTML = `Processing region ${regionIndex} of ${Object.keys(groups).length}: <b>${region}</b> (cartesian rows: ${midsArr.length * regionRows.length})...`;
+              await new Promise(r => setTimeout(r, 0));
               const regionSkus = regionRows.map(r => ({
                 asin: r.external_product_id,
                 sku: r.item_sku,
@@ -326,6 +348,8 @@
 
           // Generate and download zip
           try {
+            statusDiv.innerHTML = "Generating zip file (this may take a moment)...";
+            await new Promise(r => setTimeout(r, 0));
             const content = await zip.generateAsync({ type: 'blob' });
             const a = document.createElement('a');
             a.href = URL.createObjectURL(content);
@@ -345,7 +369,7 @@
               const midsArr = mapData
                 .filter(m => m.Region === region)
                 .map(m => m.MID)
-                .filter(mid => mid && mid.trim() !== "");
+                .filter(mid => typeof mid === "string" ? mid.trim() !== "" : (mid !== null && mid !== undefined && String(mid).trim() !== ""));
               const cartesianCount = midsArr.length * regionRows.length;
               msg += `<b>${region}</b>: `;
               if (uploads) msg += `${regionRows.length} upload rows, `;
