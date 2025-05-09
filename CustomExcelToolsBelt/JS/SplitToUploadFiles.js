@@ -292,8 +292,49 @@
             if (uploads) {
               statusDiv.innerHTML = `Processing region ${regionIndex} of ${Object.keys(groups).length}: <b>${region}</b> (upload rows: ${regionRows.length})...`;
               await new Promise(r => setTimeout(r, 0));
+              // --- Custom Upload File Format as XLSX ---
+              // 1. Metadata line (single cell, rest empty)
+              const now = new Date();
+              const isoTimestamp = now.toISOString();
+              const metadataLine = [
+                "TemplateType=fptcustom Version=2025.0401 TemplateSignature=Rk9PRA== " +
+                "settings=attributeRow=3&contentLanguageTag=en_US&dataRow=4&feedType=113&headerLanguageTag=en_US&isEdit=false&isProcessingSummary=false&labelRow=2&metadataVersion=MatprodVm9MVFByb2RfMTIzNA%3D%3D&primaryMarketplaceId=amzn1.mp.o.ATVPDKIKX0DER&ptds=Rk9PRA%3D%3D&reportProvenance=false&templateIdentifier=5dd18c07-9366-4278-8b7c-ed2710400e03&timestamp=" + isoTimestamp
+              ];
+
+              // 2. Human-readable labels (array)
+              const labelLine = [
+                "Product Type", "Seller SKU", "Record Action", "Your Price", "Offering Release Date", "Stop Selling Date",
+                "Offering Condition Type", "Main Image URL", "External Product ID", "External Product ID Type", "Quantity", "ATC"
+              ];
+
+              // 3. System column keys (array)
+              const keyLine = [
+                "feed_product_type", "item_sku", "update_delete", "standard_price", "offering_start_date", "offering_end_date",
+                "condition_type", "main_image_url", "external_product_id", "external_product_id_type", "quantity", "alternate_tax_code"
+              ];
+
+              // 4. Data rows (array of arrays, in order)
+              const dataRows = regionRows.map(r => [
+                r.feed_product_type ?? "",
+                r.item_sku ?? "",
+                r.update_delete ?? "",
+                r.standard_price ?? "",
+                r.offering_start_date ?? "",
+                r.offering_end_date ?? "",
+                r.condition_type ?? "",
+                r.main_image_url ?? "",
+                r.external_product_id ?? "",
+                r.external_product_id_type ?? "",
+                r.quantity ?? "",
+                r.alternate_tax_code ?? ""
+              ]);
+
+              // Build worksheet as array-of-arrays
+              const aoa = [metadataLine, labelLine, keyLine, ...dataRows];
+              const ws = XLSX.utils.aoa_to_sheet(aoa);
+
+              // Save as .xlsx
               const wb = XLSX.utils.book_new();
-              const ws = XLSX.utils.json_to_sheet(regionRows);
               XLSX.utils.book_append_sheet(wb, ws, 'Sheet1');
               const uploadFname = `${sanitizeFilename(region)}-${sanitizeFilename(suffix)}.xlsx`;
               const wbout = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
@@ -309,7 +350,8 @@
             if (mids) {
               statusDiv.innerHTML = `Processing region ${regionIndex} of ${Object.keys(groups).length}: <b>${region}</b> (MIDs: ${midsArr.length})...`;
               await new Promise(r => setTimeout(r, 0));
-              const midsCsv = "MID\n" + midsArr.join("\n");
+              // Force MID as string in CSV: ="MID"
+              const midsCsv = "MID\n" + midsArr.map(mid => '="' + String(mid) + '"').join("\n");
               regionFolder.file("region-mids.csv", midsCsv);
               fileCount++;
             }
@@ -327,7 +369,7 @@
               midsArr.forEach(mid => {
                 regionSkus.forEach(skuRow => {
                   cartesianRows.push({
-                    catering_mid: mid,
+                    catering_mid: "'" + String(mid),
                     asin: skuRow.asin,
                     sku: skuRow.sku,
                     alternate_tax_code: skuRow.alternate_tax_code
@@ -338,7 +380,12 @@
               const cartesianCsv = [
                 "catering_mid,asin,sku,alternate_tax_code",
                 ...cartesianRows.map(row =>
-                  [row.catering_mid, row.asin, row.sku, row.alternate_tax_code].join(",")
+                  [
+                    '="' + String(row.catering_mid) + '"',
+                    row.asin,
+                    row.sku,
+                    row.alternate_tax_code
+                  ].join(",")
                 )
               ].join("\n");
               regionFolder.file("region-cartesian.csv", cartesianCsv);
