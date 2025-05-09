@@ -351,8 +351,13 @@
               statusDiv.innerHTML = `Processing region ${regionIndex} of ${Object.keys(groups).length}: <b>${region}</b> (MIDs: ${midsArr.length})...`;
               await new Promise(r => setTimeout(r, 0));
               // Force MID as string in CSV: ="MID"
-              const midsCsv = "MID\n" + midsArr.map(mid => '="' + String(mid) + '"').join("\n");
-              regionFolder.file("region-mids.csv", midsCsv);
+              // MIDs as XLSX
+              const midsSheet = XLSX.utils.aoa_to_sheet([["MID"], ...midsArr.map(mid => ['="' + String(mid) + '"'])]);
+              const midsWb = XLSX.utils.book_new();
+              XLSX.utils.book_append_sheet(midsWb, midsSheet, "MIDs");
+              const midsFname = `${sanitizeFilename(region)} MIDs.xlsx`;
+              const midsWbout = XLSX.write(midsWb, { bookType: 'xlsx', type: 'array' });
+              regionFolder.file(midsFname, midsWbout);
               fileCount++;
             }
 
@@ -377,18 +382,24 @@
                 });
               });
               // Write as CSV
-              const cartesianCsv = [
-                "catering_mid,asin,sku,alternate_tax_code",
+              // Cartesian as XLSX
+              const cartesianAoa = [
+                ["catering_mid", "asin", "sku", "alternate_tax_code"],
                 ...cartesianRows.map(row =>
                   [
                     '="' + String(row.catering_mid) + '"',
                     row.asin,
                     row.sku,
                     row.alternate_tax_code
-                  ].join(",")
+                  ]
                 )
-              ].join("\n");
-              regionFolder.file("region-cartesian.csv", cartesianCsv);
+              ];
+              const cartesianSheet = XLSX.utils.aoa_to_sheet(cartesianAoa);
+              const cartesianWb = XLSX.utils.book_new();
+              XLSX.utils.book_append_sheet(cartesianWb, cartesianSheet, "ATC");
+              const cartesianFname = `${sanitizeFilename(region)} ATC File.xlsx`;
+              const cartesianWbout = XLSX.write(cartesianWb, { bookType: 'xlsx', type: 'array' });
+              regionFolder.file(cartesianFname, cartesianWbout);
               fileCount++;
             }
           }
