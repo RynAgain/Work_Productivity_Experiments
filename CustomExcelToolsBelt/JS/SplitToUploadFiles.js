@@ -82,7 +82,47 @@
 
         // Panel HTML
         root.innerHTML = `
-          <h3 style="margin-top:0;margin-bottom:12px;">Split To Upload Files</h3>
+          <div style="display:flex;align-items:center;margin-bottom:12px;">
+            <h3 style="margin:0;flex:1;">Split To Upload Files</h3>
+            <span id="split-to-upload-info" title="Show info" style="cursor:pointer;font-size:20px;color:#004E36;margin-left:8px;">&#9432;</span>
+          </div>
+          <div id="split-to-upload-info-modal" style="display:none;position:fixed;top:10vh;left:50%;transform:translateX(-50%);background:#fff;border:2px solid #004E36;border-radius:10px;box-shadow:0 4px 24px rgba(0,0,0,0.13);z-index:99999;padding:28px 32px 24px 32px;max-width:600px;width:90vw;">
+            <div style="display:flex;align-items:center;margin-bottom:10px;">
+              <b style="font-size:18px;flex:1;">About: Split To Upload Files</b>
+              <button id="split-to-upload-info-close" style="font-size:18px;background:none;border:none;cursor:pointer;color:#004E36;">&times;</button>
+            </div>
+            <div style="font-size:15px;line-height:1.6;">
+              <p>
+                <b>Purpose:</b> This tool splits a product upload file by region, generates region-specific upload files, MID lists, and ATC (cartesian) files, and outputs all as .xlsx in a zip.
+              </p>
+              <p>
+                <b>Required Inputs:</b>
+                <ul>
+                  <li><b>Product Upload File</b> (uploaded in the main sidebar): Must contain these columns:<br>
+                    <code>feed_product_type, item_sku, update_delete, standard_price, offering_start_date, offering_end_date, condition_type, main_image_url, external_product_id, external_product_id_type, quantity, alternate_tax_code</code>
+                  </li>
+                  <li><b>Store-Region-MID Map File</b>: Must contain these columns:<br>
+                    <code>Acro, Region, Store name, MID</code>
+                  </li>
+                </ul>
+              </p>
+              <p>
+                <b>Outputs:</b>
+                <ul>
+                  <li><b>Upload File (.xlsx):</b> For each region, a file with metadata, human-readable labels, system keys, and product rows (ATC column is omitted).</li>
+                  <li><b>MIDs File (.xlsx):</b> For each region, a file listing all MIDs for that region.</li>
+                  <li><b>ATC File (.xlsx):</b> For each region, a file with the cartesian product of region MIDs × SKUs, columns: <code>catering_mid, asin, sku, alternate_tax_code</code>.</li>
+                </ul>
+              </p>
+              <p>
+                <b>Templates:</b>
+                <ul>
+                  <li><a id="split-to-upload-template-upload" href="#" download="upload-template.xlsx">Download Upload File Template (.xlsx)</a></li>
+                  <li><a id="split-to-upload-template-map" href="#" download="store-region-mid-template.xlsx">Download Store-Region-MID Map Template (.xlsx)</a></li>
+                </ul>
+              </p>
+            </div>
+          </div>
           <div id="split-to-upload-warning" style="color:#b85c00;font-weight:bold;margin-bottom:8px;display:none;"></div>
           <label for="split-to-upload-map">Store-Region-ID Map File (.csv, .xlsx, .xls)</label>
           <input type="file" id="split-to-upload-map" accept=".csv,.xlsx,.xls" aria-label="Store-Region-ID Map File" />
@@ -510,6 +550,42 @@
             window.TM_FileState.unsubscribe(unsub);
           }
         });
+
+        // Info icon/modal logic
+        const infoIcon = root.querySelector('#split-to-upload-info');
+        const infoModal = root.querySelector('#split-to-upload-info-modal');
+        const infoClose = root.querySelector('#split-to-upload-info-close');
+        infoIcon.onclick = () => { infoModal.style.display = "block"; };
+        infoClose.onclick = () => { infoModal.style.display = "none"; };
+        window.addEventListener('keydown', function(e) {
+          if (e.key === "Escape") infoModal.style.display = "none";
+        });
+
+        // Template download logic
+        function makeXlsxTemplate(headers, filename) {
+          const ws = XLSX.utils.aoa_to_sheet([headers]);
+          const wb = XLSX.utils.book_new();
+          XLSX.utils.book_append_sheet(wb, ws, "Template");
+          const wbout = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
+          const blob = new Blob([wbout], { type: "application/octet-stream" });
+          const url = URL.createObjectURL(blob);
+          return url;
+        }
+        setTimeout(() => {
+          const uploadTemplate = root.querySelector('#split-to-upload-template-upload');
+          const mapTemplate = root.querySelector('#split-to-upload-template-map');
+          if (uploadTemplate) {
+            uploadTemplate.href = makeXlsxTemplate([
+              "feed_product_type", "item_sku", "update_delete", "standard_price", "offering_start_date", "offering_end_date",
+              "condition_type", "main_image_url", "external_product_id", "external_product_id_type", "quantity", "alternate_tax_code"
+            ], "upload-template.xlsx");
+          }
+          if (mapTemplate) {
+            mapTemplate.href = makeXlsxTemplate([
+              "Acro", "Region", "Store name", "MID"
+            ], "store-region-mid-template.xlsx");
+          }
+        }, 500);
 
         return root;
       }
