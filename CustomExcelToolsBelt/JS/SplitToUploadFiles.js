@@ -304,13 +304,13 @@
               // 2. Human-readable labels (array)
               const labelLine = [
                 "Product Type", "Seller SKU", "Record Action", "Your Price", "Offering Release Date", "Stop Selling Date",
-                "Offering Condition Type", "Main Image URL", "External Product ID", "External Product ID Type", "Quantity", "ATC"
+                "Offering Condition Type", "Main Image URL", "External Product ID", "External Product ID Type", "Quantity"
               ];
 
               // 3. System column keys (array)
               const keyLine = [
                 "feed_product_type", "item_sku", "update_delete", "standard_price", "offering_start_date", "offering_end_date",
-                "condition_type", "main_image_url", "external_product_id", "external_product_id_type", "quantity", "alternate_tax_code"
+                "condition_type", "main_image_url", "external_product_id", "external_product_id_type", "quantity"
               ];
 
               // 4. Data rows (array of arrays, in order)
@@ -325,8 +325,7 @@
                 r.main_image_url ?? "",
                 r.external_product_id ?? "",
                 r.external_product_id_type ?? "",
-                r.quantity ?? "",
-                r.alternate_tax_code ?? ""
+                r.quantity ?? ""
               ]);
 
               // Build worksheet as array-of-arrays
