@@ -94,6 +94,9 @@
           <label for="split-to-upload-suffix">File name suffix</label>
           <input type="text" id="split-to-upload-suffix" value="upload" aria-label="File name suffix" />
           <button id="split-to-upload-go" disabled aria-label="Split and download zip">Split & Download Zip</button>
+          <button id="split-to-upload-uploadsonly" disabled aria-label="Download upload files only" style="margin-top:6px;">Download Upload Files Only</button>
+          <button id="split-to-upload-midsonly" disabled aria-label="Download MID lists only" style="margin-top:6px;">Download MID Lists Only</button>
+          <button id="split-to-upload-cartesianonly" disabled aria-label="Download Cartesian product only" style="margin-top:6px;">Download Cartesian Product Only</button>
           <div id="split-to-upload-status"></div>
         `;
 
@@ -101,6 +104,9 @@
         const columnSelect = root.querySelector('#split-to-upload-column');
         const suffixInput = root.querySelector('#split-to-upload-suffix');
         const goBtn = root.querySelector('#split-to-upload-go');
+        const uploadsOnlyBtn = root.querySelector('#split-to-upload-uploadsonly');
+        const midsOnlyBtn = root.querySelector('#split-to-upload-midsonly');
+        const cartesianOnlyBtn = root.querySelector('#split-to-upload-cartesianonly');
         const statusDiv = root.querySelector('#split-to-upload-status');
         const warningDiv = root.querySelector('#split-to-upload-warning');
         const mapInput = root.querySelector('#split-to-upload-map');
@@ -143,11 +149,17 @@
             });
             columnSelect.disabled = false;
             goBtn.disabled = !columnSelect.value;
+            uploadsOnlyBtn.disabled = !columnSelect.value;
+            midsOnlyBtn.disabled = !columnSelect.value;
+            cartesianOnlyBtn.disabled = !columnSelect.value;
             root.classList.remove('disabled');
             warningDiv.style.display = 'none';
           } else {
             columnSelect.disabled = true;
             goBtn.disabled = true;
+            uploadsOnlyBtn.disabled = true;
+            midsOnlyBtn.disabled = true;
+            cartesianOnlyBtn.disabled = true;
             root.classList.add('disabled');
             warningDiv.textContent = 'Input file does not meet requirements for this tool.';
             warningDiv.style.display = '';
@@ -223,10 +235,9 @@
         subscribe();
 
         // Split and download handler
-        goBtn.addEventListener('click', async function() {
+        // Helper for all output types
+        async function generateZip({ uploads = false, mids = false, cartesian = false, suffix, col, statusDiv }) {
           const state = window.TM_FileState.getState();
-          const col = columnSelect.value;
-          const suffix = suffixInput.value.trim() || 'upload';
           if (!state.sheetData || !col) {
             statusDiv.textContent = 'No data or column selected. Please upload a file and select a column.';
             return;
@@ -235,7 +246,7 @@
             statusDiv.textContent = 'No valid Store-Region-MID map file loaded.';
             return;
           }
-          statusDiv.textContent = 'Splitting and zipping...';
+          statusDiv.textContent = 'Generating zip...';
 
           // Group rows by region (split column)
           const groups = {};
@@ -257,20 +268,26 @@
             const regionFolder = zip.folder(sanitizeFilename(region));
 
             // 1. Split upload file (XLSX)
-            const wb = XLSX.utils.book_new();
-            const ws = XLSX.utils.json_to_sheet(regionRows);
-            XLSX.utils.book_append_sheet(wb, ws, 'Sheet1');
-            const uploadFname = `${sanitizeFilename(region)}-${sanitizeFilename(suffix)}.xlsx`;
-            const wbout = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
-            regionFolder.file(uploadFname, wbout);
+            if (uploads) {
+              const wb = XLSX.utils.book_new();
+              const ws = XLSX.utils.json_to_sheet(regionRows);
+              XLSX.utils.book_append_sheet(wb, ws, 'Sheet1');
+              const uploadFname = `${sanitizeFilename(region)}-${sanitizeFilename(suffix)}.xlsx`;
+              const wbout = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
+              regionFolder.file(uploadFname, wbout);
+              fileCount++;
+            }
 
             // 2. List of MIDs for the region (CSV)
-            const mids = mapData
+            const midsArr = mapData
               .filter(m => m.Region === region)
               .map(m => m.MID)
               .filter(mid => mid && mid.trim() !== "");
-            const midsCsv = "MID\n" + mids.join("\n");
-            regionFolder.file("region-mids.csv", midsCsv);
+            if (mids) {
+              const midsCsv = "MID\n" + midsArr.join("\n");
+              regionFolder.file("region-mids.csv", midsCsv);
+              fileCount++;
+            }
 
             // 3. Cartesian product: region MIDs × SKUs
             // Output columns: catering_mid, asin, sku, alternate_tax_code
@@ -278,32 +295,33 @@
             // - asin: external_product_id from upload
             // - sku: item_sku from upload
             // - alternate_tax_code: alternate_tax_code from upload
-            const regionSkus = regionRows.map(r => ({
-              asin: r.external_product_id,
-              sku: r.item_sku,
-              alternate_tax_code: r.alternate_tax_code
-            }));
-            const cartesianRows = [];
-            mids.forEach(mid => {
-              regionSkus.forEach(skuRow => {
-                cartesianRows.push({
-                  catering_mid: mid,
-                  asin: skuRow.asin,
-                  sku: skuRow.sku,
-                  alternate_tax_code: skuRow.alternate_tax_code
+            if (cartesian) {
+              const regionSkus = regionRows.map(r => ({
+                asin: r.external_product_id,
+                sku: r.item_sku,
+                alternate_tax_code: r.alternate_tax_code
+              }));
+              const cartesianRows = [];
+              midsArr.forEach(mid => {
+                regionSkus.forEach(skuRow => {
+                  cartesianRows.push({
+                    catering_mid: mid,
+                    asin: skuRow.asin,
+                    sku: skuRow.sku,
+                    alternate_tax_code: skuRow.alternate_tax_code
+                  });
                 });
               });
-            });
-            // Write as CSV
-            const cartesianCsv = [
-              "catering_mid,asin,sku,alternate_tax_code",
-              ...cartesianRows.map(row =>
-                [row.catering_mid, row.asin, row.sku, row.alternate_tax_code].join(",")
-              )
-            ].join("\n");
-            regionFolder.file("region-cartesian.csv", cartesianCsv);
-
-            fileCount += 3;
+              // Write as CSV
+              const cartesianCsv = [
+                "catering_mid,asin,sku,alternate_tax_code",
+                ...cartesianRows.map(row =>
+                  [row.catering_mid, row.asin, row.sku, row.alternate_tax_code].join(",")
+                )
+              ].join("\n");
+              regionFolder.file("region-cartesian.csv", cartesianCsv);
+              fileCount++;
+            }
           }
 
           // Generate and download zip
@@ -311,14 +329,80 @@
             const content = await zip.generateAsync({ type: 'blob' });
             const a = document.createElement('a');
             a.href = URL.createObjectURL(content);
-            a.download = `split-upload-${col}.zip`;
+            let label = '';
+            if (uploads && mids && cartesian) label = 'split-upload';
+            else if (uploads) label = 'uploads';
+            else if (mids) label = 'mids';
+            else if (cartesian) label = 'cartesian';
+            a.download = `${label}-${col}.zip`;
             document.body.appendChild(a);
             a.click();
             setTimeout(() => document.body.removeChild(a), 100);
-            statusDiv.textContent = `Downloaded ${fileCount} files in zip (folders for each region).`;
+            // Detailed status message
+            let msg = `Created zip with ${Object.keys(groups).length} region folders, ${fileCount} files total.<br>`;
+            for (const region in groups) {
+              const regionRows = groups[region];
+              const midsArr = mapData
+                .filter(m => m.Region === region)
+                .map(m => m.MID)
+                .filter(mid => mid && mid.trim() !== "");
+              const cartesianCount = midsArr.length * regionRows.length;
+              msg += `<b>${region}</b>: `;
+              if (uploads) msg += `${regionRows.length} upload rows, `;
+              if (mids) msg += `${midsArr.length} MIDs, `;
+              if (cartesian) msg += `${cartesianCount} cartesian rows, `;
+              msg = msg.replace(/, $/, '');
+              msg += '<br>';
+            }
+            msg += "Download should start automatically.";
+            statusDiv.innerHTML = msg;
           } catch (err) {
             statusDiv.textContent = 'Error creating zip: ' + err.message;
           }
+        }
+
+        goBtn.addEventListener('click', function() {
+          generateZip({
+            uploads: true,
+            mids: true,
+            cartesian: true,
+            suffix: suffixInput.value.trim() || 'upload',
+            col: columnSelect.value,
+            statusDiv
+          });
+        });
+
+        uploadsOnlyBtn.addEventListener('click', function() {
+          generateZip({
+            uploads: true,
+            mids: false,
+            cartesian: false,
+            suffix: suffixInput.value.trim() || 'upload',
+            col: columnSelect.value,
+            statusDiv
+          });
+        });
+
+        midsOnlyBtn.addEventListener('click', function() {
+          generateZip({
+            uploads: false,
+            mids: true,
+            cartesian: false,
+            suffix: suffixInput.value.trim() || 'upload',
+            col: columnSelect.value,
+            statusDiv
+          });
+        });
+
+        cartesianOnlyBtn.addEventListener('click', function() {
+          generateZip({
+            uploads: false,
+            mids: false,
+            cartesian: true,
+            suffix: suffixInput.value.trim() || 'upload',
+            col: columnSelect.value,
+            statusDiv
+          });
         });
 
         // Clean up on panel removal
