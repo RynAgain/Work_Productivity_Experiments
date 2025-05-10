@@ -121,6 +121,24 @@
           <span style="color:#888;font-size:13px;">Files are persisted in your browser (localStorage). Only the 5 most recent weekday files are kept.</span>`;
         root.appendChild(desc);
 
+        // Download link (obfuscated)
+        const encodedUrl = "aHR0cHM6Ly9zaGFyZS5hbWF6b24uY29tL3NpdGVzL1dGTV9lQ29tbV9BQkkvX2xheW91dHMvMTUvZG93bmxvYWQuYXNweD9Tb3VyY2VVcmw9JTJGc2l0ZXMlMkZXRk1fZUNvbW1fQUJJJTJGU2hhcmVkJTIwRG9jdW1lbnRzJTJGV0ZNT0FDJTJGRGFpbHlJbnZlbnRvcnklMkZXRk1PQUMlMjBJbnZlbnRvcnklMjBEYXRhLnhsc3gmRmxkVXJsPSZTb3VyY2U9aHR0cHMlM0ElMkYlMkZzaGFyZS5hbWF6b24uY29tJTJGc2l0ZXMlMkZXRk1fZUNvbW1fQUJJJTJGU2hhcmVkJTIwRG9jdW1lbnRzJTJGRm9ybXMlMkZBbGxJdGVtcy5hc3B4JTNGUm9vdEZvbGRlciUzRCUyRnNpdGVzJTJGV0ZNLWVDb21tLUFCSVUyRlNoYXJlZCUyMERvY3VtZW50cyUyRldGTU9BQyUyRkRhaWx5SW52ZW50b3J5JkZvbGRlckNUSUQ9MHgwMTIwMDB7M0MzQ0Y1QzUxNjY1Njg0M0FENzI4MzM4RDlDMkFGQTQ=";
+        // Remove newlines (for safety)
+        const urlB64 = encodedUrl.replace(/\s+/g, '');
+        function decodeB64(b64) {
+          try {
+            return atob(b64);
+          } catch (e) {
+            return '';
+          }
+        }
+        const reportUrl = decodeB64(urlB64);
+        const dlDiv = document.createElement('div');
+        dlDiv.style.marginBottom = '12px';
+        dlDiv.innerHTML = `<a href="${reportUrl}" target="_blank" rel="noopener noreferrer" style="color:#004E36;font-weight:600;text-decoration:underline;">&#128190; Download Latest Inventory Report</a>
+          <span style="color:#888;font-size:13px;margin-left:6px;">(opens in new tab, login required)</span>`;
+        root.appendChild(dlDiv);
+
         // Days container
         const daysDiv = document.createElement('div');
         daysDiv.id = 'daily-buy-days';

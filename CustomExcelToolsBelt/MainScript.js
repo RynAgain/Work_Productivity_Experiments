@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Modular Tampermonkey UI System
-// @namespace    http://tampermonkey.net/
-// @version      0.124
+// @namespace    http://Tampermonkey.net/
+// @version      0.125
 // @description  Modular UI system for /editor page, with feature panel registration
 // @match        https://*.cam.wfm.amazon.dev/editor*
 // @require      https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.17.0/xlsx.full.min.js
