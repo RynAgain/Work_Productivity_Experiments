@@ -186,21 +186,40 @@
             reader.onload = function(e) {
               try {
                 const data = e.target.result;
-                // Convert ArrayBuffer to base64
+                // Parse workbook
+                const wb = XLSX.read(data, { type: 'array' });
+                const SHEET_NAME = "WFMOAC Inventory Data";
+                const REQUIRED_HEADERS = [
+                  "store_name","store_acronym","store_tlc","item_name","sku","asin","quantity","listing_status","event_date","sku_wo_chck_dgt","rnk","eod_our_price","offering_start_datetime","offering_end_datetime","merchant_customer_id","encrypted_merchant_id","is_active","asin","gl_product_group_desc","item_name","national_family_name","national_category_name","national_subcategory_name","recall_description","degredation_reason","online_sales","instore_sales","snapshot_day"
+                ];
+                if (!wb.SheetNames.includes(SHEET_NAME)) {
+                  status.textContent = `Error: Sheet "${SHEET_NAME}" not found in file.`;
+                  return;
+                }
+                const ws = wb.Sheets[SHEET_NAME];
+                const rows = XLSX.utils.sheet_to_json(ws, { defval: '' });
+                if (!rows.length) {
+                  status.textContent = `Error: Sheet "${SHEET_NAME}" is empty.`;
+                  return;
+                }
+                const fileHeaders = Object.keys(rows[0]);
+                const missing = REQUIRED_HEADERS.filter(h => !fileHeaders.includes(h));
+                if (missing.length > 0) {
+                  status.textContent = `Error: Missing required columns: ${missing.join(', ')}`;
+                  return;
+                }
+                // Convert ArrayBuffer to base64 for persistence
                 let binary = '';
                 const bytes = new Uint8Array(data);
                 for (let i = 0; i < bytes.length; i++) {
                   binary += String.fromCharCode(bytes[i]);
                 }
                 const dataB64 = btoa(binary);
-                // Add/replace in fileState
-                fileState[dateStr] = { name: file.name, dataB64 };
-                // Enforce only 5 most recent files
-                // (sort by date, keep only last 5)
+                // Add/replace in fileState (store only relevant info for future use)
+                fileState[dateStr] = { name: file.name, dataB64, valid: true };
                 saveFilesToStorage(fileState);
-                // Reload fileState from storage to ensure sync
                 fileState = loadFilesFromStorage();
-                status.textContent = `Loaded: ${file.name}`;
+                status.textContent = `Loaded: ${file.name} (sheet "${SHEET_NAME}" valid)`;
               } catch (err) {
                 status.textContent = 'Error reading file: ' + err.message;
               }
