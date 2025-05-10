@@ -71,6 +71,8 @@
         // Panel HTML
         root.innerHTML = `
           <h3 style="margin-top:0;margin-bottom:12px;">Excel Explode Column</h3>
+          <label for="eef-file">Excel File (.xlsx or .csv)</label>
+          <input type="file" id="eef-file" accept=".xlsx,.csv" aria-label="Excel file" />
           <label for="eef-sheet">Sheet</label>
           <select id="eef-sheet" disabled aria-label="Sheet select">
             <option value="">Select sheet</option>
