@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Modular Tampermonkey UI System
 // @namespace    http://tampermonkey.net/
-// @version      0.123
+// @version      0.124
 // @description  Modular UI system for /editor page, with feature panel registration
 // @match        https://*.cam.wfm.amazon.dev/editor*
 // @require      https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.17.0/xlsx.full.min.js
@@ -152,9 +152,16 @@
   const sidebar = document.createElement('div');
   sidebar.id = 'tm-ui-sidebar';
 
-  // Tabs
-  const tabs = document.createElement('div');
-  tabs.id = 'tm-ui-tabs';
+  // Feature List (vertical, scalable)
+  const featureList = document.createElement('div');
+  featureList.id = 'tm-ui-feature-list';
+  featureList.style.display = 'flex';
+  featureList.style.flexDirection = 'column';
+  featureList.style.overflowY = 'auto';
+  featureList.style.maxHeight = 'calc(100vh - 180px)'; // leave room for upload/reset
+  featureList.style.margin = '0 0 10px 0';
+  featureList.style.padding = '0';
+  featureList.style.gap = '2px';
 
   // Panels
   const panels = document.createElement('div');
@@ -163,7 +170,7 @@
   // Append panels to mainContent
   mainContent.appendChild(panels);
 
-  sidebar.appendChild(tabs);
+  sidebar.appendChild(featureList);
 // Add File Upload button above reset
 const uploadLabel = document.createElement('label');
 uploadLabel.textContent = 'Upload Excel File';
@@ -271,14 +278,29 @@ sidebar.appendChild(uploadInput);
   const panelRegistry = [];
   let activePanelId = null;
 
-  function renderTabs() {
-    tabs.innerHTML = '';
+  function renderFeatureList() {
+    featureList.innerHTML = '';
     panelRegistry.forEach((panel, idx) => {
-      const tab = document.createElement('button');
-      tab.className = 'tm-ui-tab' + (panel.id === activePanelId ? ' active' : '');
-      tab.textContent = panel.title;
-      tab.onclick = () => setActivePanel(panel.id);
-      tabs.appendChild(tab);
+      const btn = document.createElement('button');
+      btn.className = 'tm-ui-feature-btn' + (panel.id === activePanelId ? ' active' : '');
+      btn.textContent = panel.title;
+      btn.style.display = 'block';
+      btn.style.width = '100%';
+      btn.style.textAlign = 'left';
+      btn.style.padding = '10px 18px';
+      btn.style.background = panel.id === activePanelId ? '#e6f2ef' : 'none';
+      btn.style.border = 'none';
+      btn.style.borderRadius = '6px';
+      btn.style.fontWeight = '500';
+      btn.style.color = '#004E36';
+      btn.style.cursor = 'pointer';
+      btn.style.transition = 'background 0.2s';
+      btn.style.margin = '0';
+      btn.style.outline = 'none';
+      btn.onmouseenter = () => { if (panel.id !== activePanelId) btn.style.background = '#f7f7f7'; };
+      btn.onmouseleave = () => { btn.style.background = panel.id === activePanelId ? '#e6f2ef' : 'none'; };
+      btn.onclick = () => setActivePanel(panel.id);
+      featureList.appendChild(btn);
     });
   }
 
@@ -414,7 +436,7 @@ sidebar.appendChild(uploadInput);
 
   function setActivePanel(id) {
     activePanelId = id;
-    renderTabs();
+    renderFeatureList();
     renderPanels();
   }
 
@@ -431,7 +453,7 @@ sidebar.appendChild(uploadInput);
       if (panelRegistry.length === 1) {
         activePanelId = opts.id;
       }
-      renderTabs();
+      renderFeatureList();
       renderPanels();
     },
     /**
@@ -448,10 +470,53 @@ sidebar.appendChild(uploadInput);
     }
   };
 
+// Add vertical feature list styles
+if (!document.getElementById('tm-ui-feature-list-style')) {
+  const style = document.createElement('style');
+  style.id = 'tm-ui-feature-list-style';
+  style.textContent = `
+    #tm-ui-feature-list {
+      margin-top: 10px;
+      margin-bottom: 10px;
+      padding: 0;
+      overflow-y: auto;
+      max-height: calc(100vh - 180px);
+    }
+    .tm-ui-feature-btn {
+      font-family: 'Segoe UI', Arial, sans-serif;
+      font-size: 15px;
+      border: none;
+      background: none;
+      color: #004E36;
+      padding: 10px 18px;
+      border-radius: 6px;
+      margin: 0;
+      width: 100%;
+      text-align: left;
+      cursor: pointer;
+      transition: background 0.2s;
+      outline: none;
+    }
+    .tm-ui-feature-btn.active {
+      background: #e6f2ef;
+      color: #218838;
+      font-weight: 600;
+    }
+    .tm-ui-feature-btn:hover:not(.active) {
+      background: #f7f7f7;
+    }
+  `;
+  document.head.appendChild(style);
+}
+
   // Optionally, expose a hook for modules to know when UI is ready
   window.dispatchEvent(new Event('TM_UI_READY'));
 
-})();
+  // Initial render
+  renderFeatureList();
+  renderPanels();
+
+  })();
 // --- Persistent File Preview Area ---
 (function() {
   // Wait for DOM and TM_FileState
