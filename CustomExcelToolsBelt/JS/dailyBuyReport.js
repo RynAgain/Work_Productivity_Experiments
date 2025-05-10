@@ -105,17 +105,28 @@
 
         // Panel HTML
         const days = getRecentWeekdays(5);
-        root.innerHTML = `
-          <h3 style="margin-top:0;margin-bottom:12px;">Daily Buy Report</h3>
-          <div style="margin-bottom:10px;color:#444;">
-            Upload the daily buy XLSX files for the 5 most recent weekdays. Each file should correspond to the date shown.<br>
-            <span style="color:#888;font-size:13px;">Files are persisted in your browser (localStorage). Only the 5 most recent weekday files are kept.</span>
-          </div>
-          <div id="daily-buy-days"></div>
-        `;
+
+        // Header
+        const header = document.createElement('h3');
+        header.style.marginTop = '0';
+        header.style.marginBottom = '12px';
+        header.textContent = 'Daily Buy Report';
+        root.appendChild(header);
+
+        // Description
+        const desc = document.createElement('div');
+        desc.style.marginBottom = '10px';
+        desc.style.color = '#444';
+        desc.innerHTML = `Upload the daily buy XLSX files for the 5 most recent weekdays. Each file should correspond to the date shown.<br>
+          <span style="color:#888;font-size:13px;">Files are persisted in your browser (localStorage). Only the 5 most recent weekday files are kept.</span>`;
+        root.appendChild(desc);
+
+        // Days container
+        const daysDiv = document.createElement('div');
+        daysDiv.id = 'daily-buy-days';
+        root.appendChild(daysDiv);
 
         // Render file inputs for each day
-        const daysDiv = root.querySelector('#daily-buy-days');
         days.forEach(dateStr => {
           const row = document.createElement('div');
           row.className = 'day-row';
