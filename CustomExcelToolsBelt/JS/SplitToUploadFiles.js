@@ -76,6 +76,10 @@
               opacity: 0.5;
               pointer-events: none;
             }
+          #split-to-upload-panel {
+            overflow-y: auto;
+            max-height: 80vh;
+          }
           `;
           document.head.appendChild(style);
         }
