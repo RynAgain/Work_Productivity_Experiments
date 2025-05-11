@@ -413,8 +413,14 @@
               await new Promise(r => setTimeout(r, 0));
               // Force MID as string in CSV: ="MID"
               // MIDs as XLSX
-              // Write MIDs as plain strings with leading single quote to prevent scientific notation
-              const midsSheet = XLSX.utils.aoa_to_sheet([["MID"], ...midsArr.map(mid => ["'" + String(mid)])]);
+              // Write MIDs as plain strings and force cell type to string to prevent scientific notation
+              const midsSheet = XLSX.utils.aoa_to_sheet([["MID"], ...midsArr.map(mid => [String(mid)])]);
+              // Force all MID cells to type "s" (string)
+              const midsRange = XLSX.utils.decode_range(midsSheet['!ref']);
+              for (let R = 1; R <= midsRange.e.r; ++R) { // skip header row
+                const cell = midsSheet['A' + (R + 1)];
+                if (cell) cell.t = 's';
+              }
               const midsWb = XLSX.utils.book_new();
               XLSX.utils.book_append_sheet(midsWb, midsSheet, "MIDs");
               const midsFname = `${sanitizeFilename(region)} MIDs.xlsx`;
@@ -446,8 +452,8 @@
               midsArr.forEach(mid => {
                 regionSkus.forEach(skuRow => {
                   cartesianRows.push({
-                    // Write catering_mid as plain string with leading single quote to prevent scientific notation
-                    catering_mid: "'" + String(mid),
+                    // Write catering_mid as plain string (no leading quote)
+                    catering_mid: String(mid),
                     asin: skuRow.asin,
                     sku: skuRow.sku,
                     alternate_tax_code: skuRow.alternate_tax_code
@@ -460,7 +466,7 @@
                 ["catering_mid", "asin", "sku", "alternate_tax_code"],
                 ...cartesianRows.map(row =>
                   [
-                    // Write catering_mid as plain string with leading single quote to prevent scientific notation
+                    // Write catering_mid as plain string (no leading quote)
                     String(row.catering_mid),
                     row.asin,
                     row.sku,
@@ -469,6 +475,12 @@
                 )
               ];
               const cartesianSheet = XLSX.utils.aoa_to_sheet(cartesianAoa);
+              // Force all catering_mid cells to type "s" (string)
+              const cartRange = XLSX.utils.decode_range(cartesianSheet['!ref']);
+              for (let R = 1; R <= cartRange.e.r; ++R) { // skip header row
+                const cell = cartesianSheet['A' + (R + 1)];
+                if (cell) cell.t = 's';
+              }
               const cartesianWb = XLSX.utils.book_new();
               XLSX.utils.book_append_sheet(cartesianWb, cartesianSheet, "ATC");
               const cartesianFname = `${sanitizeFilename(region)} ATC File.xlsx`;
