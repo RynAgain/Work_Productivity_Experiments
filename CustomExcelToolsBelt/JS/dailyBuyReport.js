@@ -109,6 +109,12 @@
         // Panel HTML
         const days = getRecentWeekdays(5);
 
+        // Helper: get all loaded event_dates
+        function getLoadedEventDates() {
+          // Returns a Set of all event_dates in inMemoryFiles
+          return new Set(Object.values(inMemoryFiles).map(f => f.event_date).filter(Boolean));
+        }
+
         // Header
         const header = document.createElement('h3');
         header.style.marginTop = '0';
@@ -166,9 +172,18 @@
           row.appendChild(status);
           daysDiv.appendChild(row);
 
-          // If file is already stored for this date, show status
-          if (fileState[dateStr]) {
-            status.textContent = `Loaded: ${fileState[dateStr].name}`;
+          // Show loaded file for this slot if any file's event_date matches
+          let loadedEventDate = null;
+          let loadedFileName = null;
+          for (const [evtDate, fileObj] of Object.entries(inMemoryFiles)) {
+            if (evtDate === dateStr) {
+              loadedEventDate = evtDate;
+              loadedFileName = fileObj.name;
+              break;
+            }
+          }
+          if (loadedEventDate) {
+            status.textContent = `Loaded: ${loadedFileName} (event_date: ${loadedEventDate})`;
           }
 
           input.addEventListener('change', function() {
@@ -221,12 +236,34 @@
                   delete inMemoryFiles[dateStr];
                   return;
                 }
-                // Store file data in memory only (not in localStorage)
-                inMemoryFiles[dateStr] = { name: file.name, data, valid: true, rows };
-                fileState[dateStr] = { name: file.name, valid: true };
+                // Extract unique event_date from rows
+                const eventDates = Array.from(new Set(rows.map(r => r.event_date).filter(Boolean)));
+                if (eventDates.length === 0) {
+                  status.textContent = 'Error: No event_date found in sheet.';
+                  fileState[dateStr] = { name: file.name, valid: false };
+                  saveFilesToStorage(fileState);
+                  delete inMemoryFiles[dateStr];
+                  return;
+                }
+                if (eventDates.length > 1) {
+                  status.textContent = `Error: Multiple event_date values found: ${eventDates.join(', ')}`;
+                  fileState[dateStr] = { name: file.name, valid: false };
+                  saveFilesToStorage(fileState);
+                  delete inMemoryFiles[dateStr];
+                  return;
+                }
+                const eventDate = eventDates[0];
+                // Prevent duplicate event_date uploads
+                if (inMemoryFiles[eventDate]) {
+                  status.textContent = `Error: A file for event_date ${eventDate} is already uploaded.`;
+                  return;
+                }
+                // Store file data in memory only (not in localStorage), keyed by event_date
+                inMemoryFiles[eventDate] = { name: file.name, data, valid: true, rows, event_date: eventDate };
+                fileState[eventDate] = { name: file.name, valid: true };
                 saveFilesToStorage(fileState);
                 fileState = loadFilesFromStorage();
-                status.textContent = `Loaded: ${file.name} (sheet "${SHEET_NAME}" valid)`;
+                status.textContent = `Loaded: ${file.name} (event_date: ${eventDate})`;
               } catch (err) {
                 status.textContent = 'Error reading file: ' + err.message;
               }
@@ -244,12 +281,123 @@
         warnDiv.textContent = 'Note: Due to browser storage limits, uploaded files are only kept for this session. They will be lost if you reload or close the page.';
         root.appendChild(warnDiv);
 
-        // Placeholder for future comparison/report UI
-        const futureDiv = document.createElement('div');
-        futureDiv.style.marginTop = '18px';
-        futureDiv.style.color = '#888';
-        futureDiv.textContent = 'Day-over-day comparison and report features coming soon...';
-        root.appendChild(futureDiv);
+        // Day-over-day active % preview
+        const previewDiv = document.createElement('div');
+        previewDiv.style.marginTop = '24px';
+        previewDiv.style.background = '#fff';
+        previewDiv.style.border = '1px solid #eee';
+        previewDiv.style.borderRadius = '8px';
+        previewDiv.style.padding = '16px 10px 10px 10px';
+        previewDiv.style.boxShadow = '0 2px 8px rgba(0,0,0,0.03)';
+        previewDiv.style.maxHeight = '480px';
+        previewDiv.style.overflow = 'auto';
+
+        // Search/filter for store_tlc
+        const filterDiv = document.createElement('div');
+        filterDiv.style.marginBottom = '8px';
+        const filterInput = document.createElement('input');
+        filterInput.type = 'text';
+        filterInput.placeholder = 'Filter by store_tlc...';
+        filterInput.style.width = '220px';
+        filterInput.style.marginRight = '10px';
+        filterInput.style.padding = '4px 8px';
+        filterInput.style.border = '1px solid #ccc';
+        filterInput.style.borderRadius = '4px';
+        filterDiv.appendChild(filterInput);
+        previewDiv.appendChild(filterDiv);
+
+        // Table container
+        const tableDiv = document.createElement('div');
+        previewDiv.appendChild(tableDiv);
+
+        // Helper: compute day-over-day active % per store
+        function computeActivePercentages() {
+          // event_dates sorted ascending
+          const eventDates = Object.keys(inMemoryFiles).sort();
+          // store_tlc -> event_date -> {active, total}
+          const storeMap = {};
+          eventDates.forEach(evtDate => {
+            const file = inMemoryFiles[evtDate];
+            if (!file || !file.rows) return;
+            file.rows.forEach(row => {
+              const store = row.store_tlc;
+              if (!store) return;
+              if (!storeMap[store]) storeMap[store] = {};
+              if (!storeMap[store][evtDate]) storeMap[store][evtDate] = { active: 0, total: 0 };
+              // Only count unique items per store per day (by sku+asin)
+              // We'll use a Set to track unique items
+              if (!storeMap[store][evtDate].itemSet) storeMap[store][evtDate].itemSet = new Set();
+              const itemKey = (row.sku || '') + '|' + (row.asin || '');
+              if (!storeMap[store][evtDate].itemSet.has(itemKey)) {
+                storeMap[store][evtDate].itemSet.add(itemKey);
+                storeMap[store][evtDate].total += 1;
+                const status = (row.listing_status || '').toLowerCase();
+                if (status === 'active') {
+                  storeMap[store][evtDate].active += 1;
+                }
+                // Treat "incomplete" as inactive (do nothing)
+              }
+            });
+          });
+          // Remove itemSet from output
+          for (const store in storeMap) {
+            for (const evtDate in storeMap[store]) {
+              delete storeMap[store][evtDate].itemSet;
+            }
+          }
+          return { storeMap, eventDates };
+        }
+
+        // Render preview table
+        function renderPreviewTable() {
+          const { storeMap, eventDates } = computeActivePercentages();
+          let stores = Object.keys(storeMap).sort();
+          const filter = filterInput.value.trim();
+          if (filter) {
+            stores = stores.filter(s => s.toLowerCase().includes(filter.toLowerCase()));
+          }
+          const maxRows = 50;
+          let showRows = stores.slice(0, maxRows);
+          let hasMore = stores.length > maxRows;
+
+          let html = '';
+          if (stores.length === 0) {
+            html = '<div style="color:#888;">No stores to display. Upload files to see analysis.</div>';
+          } else {
+            html += `<table style="border-collapse:collapse;width:100%;font-size:13px;">`;
+            html += `<thead><tr><th style="position:sticky;left:0;background:#fff;z-index:2;">store_tlc</th>`;
+            eventDates.forEach(evtDate => {
+              html += `<th style="min-width:90px;">${evtDate}</th>`;
+            });
+            html += `</tr></thead><tbody>`;
+            showRows.forEach(store => {
+              html += `<tr><td style="position:sticky;left:0;background:#fff;z-index:1;font-weight:500;">${store}</td>`;
+              eventDates.forEach(evtDate => {
+                const cell = storeMap[store][evtDate];
+                if (!cell) {
+                  html += `<td style="color:#bbb;">-</td>`;
+                } else {
+                  const pct = cell.total > 0 ? (cell.active / cell.total * 100) : 0;
+                  const pctStr = cell.total > 0 ? `${cell.active}/${cell.total} (${pct.toFixed(1)}%)` : '-';
+                  html += `<td>${pctStr}</td>`;
+                }
+              });
+              html += `</tr>`;
+            });
+            html += `</tbody></table>`;
+            if (hasMore) {
+              html += `<div style="margin-top:8px;color:#888;">Showing first ${maxRows} of ${stores.length} stores. Use filter to find a specific store.</div>`;
+            }
+          }
+          tableDiv.innerHTML = html;
+        }
+
+        filterInput.addEventListener('input', renderPreviewTable);
+
+        // Initial render
+        renderPreviewTable();
+
+        root.appendChild(previewDiv);
 
         return root;
       }

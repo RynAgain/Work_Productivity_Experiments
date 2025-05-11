@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Modular Tampermonkey UI System
 // @namespace    http://Tampermonkey.net/
-// @version      0.127
+// @version      0.128
 // @description  Modular UI system for /editor page, with feature panel registration
 // @match        https://*.cam.wfm.amazon.dev/editor*
 // @require      https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.17.0/xlsx.full.min.js
@@ -25,6 +25,9 @@
 
   // Only run on /editor
   if (!/\/editor($|\?)/.test(window.location.pathname)) return;
+
+  // Set browser tab title
+  document.title = "CatCat Tools";
 
   // --- FULL PAGE APP OVERWRITE ---
   // Remove all existing content and set up a new root
