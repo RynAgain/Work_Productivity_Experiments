@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Excel Tools Belt (Electron)</title>
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:;">
+  <meta name="viewport" content="width=1200, initial-scale=1">
+  <link rel="icon" href="data:,">
+  <style>
+    /* CSS Reset and base styles */
+    html, body {
+      height: 100%;
+      margin: 0;
+      padding: 0;
+      background: #f7f7f7;
+      font-family: 'Segoe UI', Arial, sans-serif;
+      font-size: 16px;
+      color: #222;
+      box-sizing: border-box;
+    }
+    *, *::before, *::after {
+      box-sizing: inherit;
+    }
+    #app, #tm-app-root {
+      width: 100vw;
+      height: 100vh;
+      min-height: 100vh;
+      min-width: 100vw;
+    }
+    /* Prevent overlapping and ensure flex layout */
+    #tm-app-root {
+      display: flex;
+      flex-direction: row;
+      height: 100vh;
+      width: 100vw;
+      background: #f7f7f7;
+      overflow: hidden;
+    }
+    #tm-ui-sidebar {
+      width: 320px;
+      min-width: 220px;
+      max-width: 340px;
+      height: 100vh;
+      background: #fff;
+      border-right: 2px solid #004E36;
+      border-radius: 0 12px 12px 0;
+      box-shadow: 2px 0 16px rgba(0,0,0,0.07);
+      display: flex;
+      flex-direction: column;
+      z-index: 1;
+      margin: 0;
+      padding: 0;
+    }
+    #tm-ui-main-content {
+      flex: 1 1 0%;
+      display: flex;
+      flex-direction: column;
+      background: #fff;
+      border-radius: 12px;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.07);
+      overflow: auto;
+      min-width: 0;
+      min-height: 0;
+      height: 100vh;
+      margin: 0;
+      box-sizing: border-box;
+    }
+    #tm-file-preview {
+      width: 420px;
+      min-width: 260px;
+      max-width: 520px;
+      height: 100vh;
+      background: #fff;
+      border-left: 2px solid #004E36;
+      border-radius: 12px 0 0 12px;
+      box-shadow: -2px 0 16px rgba(0,0,0,0.07);
+      padding: 18px 20px 16px 20px;
+      min-height: 120px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin: 0;
+      box-sizing: border-box;
+    }
+    /* Utility classes for spacing and clarity */
+    .tm-ui-feature-btn {
+      font-family: 'Segoe UI', Arial, sans-serif;
+      font-size: 15px;
+      border: none;
+      background: none;
+      color: #004E36;
+      padding: 10px 18px;
+      border-radius: 6px;
+      margin: 0;
+      width: 100%;
+      text-align: left;
+      cursor: pointer;
+      transition: background 0.2s;
+      outline: none;
+    }
+    .tm-ui-feature-btn.active {
+      background: #e6f2ef;
+      color: #218838;
+      font-weight: 600;
+    }
+    .tm-ui-feature-btn:hover:not(.active) {
+      background: #f7f7f7;
+    }
+  </style>
+</head>
+<body>
+  <div id="app"></div>
+  <!-- Main UI logic will be loaded here -->
+  <script src="../node_modules/xlsx/dist/xlsx.full.min.js"></script>
+  <script src="../node_modules/jszip/dist/jszip.min.js"></script>
+  <script src="../src/MainUI.js"></script>
+  <script src="../src/ExcelEditFun.js"></script>
+  <script src="../src/previewFile.js"></script>
+  <script src="../src/SplitBy.js"></script>
+  <script src="../src/SplitToUploadFiles.js"></script>
+  <script src="../src/dailyBuyReport.js"></script>
+</body>
+</html>

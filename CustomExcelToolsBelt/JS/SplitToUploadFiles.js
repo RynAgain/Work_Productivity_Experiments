@@ -413,7 +413,8 @@
               await new Promise(r => setTimeout(r, 0));
               // Force MID as string in CSV: ="MID"
               // MIDs as XLSX
-              const midsSheet = XLSX.utils.aoa_to_sheet([["MID"], ...midsArr.map(mid => ['="' + String(mid) + '"'])]);
+              // Write MIDs as plain strings with leading single quote to prevent scientific notation
+              const midsSheet = XLSX.utils.aoa_to_sheet([["MID"], ...midsArr.map(mid => ["'" + String(mid)])]);
               const midsWb = XLSX.utils.book_new();
               XLSX.utils.book_append_sheet(midsWb, midsSheet, "MIDs");
               const midsFname = `${sanitizeFilename(region)} MIDs.xlsx`;
@@ -445,6 +446,7 @@
               midsArr.forEach(mid => {
                 regionSkus.forEach(skuRow => {
                   cartesianRows.push({
+                    // Write catering_mid as plain string with leading single quote to prevent scientific notation
                     catering_mid: "'" + String(mid),
                     asin: skuRow.asin,
                     sku: skuRow.sku,
@@ -458,7 +460,8 @@
                 ["catering_mid", "asin", "sku", "alternate_tax_code"],
                 ...cartesianRows.map(row =>
                   [
-                    '="' + String(row.catering_mid) + '"',
+                    // Write catering_mid as plain string with leading single quote to prevent scientific notation
+                    String(row.catering_mid),
                     row.asin,
                     row.sku,
                     row.alternate_tax_code
