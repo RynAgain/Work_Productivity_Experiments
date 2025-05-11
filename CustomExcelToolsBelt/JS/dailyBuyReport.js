@@ -24,16 +24,19 @@
 
   // Persistence helpers
   const STORAGE_KEY = "dailyBuyReport_files";
+  // In-memory file data: { date: { name, data, valid } }
+  let inMemoryFiles = {};
+
   function loadFilesFromStorage() {
     try {
       const raw = localStorage.getItem(STORAGE_KEY);
       if (!raw) return {};
       const arr = JSON.parse(raw);
-      // arr: [{date, name, dataB64}]
+      // arr: [{date, name, valid}]
       const out = {};
       arr.forEach(obj => {
-        if (obj && obj.date && obj.name && obj.dataB64) {
-          out[obj.date] = { name: obj.name, dataB64: obj.dataB64 };
+        if (obj && obj.date && obj.name) {
+          out[obj.date] = { name: obj.name, valid: obj.valid };
         }
       });
       return out;
@@ -42,7 +45,7 @@
     }
   }
   function saveFilesToStorage(fileMap) {
-    // fileMap: {date: {name, dataB64}}
+    // fileMap: {date: {name, valid}}
     // Only keep 5 most recent by date
     const entries = Object.entries(fileMap)
       .map(([date, v]) => ({ date, ...v }))
@@ -173,6 +176,7 @@
             if (!file) {
               // Remove file for this date
               delete fileState[dateStr];
+              delete inMemoryFiles[dateStr];
               saveFilesToStorage(fileState);
               status.textContent = 'No file selected.';
               return;
@@ -194,29 +198,32 @@
                 ];
                 if (!wb.SheetNames.includes(SHEET_NAME)) {
                   status.textContent = `Error: Sheet "${SHEET_NAME}" not found in file.`;
+                  fileState[dateStr] = { name: file.name, valid: false };
+                  saveFilesToStorage(fileState);
+                  delete inMemoryFiles[dateStr];
                   return;
                 }
                 const ws = wb.Sheets[SHEET_NAME];
                 const rows = XLSX.utils.sheet_to_json(ws, { defval: '' });
                 if (!rows.length) {
                   status.textContent = `Error: Sheet "${SHEET_NAME}" is empty.`;
+                  fileState[dateStr] = { name: file.name, valid: false };
+                  saveFilesToStorage(fileState);
+                  delete inMemoryFiles[dateStr];
                   return;
                 }
                 const fileHeaders = Object.keys(rows[0]);
                 const missing = REQUIRED_HEADERS.filter(h => !fileHeaders.includes(h));
                 if (missing.length > 0) {
                   status.textContent = `Error: Missing required columns: ${missing.join(', ')}`;
+                  fileState[dateStr] = { name: file.name, valid: false };
+                  saveFilesToStorage(fileState);
+                  delete inMemoryFiles[dateStr];
                   return;
                 }
-                // Convert ArrayBuffer to base64 for persistence
-                let binary = '';
-                const bytes = new Uint8Array(data);
-                for (let i = 0; i < bytes.length; i++) {
-                  binary += String.fromCharCode(bytes[i]);
-                }
-                const dataB64 = btoa(binary);
-                // Add/replace in fileState (store only relevant info for future use)
-                fileState[dateStr] = { name: file.name, dataB64, valid: true };
+                // Store file data in memory only (not in localStorage)
+                inMemoryFiles[dateStr] = { name: file.name, data, valid: true, rows };
+                fileState[dateStr] = { name: file.name, valid: true };
                 saveFilesToStorage(fileState);
                 fileState = loadFilesFromStorage();
                 status.textContent = `Loaded: ${file.name} (sheet "${SHEET_NAME}" valid)`;
@@ -227,6 +234,15 @@
             reader.readAsArrayBuffer(file);
           });
         });
+
+        // Warning about persistence
+        const warnDiv = document.createElement('div');
+        warnDiv.style.marginTop = '14px';
+        warnDiv.style.color = '#b85c00';
+        warnDiv.style.fontWeight = 'bold';
+        warnDiv.style.fontSize = '13px';
+        warnDiv.textContent = 'Note: Due to browser storage limits, uploaded files are only kept for this session. They will be lost if you reload or close the page.';
+        root.appendChild(warnDiv);
 
         // Placeholder for future comparison/report UI
         const futureDiv = document.createElement('div');
