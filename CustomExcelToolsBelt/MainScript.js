@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Modular Tampermonkey UI System
 // @namespace    http://Tampermonkey.net/
-// @version      0.132
+// @version      0.133
 // @description  Modular UI system for /editor page, with feature panel registration
 // @match        https://*.cam.wfm.amazon.dev/editor*
 // @require      https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.17.0/xlsx.full.min.js
@@ -20,6 +20,7 @@
 // @downloadURL    https://github.com/RynAgain/Work_Productivity_Experiments/raw/main/CustomExcelToolsBelt/MainScript.js
 // @run-at document-end
 // ==/UserScript==
+
 
 (function() {
   'use strict';

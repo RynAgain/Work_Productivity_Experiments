@@ -359,8 +359,10 @@
               const now = new Date();
               const isoTimestamp = now.toISOString();
               const metadataLine = [
-                "TemplateType=fptcustom Version=2025.0401 TemplateSignature=Rk9PRA== " +
-                "settings=attributeRow=3&contentLanguageTag=en_US&dataRow=4&feedType=113&headerLanguageTag=en_US&isEdit=false&isProcessingSummary=false&labelRow=2&metadataVersion=MatprodVm9MVFByb2RfMTIzNA%3D%3D&primaryMarketplaceId=amzn1.mp.o.ATVPDKIKX0DER&ptds=Rk9PRA%3D%3D&reportProvenance=false&templateIdentifier=5dd18c07-9366-4278-8b7c-ed2710400e03&timestamp=" + isoTimestamp
+                "TemplateType=fptcustom",
+                "Version=2025.0401",
+                "TemplateSignature=Rk9PRA==",
+                "settings=attributeRow=3&contentLanguageTag=en_US&dataRow=4&feedType=113"
               ];
 
               // 2. Human-readable labels (array)
