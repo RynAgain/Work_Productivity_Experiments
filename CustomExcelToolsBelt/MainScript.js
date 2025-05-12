@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Modular Tampermonkey UI System
 // @namespace    http://Tampermonkey.net/
-// @version      0.130
+// @version      0.131
 // @description  Modular UI system for /editor page, with feature panel registration
 // @match        https://*.cam.wfm.amazon.dev/editor*
 // @require      https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.17.0/xlsx.full.min.js
@@ -12,6 +12,7 @@
 // @require      https://github.com/RynAgain/Work_Productivity_Experiments/raw/main/CustomExcelToolsBelt/JS/SplitBy.js
 // @require      https://github.com/RynAgain/Work_Productivity_Experiments/raw/main/CustomExcelToolsBelt/JS/SplitToUploadFiles.js
 // @require      https://github.com/RynAgain/Work_Productivity_Experiments/raw/main/CustomExcelToolsBelt/JS/dailyBuyReport.js
+// @require      https://github.com/RynAgain/Work_Productivity_Experiments/raw/main/CustomExcelToolsBelt/JS/SellerCustomUploads.js
 
 
 // @grant        none
