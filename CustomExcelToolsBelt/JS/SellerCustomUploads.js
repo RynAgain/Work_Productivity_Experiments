@@ -164,13 +164,12 @@
           }
           // item_sku: 13 digits, required, leading zeros allowed
           else if (field.key === 'item_sku') {
-            input = document.createElement('input');
-            input.type = 'text';
+            // Allow multiple SKUs (comma or newline separated)
+            input = document.createElement('textarea');
             input.id = 'scu-' + field.key;
-            input.placeholder = '13-digit SKU (e.g. 0001234567890)';
-            input.maxLength = 13;
-            input.pattern = '\\d{13}';
-            input.autocomplete = 'off';
+            input.placeholder = 'One or more 13-digit SKUs (comma or newline separated)';
+            input.rows = 2;
+            input.style.resize = 'vertical';
             input.style.gridColumn = 'span 1';
 
             // Add convert button and helper
@@ -215,20 +214,35 @@
 
             convertBtn.onclick = function(e) {
               e.preventDefault();
-              const val = input.value.replace(/\D/g, '');
-              if (!val || val.length < 6 || val.length > 12) {
+              // For multiple SKUs, convert each line/entry
+              const lines = input.value.split(/[\n,]+/).map(s => s.trim()).filter(Boolean);
+              if (lines.length === 0) {
                 input.value = '';
                 input.focus();
-                statusDiv.textContent = 'Enter a numeric SKU between 6 and 12 digits to convert.';
+                statusDiv.textContent = 'Enter at least one SKU to convert.';
                 return;
               }
-              const upc = getUPC(val);
-              const ean = getEAN(upc);
-              if (ean.length === 13) {
-                input.value = ean;
-                statusDiv.textContent = 'Converted to 13-digit SKU: ' + ean;
+              let converted = [];
+              let failed = [];
+              for (const val of lines) {
+                const digits = val.replace(/\D/g, '');
+                if (!digits || digits.length < 6 || digits.length > 12) {
+                  failed.push(val);
+                  continue;
+                }
+                const upc = getUPC(digits);
+                const ean = getEAN(upc);
+                if (ean.length === 13) {
+                  converted.push(ean);
+                } else {
+                  failed.push(val);
+                }
+              }
+              input.value = converted.join('\n');
+              if (failed.length > 0) {
+                statusDiv.textContent = `Some SKUs could not be converted: ${failed.join(', ')}`;
               } else {
-                statusDiv.textContent = 'Could not convert to 13-digit SKU.';
+                statusDiv.textContent = `Converted to 13-digit SKUs.`;
               }
             };
 
@@ -315,50 +329,47 @@
         // Handle form submit (add row)
         form.onsubmit = function(e) {
           e.preventDefault();
-          // Gather values
-          const row = {};
+          // Gather values for all fields except item_sku
+          const baseRow = {};
           let hasValue = false;
-          let errorMsg = '';
 
           FIELDS.forEach(field => {
+            if (field.key === 'item_sku') return;
             let val = inputs[field.key].value;
-
-            // item_sku: must be exactly 13 digits, not blank
-            if (field.key === 'item_sku') {
-              if (!val || !/^\d{13}$/.test(val)) {
-                errorMsg = 'Seller SKU must be exactly 13 digits (including leading zeros).';
-              }
-            }
-
             // feed_product_type: default to "food" if blank
             if (field.key === 'feed_product_type' && !val) {
               val = 'food';
             }
-
             // condition_type: always "New"
             if (field.key === 'condition_type') {
               val = 'New';
             }
-
             // Dates: store as entered, format on output
-            if (inputs[field.key].type === 'date' && val) {
-              // Store as yyyy-mm-dd, format on output
+            if (inputs[field.key] && inputs[field.key].type === 'date' && val) {
               val = val;
             }
-
             if (val !== '') hasValue = true;
-            row[field.key] = val;
+            baseRow[field.key] = val;
           });
 
-          if (errorMsg) {
-            statusDiv.textContent = errorMsg;
+          // Handle multiple SKUs
+          const skuRaw = inputs['item_sku'].value;
+          const skuList = skuRaw.split(/[\n,]+/).map(s => s.trim()).filter(Boolean);
+          if (skuList.length === 0) {
+            statusDiv.textContent = 'Please enter at least one SKU.';
             return;
           }
-          if (!hasValue) {
-            statusDiv.textContent = 'Please enter at least one value to add a row.';
+          let invalid = skuList.filter(sku => !/^\d{13}$/.test(sku));
+          if (invalid.length > 0) {
+            statusDiv.textContent = 'All SKUs must be exactly 13 digits (including leading zeros). Invalid: ' + invalid.join(', ');
             return;
           }
-          rows.push(row);
+
+          // Add a row for each SKU
+          for (const sku of skuList) {
+            rows.push({ ...baseRow, item_sku: sku });
+          }
+
           // Clear inputs, except for feed_product_type and condition_type
           FIELDS.forEach(field => {
             if (field.key === 'feed_product_type') {
@@ -544,11 +555,54 @@
           thead.appendChild(headerRow);
           table.appendChild(thead);
           const tbody = document.createElement('tbody');
-          rows.forEach(r => {
+          rows.forEach((r, rowIdx) => {
             const tr = document.createElement('tr');
             FIELDS.forEach(f => {
               const td = document.createElement('td');
+              td.contentEditable = "true";
               td.textContent = r[f.key] || '';
+              td.style.background = "#fff";
+              td.style.cursor = "text";
+              td.addEventListener('blur', function() {
+                const newVal = td.textContent.trim();
+                // Validate SKU
+                if (f.key === 'item_sku' && !/^\d{13}$/.test(newVal)) {
+                  td.style.background = "#ffe0e0";
+                  statusDiv.textContent = 'SKU must be exactly 13 digits.';
+                  td.textContent = r[f.key] || '';
+                  return;
+                }
+                // Validate update_delete
+                if (f.key === 'update_delete' && newVal && !['Delete', 'PartialUpdate'].includes(newVal)) {
+                  td.style.background = "#ffe0e0";
+                  statusDiv.textContent = 'Record Action must be "Delete" or "PartialUpdate".';
+                  td.textContent = r[f.key] || '';
+                  return;
+                }
+                // Validate dates
+                if ((f.key === 'offering_start_date' || f.key === 'offering_end_date') && newVal && !/^\d{2}\/\d{2}\/\d{4}$/.test(newVal)) {
+                  td.style.background = "#ffe0e0";
+                  statusDiv.textContent = 'Date must be in mm/dd/yyyy format.';
+                  td.textContent = r[f.key] || '';
+                  return;
+                }
+                // Always "New" for condition_type
+                if (f.key === 'condition_type') {
+                  td.textContent = 'New';
+                  return;
+                }
+                // Save edit
+                rows[rowIdx][f.key] = newVal;
+                try { localStorage.setItem(PERSIST_KEY, JSON.stringify(rows)); } catch (e) {}
+                td.style.background = "#fff";
+                statusDiv.textContent = '';
+              });
+              td.addEventListener('keydown', function(ev) {
+                if (ev.key === 'Enter') {
+                  ev.preventDefault();
+                  td.blur();
+                }
+              });
               tr.appendChild(td);
             });
             tbody.appendChild(tr);
