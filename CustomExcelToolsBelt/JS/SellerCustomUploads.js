@@ -141,20 +141,142 @@
           label.setAttribute('for', 'scu-' + field.key);
           label.style.gridColumn = 'span 1';
 
-          const input = document.createElement('input');
-          input.type = 'text';
-          input.id = 'scu-' + field.key;
-          input.placeholder = field.label;
-          input.style.gridColumn = 'span 1';
+          let input;
+          // feed_product_type: default "food"
+          if (field.key === 'feed_product_type') {
+            input = document.createElement('input');
+            input.type = 'text';
+            input.id = 'scu-' + field.key;
+            input.placeholder = field.label;
+            input.value = 'food';
+            input.style.gridColumn = 'span 1';
+          }
+          // item_sku: 13 digits, required, leading zeros allowed
+          else if (field.key === 'item_sku') {
+            input = document.createElement('input');
+            input.type = 'text';
+            input.id = 'scu-' + field.key;
+            input.placeholder = '13-digit SKU (e.g. 0001234567890)';
+            input.maxLength = 13;
+            input.pattern = '\\d{13}';
+            input.autocomplete = 'off';
+            input.style.gridColumn = 'span 1';
 
-          // For some fields, set input type or pattern
-          if (field.key === 'standard_price' || field.key === 'quantity') {
+            // Add convert button and helper
+            const convertBtn = document.createElement('button');
+            convertBtn.type = 'button';
+            convertBtn.textContent = 'Convert to 13-digit SKU';
+            convertBtn.style.marginLeft = '6px';
+            convertBtn.style.marginBottom = '10px';
+            convertBtn.style.background = '#218838';
+            convertBtn.style.color = '#fff';
+            convertBtn.style.border = 'none';
+            convertBtn.style.borderRadius = '4px';
+            convertBtn.style.padding = '6px 10px';
+            convertBtn.style.fontSize = '13px';
+            convertBtn.style.cursor = 'pointer';
+
+            // Helper text
+            const helper = document.createElement('div');
+            helper.style.fontSize = '12px';
+            helper.style.color = '#888';
+            helper.style.marginBottom = '6px';
+            helper.textContent = 'Enter a short SKU (6-12 digits) and click "Convert" to auto-generate a valid 13-digit SKU (EAN-13).';
+
+            // Conversion logic
+            function getUPC(sku) {
+              const upc = ('000000000000' + sku).slice(-12);
+              return upc;
+            }
+            function calculateCheckDigit(code) {
+              const oddSum = [0, 2, 4, 6, 8, 10].reduce((sum, i) => sum + parseInt(code[i]), 0);
+              const evenSum = [1, 3, 5, 7, 9, 11].reduce((sum, i) => sum + parseInt(code[i]), 0);
+              const totalSum = oddSum + evenSum * 3;
+              const nextTen = Math.ceil(totalSum / 10) * 10;
+              return nextTen - totalSum;
+            }
+            function getEAN(upc) {
+              if (upc.length !== 12) {
+                return '';
+              }
+              return upc + calculateCheckDigit(upc);
+            }
+
+            convertBtn.onclick = function(e) {
+              e.preventDefault();
+              const val = input.value.replace(/\D/g, '');
+              if (!val || val.length < 6 || val.length > 12) {
+                input.value = '';
+                input.focus();
+                statusDiv.textContent = 'Enter a numeric SKU between 6 and 12 digits to convert.';
+                return;
+              }
+              const upc = getUPC(val);
+              const ean = getEAN(upc);
+              if (ean.length === 13) {
+                input.value = ean;
+                statusDiv.textContent = 'Converted to 13-digit SKU: ' + ean;
+              } else {
+                statusDiv.textContent = 'Could not convert to 13-digit SKU.';
+              }
+            };
+
+            // Insert helper and button after input
+            form.appendChild(label);
+            form.appendChild(input);
+            form.appendChild(convertBtn);
+            form.appendChild(helper);
+            // Skip default append below
+            inputs[field.key] = input;
+            return;
+          }
+          // update_delete: dropdown
+          else if (field.key === 'update_delete') {
+            input = document.createElement('select');
+            input.id = 'scu-' + field.key;
+            input.style.gridColumn = 'span 1';
+            ['Delete', 'PartialUpdate'].forEach(optVal => {
+              const opt = document.createElement('option');
+              opt.value = optVal;
+              opt.textContent = optVal;
+              input.appendChild(opt);
+            });
+          }
+          // offering_start_date / offering_end_date: date input
+          else if (field.key === 'offering_start_date' || field.key === 'offering_end_date') {
+            input = document.createElement('input');
+            input.type = 'date';
+            input.id = 'scu-' + field.key;
+            input.placeholder = field.label;
+            input.style.gridColumn = 'span 1';
+          }
+          // condition_type: always "New", read-only
+          else if (field.key === 'condition_type') {
+            input = document.createElement('input');
+            input.type = 'text';
+            input.id = 'scu-' + field.key;
+            input.value = 'New';
+            input.readOnly = true;
+            input.style.background = '#f2f2f2';
+            input.style.gridColumn = 'span 1';
+          }
+          // standard_price, quantity: number
+          else if (field.key === 'standard_price' || field.key === 'quantity') {
+            input = document.createElement('input');
             input.type = 'number';
             input.step = 'any';
             input.min = '0';
+            input.id = 'scu-' + field.key;
+            input.placeholder = field.label;
+            input.style.gridColumn = 'span 1';
           }
-          if (field.key === 'offering_start_date' || field.key === 'offering_end_date') {
-            input.type = 'date';
+          // default: text
+          else {
+            input = document.createElement('input');
+            input.type = 'text';
+            input.id = 'scu-' + field.key;
+            input.placeholder = field.label;
+            input.style.gridColumn = 'span 1';
           }
 
           inputs[field.key] = input;
@@ -185,22 +307,57 @@
           // Gather values
           const row = {};
           let hasValue = false;
+          let errorMsg = '';
+
           FIELDS.forEach(field => {
             let val = inputs[field.key].value;
+
+            // item_sku: must be exactly 13 digits, not blank
+            if (field.key === 'item_sku') {
+              if (!val || !/^\d{13}$/.test(val)) {
+                errorMsg = 'Seller SKU must be exactly 13 digits (including leading zeros).';
+              }
+            }
+
+            // feed_product_type: default to "food" if blank
+            if (field.key === 'feed_product_type' && !val) {
+              val = 'food';
+            }
+
+            // condition_type: always "New"
+            if (field.key === 'condition_type') {
+              val = 'New';
+            }
+
+            // Dates: store as entered, format on output
             if (inputs[field.key].type === 'date' && val) {
-              // Format as YYYY-MM-DD
+              // Store as yyyy-mm-dd, format on output
               val = val;
             }
+
             if (val !== '') hasValue = true;
             row[field.key] = val;
           });
+
+          if (errorMsg) {
+            statusDiv.textContent = errorMsg;
+            return;
+          }
           if (!hasValue) {
             statusDiv.textContent = 'Please enter at least one value to add a row.';
             return;
           }
           rows.push(row);
-          // Clear inputs
-          FIELDS.forEach(field => { inputs[field.key].value = ''; });
+          // Clear inputs, except for feed_product_type and condition_type
+          FIELDS.forEach(field => {
+            if (field.key === 'feed_product_type') {
+              inputs[field.key].value = 'food';
+            } else if (field.key === 'condition_type') {
+              inputs[field.key].value = 'New';
+            } else {
+              inputs[field.key].value = '';
+            }
+          });
           statusDiv.textContent = '';
           renderTable();
         };
@@ -258,7 +415,28 @@
           ];
           const labelLine = FIELDS.map(f => f.label);
           const keyLine = FIELDS.map(f => f.key);
-          const dataRows = rows.map(r => FIELDS.map(f => r[f.key] ?? ""));
+          // Format dates as mm/dd/yyyy
+          function formatDate(val) {
+            if (!val) return "";
+            // val is yyyy-mm-dd
+            const parts = val.split('-');
+            if (parts.length === 3) {
+              return `${parts[1].padStart(2, '0')}/${parts[2].padStart(2, '0')}/${parts[0]}`;
+            }
+            return val;
+          }
+          const dataRows = rows.map(r => FIELDS.map(f => {
+            if (f.key === 'offering_start_date' || f.key === 'offering_end_date') {
+              return formatDate(r[f.key]);
+            }
+            if (f.key === 'feed_product_type') {
+              return r[f.key] || 'food';
+            }
+            if (f.key === 'condition_type') {
+              return 'New';
+            }
+            return r[f.key] ?? "";
+          }));
           const aoa = [metadataLine, labelLine, keyLine, ...dataRows];
           const ws = XLSX.utils.aoa_to_sheet(aoa);
           const wb = XLSX.utils.book_new();

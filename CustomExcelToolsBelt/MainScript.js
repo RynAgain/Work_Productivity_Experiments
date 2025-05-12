@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Modular Tampermonkey UI System
 // @namespace    http://Tampermonkey.net/
-// @version      0.131
+// @version      0.132
 // @description  Modular UI system for /editor page, with feature panel registration
 // @match        https://*.cam.wfm.amazon.dev/editor*
 // @require      https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.17.0/xlsx.full.min.js
@@ -440,6 +440,10 @@ sidebar.appendChild(uploadInput);
 
   function setActivePanel(id) {
     activePanelId = id;
+    // Persist last active panel to localStorage
+    try {
+      localStorage.setItem('tm_last_active_panel', id);
+    } catch (e) {}
     renderFeatureList();
     renderPanels();
   }
@@ -454,8 +458,27 @@ sidebar.appendChild(uploadInput);
       if (!opts || !opts.id || !opts.title || typeof opts.render !== 'function') return;
       if (panelRegistry.some(p => p.id === opts.id)) return; // Prevent duplicate
       panelRegistry.push(opts);
+
+      // On first panel registration, try to restore last active panel from localStorage
       if (panelRegistry.length === 1) {
-        activePanelId = opts.id;
+        let restored = null;
+        try {
+          restored = localStorage.getItem('tm_last_active_panel');
+        } catch (e) {}
+        if (restored && panelRegistry.some(p => p.id === restored)) {
+          activePanelId = restored;
+        } else {
+          activePanelId = opts.id;
+        }
+      } else {
+        // If not first, check if this is the restored panel
+        let restored = null;
+        try {
+          restored = localStorage.getItem('tm_last_active_panel');
+        } catch (e) {}
+        if (restored && panelRegistry.some(p => p.id === restored)) {
+          activePanelId = restored;
+        }
       }
       renderFeatureList();
       renderPanels();
