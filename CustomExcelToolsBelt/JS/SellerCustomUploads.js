@@ -119,7 +119,18 @@
         ];
 
         // State: array of row objects
+        // Persistence key
+        const PERSIST_KEY = 'seller_custom_upload_rows';
         let rows = [];
+
+        // Load persisted rows on panel render
+        try {
+          const saved = localStorage.getItem(PERSIST_KEY);
+          if (saved) {
+            const parsed = JSON.parse(saved);
+            if (Array.isArray(parsed)) rows = parsed;
+          }
+        } catch (e) {}
 
         // Status div
         const statusDiv = document.createElement('div');
@@ -359,7 +370,12 @@
             }
           });
           statusDiv.textContent = '';
+          // Persist rows after add
+          try {
+            localStorage.setItem(PERSIST_KEY, JSON.stringify(rows));
+          } catch (e) {}
           renderTable();
+          renderCustomPreview();
         };
 
         // Render table of rows
@@ -367,6 +383,9 @@
           if (rows.length === 0) {
             tableDiv.innerHTML = '<div style="color:#888;">No rows added yet.</div>';
             downloadBtn.disabled = true;
+            // Persist empty
+            try { localStorage.setItem(PERSIST_KEY, JSON.stringify([])); } catch (e) {}
+            renderCustomPreview();
             return;
           }
           let html = '<table><thead><tr>';
@@ -386,6 +405,11 @@
           tableDiv.innerHTML = html;
           downloadBtn.disabled = false;
 
+          // Persist rows after change
+          try {
+            localStorage.setItem(PERSIST_KEY, JSON.stringify(rows));
+          } catch (e) {}
+
           // Attach remove handlers
           Array.from(tableDiv.querySelectorAll('.remove-row-btn')).forEach(btn => {
             btn.onclick = function(e) {
@@ -394,9 +418,11 @@
               if (!isNaN(idx)) {
                 rows.splice(idx, 1);
                 renderTable();
+                renderCustomPreview();
               }
             };
           });
+          renderCustomPreview();
         }
 
         // Download handler
@@ -447,14 +473,110 @@
           statusDiv.textContent = 'File downloaded: custom-upload.xlsx';
         };
 
+        // Clear Data button
+        const clearBtn = document.createElement('button');
+        clearBtn.textContent = 'Clear Data';
+        clearBtn.style.background = '#b85c00';
+        clearBtn.style.color = '#fff';
+        clearBtn.style.border = 'none';
+        clearBtn.style.borderRadius = '5px';
+        clearBtn.style.padding = '10px 0';
+        clearBtn.style.fontSize = '16px';
+        clearBtn.style.cursor = 'pointer';
+        clearBtn.style.width = '100%';
+        clearBtn.style.marginTop = '10px';
+        clearBtn.onclick = function(e) {
+          e.preventDefault();
+          rows = [];
+          try { localStorage.removeItem(PERSIST_KEY); } catch (e) {}
+          renderTable();
+          renderCustomPreview();
+          statusDiv.textContent = 'Data cleared.';
+        };
+
+        // --- Custom Preview in right panel ---
+        function renderCustomPreview() {
+          // Only show if this panel is active
+          if (!window.TM_UI || !window.TM_UI.getPanels) return;
+          const panels = window.TM_UI.getPanels();
+          const active = panels.find(p => p.id === 'seller-custom-uploads');
+          // Try to detect if this panel is active
+          let isActive = false;
+          try {
+            // Find the sidebar button with active class
+            const btns = document.querySelectorAll('.tm-ui-feature-btn.active');
+            btns.forEach(btn => {
+              if (btn.textContent.trim() === 'Seller Custom Uploads') isActive = true;
+            });
+          } catch (e) {}
+          const preview = document.getElementById('tm-file-preview');
+          if (!preview) return;
+          if (!isActive) {
+            // Restore standard preview if needed
+            if (preview.dataset.scuCustom === "1") {
+              preview.innerHTML = '';
+              delete preview.dataset.scuCustom;
+              if (window.TM_RefreshPreview) window.TM_RefreshPreview();
+            }
+            return;
+          }
+          // Replace preview with custom table
+          preview.innerHTML = '';
+          preview.dataset.scuCustom = "1";
+          const title = document.createElement('h3');
+          title.textContent = 'Custom Upload Preview';
+          preview.appendChild(title);
+          if (rows.length === 0) {
+            const empty = document.createElement('div');
+            empty.style.color = '#888';
+            empty.textContent = 'No rows to preview.';
+            preview.appendChild(empty);
+            return;
+          }
+          const table = document.createElement('table');
+          const thead = document.createElement('thead');
+          const headerRow = document.createElement('tr');
+          FIELDS.forEach(f => {
+            const th = document.createElement('th');
+            th.textContent = f.label;
+            headerRow.appendChild(th);
+          });
+          thead.appendChild(headerRow);
+          table.appendChild(thead);
+          const tbody = document.createElement('tbody');
+          rows.forEach(r => {
+            const tr = document.createElement('tr');
+            FIELDS.forEach(f => {
+              const td = document.createElement('td');
+              td.textContent = r[f.key] || '';
+              tr.appendChild(td);
+            });
+            tbody.appendChild(tr);
+          });
+          table.appendChild(tbody);
+          preview.appendChild(table);
+        }
+
         // Initial render
         renderTable();
+        renderCustomPreview();
 
         // Compose UI
         root.appendChild(form);
         root.appendChild(tableDiv);
         root.appendChild(downloadBtn);
+        root.appendChild(clearBtn);
         root.appendChild(statusDiv);
+
+        // Listen for panel switches to update preview
+        setTimeout(() => {
+          // Listen for sidebar button clicks
+          document.querySelectorAll('.tm-ui-feature-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+              setTimeout(renderCustomPreview, 100);
+            });
+          });
+        }, 500);
 
         return root;
       }
