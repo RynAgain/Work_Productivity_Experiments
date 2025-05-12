@@ -76,7 +76,30 @@
 
         // Panel HTML
         root.innerHTML = `
-          <h3 style="margin-top:0;margin-bottom:12px;">Split File By Column</h3>
+          <div style="display:flex;align-items:center;margin-bottom:12px;">
+            <h3 style="margin:0;flex:1;">Split File By Column</h3>
+            <span id="split-by-info-icon" title="Show info" style="cursor:pointer;font-size:20px;color:#004E36;margin-left:8px;">&#9432;</span>
+          </div>
+          <div id="split-by-info-modal" style="display:none;position:fixed;top:10vh;left:50%;transform:translateX(-50%);background:#fff;border:2px solid #004E36;border-radius:10px;box-shadow:0 4px 24px rgba(0,0,0,0.13);z-index:99999;padding:28px 32px 24px 32px;max-width:600px;width:90vw;">
+            <div style="display:flex;align-items:center;margin-bottom:10px;">
+              <b style="font-size:18px;flex:1;">About: Split By Column</b>
+              <button id="split-by-info-close" style="font-size:18px;background:none;border:none;cursor:pointer;color:#004E36;">&times;</button>
+            </div>
+            <div style="font-size:15px;line-height:1.6;">
+              <p>
+                <b>Purpose:</b> This tool splits an uploaded Excel file into multiple files based on the unique values in a selected column. Each output file contains only the rows for one value of that column.
+              </p>
+              <p>
+                <b>How to use:</b>
+                <ul>
+                  <li>Upload an Excel file in the main sidebar.</li>
+                  <li>Select the column to split by.</li>
+                  <li>Optionally set a file name suffix.</li>
+                  <li>Click "Split & Download Zip" to get a zip file with one Excel file per unique value.</li>
+                </ul>
+              </p>
+            </div>
+          </div>
           <label for="split-by-column">Column to split by</label>
           <select id="split-by-column" aria-label="Column to split by">
             <option value="">Select column</option>
@@ -193,6 +216,18 @@
             window.TM_FileState.unsubscribe(unsub);
           }
         });
+
+        // Info icon/modal logic
+        const infoIcon = root.querySelector('#split-by-info-icon');
+        const infoModal = root.querySelector('#split-by-info-modal');
+        const infoClose = root.querySelector('#split-by-info-close');
+        if (infoIcon && infoModal && infoClose) {
+          infoIcon.onclick = () => { infoModal.style.display = "block"; };
+          infoClose.onclick = () => { infoModal.style.display = "none"; };
+          window.addEventListener('keydown', function(e) {
+            if (e.key === "Escape") infoModal.style.display = "none";
+          });
+        }
 
         return root;
       }

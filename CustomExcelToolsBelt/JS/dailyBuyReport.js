@@ -72,6 +72,79 @@
         const root = document.createElement('div');
         root.id = 'daily-buy-report-panel';
 
+        // Info icon/modal
+        const infoIcon = document.createElement('span');
+        infoIcon.id = 'dbr-info-icon';
+        infoIcon.title = 'Show info';
+        infoIcon.style.cursor = 'pointer';
+        infoIcon.style.fontSize = '20px';
+        infoIcon.style.color = '#004E36';
+        infoIcon.style.marginLeft = '8px';
+        infoIcon.innerHTML = '&#9432;';
+
+        const infoModal = document.createElement('div');
+        infoModal.id = 'dbr-info-modal';
+        infoModal.style.display = 'none';
+        infoModal.style.position = 'fixed';
+        infoModal.style.top = '10vh';
+        infoModal.style.left = '50%';
+        infoModal.style.transform = 'translateX(-50%)';
+        infoModal.style.background = '#fff';
+        infoModal.style.border = '2px solid #004E36';
+        infoModal.style.borderRadius = '10px';
+        infoModal.style.boxShadow = '0 4px 24px rgba(0,0,0,0.13)';
+        infoModal.style.zIndex = '99999';
+        infoModal.style.padding = '28px 32px 24px 32px';
+        infoModal.style.maxWidth = '600px';
+        infoModal.style.width = '90vw';
+
+        infoModal.innerHTML = `
+          <div style="display:flex;align-items:center;margin-bottom:10px;">
+            <b style="font-size:18px;flex:1;">About: Daily Buy Report</b>
+            <button id="dbr-info-close" style="font-size:18px;background:none;border:none;cursor:pointer;color:#004E36;">&times;</button>
+          </div>
+          <div style="font-size:15px;line-height:1.6;">
+            <p>
+              <b>Purpose:</b> This tool lets you upload and preview daily buy XLSX files for the 5 most recent weekdays, track file status, and analyze day-over-day active percentages by store.
+            </p>
+            <p>
+              <b>Features:</b>
+              <ul>
+                <li>Upload XLSX files for each recent weekday.</li>
+                <li>Files are validated for required columns and event dates.</li>
+                <li>Preview day-over-day active percentages by store.</li>
+                <li>Data is persisted in your browser for the session.</li>
+              </ul>
+            </p>
+          </div>
+        `;
+
+        // Info icon/modal logic
+        setTimeout(() => {
+          const closeBtn = infoModal.querySelector('#dbr-info-close');
+          if (closeBtn) {
+            closeBtn.onclick = () => { infoModal.style.display = "none"; };
+          }
+        }, 100);
+        infoIcon.onclick = () => { infoModal.style.display = "block"; };
+        window.addEventListener('keydown', function(e) {
+          if (e.key === "Escape") infoModal.style.display = "none";
+        });
+
+        // Add info icon to panel header
+        const headerDiv = document.createElement('div');
+        headerDiv.style.display = 'flex';
+        headerDiv.style.alignItems = 'center';
+        headerDiv.style.marginBottom = '12px';
+        const h3 = document.createElement('h3');
+        h3.textContent = 'Daily Buy Report';
+        h3.style.margin = '0';
+        h3.style.flex = '1';
+        headerDiv.appendChild(h3);
+        headerDiv.appendChild(infoIcon);
+        root.appendChild(headerDiv);
+        root.appendChild(infoModal);
+
         // Styles (scoped)
         if (!document.getElementById('daily-buy-report-style')) {
           const style = document.createElement('style');
