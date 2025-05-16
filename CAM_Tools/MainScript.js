@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         CAM_Admin_Tools
 // @namespace    http://tampermonkey.net/
-// @version      2.6.096
+// @version      2.6.097
 // @description  Main script to include button functionalities
 // @author       Ryan Satterfield
 // @match        https://*.cam.wfm.amazon.dev/*
@@ -36,6 +36,9 @@
 // @require      https://github.com/RynAgain/Work_Productivity_Experiments/raw/main/CAM_Tools/JS/auditHistoryPull.js
 // @require      https://github.com/RynAgain/Work_Productivity_Experiments/raw/main/CAM_Tools/JS/DesyncFinder.js
 // @require      https://github.com/RynAgain/Work_Productivity_Experiments/raw/main/CAM_Tools/JS/scratchpaper.js
+// @require      https://github.com/RynAgain/Work_Productivity_Experiments/raw/main/CAM_Tools/JS/ExistingItemEditor.js
+
+
 
 // @run-at       document-end
 // @updateURL    https://github.com/RynAgain/Work_Productivity_Experiments/raw/main/CAM_Tools/MainScript.js
