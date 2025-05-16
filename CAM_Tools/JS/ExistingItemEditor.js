@@ -4,21 +4,10 @@
     const BUTTON_ID = 'existing-item-editor-btn';
     const GENERAL_HELP_BTN_ID = 'generalHelpToolsButton';
 
-    // Helper: Detect side menu mode (adjust selector as needed)
-    function isSideMenuMode() {
-        // Example: check for a sidebar element or class on body
-        // Update this logic to match your app's actual side menu mode detection
-        return !!document.querySelector('.side-menu, .sidebar, #side-menu, #sidebar');
-    }
-
     // Inject styles for the new button
     const style = document.createElement('style');
     style.textContent = `
         #${BUTTON_ID} {
-            position: fixed;
-            left: 0;
-            /* Will be set dynamically based on General Help Tools button position */
-            z-index: 3201;
             background: #004E36;
             color: #fff;
             border: none;
@@ -33,6 +22,7 @@
             cursor: pointer;
             font-size: 18px;
             transition: background 0.2s;
+            margin-top: 4px;
         }
         #${BUTTON_ID}:hover {
             background: #218838;
@@ -41,13 +31,12 @@
     document.head.appendChild(style);
 
     function addExistingItemEditorButton() {
-        // Only add in side menu mode
-        if (!isSideMenuMode()) {
-            const btn = document.getElementById(BUTTON_ID);
-            if (btn) btn.remove();
-            return;
-        }
-        if (document.getElementById(BUTTON_ID)) return;
+        // Remove if already present (to avoid duplicates)
+        const oldBtn = document.getElementById(BUTTON_ID);
+        if (oldBtn) oldBtn.remove();
+
+        const generalHelpBtn = document.getElementById(GENERAL_HELP_BTN_ID);
+        if (!generalHelpBtn) return;
 
         const btn = document.createElement('button');
         btn.id = BUTTON_ID;
@@ -66,18 +55,11 @@
             alert('Existing Item Editor button clicked. Implement functionality here.');
         };
 
-        // Place directly below the General Help Tools button if present, else append to body
-        const generalHelpBtn = document.getElementById(GENERAL_HELP_BTN_ID);
-        if (generalHelpBtn && generalHelpBtn.parentNode) {
-            // Try to position the new button directly below the General Help Tools button
-            // If the General Help Tools button is fixed, match its left and set top accordingly
-            const rect = generalHelpBtn.getBoundingClientRect();
-            btn.style.position = 'fixed';
-            btn.style.left = rect.left + 'px';
-            btn.style.top = (rect.top + rect.height + 4) + 'px'; // 4px gap
-            document.body.appendChild(btn);
+        // Insert as next sibling in the DOM
+        if (generalHelpBtn.nextSibling) {
+            generalHelpBtn.parentNode.insertBefore(btn, generalHelpBtn.nextSibling);
         } else {
-            document.body.appendChild(btn);
+            generalHelpBtn.parentNode.appendChild(btn);
         }
     }
 
