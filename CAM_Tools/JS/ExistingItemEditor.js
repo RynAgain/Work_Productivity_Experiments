@@ -52,21 +52,20 @@
       document.body.appendChild(overlay);
   
       /* ---------------- Handsontable ---------------------------------- */
-      let hot;
+      // Initialize DataTables
       try {
-        hot = new Handsontable(container, {
-          data        : [],
-          colHeaders  : COLS,
-          rowHeaders  : true,
-          contextMenu : true,
-          width       : '100%',
-          height      : '100%',
-          licenseKey  : 'non-commercial-and-evaluation'
-        });
+          $(container).html('<table id="dataTable" class="display" style="width:100%"></table>');
+          $('#dataTable').DataTable({
+              data: [],
+              columns: COLS.map(col => ({ title: col })),
+              paging: true,
+              searching: true,
+              ordering: true
+          });
       } catch (err) {
-        console.error('[ExistingItemEditor] Handsontable init failed:', err);
-        document.body.removeChild(overlay);
-        return;
+          console.error('[ExistingItemEditor] DataTables init failed:', err);
+          document.body.removeChild(overlay);
+          return;
       }
   
       /* ---------------- UI controls ----------------------------------- */
