@@ -36,15 +36,15 @@
         container.style.overflow = 'hidden';
         container.style.boxShadow = '0 8px 32px rgba(0,0,0,0.18), 0 1.5px 6px rgba(0,78,54,0.10)';
 
-        // Initialize x-spreadsheet
-        const sheet = new Spreadsheet(container, {
-            showToolbar: true,
-            showGrid: true,
-            showContextmenu: true,
-            view: {
-                height: () => document.documentElement.clientHeight - 100,
-                width: () => document.documentElement.clientWidth - 100,
-            },
+        // Initialize Handsontable
+        const hot = new Handsontable(container, {
+            data: [],
+            rowHeaders: true,
+            colHeaders: true,
+            contextMenu: true,
+            width: '100%',
+            height: '100%',
+            licenseKey: 'non-commercial-and-evaluation' // for non-commercial use
         });
 
         // Load data into spreadsheet
