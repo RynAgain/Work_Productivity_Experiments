@@ -91,6 +91,9 @@
             #editorContainer {
               display: none;
             }
+            #fetchDataButton {
+              display: block;
+            }
           </style>
         </button>`;
       container.appendChild(form);
