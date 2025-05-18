@@ -27,7 +27,7 @@
     ...defaultSettings,
     ...getSettings()
   };
-  // DO NOT use Proxy for state: all state changes must go through setState to avoid infinite render loops. dang crashed the website last time
+  // DO NOT use Proxy for state: all state changes must go through setState to avoid infinite render loops.
 
   // Only persist these keys
   function persistSettings() {
@@ -64,25 +64,26 @@
     if (onClick) btn.onclick = onClick;
     return btn;
   }
-// ------------------------------------------------------------------
-//  CSS FOR VISUAL HIDING OF NAV BAR BUTTONS IN SIDE MENU MODE
-// ------------------------------------------------------------------
-const style = document.createElement('style');
-style.textContent = `
-  .nav-bar-hidden {
-    opacity: 0 !important;
-    pointer-events: none !important;
-    position: absolute !important;
-    left: -9999px !important;
-  }
-  .drawer[aria-hidden="true"] {
-    display: none !important;
-  }
-  .drawer[aria-hidden="false"] {
-    display: flex !important;
-  }
-`;
-document.head.appendChild(style);
+
+  // ------------------------------------------------------------------
+  //  CSS FOR VISUAL HIDING OF NAV BAR BUTTONS IN SIDE MENU MODE
+  // ------------------------------------------------------------------
+  const style = document.createElement('style');
+  style.textContent = `
+    .nav-bar-hidden {
+      opacity: 0 !important;
+      pointer-events: none !important;
+      position: absolute !important;
+      left: -9999px !important;
+    }
+    .drawer[aria-hidden="true"] {
+      display: none !important;
+    }
+    .drawer[aria-hidden="false"] {
+      display: flex !important;
+    }
+  `;
+  document.head.appendChild(style);
 
   // ------------------------------------------------------------------
   //  UI ELEMENTS
@@ -172,7 +173,7 @@ document.head.appendChild(style);
     zIndex: '3001'
   });
 
-  // Drawer and Overlay
+  // Drawer Overlay
   const drawerOverlay = document.createElement('div');
   Object.assign(drawerOverlay.style, {
     position: 'fixed',
@@ -184,6 +185,7 @@ document.head.appendChild(style);
     zIndex: '2999',
     display: 'none'
   });
+
   /** Icon Bar for Side Menu **/
   const iconBar = document.createElement('div');
   Object.assign(iconBar.style, {
@@ -204,7 +206,7 @@ document.head.appendChild(style);
   iconBar.setAttribute('role', 'menu');
 
   // ------------------------------------------------------------------
-  //  STATIC SIDE MENU CONFIGURATION (RELIABLE APPROACH)
+  //  STATIC SIDE MENU CONFIGURATION
   // ------------------------------------------------------------------
   const sideMenuItems = [
     {
@@ -236,15 +238,23 @@ document.head.appendChild(style);
       tooltip: 'General Help Tools',
       icon: `<svg width="22" height="22" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 1 1 5.82 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12" y2="17"/></svg>`,
       action: () => document.getElementById('generalHelpToolsButton')?.click()
-    },
-    {
-      label: 'Existing Item Editor',
-      tooltip: 'Edit Existing Items',
-      icon: window.editorIcon,
-      action: window.openExistingItemEditor
     }
   ];
-  // (drawerClose and drawer removed: no longer needed)
+
+  // Dynamically add Existing Item Editor button when components are ready
+  const editorObserver = new MutationObserver(() => {
+    if (window.editorIcon && window.openExistingItemEditor) {
+      sideMenuItems.push({
+        label: 'Existing Item Editor',
+        tooltip: 'Edit Existing Items',
+        icon: window.editorIcon,
+        action: window.openExistingItemEditor
+      });
+      editorObserver.disconnect();
+      render();
+    }
+  });
+  editorObserver.observe(document.body, { childList: true, subtree: true });
 
   // IDs for bottom bar buttons
   const bottomButtonIds = ['redriveButton', 'addItemButton', 'downloadDataButton', 'activateButton', 'generalHelpToolsButton'];
@@ -252,16 +262,14 @@ document.head.appendChild(style);
   // ------------------------------------------------------------------
   //  RENDER FUNCTION
   // ------------------------------------------------------------------
-// Debug log for menu transform and event listeners
-console.debug('[Settings.js] render: settingsMenuOpen=', state.settingsMenuOpen, 'transform=', settingsMenu.style.transform, 'menu width:', settingsMenu.offsetWidth, 'button width:', settingsBtn.offsetWidth);
   function render() {
     // Settings Button
     settingsBtn.style.background = state.themeColor;
-  
-    // Settings Menu 
+
+    // Settings Menu
     if (state.settingsMenuOpen) {
       renderSettingsMenu();
-      settingsMenu.style.transform = 'translateX(0)'; // Now pops out to the right of the button
+      settingsMenu.style.transform = 'translateX(0)';
       settingsMenu.style.boxShadow = '2px 0 12px rgba(0,0,0,.18)';
       settingsMenu.style.pointerEvents = 'auto';
       settingsMenu.setAttribute('aria-hidden', 'false');
@@ -270,17 +278,16 @@ console.debug('[Settings.js] render: settingsMenuOpen=', state.settingsMenuOpen,
         if (firstInput) firstInput.focus();
       }, 100);
     } else {
-      // Move fully off-screen to the left (menu width + button width + margin)
       settingsMenu.style.transform = 'translateX(-296px)'; // 260px menu + 36px button = 296px
       settingsMenu.style.boxShadow = 'none';
       settingsMenu.style.pointerEvents = 'none';
       settingsMenu.setAttribute('aria-hidden', 'true');
     }
-  
+
     // Hamburger/Close Button
     toggleBtn.innerHTML = (state.sideMenuOpen || state.bottomBarVisible) ? closeSVG : hamburgerSVG;
     toggleBtn.title = (state.sideMenuOpen || state.bottomBarVisible) ? 'Hide Menu' : 'Show Menu';
-  
+
     // Icon Bar (side menu mode)
     if (state.menuStyle === 'side') {
       // Always hide bottom bar in side menu mode
@@ -380,7 +387,7 @@ console.debug('[Settings.js] render: settingsMenuOpen=', state.settingsMenuOpen,
   settingsBtn.onmouseenter = () => settingsBtn.style.background = '#218838';
   settingsBtn.onmouseleave = () => settingsBtn.style.background = state.themeColor;
   settingsBtn.onclick = () => setState({ settingsMenuOpen: !state.settingsMenuOpen });
-  
+
   toggleBtn.onmouseenter = () => toggleBtn.style.background = '#218838';
   toggleBtn.onmouseleave = () => toggleBtn.style.background = '#004E36';
   toggleBtn.onclick = () => {
@@ -390,11 +397,9 @@ console.debug('[Settings.js] render: settingsMenuOpen=', state.settingsMenuOpen,
       setState({ bottomBarVisible: !state.bottomBarVisible, sideMenuOpen: false });
     }
   };
-  
-  // (drawerOverlay and drawerClose event handlers removed: no longer needed)
-  
+
   // Keyboard accessibility: ESC closes menus, trap focus
-  document.addEventListener('keydown', function(e) {
+  document.addEventListener('keydown', function (e) {
     if (e.key === 'Escape') {
       if (state.settingsMenuOpen) setState({ settingsMenuOpen: false });
       if (state.sideMenuOpen) setState({ sideMenuOpen: false });
@@ -440,12 +445,12 @@ console.debug('[Settings.js] render: settingsMenuOpen=', state.settingsMenuOpen,
   if (!document.body.contains(settingsMenu)) document.body.appendChild(settingsMenu);
   if (!document.body.contains(toggleBtn)) document.body.appendChild(toggleBtn);
   if (!document.body.contains(iconBar)) document.body.appendChild(iconBar);
-  
+
   // Add smooth transitions for menus/drawer
   const transitionStyle = document.createElement('style');
   transitionStyle.textContent = `
     #settings-btn, #settings-btn:focus { outline: none; }
-    .drawer, #settings-btn, #settings-btn, #settingsMenu {
+    .drawer, #settings-btn, #settingsMenu {
       transition: box-shadow .25s, background .3s, left .25s, transform .25s;
     }
     .drawer[aria-hidden="false"] { transition: left .25s cubic-bezier(.4,0,.2,1); }
@@ -460,24 +465,23 @@ console.debug('[Settings.js] render: settingsMenuOpen=', state.settingsMenuOpen,
   `;
   document.head.appendChild(transitionStyle);
 
+  // ------------------------------------------------------------------
+  //  DYNAMIC BUTTON OBSERVER FOR DRAWER POPULATION
+  // ------------------------------------------------------------------
+  (function observeNavButtons() {
+    if (!Array.isArray(bottomButtonIds) || bottomButtonIds.length === 0) return;
+    const found = () => bottomButtonIds.every(id => document.getElementById(id));
+    if (found()) return; // All buttons already present
+
+    const observer = new MutationObserver(() => {
+      if (found()) {
+        render();
+        observer.disconnect();
+      }
+    });
+    observer.observe(document.body, { childList: true, subtree: true });
+  })();
+
   // Initial render
-// ------------------------------------------------------------------
-//  DYNAMIC BUTTON OBSERVER FOR DRAWER POPULATION
-// ------------------------------------------------------------------
-(function observeNavButtons() {
-  if (!Array.isArray(bottomButtonIds) || bottomButtonIds.length === 0) return;
-  const found = () => bottomButtonIds.every(id => document.getElementById(id));
-  if (found()) return; // All buttons already present
-
-  const observer = new MutationObserver(() => {
-    if (found()) {
-      render();
-      observer.disconnect();
-    }
-  });
-  observer.observe(document.body, { childList: true, subtree: true });
-})();
-// Remove any references to drawer/drawerOverlay in the rest of the codebase.
   render();
-
 })();
