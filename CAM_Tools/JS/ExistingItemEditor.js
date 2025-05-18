@@ -31,6 +31,54 @@
      * ------------------------------------------------------------------ */
     function openExistingItemEditor () {
       console.log('[ExistingItemEditor] opening…');
+
+      // Create overlay
+      const overlay = Object.assign(document.createElement('div'), {
+        id   : 'editorOverlay',
+        style: `
+          position:fixed; inset:0;
+          display:flex; justify-content:center; align-items:center;
+          background:rgba(0,0,0,.5); z-index:1001;`
+      });
+
+      const container = Object.assign(document.createElement('div'), {
+        style: `
+          position:relative; width:80vw; height:80vh; background:#fff;
+          border-radius:12px; overflow:hidden;
+          box-shadow:0 8px 32px rgba(0,0,0,.18), 0 1.5px 6px rgba(0,78,54,.10);`
+      });
+
+      overlay.appendChild(container);
+      document.body.appendChild(overlay);
+
+      // Form for user input
+      const form = document.createElement('form');
+      form.innerHTML = `
+        <label>PLU(s):</label>
+        <input type="text" id="pluInput" placeholder="Enter PLU(s) separated by commas" style="width:100%;padding:6px 8px;border:1px solid #ccc;border-radius:5px;font-size:14px;">
+        <label>By:</label>
+        <select id="bySelect" style="width:100%;padding:6px 8px;border:1px solid #ccc;border-radius:5px;font-size:14px;">
+          <option value="Store">Store</option>
+          <option value="Region">Region</option>
+        </select>
+        <label>Store/Region:</label>
+        <input type="text" id="storeRegionInput" placeholder="Enter Store/Region codes separated by commas" style="width:100%;padding:6px 8px;border:1px solid #ccc;border-radius:5px;font-size:14px;">
+        <label><input type="checkbox" id="allStoresCheckbox"> All Stores</label>
+        <button type="button" id="fetchDataButton" style="width:100%;margin-top:10px;background:#004E36;color:#fff;border:none;border-radius:5px;padding:8px 0;font-size:15px;cursor:pointer;">Fetch Data</button>
+      `;
+      container.appendChild(form);
+
+      // Event listener for fetching data
+      document.getElementById('fetchDataButton').addEventListener('click', function () {
+        const pluInput = Array.from(new Set(document.getElementById('pluInput').value.split(',').map(plu => plu.trim())));
+        const bySelect = document.getElementById('bySelect').value;
+        const storeRegionInput = Array.from(new Set(document.getElementById('storeRegionInput').value.split(',').map(sr => sr.trim())));
+
+        // Fetch data logic similar to RedriveButton.js
+        fetchData(pluInput, bySelect, storeRegionInput).then(data => {
+          hot.loadData(data);
+        }).catch(error => console.error('Error fetching data:', error));
+      });
   
       /* ---------------- overlay + container --------------------------- */
       const overlay = Object.assign(document.createElement('div'), {
@@ -52,20 +100,21 @@
       document.body.appendChild(overlay);
   
       /* ---------------- Handsontable ---------------------------------- */
-      // Initialize DataTables
+      let hot;
       try {
-          $(container).html('<table id="dataTable" class="display" style="width:100%"></table>');
-          $('#dataTable').DataTable({
-              data: [],
-              columns: COLS.map(col => ({ title: col })),
-              paging: true,
-              searching: true,
-              ordering: true
-          });
+        hot = new Handsontable(container, {
+          data        : [],
+          colHeaders  : COLS,
+          rowHeaders  : true,
+          contextMenu : true,
+          width       : '100%',
+          height      : '100%',
+          licenseKey  : 'non-commercial-and-evaluation'
+        });
       } catch (err) {
-          console.error('[ExistingItemEditor] DataTables init failed:', err);
-          document.body.removeChild(overlay);
-          return;
+        console.error('[ExistingItemEditor] Handsontable init failed:', err);
+        document.body.removeChild(overlay);
+        return;
       }
   
       /* ---------------- UI controls ----------------------------------- */
