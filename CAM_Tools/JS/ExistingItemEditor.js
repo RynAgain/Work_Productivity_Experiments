@@ -1,235 +1,229 @@
+/* eslint-env browser */
 (function () {
     'use strict';
-
-    // SVG icon for the quick tools menu
+  
+    /* ------------------------------------------------------------------ *
+     *  ICON + CONSTANTS
+     * ------------------------------------------------------------------ */
     const editorIcon = `
-        <svg width="22" height="22" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
-            <path d="M12 19l7-7 3 3-7 7-3-3z" fill="#004E36" stroke="#fff" stroke-width="1.5"/>
-            <path d="M18 13l-6 6M2 12l6 6M3 3l18 18" stroke="#fff" stroke-width="1.5"/>
-        </svg>
-    `;
-
-    // Function to open the Existing Item Editor
-    function openExistingItemEditor() {
-        console.log('Opening Existing Item Editor');
-
-        // Create overlay
-        const overlay = document.createElement('div');
-        overlay.id = 'editorOverlay';
-        overlay.style.position = 'fixed';
-        overlay.style.top = '0';
-        overlay.style.left = '0';
-        overlay.style.width = '100vw';
-        overlay.style.height = '100vh';
-        overlay.style.background = 'rgba(0,0,0,0.5)';
-        overlay.style.zIndex = '1001';
-        overlay.style.display = 'flex';
-        overlay.style.justifyContent = 'center';
-        overlay.style.alignItems = 'center';
-
-        // Container for x-spreadsheet
-        const container = document.createElement('div');
-        container.style.width = '80vw';
-        container.style.height = '80vh';
-        container.style.background = '#fff';
-        container.style.borderRadius = '12px';
-        container.style.overflow = 'hidden';
-        container.style.boxShadow = '0 8px 32px rgba(0,0,0,0.18), 0 1.5px 6px rgba(0,78,54,0.10)';
-
-        // Initialize Handsontable
-        const hot = new Handsontable(container, {
-            data: [],
-            rowHeaders: true,
-            colHeaders: true,
-            contextMenu: true,
-            width: '100%',
-            height: '100%',
-            licenseKey: 'non-commercial-and-evaluation' // for non-commercial use
+      <svg width="22" height="22" fill="none" stroke="#fff" stroke-width="2.2"
+           stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
+        <path d="M12 19l7-7 3 3-7 7-3-3z" fill="#004E36" stroke="#fff" stroke-width="1.5"/>
+        <path d="M18 13l-6 6M2 12l6 6M3 3l18 18" stroke="#fff" stroke-width="1.5"/>
+      </svg>`;
+  
+    const COLS = [
+      'Store - 3 Letter Code',
+      'Item Name',
+      'Item PLU/UPC',
+      'Availability',
+      'Current Inventory',
+      'Sales Floor Capacity',
+      'Tracking Start Date',
+      'Tracking End Date'
+    ];
+  
+    const environment = window.location.hostname.includes('gamma') ? 'gamma' : 'prod';
+    const apiUrlBase  = `https://${environment}.cam.wfm.amazon.dev/api/`;
+  
+    /* ------------------------------------------------------------------ *
+     *  MAIN ENTRY POINT
+     * ------------------------------------------------------------------ */
+    function openExistingItemEditor () {
+      console.log('[ExistingItemEditor] opening…');
+  
+      /* ---------------- overlay + container --------------------------- */
+      const overlay = Object.assign(document.createElement('div'), {
+        id   : 'editorOverlay',
+        style: `
+          position:fixed; inset:0;
+          display:flex; justify-content:center; align-items:center;
+          background:rgba(0,0,0,.5); z-index:1001;`
+      });
+  
+      const container = Object.assign(document.createElement('div'), {
+        style: `
+          position:relative; width:80vw; height:80vh; background:#fff;
+          border-radius:12px; overflow:hidden;
+          box-shadow:0 8px 32px rgba(0,0,0,.18), 0 1.5px 6px rgba(0,78,54,.10);`
+      });
+  
+      overlay.appendChild(container);
+      document.body.appendChild(overlay);
+  
+      /* ---------------- Handsontable ---------------------------------- */
+      let hot;
+      try {
+        hot = new Handsontable(container, {
+          data        : [],
+          colHeaders  : COLS,
+          rowHeaders  : true,
+          contextMenu : true,
+          width       : '100%',
+          height      : '100%',
+          licenseKey  : 'non-commercial-and-evaluation'
         });
-
-        // Load data into Handsontable
-        fetchData().then(data => {
-            hot.loadData(data);
+      } catch (err) {
+        console.error('[ExistingItemEditor] Handsontable init failed:', err);
+        document.body.removeChild(overlay);
+        return;
+      }
+  
+      /* ---------------- UI controls ----------------------------------- */
+      // close button
+      const closeBtn = Object.assign(document.createElement('button'), {
+        innerHTML : '&times;',
+        title     : 'Close',
+        style     : `
+          position:absolute; top:10px; right:10px; padding:0 8px;
+          font-size:26px; line-height:28px;
+          background:none; border:none; cursor:pointer;`
+      });
+      closeBtn.onclick = () => document.body.removeChild(overlay);
+      container.appendChild(closeBtn);
+  
+      // file‑name input
+      const nameInput = Object.assign(document.createElement('input'), {
+        type        : 'text',
+        placeholder : 'Enter file name',
+        style       : `
+          position:absolute; bottom:50px; right:10px; padding:6px 8px;
+          border:1px solid #ccc; border-radius:4px; font-size:15px;`
+      });
+      container.appendChild(nameInput);
+  
+      // download CSV
+      const dlBtn = makeActionBtn('Download CSV', 10, () => {
+        const file = (nameInput.value.trim() || 'ExistingCamItems') + '.csv';
+        downloadCSV(hot.getSourceData(), file);
+      });
+      container.appendChild(dlBtn);
+  
+      // upload
+      const upBtn = makeActionBtn('Upload', 110, () => uploadData(hot.getSourceData()));
+      container.appendChild(upBtn);
+  
+      function makeActionBtn (label, right, cb) {
+        return Object.assign(document.createElement('button'), {
+          innerText : label,
+          style     : `
+            position:absolute; bottom:10px; right:${right}px;
+            padding:6px 12px; font-size:15px; cursor:pointer;`,
+          onclick   : cb
         });
-
-        // Append container to overlay
-        overlay.appendChild(container);
-        document.body.appendChild(overlay);
-
-        // Close button
-        const closeButton = document.createElement('button');
-        closeButton.innerHTML = '&times;';
-        closeButton.style.position = 'absolute';
-        closeButton.style.top = '10px';
-        closeButton.style.right = '10px';
-        closeButton.style.fontSize = '24px';
-        closeButton.style.cursor = 'pointer';
-        closeButton.onclick = () => document.body.removeChild(overlay);
-        container.appendChild(closeButton);
-
-        // Input for file name
-        const fileNameInput = document.createElement('input');
-        fileNameInput.type = 'text';
-        fileNameInput.placeholder = 'Enter file name';
-        fileNameInput.style.position = 'absolute';
-        fileNameInput.style.bottom = '50px';
-        fileNameInput.style.right = '10px';
-        fileNameInput.style.fontSize = '16px';
-        fileNameInput.style.padding = '5px';
-        container.appendChild(fileNameInput);
-
-        // Download button
-        const downloadButton = document.createElement('button');
-        downloadButton.innerHTML = 'Download CSV';
-        downloadButton.style.position = 'absolute';
-        downloadButton.style.bottom = '10px';
-        downloadButton.style.right = '10px';
-        downloadButton.style.fontSize = '16px';
-        downloadButton.style.cursor = 'pointer';
-        downloadButton.onclick = () => {
-            const fileName = fileNameInput.value.trim() || 'ExistingCamItems.csv';
-            downloadCSV(sheet.getData(), fileName);
-        };
-        container.appendChild(downloadButton);
-
-        // Upload button
-        const uploadButton = document.createElement('button');
-        uploadButton.innerHTML = 'Upload';
-        uploadButton.style.position = 'absolute';
-        uploadButton.style.bottom = '10px';
-        uploadButton.style.right = '100px';
-        uploadButton.style.fontSize = '16px';
-        uploadButton.style.cursor = 'pointer';
-        uploadButton.onclick = () => uploadData(sheet.getData());
-        container.appendChild(uploadButton);
+      }
+  
+      /* ---------------- fetch + populate ------------------------------ */
+      fetchData().then(objRows => {
+        const rows = objRows.map(r => COLS.map(c => r[c] ?? ''));
+        hot.loadData(rows);
+        console.log(`[ExistingItemEditor] loaded ${rows.length} rows`);
+      }).catch(e => console.error('[ExistingItemEditor] data load error:', e));
     }
-
-    // Function to fetch data using API logic from RedriveButton
-    function fetchData() {
-        return new Promise((resolve, reject) => {
-            const environment = window.location.hostname.includes('gamma') ? 'gamma' : 'prod';
-            const apiUrlBase = `https://${environment}.cam.wfm.amazon.dev/api/`;
-
-            const headersStores = {
-                'accept': '*/*',
-                'accept-encoding': 'gzip, deflate, br',
-                'accept-language': 'en-US,en;q=0.9',
-                'content-type': 'application/x-amz-json-1.0',
-                'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36 Edg/130.0.0.0',
-                'x-amz-target': 'WfmCamBackendService.GetStoresInformation'
-            };
-
-            fetch(apiUrlBase, {
-                method: 'POST',
-                headers: headersStores,
-                body: JSON.stringify({}),
-                credentials: 'include'
-            })
-            .then(response => response.json())
-            .then(storeData => {
-                if (!storeData || !storeData.storesInformation) {
-                    throw new Error('Invalid store data received');
-                }
-
-                const storeIds = [];
-                for (const region in storeData.storesInformation) {
-                    const states = storeData.storesInformation[region];
-                    for (const state in states) {
-                        const stores = states[state];
-                        stores.forEach(store => {
-                            storeIds.push(store.storeTLC);
-                        });
-                    }
-                }
-
-                // Fetch items for all stores
-                Promise.all(storeIds.map(storeId => fetchItemsForStore(storeId)))
-                    .then(results => {
-                        const allItems = results.flat();
-                        resolve(allItems);
-                    });
-            })
-            .catch(error => {
-                console.error('Error fetching data:', error);
-                reject(error);
-            });
-        });
-    }
-
-    function fetchItemsForStore(storeId) {
-        const headersItems = {
-            'accept': '*/*',
-            'accept-encoding': 'gzip, deflate, br',
-            'accept-language': 'en-US,en;q=0.9',
-            'content-type': 'application/x-amz-json-1.0',
-            'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36 Edg/130.0.0.0',
-            'x-amz-target': 'WfmCamBackendService.GetItemsAvailability'
+  
+    /* ------------------------------------------------------------------ *
+     *  DATA FETCHING
+     * ------------------------------------------------------------------ */
+    function fetchData () {
+      return new Promise((resolve, reject) => {
+        const hdrStores = {
+          'accept'       : '*/*',
+          'content-type' : 'application/x-amz-json-1.0',
+          'x-amz-target' : 'WfmCamBackendService.GetStoresInformation'
         };
-
-        const payloadItems = {
-            "filterContext": {
-                "storeIds": [storeId]
-            },
-            "paginationContext": {
-                "pageNumber": 0,
-                "pageSize": 10000
-            }
-        };
-
-        return fetch(apiUrlBase, {
-            method: 'POST',
-            headers: headersItems,
-            body: JSON.stringify(payloadItems),
-            credentials: 'include'
+  
+        fetch(apiUrlBase, {
+          method      : 'POST',
+          headers     : hdrStores,
+          body        : '{}',
+          credentials : 'include'
         })
-        .then(response => response.json())
-        .then(data => {
-            return data.itemsAvailability.map(item => ({
-                'Store - 3 Letter Code': storeId,
-                'Item Name': item.itemName,
-                'Item PLU/UPC': item.wfmScanCode,
-                'Availability': item.inventoryStatus,
-                'Current Inventory': item.inventoryStatus === 'Unlimited' ? "0" : (Math.max(0, Math.min(10000, parseInt(item.currentInventoryQuantity) || 0))).toString(),
-                'Sales Floor Capacity': '',
-                'Tracking Start Date': '',
-                'Tracking End Date': ''
-            }));
+        .then(r => r.json())
+        .then(storeData => {
+          if (!storeData?.storesInformation) throw new Error('Invalid store data');
+  
+          // flatten TLCs
+          const storeIds = [];
+          Object.values(storeData.storesInformation).forEach(states =>
+            Object.values(states).forEach(stores =>
+              stores.forEach(s => storeIds.push(s.storeTLC))
+            )
+          );
+  
+          return Promise.all(storeIds.map(id => fetchItemsForStore(id)));
         })
-        .catch(error => {
-            console.error(`Error fetching items for store ${storeId}:`, error);
-            return [];
-        });
+        .then(all => resolve(all.flat()))
+        .catch(err => reject(err));
+      });
     }
-
-    // Function to download data as CSV
-    function downloadCSV(data, fileName) {
-        console.log('Downloading CSV', data);
-        const csvContent = data.map(row =>
-            Object.values(row).map(value => `"${value}"`).join(",")
-        ).join("\n");
-
-        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-        const link = document.createElement("a");
-        const url = URL.createObjectURL(blob);
-        link.setAttribute("href", url);
-        link.setAttribute("download", "spreadsheet_data.csv");
-        link.style.visibility = 'hidden';
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
+  
+    function fetchItemsForStore (storeId) {
+      const hdrItems = {
+        'accept'       : '*/*',
+        'content-type' : 'application/x-amz-json-1.0',
+        'x-amz-target' : 'WfmCamBackendService.GetItemsAvailability'
+      };
+  
+      const payload = {
+        filterContext    : { storeIds:[storeId] },
+        paginationContext: { pageNumber:0, pageSize:10000 }
+      };
+  
+      return fetch(apiUrlBase, {
+        method      : 'POST',
+        headers     : hdrItems,
+        body        : JSON.stringify(payload),
+        credentials : 'include'
+      })
+      .then(r => r.json())
+      .then(d => (d.itemsAvailability || []).map(item => ({
+        'Store - 3 Letter Code' : storeId,
+        'Item Name'             : item.itemName,
+        'Item PLU/UPC'          : item.wfmScanCode,
+        'Availability'          : item.inventoryStatus,
+        'Current Inventory'     : item.inventoryStatus === 'Unlimited'
+                                  ? '0'
+                                  : String(Math.max(
+                                      0, Math.min(10000, parseInt(item.currentInventoryQuantity) || 0))),
+        'Sales Floor Capacity'  : '',
+        'Tracking Start Date'   : '',
+        'Tracking End Date'     : ''
+      })))
+      .catch(err => {
+        console.error(`[ExistingItemEditor] store ${storeId} error:`, err);
+        return [];
+      });
     }
-
-    // Function to upload data
-    function uploadData(data) {
-        console.log('Uploading data', data);
-        // Implement data upload logic
+  
+    /* ------------------------------------------------------------------ *
+     *  CSV + UPLOAD PLACEHOLDERS
+     * ------------------------------------------------------------------ */
+    function downloadCSV (rows2D, fileName) {
+      const csv = rows2D.map(r => r.map(v => `"${v ?? ''}"`).join(',')).join('\n');
+      const blob = new Blob([csv], { type:'text/csv;charset=utf-8' });
+      const link = Object.assign(document.createElement('a'), {
+        href     : URL.createObjectURL(blob),
+        download : fileName,
+        style    : 'display:none'
+      });
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
     }
-
-    // Expose for Settings.js quick tools integration
+  
+    function uploadData (rows2D) {
+      console.log('[ExistingItemEditor] upload placeholder', rows2D);
+      // TODO: implement upload logic
+    }
+  
+    /* ------------------------------------------------------------------ *
+     *  EXPORT  (settings quick‑tools can pick these up)
+     * ------------------------------------------------------------------ */
     try {
-        module.exports = { openExistingItemEditor, editorIcon };
-    } catch (e) {
-        window.openExistingItemEditor = openExistingItemEditor;
-        window.editorIcon = editorIcon;
+      module.exports = { openExistingItemEditor, editorIcon };
+    } catch { // non-module context
+      window.openExistingItemEditor = openExistingItemEditor;
+      window.editorIcon             = editorIcon;
     }
-})();
+  })();
+  
