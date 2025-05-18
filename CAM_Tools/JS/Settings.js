@@ -236,6 +236,12 @@ document.head.appendChild(style);
       tooltip: 'General Help Tools',
       icon: `<svg width="22" height="22" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 1 1 5.82 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12" y2="17"/></svg>`,
       action: () => document.getElementById('generalHelpToolsButton')?.click()
+    },
+    {
+      label: 'Existing Item Editor',
+      tooltip: 'Edit Existing Items',
+      icon: window.editorIcon,
+      action: window.openExistingItemEditor
     }
   ];
   // (drawerClose and drawer removed: no longer needed)
