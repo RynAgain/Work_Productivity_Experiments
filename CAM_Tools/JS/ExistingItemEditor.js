@@ -4,14 +4,7 @@
     const BUTTON_ID = 'existing-item-editor-btn';
     const GENERAL_HELP_BTN_ID = 'generalHelpToolsButton';
 
-    // Simple debounce utility to prevent rapid repeated calls
-    function debounce(fn, delay) {
-        let timeoutId;
-        return function(...args) {
-            clearTimeout(timeoutId);
-            timeoutId = setTimeout(() => fn.apply(this, args), delay);
-        };
-    }
+    
 
     // Inject styles for the new button
     const style = document.createElement('style');
@@ -72,11 +65,24 @@
         }
     }
 
-    // Use MutationObserver to ensure button stays present/removed as needed
-    // Use debounced callback to avoid excessive DOM updates
-    const debouncedAddButton = debounce(addExistingItemEditorButton, 100);
-    const observer = new MutationObserver(debouncedAddButton);
-    observer.observe(document.body, { childList: true, subtree: true });
+    // Ensure the Existing Item Editor button is always added after the General Help Tools button
+    function ensureButtonAfterHelp() {
+        const helpBtn = document.getElementById(GENERAL_HELP_BTN_ID);
+        if (helpBtn) {
+            addExistingItemEditorButton();
+            observer.disconnect();
+        }
+    }
+
+    // Observe for the addition of the General Help Tools button if not present
+    const observer = new MutationObserver(() => {
+        ensureButtonAfterHelp();
+    });
+    if (!document.getElementById(GENERAL_HELP_BTN_ID)) {
+        observer.observe(document.body, { childList: true, subtree: true });
+    } else {
+        addExistingItemEditorButton();
+    }
 
     // Initial attempt to add the button
     addExistingItemEditorButton();
