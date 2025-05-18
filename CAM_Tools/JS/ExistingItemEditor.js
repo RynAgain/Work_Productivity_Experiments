@@ -4,6 +4,15 @@
     const BUTTON_ID = 'existing-item-editor-btn';
     const GENERAL_HELP_BTN_ID = 'generalHelpToolsButton';
 
+    // Simple debounce utility to prevent rapid repeated calls
+    function debounce(fn, delay) {
+        let timeoutId;
+        return function(...args) {
+            clearTimeout(timeoutId);
+            timeoutId = setTimeout(() => fn.apply(this, args), delay);
+        };
+    }
+
     // Inject styles for the new button
     const style = document.createElement('style');
     style.textContent = `
@@ -64,7 +73,9 @@
     }
 
     // Use MutationObserver to ensure button stays present/removed as needed
-    const observer = new MutationObserver(addExistingItemEditorButton);
+    // Use debounced callback to avoid excessive DOM updates
+    const debouncedAddButton = debounce(addExistingItemEditorButton, 100);
+    const observer = new MutationObserver(debouncedAddButton);
     observer.observe(document.body, { childList: true, subtree: true });
 
     // Initial attempt to add the button

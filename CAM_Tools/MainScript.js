@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         CAM_Admin_Tools
 // @namespace    http://tampermonkey.net/
-// @version      2.6.098
+// @version      2.6.099
 // @description  Main script to include button functionalities
 // @author       Ryan Satterfield
 // @match        https://*.cam.wfm.amazon.dev/*
@@ -72,8 +72,23 @@
     }
 
     try {
-        const observer = new MutationObserver(() => {
-            restoreEventListeners();
+        const observer = new MutationObserver((mutationsList) => {
+            // Only restore event listeners for added nodes that match tracked targets
+            for (const mutation of mutationsList) {
+                for (const node of mutation.addedNodes) {
+                    if (!(node instanceof HTMLElement)) continue;
+                    eventListeners.forEach(({ target, type, listener, options }) => {
+                        // If the added node is the target, or contains the target, restore the event listener
+                        if (node === target || (node.contains && node.contains(target))) {
+                            try {
+                                target.addEventListener(type, listener, options);
+                            } catch (error) {
+                                console.error(`Error restoring event listener: ${error.message}`, { target, type, listener, options });
+                            }
+                        }
+                    });
+                }
+            }
         });
 
         observer.observe(document.body, { childList: true, subtree: true });
