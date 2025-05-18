@@ -87,6 +87,11 @@
                 style="width:100%;margin-top:10px;background:#004E36;color:#fff;
                        border:none;border-radius:5px;padding:8px 0;font-size:15px;cursor:pointer;">
           Fetch Data
+          <style>
+            #editorContainer {
+              display: none;
+            }
+          </style>
         </button>`;
       container.appendChild(form);
     }
@@ -159,12 +164,20 @@
       container.appendChild(btn);
     };
 
-    makeActionBtn('downloadBtn','Download CSV',10,() => {
+    const downloadBtn = makeActionBtn('downloadBtn','Download CSV',10,() => {
       const file = (document.getElementById('fileNameInput').value.trim() || 'ExistingCamItems') + '.csv';
       downloadCSV(hot.getSourceData(), file);
     });
 
-    makeActionBtn('uploadBtn','Upload',110,() => uploadData(hot.getSourceData()));
+    const uploadBtn = makeActionBtn('uploadBtn','Upload',110,() => uploadData(hot.getSourceData()));
+
+    downloadBtn.style.display = 'none';
+    uploadBtn.style.display = 'none';
+
+    document.getElementById('fetchDataButton').addEventListener('click', () => {
+      downloadBtn.style.display = 'block';
+      uploadBtn.style.display = 'block';
+    });
 
     /* ----------  Fetch‑Data button logic ----------------------------- */
     document.getElementById('fetchDataButton').onclick = () => {
@@ -175,6 +188,7 @@
                        .value.split(',').map(s=>s.trim()).filter(Boolean))];
       const all   = document.getElementById('allStoresCheckbox').checked;
 
+      document.getElementById('editorContainer').style.display = 'block';
       fetchData(plus, by, codes, all)
         .then(rows => hot.loadData(rows.map(r => COLS.map(c => r[c] ?? ''))))
         .catch(err => console.error('[ExistingItemEditor] fetchData error:', err));
