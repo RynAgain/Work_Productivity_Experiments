@@ -4,12 +4,8 @@
     // SVG icon for the quick tools menu
     const editorIcon = `
         <svg width="22" height="22" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
-            <rect x="4" y="4" width="16" height="16" rx="2" fill="#fff" stroke="none"/>
-            <rect x="4" y="4" width="16" height="16" rx="2"/>
-            <path d="M8 12h8M8 16h5"/>
-            <rect x="6.5" y="6.5" width="3" height="11" rx="0.5" fill="#004E36" stroke="#004E36"/>
-            <path d="M8 8v8" stroke="#fff" stroke-width="1.2"/>
-            <path d="M6.5 10.5h3" stroke="#fff" stroke-width="1.2"/>
+            <polygon points="12,2 19,8 19,16 12,22 5,16 5,8" fill="#004E36" stroke="#fff" stroke-width="1.5"/>
+            <path d="M12 6v12M9 9l6 6M15 9l-6 6" stroke="#fff" stroke-width="1.5"/>
         </svg>
     `;
 
