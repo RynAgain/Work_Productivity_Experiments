@@ -47,9 +47,9 @@
             licenseKey: 'non-commercial-and-evaluation' // for non-commercial use
         });
 
-        // Load data into spreadsheet
+        // Load data into Handsontable
         fetchData().then(data => {
-            sheet.loadData(data);
+            hot.loadData(data);
         });
 
         // Append container to overlay
