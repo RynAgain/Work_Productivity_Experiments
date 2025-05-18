@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         CAM_Admin_Tools
 // @namespace    http://tampermonkey.net/
-// @version      2.6.104
+// @version      2.6.105
 // @description  Main script to include button functionalities
 // @author       Ryan Satterfield
 // @match        https://*.cam.wfm.amazon.dev/*
@@ -13,6 +13,7 @@
 // @require      https://cdnjs.cloudflare.com/ajax/libs/react-dom/17.0.2/umd/react-dom.production.min.js
 // @require      https://code.jquery.com/jquery-3.6.0.min.js
 // @require      https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js
+// @require      https://cdn.jsdelivr.net/npm/x-spreadsheet@1.1.5/dist/xspreadsheet.js
 
 // @require      https://github.com/RynAgain/Work_Productivity_Experiments/raw/main/CAM_Tools/JS/AddItemButton.js
 // @require      https://raw.githubusercontent.com/RynAgain/Work_Productivity_Experiments/main/CAM_Tools/JS/activateButton.js
