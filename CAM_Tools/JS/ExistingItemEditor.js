@@ -56,13 +56,23 @@
         btn.onclick = function () {
             alert('Existing Item Editor button clicked. Implement functionality here.');
         };
+        btn.className = 'button';
+        Object.assign(btn.style, {
+            position: 'fixed',
+            left: '100%',
+            bottom: '0',
+            width: '20%',
+            height: '40px',
+            zIndex: '1000',
+            fontSize: '14px',
+            backgroundColor: '#004E36',
+            color: '#fff',
+            border: 'none',
+            borderRadius: '5px',
+            cursor: 'pointer'
+        });
 
-        // Insert as next sibling in the DOM
-        if (generalHelpBtn.nextSibling) {
-            generalHelpBtn.parentNode.insertBefore(btn, generalHelpBtn.nextSibling);
-        } else {
-            generalHelpBtn.parentNode.appendChild(btn);
-        }
+        document.body.appendChild(btn);
     }
 
     // Ensure the Existing Item Editor button is always added after the General Help Tools button
