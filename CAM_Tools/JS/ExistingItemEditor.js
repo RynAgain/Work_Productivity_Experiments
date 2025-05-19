@@ -177,10 +177,43 @@
     overlay.style.display = 'none';
 
     document.getElementById('fetchDataButton').addEventListener('click', () => {
-        downloadBtn.style.display = 'block';
-        uploadBtn.style.display = 'block';
-        overlay.style.display = 'flex';
+        fetchDataButtonLogic();
     });
+
+    function fetchDataButtonLogic() {
+        const plus  = [...new Set(document.getElementById('pluInput')
+                         .value.split(',').map(p=>p.trim()).filter(Boolean))];
+        const by    = document.getElementById('bySelect').value;
+        const codes = [...new Set(document.getElementById('storeRegionInput')
+                         .value.split(',').map(s=>s.trim()).filter(Boolean))];
+        const all   = document.getElementById('allStoresCheckbox').checked;
+
+        fetchData(plus, by, codes, all)
+            .then(rows => {
+                hot.loadData(rows.map(r => COLS.map(c => r[c] ?? '')));
+                document.getElementById('editorContainer').style.display = 'block';
+                downloadBtn.style.display = 'block';
+                uploadBtn.style.display = 'block';
+                overlay.style.display = 'flex';
+            })
+            .catch(err => console.error('[ExistingItemEditor] fetchData error:', err));
+    }
+
+    function fetchDataButtonLogic() {
+        const plus  = [...new Set(document.getElementById('pluInput')
+                         .value.split(',').map(p=>p.trim()).filter(Boolean))];
+        const by    = document.getElementById('bySelect').value;
+        const codes = [...new Set(document.getElementById('storeRegionInput')
+                         .value.split(',').map(s=>s.trim()).filter(Boolean))];
+        const all   = document.getElementById('allStoresCheckbox').checked;
+
+        fetchData(plus, by, codes, all)
+            .then(rows => {
+                hot.loadData(rows.map(r => COLS.map(c => r[c] ?? '')));
+                document.getElementById('editorContainer').style.display = 'block';
+            })
+            .catch(err => console.error('[ExistingItemEditor] fetchData error:', err));
+    }
 
     /* ----------  Fetch‑Data button logic ----------------------------- */
     document.getElementById('fetchDataButton').onclick = () => {
