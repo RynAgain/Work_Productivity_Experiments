@@ -110,6 +110,7 @@
     try {
       hot = new Handsontable(sheetDiv, {
         data        : [],
+        renderAllRows: false,
         colHeaders  : COLS,
         rowHeaders  : true,
         contextMenu : true,
@@ -198,10 +199,6 @@
         .catch(err => console.error('[ExistingItemEditor] fetchData error:', err));
     };
 
-    /* ----------  initial auto‑load ----------------------------------- */
-    fetchData([], 'Store', [], true)
-      .then(rows => hot.loadData(rows.map(r => COLS.map(c => r[c] ?? ''))))
-      .catch(e   => console.error('[ExistingItemEditor] initial load error:', e));
   }
 
   /* ------------------------------------------------------------------ *
