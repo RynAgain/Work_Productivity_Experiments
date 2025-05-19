@@ -1,4 +1,4 @@
-/* eslint-env browser */
+/* eslint‑env browser */
 (function () {
   'use strict';
 
@@ -88,12 +88,8 @@
                        border:none;border-radius:5px;padding:8px 0;font-size:15px;cursor:pointer;">
           Fetch Data
           <style>
-            #editorContainer {
-              display: none;
-            }
-            #fetchDataButton {
-              display: block;
-            }
+            #editorContainer { display:none; }
+            #fetchDataButton { display:block; }
           </style>
         </button>`;
       container.appendChild(form);
@@ -155,9 +151,13 @@
     }
 
     const makeActionBtn = (id, label, right, cb) => {
-      if (container.querySelector(`#${id}`)) return;
-      const btn = Object.assign(document.createElement('button'), {
-        id        : id,
+      // return existing button if present
+      let btn = container.querySelector(`#${id}`);
+      if (btn) return btn;
+
+      // otherwise create it
+      btn = Object.assign(document.createElement('button'), {
+        id,
         innerText : label,
         style     : `
           position:absolute; bottom:10px; right:${right}px;
@@ -165,15 +165,15 @@
         onclick   : cb
       });
       container.appendChild(btn);
-    return btn;
+      return btn;
     };
 
-    const downloadBtn = makeActionBtn('downloadBtn','Download CSV',10,() => {
+    const downloadBtn = makeActionBtn('downloadBtn', 'Download CSV', 10, () => {
       const file = (document.getElementById('fileNameInput').value.trim() || 'ExistingCamItems') + '.csv';
       downloadCSV(hot.getSourceData(), file);
     });
 
-    const uploadBtn = makeActionBtn('uploadBtn','Upload',110,() => uploadData(hot.getSourceData()));
+    const uploadBtn = makeActionBtn('uploadBtn', 'Upload', 110, () => uploadData(hot.getSourceData()));
 
     downloadBtn.style.display = 'none';
     uploadBtn.style.display = 'none';
