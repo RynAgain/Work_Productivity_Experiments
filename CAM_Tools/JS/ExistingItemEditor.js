@@ -174,12 +174,12 @@
 
     downloadBtn.style.display = 'none';
     uploadBtn.style.display = 'none';
-    document.getElementById('editorContainer').style.display = 'none';
+    overlay.style.display = 'none';
 
     document.getElementById('fetchDataButton').addEventListener('click', () => {
         downloadBtn.style.display = 'block';
         uploadBtn.style.display = 'block';
-        document.getElementById('editorContainer').style.display = 'block';
+        overlay.style.display = 'flex';
     });
 
     /* ----------  Fetch‑Data button logic ----------------------------- */
