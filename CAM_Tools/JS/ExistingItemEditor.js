@@ -165,6 +165,7 @@
         onclick   : cb
       });
       container.appendChild(btn);
+    return btn;
     };
 
     const downloadBtn = makeActionBtn('downloadBtn','Download CSV',10,() => {
