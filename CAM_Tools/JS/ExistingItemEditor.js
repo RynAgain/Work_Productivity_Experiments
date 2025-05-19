@@ -87,10 +87,6 @@
                 style="width:100%;margin-top:10px;background:#004E36;color:#fff;
                        border:none;border-radius:5px;padding:8px 0;font-size:15px;cursor:pointer;">
           Fetch Data
-          <style>
-            #editorContainer { display:none; }
-            #fetchDataButton { display:block; }
-          </style>
         </button>`;
       container.appendChild(form);
     }
@@ -178,10 +174,12 @@
 
     downloadBtn.style.display = 'none';
     uploadBtn.style.display = 'none';
+    document.getElementById('editorContainer').style.display = 'none';
 
     document.getElementById('fetchDataButton').addEventListener('click', () => {
-      downloadBtn.style.display = 'block';
-      uploadBtn.style.display = 'block';
+        downloadBtn.style.display = 'block';
+        uploadBtn.style.display = 'block';
+        document.getElementById('editorContainer').style.display = 'block';
     });
 
     /* ----------  Fetch‑Data button logic ----------------------------- */
