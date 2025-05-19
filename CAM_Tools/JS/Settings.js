@@ -165,7 +165,6 @@
     fontFamily: 'Segoe UI, Arial, sans-serif',
     borderTopRightRadius: '12px',
     borderBottomRightRadius: '12px',
-    // When closed, move fully off-screen to the left (not just -270px, but -260px - 36px - 8px margin)
     transform: 'translateX(-304px)', // 260px menu + 36px button + 8px margin
     transition: 'transform .25s cubic-bezier(.4,0,.2,1)',
     boxShadow: 'none',
@@ -245,8 +244,12 @@
       icon: window.editorIcon,
       action: window.openExistingItemEditor
     }
-  ];
-  });
+  ]; // ← array ends here (stray token removed)
+
+  // ------------------------------------------------------------------
+  //  EXTRA OBSERVER FOR EDITOR ICON (stub so script doesn't break)
+  // ------------------------------------------------------------------
+  const editorObserver = new MutationObserver(() => {});
   editorObserver.observe(document.body, { childList: true, subtree: true });
 
   // IDs for bottom bar buttons
@@ -433,7 +436,6 @@
   // ------------------------------------------------------------------
   //  MOUNT EVERYTHING
   // ------------------------------------------------------------------
-  // Only append if not already in DOM (prevents moving/removing other UI like scratchpad)
   if (!document.body.contains(settingsBtn)) document.body.appendChild(settingsBtn);
   if (!document.body.contains(settingsMenu)) document.body.appendChild(settingsMenu);
   if (!document.body.contains(toggleBtn)) document.body.appendChild(toggleBtn);
@@ -450,10 +452,8 @@
     .drawer[aria-hidden="true"] { transition: left .25s cubic-bezier(.4,0,.2,1); }
     #settingsMenu[aria-hidden="false"] { transition: transform .25s cubic-bezier(.4,0,.2,1); }
     #settingsMenu[aria-hidden="true"] { transition: transform .25s cubic-bezier(.4,0,.2,1); }
-    /* Ensure icon bar does not overlap scratchpad button (z-index: 3100 for iconBar, 3200 for scratchpad) */
     #scratchpad-toggle-btn { z-index: 3200 !important; }
     [id^="scratchpad-toggle-btn"] { z-index: 3200 !important; }
-    /* Make sure iconBar is always visible but below scratchpad */
     .iconbar-item { outline: none; }
   `;
   document.head.appendChild(transitionStyle);
