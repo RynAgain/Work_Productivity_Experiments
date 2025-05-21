@@ -131,6 +131,10 @@
           <label for="split-to-upload-map">Store-Region-ID Map File (.csv, .xlsx, .xls)</label>
           <input type="file" id="split-to-upload-map" accept=".csv,.xlsx,.xls" aria-label="Store-Region-ID Map File" />
           <div id="split-to-upload-map-status" style="font-size:13px;color:#004E36;margin-bottom:8px;"></div>
+          <div style="margin-bottom:8px;">
+            <input type="checkbox" id="split-to-upload-splitbymid" style="margin-right:6px;" />
+            <label for="split-to-upload-splitbymid" style="display:inline;font-weight:400;">Split by MID instead of Region</label>
+          </div>
           <label for="split-to-upload-column">Column to split by</label>
           <select id="split-to-upload-column" aria-label="Column to split by">
             <option value="">Select column</option>
@@ -155,6 +159,7 @@
         const warningDiv = root.querySelector('#split-to-upload-warning');
         const mapInput = root.querySelector('#split-to-upload-map');
         const mapStatus = root.querySelector('#split-to-upload-map-status');
+        const splitByMIDCheckbox = root.querySelector('#split-to-upload-splitbymid');
         let mapData = null;
         const MAP_STORAGE_KEY = "splitToUploadFiles_mapData";
         // Try to load persisted map on panel load
@@ -298,7 +303,7 @@
 
         // Split and download handler
         // Helper for all output types
-        async function generateZip({ uploads = false, mids = false, cartesian = false, suffix, col, statusDiv }) {
+        async function generateZip({ uploads = false, mids = false, cartesian = false, suffix, col, statusDiv, splitByMID = false }) {
           const state = window.TM_FileState.getState();
           if (!state.sheetData || !col) {
             statusDiv.textContent = 'No data or column selected. Please upload a file and select a column.';
@@ -309,7 +314,7 @@
             return;
           }
 
-          // Group rows by region (split column)
+          // Group rows by region or MID (split column)
           const groups = {};
           state.sheetData.forEach(row => {
             const key = row[col] || 'EMPTY';
@@ -321,23 +326,38 @@
           let totalCartesian = 0;
           let totalUploadRows = 0;
           let totalMIDs = 0;
-          for (const region in groups) {
-            const regionRows = groups[region];
-            const midsArr = mapData
-              .filter(m => m.Region === region)
-              .map(m => m.MID)
-              .filter(mid => typeof mid === "string" ? mid.trim() !== "" : (mid !== null && mid !== undefined && String(mid).trim() !== ""));
-            totalUploadRows += regionRows.length;
-            totalMIDs += midsArr.length;
-            totalCartesian += regionRows.length * midsArr.length;
+          if (splitByMID) {
+            // Each group is a MID
+            for (const mid in groups) {
+              const midRows = groups[mid];
+              totalUploadRows += midRows.length;
+              totalMIDs += 1;
+              totalCartesian += midRows.length; // Each MID × its SKUs (1:1)
+            }
+            statusDiv.innerHTML = `Preparing to process ${Object.keys(groups).length} MIDs.<br>
+              Total upload rows: ${totalUploadRows}<br>
+              Total MIDs: ${totalMIDs}<br>
+              Total cartesian rows: ${totalCartesian}<br>
+              <b>Processing...</b>`;
+          } else {
+            for (const region in groups) {
+              const regionRows = groups[region];
+              const midsArr = mapData
+                .filter(m => m.Region === region)
+                .map(m => m.MID)
+                .filter(mid => typeof mid === "string" ? mid.trim() !== "" : (mid !== null && mid !== undefined && String(mid).trim() !== ""));
+              totalUploadRows += regionRows.length;
+              totalMIDs += midsArr.length;
+              totalCartesian += regionRows.length * midsArr.length;
+            }
+            statusDiv.innerHTML = `Preparing to process ${Object.keys(groups).length} regions.<br>
+              Total upload rows: ${totalUploadRows}<br>
+              Total MIDs: ${totalMIDs}<br>
+              Total cartesian rows: ${totalCartesian}<br>
+              <b>Processing...</b>`;
           }
-          statusDiv.innerHTML = `Preparing to process ${Object.keys(groups).length} regions.<br>
-            Total upload rows: ${totalUploadRows}<br>
-            Total MIDs: ${totalMIDs}<br>
-            Total cartesian rows: ${totalCartesian}<br>
-            <b>Processing...</b>`;
 
-          // Create zip with folders for each region
+          // Create zip with folders for each region or MID
           const zip = new JSZip();
           let fileCount = 0;
           function sanitizeFilename(name) {
@@ -345,9 +365,11 @@
           }
 
           let regionIndex = 0;
-          for (const region in groups) {
+          for (const groupKey in groups) {
             regionIndex++;
-            const regionRows = groups[region];
+            const regionRows = groups[groupKey];
+            // If splitByMID, groupKey is MID, else it's region
+            const region = groupKey;
             const regionFolder = zip.folder(sanitizeFilename(region));
 
             // 1. Split upload file (XLSX)
@@ -406,16 +428,21 @@
             }
 
             // 2. List of MIDs for the region (CSV)
-            const midsArr = mapData
-              .filter(m => m.Region === region)
-              .map(m => m.MID)
-              .filter(mid => typeof mid === "string" ? mid.trim() !== "" : (mid !== null && mid !== undefined && String(mid).trim() !== ""));
+            let midsArr;
+            if (splitByMID) {
+              midsArr = [region]; // region is actually MID
+            } else {
+              midsArr = mapData
+                .filter(m => m.Region === region)
+                .map(m => m.MID)
+                .filter(mid => typeof mid === "string" ? mid.trim() !== "" : (mid !== null && mid !== undefined && String(mid).trim() !== ""));
+            }
             if (mids) {
-              statusDiv.innerHTML = `Processing region ${regionIndex} of ${Object.keys(groups).length}: <b>${region}</b> (MIDs: ${midsArr.length})...`;
+              statusDiv.innerHTML = splitByMID
+                ? `Processing MID ${regionIndex} of ${Object.keys(groups).length}: <b>${region}</b>...`
+                : `Processing region ${regionIndex} of ${Object.keys(groups).length}: <b>${region}</b> (MIDs: ${midsArr.length})...`;
               await new Promise(r => setTimeout(r, 0));
-              // Force MID as string in CSV: ="MID"
               // MIDs as XLSX
-              // Write MIDs as plain strings and force cell type to string to prevent scientific notation
               const midsSheet = XLSX.utils.aoa_to_sheet([["MID"], ...midsArr.map(mid => [String(mid)])]);
               // Force all MID cells to type "s" (string)
               const midsRange = XLSX.utils.decode_range(midsSheet['!ref']);
@@ -443,7 +470,9 @@
 
             // 3. Cartesian product: region MIDs × SKUs
             if (cartesian) {
-              statusDiv.innerHTML = `Processing region ${regionIndex} of ${Object.keys(groups).length}: <b>${region}</b> (cartesian rows: ${midsArr.length * regionRows.length})...`;
+              statusDiv.innerHTML = splitByMID
+                ? `Processing MID ${regionIndex} of ${Object.keys(groups).length}: <b>${region}</b> (cartesian rows: ${regionRows.length})...`
+                : `Processing region ${regionIndex} of ${Object.keys(groups).length}: <b>${region}</b> (cartesian rows: ${midsArr.length * regionRows.length})...`;
               await new Promise(r => setTimeout(r, 0));
               const regionSkus = regionRows.map(r => ({
                 asin: r.external_product_id,
@@ -451,24 +480,33 @@
                 alternate_tax_code: r.alternate_tax_code
               }));
               const cartesianRows = [];
-              midsArr.forEach(mid => {
+              if (splitByMID) {
+                // Only one MID per group
                 regionSkus.forEach(skuRow => {
                   cartesianRows.push({
-                    // Write catering_mid as plain string (no leading quote)
-                    catering_mid: String(mid),
+                    catering_mid: String(region),
                     asin: skuRow.asin,
                     sku: skuRow.sku,
                     alternate_tax_code: skuRow.alternate_tax_code
                   });
                 });
-              });
-              // Write as CSV
+              } else {
+                midsArr.forEach(mid => {
+                  regionSkus.forEach(skuRow => {
+                    cartesianRows.push({
+                      catering_mid: String(mid),
+                      asin: skuRow.asin,
+                      sku: skuRow.sku,
+                      alternate_tax_code: skuRow.alternate_tax_code
+                    });
+                  });
+                });
+              }
               // Cartesian as XLSX
               const cartesianAoa = [
                 ["catering_mid", "asin", "sku", "alternate_tax_code"],
                 ...cartesianRows.map(row =>
                   [
-                    // Write catering_mid as plain string (no leading quote)
                     String(row.catering_mid),
                     row.asin,
                     row.sku,
@@ -509,15 +547,21 @@
             a.click();
             setTimeout(() => document.body.removeChild(a), 100);
             // Detailed status message
-            let msg = `Created zip with ${Object.keys(groups).length} region folders, ${fileCount} files total.<br>`;
-            for (const region in groups) {
-              const regionRows = groups[region];
-              const midsArr = mapData
-                .filter(m => m.Region === region)
-                .map(m => m.MID)
-                .filter(mid => typeof mid === "string" ? mid.trim() !== "" : (mid !== null && mid !== undefined && String(mid).trim() !== ""));
-              const cartesianCount = midsArr.length * regionRows.length;
-              msg += `<b>${region}</b>: `;
+            let msg = `Created zip with ${Object.keys(groups).length} ${splitByMID ? 'MID' : 'region'} folders, ${fileCount} files total.<br>`;
+            for (const groupKey in groups) {
+              const regionRows = groups[groupKey];
+              let midsArr, cartesianCount;
+              if (splitByMID) {
+                midsArr = [groupKey];
+                cartesianCount = regionRows.length;
+              } else {
+                midsArr = mapData
+                  .filter(m => m.Region === groupKey)
+                  .map(m => m.MID)
+                  .filter(mid => typeof mid === "string" ? mid.trim() !== "" : (mid !== null && mid !== undefined && String(mid).trim() !== ""));
+                cartesianCount = midsArr.length * regionRows.length;
+              }
+              msg += `<b>${groupKey}</b>: `;
               if (uploads) msg += `${regionRows.length} upload rows, `;
               if (mids) msg += `${midsArr.length} MIDs, `;
               if (cartesian) msg += `${cartesianCount} cartesian rows, `;
@@ -538,7 +582,8 @@
             cartesian: true,
             suffix: suffixInput.value.trim() || 'upload',
             col: columnSelect.value,
-            statusDiv
+            statusDiv,
+            splitByMID: !!splitByMIDCheckbox.checked
           });
         });
 
@@ -549,7 +594,8 @@
             cartesian: false,
             suffix: suffixInput.value.trim() || 'upload',
             col: columnSelect.value,
-            statusDiv
+            statusDiv,
+            splitByMID: !!splitByMIDCheckbox.checked
           });
         });
 
@@ -560,7 +606,8 @@
             cartesian: false,
             suffix: suffixInput.value.trim() || 'upload',
             col: columnSelect.value,
-            statusDiv
+            statusDiv,
+            splitByMID: !!splitByMIDCheckbox.checked
           });
         });
 
@@ -571,7 +618,8 @@
             cartesian: true,
             suffix: suffixInput.value.trim() || 'upload',
             col: columnSelect.value,
-            statusDiv
+            statusDiv,
+            splitByMID: !!splitByMIDCheckbox.checked
           });
         });
 
