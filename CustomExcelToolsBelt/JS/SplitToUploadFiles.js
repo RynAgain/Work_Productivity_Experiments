@@ -87,16 +87,42 @@
         // Panel HTML
         root.innerHTML = `
           <style>
-            .split-to-upload-toggle-btn[aria-pressed="true"] {
+            .split-to-upload-segment-btn {
+              border: 1px solid #004E36;
+              background: #fff;
+              color: #004E36;
+              font-weight: 500;
+              transition: background 0.2s, color 0.2s;
+              cursor: pointer;
+              outline: none;
+              box-shadow: none;
+            }
+            .split-to-upload-segment-btn.active, .split-to-upload-segment-btn[aria-pressed="true"] {
               background: #004E36 !important;
               color: #fff !important;
-              border: 1px solid #004E36 !important;
+              z-index: 1;
             }
-            .split-to-upload-toggle-btn[aria-pressed="false"] {
+            .split-to-upload-segment-btn:not(.active):not([aria-pressed="true"]) {
               background: #fff !important;
               color: #004E36 !important;
-              border: 1px solid #004E36 !important;
             }
+            #split-to-upload-segmented {
+              border-radius: 5px;
+              overflow: hidden;
+              border: 1px solid #004E36;
+              width: 100%;
+              margin-bottom: 0;
+            }
+            #split-to-upload-segmented .split-to-upload-segment-btn {
+              border-radius: 0;
+              border: none;
+              border-right: 1px solid #004E36;
+            }
+            #split-to-upload-segmented .split-to-upload-segment-btn:last-child {
+              border-right: none;
+            }
+            #split-to-upload-region-btn { border-radius: 5px 0 0 5px; }
+            #split-to-upload-mid-btn { border-radius: 0 5px 5px 0; }
           </style>
           <div style="display:flex;align-items:center;margin-bottom:12px;">
             <h3 style="margin:0;flex:1;">Split To Upload Files</h3>
@@ -143,10 +169,15 @@
           <label for="split-to-upload-map">Store-Region-ID Map File (.csv, .xlsx, .xls)</label>
           <input type="file" id="split-to-upload-map" accept=".csv,.xlsx,.xls" aria-label="Store-Region-ID Map File" />
           <div id="split-to-upload-map-status" style="font-size:13px;color:#004E36;margin-bottom:8px;"></div>
-          <div style="margin-bottom:8px;">
-            <button type="button" id="split-to-upload-splitbymid-btn" class="split-to-upload-toggle-btn" aria-pressed="false" style="display:inline-block;padding:7px 16px;font-size:15px;border-radius:5px;border:1px solid #004E36;background:#fff;color:#004E36;cursor:pointer;transition:background 0.2s, color 0.2s;font-weight:500;">
-              Split by MID instead of Region
-            </button>
+          <div style="margin-bottom:12px;">
+            <div id="split-to-upload-segmented" style="display:flex;gap:0;">
+              <button type="button" id="split-to-upload-region-btn" class="split-to-upload-segment-btn active" aria-pressed="true" style="flex:1 1 0;padding:7px 0;font-size:15px;border-radius:5px 0 0 5px;border:1px solid #004E36;background:#004E36;color:#fff;cursor:pointer;transition:background 0.2s, color 0.2s;font-weight:500;border-right:none;">
+                Split by Region
+              </button>
+              <button type="button" id="split-to-upload-mid-btn" class="split-to-upload-segment-btn" aria-pressed="false" style="flex:1 1 0;padding:7px 0;font-size:15px;border-radius:0 5px 5px 0;border:1px solid #004E36;background:#fff;color:#004E36;cursor:pointer;transition:background 0.2s, color 0.2s;font-weight:500;">
+                Split by MID
+              </button>
+            </div>
           </div>
           <label for="split-to-upload-column">Column to split by</label>
           <select id="split-to-upload-column" aria-label="Column to split by">
@@ -172,7 +203,8 @@
         const warningDiv = root.querySelector('#split-to-upload-warning');
         const mapInput = root.querySelector('#split-to-upload-map');
         const mapStatus = root.querySelector('#split-to-upload-map-status');
-        const splitByMIDToggleBtn = root.querySelector('#split-to-upload-splitbymid-btn');
+        const regionBtn = root.querySelector('#split-to-upload-region-btn');
+        const midBtn = root.querySelector('#split-to-upload-mid-btn');
         let splitByMID = false;
         let mapData = null;
         const MAP_STORAGE_KEY = "splitToUploadFiles_mapData";
@@ -589,10 +621,20 @@
           }
         }
 
-        // Toggle button logic
-        splitByMIDToggleBtn.addEventListener('click', function() {
-          splitByMID = !splitByMID;
-          splitByMIDToggleBtn.setAttribute('aria-pressed', splitByMID ? 'true' : 'false');
+        // Segmented control logic
+        regionBtn.addEventListener('click', function() {
+          splitByMID = false;
+          regionBtn.classList.add('active');
+          regionBtn.setAttribute('aria-pressed', 'true');
+          midBtn.classList.remove('active');
+          midBtn.setAttribute('aria-pressed', 'false');
+        });
+        midBtn.addEventListener('click', function() {
+          splitByMID = true;
+          midBtn.classList.add('active');
+          midBtn.setAttribute('aria-pressed', 'true');
+          regionBtn.classList.remove('active');
+          regionBtn.setAttribute('aria-pressed', 'false');
         });
 
         goBtn.addEventListener('click', function() {
