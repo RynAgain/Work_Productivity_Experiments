@@ -446,22 +446,60 @@
               ];
 
               // 4. Data rows (array of arrays, in order)
-              // Helper to format date as YYYY-MM-DD if not blank
+              // Helper to robustly format date as YYYY-MM-DD if not blank
               function formatDateYMD(val) {
                 if (!val || String(val).trim() === "") return "";
-                // Try to parse as Date
-                let d = typeof val === "string" ? new Date(val) : val;
-                if (typeof d === "string" && /^\d{4}-\d{2}-\d{2}$/.test(d)) return d; // already formatted
-                if (d instanceof Date && !isNaN(d)) {
-                  return d.toISOString().slice(0, 10);
+                let str = String(val).trim();
+
+                // Already in YYYY-MM-DD
+                if (/^\d{4}-\d{2}-\d{2}$/.test(str)) return str;
+
+                // UNIX timestamp (seconds or ms)
+                if (/^\d{10}$/.test(str)) {
+                  // 10 digits: seconds
+                  let dt = new Date(Number(str) * 1000);
+                  if (!isNaN(dt)) return dt.toISOString().slice(0, 10);
                 }
-                // Try to parse string
-                let parsed = Date.parse(val);
+                if (/^\d{13}$/.test(str)) {
+                  // 13 digits: ms
+                  let dt = new Date(Number(str));
+                  if (!isNaN(dt)) return dt.toISOString().slice(0, 10);
+                }
+
+                // MM-DD-YYYY or MM/DD/YYYY
+                let mdy = str.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})$/);
+                if (mdy) {
+                  let [_, mm, dd, yyyy] = mdy;
+                  let dt = new Date(`${yyyy}-${mm.padStart(2, "0")}-${dd.padStart(2, "0")}`);
+                  if (!isNaN(dt)) return dt.toISOString().slice(0, 10);
+                }
+
+                // DD-MM-YYYY or DD/MM/YYYY
+                let dmy = str.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})$/);
+                if (dmy) {
+                  let [_, dd, mm, yyyy] = dmy;
+                  // If MM > 12, assume DD-MM-YYYY
+                  if (Number(mm) > 12) {
+                    let dt = new Date(`${yyyy}-${mm.padStart(2, "0")}-${dd.padStart(2, "0")}`);
+                    if (!isNaN(dt)) return dt.toISOString().slice(0, 10);
+                  }
+                }
+
+                // YYYY/MM/DD
+                let ymd = str.match(/^(\d{4})[\/\-](\d{1,2})[\/\-](\d{1,2})$/);
+                if (ymd) {
+                  let [_, yyyy, mm, dd] = ymd;
+                  let dt = new Date(`${yyyy}-${mm.padStart(2, "0")}-${dd.padStart(2, "0")}`);
+                  if (!isNaN(dt)) return dt.toISOString().slice(0, 10);
+                }
+
+                // Try Date.parse fallback
+                let parsed = Date.parse(str);
                 if (!isNaN(parsed)) {
                   let dt = new Date(parsed);
                   return dt.toISOString().slice(0, 10);
                 }
-                return String(val); // fallback: return as-is
+                return str; // fallback: return as-is
               }
               const dataRows = regionRows.map(r => [
                 r.feed_product_type ?? "",
