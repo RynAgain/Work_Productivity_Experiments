@@ -446,13 +446,30 @@
               ];
 
               // 4. Data rows (array of arrays, in order)
+              // Helper to format date as YYYY-MM-DD if not blank
+              function formatDateYMD(val) {
+                if (!val || String(val).trim() === "") return "";
+                // Try to parse as Date
+                let d = typeof val === "string" ? new Date(val) : val;
+                if (typeof d === "string" && /^\d{4}-\d{2}-\d{2}$/.test(d)) return d; // already formatted
+                if (d instanceof Date && !isNaN(d)) {
+                  return d.toISOString().slice(0, 10);
+                }
+                // Try to parse string
+                let parsed = Date.parse(val);
+                if (!isNaN(parsed)) {
+                  let dt = new Date(parsed);
+                  return dt.toISOString().slice(0, 10);
+                }
+                return String(val); // fallback: return as-is
+              }
               const dataRows = regionRows.map(r => [
                 r.feed_product_type ?? "",
                 r.item_sku ?? "",
                 r.update_delete ?? "",
                 r.standard_price ?? "",
-                r.offering_start_date ?? "",
-                r.offering_end_date ?? "",
+                formatDateYMD(r.offering_start_date),
+                formatDateYMD(r.offering_end_date),
                 r.condition_type ?? "",
                 r.main_image_url ?? "",
                 r.external_product_id ?? "",
