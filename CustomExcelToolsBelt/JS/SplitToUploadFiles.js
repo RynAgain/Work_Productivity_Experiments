@@ -448,8 +448,17 @@
               // 4. Data rows (array of arrays, in order)
               // Helper to robustly format date as YYYY-MM-DD if not blank
               function formatDateYMD(val) {
-                if (!val || String(val).trim() === "") return "";
+                if (val === null || val === undefined || String(val).trim() === "") return "";
                 let str = String(val).trim();
+
+                // Excel serial date (days since 1899-12-30)
+                if (!isNaN(str) && Number(str) > 20000 && Number(str) < 60000) {
+                  // Excel's day 1 is 1899-12-31, but JS Date epoch is 1970-01-01
+                  // Excel's 0 is 1899-12-30 (due to Lotus 1-2-3 bug)
+                  let base = new Date(Date.UTC(1899, 11, 30));
+                  let dt = new Date(base.getTime() + Number(str) * 86400000);
+                  if (!isNaN(dt)) return dt.toISOString().slice(0, 10);
+                }
 
                 // Already in YYYY-MM-DD
                 if (/^\d{4}-\d{2}-\d{2}$/.test(str)) return str;
