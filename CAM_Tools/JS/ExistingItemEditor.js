@@ -316,8 +316,76 @@
                 .then(data => {
                     console.log('Item data received:', data);
                     if (data && data.itemsAvailability && data.itemsAvailability.length > 0) {
-                        progress.innerHTML = 'Item data loaded. (Implement edit logic here)';
-                        // Here you would show fields for editing and then allow saving changes via another API call.
+                        progress.innerHTML = 'Item data loaded.';
+
+                        // Add Download CSV button if not already present
+                        if (!document.getElementById('downloadExistingItemCsvButton')) {
+                            var downloadBtn = document.createElement('button');
+                            downloadBtn.id = 'downloadExistingItemCsvButton';
+                            downloadBtn.textContent = 'Download CSV';
+                            downloadBtn.className = 'button';
+                            downloadBtn.style.width = '100%';
+                            downloadBtn.style.marginTop = '10px';
+                            downloadBtn.style.background = '#004E36';
+                            downloadBtn.style.color = '#fff';
+                            downloadBtn.style.border = 'none';
+                            downloadBtn.style.borderRadius = '5px';
+                            downloadBtn.style.padding = '10px 0';
+                            downloadBtn.style.fontSize = '16px';
+                            downloadBtn.style.cursor = 'pointer';
+                            downloadBtn.style.transition = 'background 0.2s';
+                            downloadBtn.addEventListener('mouseenter', function() {
+                                downloadBtn.style.background = '#218838';
+                            });
+                            downloadBtn.addEventListener('mouseleave', function() {
+                                downloadBtn.style.background = '#004E36';
+                            });
+
+                            // Insert after progress
+                            progress.parentNode.insertBefore(downloadBtn, progress.nextSibling);
+
+                            downloadBtn.onclick = function() {
+                                // Transform data for uploadable CSV
+                                var items = data.itemsAvailability;
+                                var storeId = storeRegion; // Using input as store code
+                                var desiredHeaders = [
+                                    'Store - 3 Letter Code',
+                                    'Item Name',
+                                    'Item PLU/UPC',
+                                    'Availability',
+                                    'Current Inventory',
+                                    'Sales Floor Capacity',
+                                    'Andon Cord',
+                                    'Tracking Start Date',
+                                    'Tracking End Date'
+                                ];
+                                var csvRows = [desiredHeaders.join(",")];
+
+                                items.forEach(function(item) {
+                                    var row = [
+                                        storeId,
+                                        item.itemName || '',
+                                        item.wfmScanCode || '',
+                                        item.inventoryStatus || '',
+                                        (item.inventoryStatus === 'Unlimited' ? "0" : (Math.max(0, Math.min(10000, parseInt(item.currentInventoryQuantity) || 0))).toString()),
+                                        '', // Sales Floor Capacity (empty or fill if available)
+                                        item.andonCordState ? 'Enabled' : 'Disabled',
+                                        '', // Tracking Start Date
+                                        ''  // Tracking End Date
+                                    ];
+                                    csvRows.push(row.map(v => `"${String(v).replace(/"/g, '""')}"`).join(","));
+                                });
+
+                                var csvContent = csvRows.join("\n");
+                                var blob = new Blob([csvContent], { type: "text/csv" });
+                                var link = document.createElement("a");
+                                link.href = URL.createObjectURL(blob);
+                                link.download = "ExistingItemEdit.csv";
+                                document.body.appendChild(link);
+                                link.click();
+                                document.body.removeChild(link);
+                            };
+                        }
                     } else {
                         progress.innerHTML = 'No item found for given PLU and Store/Region.';
                     }
