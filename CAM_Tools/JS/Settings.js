@@ -515,6 +515,24 @@
     ctx.textBaseline = 'middle';
     ctx.clearRect(0, 0, 64, 64);
     ctx.fillText(emoji, 32, 36);
+
+    // Draw a marker at the hotspot (16,16)
+    ctx.save();
+    ctx.beginPath();
+    ctx.arc(16, 16, 4, 0, 2 * Math.PI, false);
+    ctx.fillStyle = '#fff';
+    ctx.globalAlpha = 0.85;
+    ctx.fill();
+    ctx.globalAlpha = 1.0;
+    ctx.lineWidth = 2;
+    ctx.strokeStyle = '#000';
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.arc(16, 16, 1.5, 0, 2 * Math.PI, false);
+    ctx.fillStyle = '#000';
+    ctx.fill();
+    ctx.restore();
+
     const dataUrl = canvas.toDataURL('image/png');
 
     styleTag = document.createElement('style');
