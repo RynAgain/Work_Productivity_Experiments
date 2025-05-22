@@ -19,7 +19,7 @@
   //  CENTRALIZED STATE
   // ------------------------------------------------------------------
   const SETTINGS_VERSION = 1;
-  const defaultSettings = { menuStyle: 'side', themeColor: '#004E36', __version: SETTINGS_VERSION };
+  const defaultSettings = { menuStyle: 'side', themeColor: '#004E36', cursorEmoji: 'normal', __version: SETTINGS_VERSION };
   let state = {
     settingsMenuOpen: false,
     sideMenuOpen: false,
@@ -33,7 +33,8 @@
   function persistSettings() {
     setSettings({
       menuStyle: state.menuStyle,
-      themeColor: state.themeColor
+      themeColor: state.themeColor,
+      cursorEmoji: state.cursorEmoji
     });
   }
 
@@ -362,6 +363,20 @@
                style="width:40px;height:32px;border:none;vertical-align:middle">
         <span style="margin-left:10px;font-size:14px">${state.themeColor}</span>
       </label>
+    ` +
+    `<label style="display:block;margin-top:10px">
+       <span style="font-weight:500;display:block;margin-bottom:4px">Cursor Emoji</span>
+       <select id="cursorEmoji" style="width:100%;padding:7px 10px;border:1px solid #ccc;border-radius:5px">
+         <option value="normal" ${state.cursorEmoji === 'normal' ? 'selected' : ''}>Normal</option>
+         <option value="🖊️" ${state.cursorEmoji === '🖊️' ? 'selected' : ''}>🖊️ Pen</option>
+         <option value="🦄" ${state.cursorEmoji === '🦄' ? 'selected' : ''}>🦄 Unicorn</option>
+         <option value="🔥" ${state.cursorEmoji === '🔥' ? 'selected' : ''}>🔥 Fire</option>
+         <option value="👾" ${state.cursorEmoji === '👾' ? 'selected' : ''}>👾 Alien</option>
+         <option value="💡" ${state.cursorEmoji === '💡' ? 'selected' : ''}>💡 Lightbulb</option>
+         <option value="⭐" ${state.cursorEmoji === '⭐' ? 'selected' : ''}>⭐ Star</option>
+         <option value="🍕" ${state.cursorEmoji === '🍕' ? 'selected' : ''}>🍕 Pizza</option>
+       </select>
+     </label>
     `;
     // Wiring
     settingsMenu.querySelector('#settings-close').onclick = () => setState({ settingsMenuOpen: false });
@@ -375,6 +390,7 @@
       });
     };
     settingsMenu.querySelector('#themeColor').oninput = e => setState({ themeColor: e.target.value });
+    settingsMenu.querySelector('#cursorEmoji').onchange = e => setState({ cursorEmoji: e.target.value });
   }
 
   // ------------------------------------------------------------------
@@ -477,4 +493,58 @@
 
   // Initial render
   render();
-})();
+
+  // Apply cursor emoji on load and when settings change
+  function applyCursorEmoji(emoji) {
+    // Remove any previous custom cursor style
+    let styleTag = document.getElementById('cam-tools-cursor-emoji');
+    if (styleTag) styleTag.remove();
+
+    if (!emoji || emoji === 'normal') {
+      document.body.style.cursor = '';
+      return;
+    }
+
+    // Create a canvas to draw the emoji and use as a cursor
+    const canvas = document.createElement('canvas');
+    canvas.width = 64;
+    canvas.height = 64;
+    const ctx = canvas.getContext('2d');
+    ctx.font = '48px serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.clearRect(0, 0, 64, 64);
+    ctx.fillText(emoji, 32, 36);
+    const dataUrl = canvas.toDataURL('image/png');
+
+    styleTag = document.createElement('style');
+    styleTag.id = 'cam-tools-cursor-emoji';
+    styleTag.textContent = `
+      body, *:not(input):not(textarea):not([contenteditable="true"]) {
+        cursor: url('${dataUrl}') 16 16, auto !important;
+      }
+    `;
+    document.head.appendChild(styleTag);
+  }
+
+  // Initial application
+  applyCursorEmoji(state.cursorEmoji);
+
+  // Listen for settings changes to update cursor
+  window.addEventListener('camToolsSettingsChanged', () => {
+    const newSettings = getSettings();
+    if (typeof newSettings.cursorEmoji !== 'undefined') {
+      applyCursorEmoji(newSettings.cursorEmoji);
+    }
+  });
+
+  // Also update cursor when setState is called
+  const origSetState = setState;
+  setState = function(partial) {
+    origSetState(partial);
+    if (typeof partial.cursorEmoji !== 'undefined') {
+      applyCursorEmoji(partial.cursorEmoji);
+    }
+  };
+
+  })();
