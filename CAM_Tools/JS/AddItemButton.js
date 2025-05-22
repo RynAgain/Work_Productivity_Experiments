@@ -218,6 +218,131 @@ function fetchAllStoreCodes() {
             });
             headerBar.appendChild(closeButton);
             formContainer.appendChild(headerBar);
+// Info/disclaimer box (hidden by default, shown when info icon is clicked)
+var infoBox = document.createElement('div');
+infoBox.id = 'addItemOverlayInfoBox';
+infoBox.style.display = 'none';
+infoBox.style.position = 'absolute';
+infoBox.style.top = '48px';
+infoBox.style.left = '16px';
+infoBox.style.background = '#f5f7fa';
+infoBox.style.color = '#222';
+infoBox.style.borderLeft = '4px solid #004E36';
+infoBox.style.padding = '14px 18px 14px 16px';
+infoBox.style.borderRadius = '7px';
+infoBox.style.fontSize = '15px';
+infoBox.style.lineHeight = '1.7';
+infoBox.style.boxShadow = '0 2px 12px rgba(0,0,0,0.10)';
+infoBox.style.zIndex = '2002';
+infoBox.style.minWidth = '240px';
+infoBox.style.maxWidth = '340px';
+infoBox.style.transition = 'opacity 0.2s';
+infoBox.setAttribute('role', 'dialog');
+infoBox.setAttribute('aria-modal', 'false');
+infoBox.tabIndex = -1;
+infoBox.innerHTML = `
+    <div style="display:flex;align-items:flex-start;gap:12px;">
+        <svg width="22" height="22" fill="#004E36" viewBox="0 0 20 20" style="flex-shrink:0;margin-top:2px;">
+            <circle cx="10" cy="10" r="10" fill="#e0e0e0"/>
+            <text x="10" y="15" text-anchor="middle" font-size="13" font-family="Segoe UI, Arial, sans-serif" fill="#004E36" font-weight="bold">i</text>
+        </svg>
+        <div style="flex:1;">
+            <div style="font-weight:600;margin-bottom:2px;">Add New Item(s)</div>
+            Use this tool to generate upload files for adding new items to selected stores.<br>
+            <div style="margin:7px 0 0 0;font-weight:600;">How to use:</div>
+            <ol style="margin:7px 0 0 18px;padding:0 0 0 0;">
+                <li>Enter a store code or check "All Stores" to include all stores.</li>
+                <li>Enter one or more PLU codes (comma-separated) for the items to add.</li>
+                <li>Fill in the current inventory, availability, andon cord state, and tracking dates as needed.</li>
+                <li>Click <b>Generate File</b> to compile the data. Progress will be shown.</li>
+                <li>When complete, a CSV file will be downloaded to your computer.</li>
+            </ol>
+            <div style="margin:7px 0 0 0;font-weight:600;">Tips:</div>
+            <ul style="margin:4px 0 0 18px;padding:0 0 0 0;">
+                <li>Use "All Stores" to add items to every store in the system.</li>
+                <li>Both tracking dates must be filled if one is provided.</li>
+                <li>If you encounter issues, check that all required fields are filled and try again.</li>
+            </ul>
+            <div style="margin:7px 0 0 0;font-weight:600;">Disclaimer:</div>
+            The downloaded file <b>cannot be directly uploaded</b> elsewhere. You must convert or format it as required for uploads.
+        </div>
+        <button id="closeAddItemInfoBoxBtn" aria-label="Close information" style="background:transparent;border:none;color:#004E36;font-size:20px;font-weight:bold;cursor:pointer;line-height:1;padding:0 4px;margin-left:8px;border-radius:4px;transition:background 0.2s;">&times;</button>
+    </div>
+`;
+formContainer.style.position = 'relative';
+formContainer.appendChild(infoBox);
+
+// Add info icon to headerBar
+var infoIcon = document.createElement('span');
+infoIcon.id = 'addItemOverlayInfoIcon';
+infoIcon.tabIndex = 0;
+infoIcon.setAttribute('aria-label', 'Show information');
+infoIcon.style.display = 'inline-flex';
+infoIcon.style.alignItems = 'center';
+infoIcon.style.justifyContent = 'center';
+infoIcon.style.width = '20px';
+infoIcon.style.height = '20px';
+infoIcon.style.borderRadius = '50%';
+infoIcon.style.background = '#e0e0e0';
+infoIcon.style.color = '#004E36';
+infoIcon.style.fontWeight = 'bold';
+infoIcon.style.fontSize = '15px';
+infoIcon.style.cursor = 'pointer';
+infoIcon.style.marginLeft = '8px';
+infoIcon.style.transition = 'background 0.2s';
+infoIcon.innerHTML = `
+    <svg width="16" height="16" viewBox="0 0 20 20" fill="none" style="display:block;">
+        <circle cx="10" cy="10" r="10" fill="#e0e0e0"/>
+        <text x="10" y="14" text-anchor="middle" font-size="12" font-family="Segoe UI, Arial, sans-serif" fill="#004E36" font-weight="bold">i</text>
+    </svg>
+`;
+headerBar.querySelector('span').appendChild(infoIcon);
+
+// Info icon click logic
+setTimeout(function() {
+    var infoIcon = document.getElementById('addItemOverlayInfoIcon');
+    var infoBox = document.getElementById('addItemOverlayInfoBox');
+    if (infoIcon && infoBox) {
+        function showInfoBox() {
+            infoBox.style.display = 'block';
+            infoBox.focus();
+        }
+        function hideInfoBox() {
+            infoBox.style.display = 'none';
+            infoIcon.focus();
+        }
+        infoIcon.addEventListener('click', function(e) {
+            e.stopPropagation();
+            showInfoBox();
+        });
+        infoIcon.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                showInfoBox();
+            }
+        });
+        // Close button inside infoBox
+        var closeBtn = document.getElementById('closeAddItemInfoBoxBtn');
+        if (closeBtn) {
+            closeBtn.addEventListener('click', function(e) {
+                e.stopPropagation();
+                hideInfoBox();
+            });
+        }
+        // Dismiss infoBox on Escape key
+        infoBox.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                hideInfoBox();
+            }
+        });
+        // Optional: clicking outside infoBox closes it
+        document.addEventListener('mousedown', function handler(e) {
+            if (infoBox.style.display === 'block' && !infoBox.contains(e.target) && !infoIcon.contains(e.target)) {
+                hideInfoBox();
+            }
+        });
+    }
+}, 0);
 
             // Content area
             var contentArea = document.createElement('div');

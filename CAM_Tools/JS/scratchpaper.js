@@ -93,6 +93,129 @@
         closeBtn.style.marginLeft = '10px';
 
         header.appendChild(title);
+// Info/disclaimer box (hidden by default, shown when info icon is clicked)
+const infoBox = document.createElement('div');
+infoBox.id = 'scratchpadInfoBox';
+infoBox.style.display = 'none';
+infoBox.style.position = 'absolute';
+infoBox.style.top = '44px';
+infoBox.style.left = '12px';
+infoBox.style.background = '#f5f7fa';
+infoBox.style.color = '#222';
+infoBox.style.borderLeft = '4px solid #004E36';
+infoBox.style.padding = '14px 18px 14px 16px';
+infoBox.style.borderRadius = '7px';
+infoBox.style.fontSize = '15px';
+infoBox.style.lineHeight = '1.7';
+infoBox.style.boxShadow = '0 2px 12px rgba(0,0,0,0.10)';
+infoBox.style.zIndex = '2002';
+infoBox.style.minWidth = '220px';
+infoBox.style.maxWidth = '320px';
+infoBox.style.transition = 'opacity 0.2s';
+infoBox.setAttribute('role', 'dialog');
+infoBox.setAttribute('aria-modal', 'false');
+infoBox.tabIndex = -1;
+infoBox.innerHTML = `
+    <div style="display:flex;align-items:flex-start;gap:12px;">
+        <svg width="22" height="22" fill="#004E36" viewBox="0 0 20 20" style="flex-shrink:0;margin-top:2px;">
+            <circle cx="10" cy="10" r="10" fill="#e0e0e0"/>
+            <text x="10" y="15" text-anchor="middle" font-size="13" font-family="Segoe UI, Arial, sans-serif" fill="#004E36" font-weight="bold">i</text>
+        </svg>
+        <div style="flex:1;">
+            <div style="font-weight:600;margin-bottom:2px;">Scratchpad</div>
+            The Scratchpad is a persistent, multi-tab notepad for quick notes, lists, or code snippets.<br>
+            <div style="margin:7px 0 0 0;font-weight:600;">How to use:</div>
+            <ol style="margin:7px 0 0 18px;padding:0 0 0 0;">
+                <li>Click the <b>Scratchpad</b> button on the left to open or close the pad.</li>
+                <li>Use multiple tabs to organize your notes. Double-click a tab to rename it, or click "+" to add a new tab.</li>
+                <li>All content is saved automatically and persists across sessions.</li>
+                <li>Drag the header to reposition the pad anywhere on the screen.</li>
+                <li>Use <b>Ctrl+Shift+S</b> to quickly toggle the pad.</li>
+            </ol>
+            <div style="margin:7px 0 0 0;font-weight:600;">Tips:</div>
+            <ul style="margin:4px 0 0 18px;padding:0 0 0 0;">
+                <li>Tab content is saved as you type.</li>
+                <li>Close tabs with the "×" on each tab (at least one tab must remain).</li>
+                <li>All data is stored locally in your browser and is not synced to the cloud.</li>
+            </ul>
+        </div>
+        <button id="closeScratchpadInfoBoxBtn" aria-label="Close information" style="background:transparent;border:none;color:#004E36;font-size:20px;font-weight:bold;cursor:pointer;line-height:1;padding:0 4px;margin-left:8px;border-radius:4px;transition:background 0.2s;">&times;</button>
+    </div>
+`;
+scratchpadContainer.style.position = 'relative';
+scratchpadContainer.appendChild(infoBox);
+
+// Add info icon to header
+const infoIcon = document.createElement('span');
+infoIcon.id = 'scratchpadInfoIcon';
+infoIcon.tabIndex = 0;
+infoIcon.setAttribute('aria-label', 'Show information');
+infoIcon.style.display = 'inline-flex';
+infoIcon.style.alignItems = 'center';
+infoIcon.style.justifyContent = 'center';
+infoIcon.style.width = '20px';
+infoIcon.style.height = '20px';
+infoIcon.style.borderRadius = '50%';
+infoIcon.style.background = '#e0e0e0';
+infoIcon.style.color = '#004E36';
+infoIcon.style.fontWeight = 'bold';
+infoIcon.style.fontSize = '15px';
+infoIcon.style.cursor = 'pointer';
+infoIcon.style.marginLeft = '8px';
+infoIcon.style.transition = 'background 0.2s';
+infoIcon.innerHTML = `
+    <svg width="16" height="16" viewBox="0 0 20 20" fill="none" style="display:block;">
+        <circle cx="10" cy="10" r="10" fill="#e0e0e0"/>
+        <text x="10" y="14" text-anchor="middle" font-size="12" font-family="Segoe UI, Arial, sans-serif" fill="#004E36" font-weight="bold">i</text>
+    </svg>
+`;
+header.appendChild(infoIcon);
+
+// Info icon click logic
+setTimeout(function() {
+    var infoIcon = document.getElementById('scratchpadInfoIcon');
+    var infoBox = document.getElementById('scratchpadInfoBox');
+    if (infoIcon && infoBox) {
+        function showInfoBox() {
+            infoBox.style.display = 'block';
+            infoBox.focus();
+        }
+        function hideInfoBox() {
+            infoBox.style.display = 'none';
+            infoIcon.focus();
+        }
+        infoIcon.addEventListener('click', function(e) {
+            e.stopPropagation();
+            showInfoBox();
+        });
+        infoIcon.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                showInfoBox();
+            }
+        });
+        // Close button inside infoBox
+        var closeBtn = document.getElementById('closeScratchpadInfoBoxBtn');
+        if (closeBtn) {
+            closeBtn.addEventListener('click', function(e) {
+                e.stopPropagation();
+                hideInfoBox();
+            });
+        }
+        // Dismiss infoBox on Escape key
+        infoBox.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                hideInfoBox();
+            }
+        });
+        // Optional: clicking outside infoBox closes it
+        document.addEventListener('mousedown', function handler(e) {
+            if (infoBox.style.display === 'block' && !infoBox.contains(e.target) && !infoIcon.contains(e.target)) {
+                hideInfoBox();
+            }
+        });
+    }
+}, 0);
         header.appendChild(closeBtn);
 
         // Tab Bar

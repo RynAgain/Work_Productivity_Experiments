@@ -147,7 +147,21 @@ infoBox.innerHTML = `
             <div style="font-weight:600;margin-bottom:2px;">Download Data</div>
             Download item data as a CSV file based on your selected filters.<br>
             <div style="margin:7px 0 0 0;font-weight:600;">How to use:</div>
-            Select your options below and click <b>Download</b>.<br>
+            <ol style="margin:7px 0 0 18px;padding:0 0 0 0;">
+                <li><b>Everything, Everywhere</b>: Select this to download all available data, ignoring other filters.</li>
+                <li><b>Specific PLUs</b>: Enter one or more PLU codes (comma-separated) to limit the download to those items.</li>
+                <li><b>All PLUs</b>: Check to include all PLUs (overrides the specific PLUs field).</li>
+                <li><b>By Store/Region</b>: Choose whether to filter by Store or Region, then enter the relevant codes in the field below.</li>
+                <li><b>All Stores/Regions</b>: Check to include all stores/regions (overrides the Store/Region field).</li>
+                <li>Click <b>Download</b> to start the process. The system will fetch and compile the data based on your selections. Progress will be shown during the download.</li>
+                <li>When complete, a CSV file will be downloaded to your computer.</li>
+            </ol>
+            <div style="margin:7px 0 0 0;font-weight:600;">Tips:</div>
+            <ul style="margin:4px 0 0 18px;padding:0 0 0 0;">
+                <li>If you select "Everything, Everywhere", all other options are ignored.</li>
+                <li>Use filters to limit the data to only what you need for faster downloads.</li>
+                <li>If you encounter issues, try reducing the number of stores or PLUs selected.</li>
+            </ul>
             <div style="margin:7px 0 0 0;font-weight:600;">Disclaimer:</div>
             The downloaded file <b>cannot be directly uploaded</b> elsewhere. You must convert or format it as required for uploads.
         </div>
