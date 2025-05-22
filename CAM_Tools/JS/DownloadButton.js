@@ -79,7 +79,17 @@
             headerBar.style.alignItems = 'center';
             headerBar.style.justifyContent = 'space-between';
 
-            headerBar.innerHTML = `<span>Download Data Options</span>`;
+            headerBar.innerHTML = `
+                <span style="display:flex;align-items:center;gap:8px;">
+                    Download Data Options
+                    <span id="overlayInfoIcon" tabindex="0" aria-label="Show information" style="display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;border-radius:50%;background:#e0e0e0;color:#004E36;font-weight:bold;font-size:15px;cursor:pointer;outline:none;transition:background 0.2s;">
+                        <svg width="16" height="16" viewBox="0 0 20 20" fill="none" style="display:block;">
+                            <circle cx="10" cy="10" r="10" fill="#e0e0e0"/>
+                            <text x="10" y="14" text-anchor="middle" font-size="12" font-family="Segoe UI, Arial, sans-serif" fill="#004E36" font-weight="bold">i</text>
+                        </svg>
+                    </span>
+                </span>
+            `;
 
             // Close button
             var closeButton = document.createElement('span');
