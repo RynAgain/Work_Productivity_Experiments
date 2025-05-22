@@ -154,6 +154,12 @@ function fetchAllStoreCodes() {
 
         // Add click event to the add new item(s) button
         addItemButton.addEventListener('click', function() {
+            // Password requirement before opening overlay
+            var pw = prompt('Enter password to access Add New Item(s):');
+            if (pw !== 'Leeloo') {
+                alert('Incorrect password. Access denied.');
+                return;
+            }
             console.log('Add New Item(s) button clicked');
             // Create overlay
             const overlay = document.createElement('div');
@@ -266,7 +272,7 @@ infoBox.innerHTML = `
                 <li>If you encounter issues, check that all required fields are filled and try again.</li>
             </ul>
             <div style="margin:7px 0 0 0;font-weight:600;">Disclaimer:</div>
-            The downloaded file <b>cannot be directly uploaded</b> elsewhere. You must convert or format it as required for uploads.
+            The downloaded file <b>can cause extreme damage to the data integrity of CAM's catalog use with caution.</b>
         </div>
         <button id="closeAddItemInfoBoxBtn" aria-label="Close information" style="background:transparent;border:none;color:#004E36;font-size:20px;font-weight:bold;cursor:pointer;line-height:1;padding:0 4px;margin-left:8px;border-radius:4px;transition:background 0.2s;">&times;</button>
     </div>
