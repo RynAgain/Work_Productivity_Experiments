@@ -166,7 +166,7 @@
     fontFamily: 'Segoe UI, Arial, sans-serif',
     borderTopRightRadius: '12px',
     borderBottomRightRadius: '12px',
-    transform: 'translateX(-304px)', // 260px menu + 36px button + 8px margin
+    transform: 'translateX(-400px)', // 260px menu + 36px button + 8px margin
     transition: 'transform .25s cubic-bezier(.4,0,.2,1)',
     boxShadow: 'none',
     pointerEvents: 'none',
@@ -258,7 +258,7 @@
   editorObserver.observe(document.body, { childList: true, subtree: true });
 
   // IDs for bottom bar buttons
-  const bottomButtonIds = ['redriveButton', 'addItemButton', 'downloadDataButton', 'activateButton', 'generalHelpToolsButton'];
+  const bottomButtonIds = ['redriveButton', 'addItemButton', 'downloadDataButton', 'activateButton', 'generalHelpToolsButton', 'existingItemEditorButton'];
 
   // ------------------------------------------------------------------
   //  RENDER FUNCTION
@@ -603,14 +603,42 @@
   // ------------------------------------------------------------------
   (function observeNavButtons() {
     if (!Array.isArray(bottomButtonIds) || bottomButtonIds.length === 0) return;
-    const found = () => bottomButtonIds.every(id => document.getElementById(id));
-    if (found()) return; // All buttons already present
 
-    const observer = new MutationObserver(() => {
-      if (found()) {
-        render();
-        observer.disconnect();
+    // Helper to hide any bar-type button if in side menu mode
+    function hideBarButtonsIfNeeded() {
+      if (state.menuStyle === 'side') {
+        bottomButtonIds.forEach(id => {
+          const el = document.getElementById(id);
+          if (el) el.classList.add('nav-bar-hidden');
+        });
       }
+    }
+
+    // Initial hide if needed
+    hideBarButtonsIfNeeded();
+
+    // Observe for new buttons and hide as needed
+    const observer = new MutationObserver((mutationsList) => {
+      let shouldRender = false;
+      for (const mutation of mutationsList) {
+        for (const node of mutation.addedNodes) {
+          if (node instanceof HTMLElement) {
+            bottomButtonIds.forEach(id => {
+              if (node.id === id) {
+                if (state.menuStyle === 'side') node.classList.add('nav-bar-hidden');
+                shouldRender = true;
+              }
+              // Also check descendants
+              const descendant = node.querySelector && node.querySelector(`#${id}`);
+              if (descendant && state.menuStyle === 'side') {
+                descendant.classList.add('nav-bar-hidden');
+                shouldRender = true;
+              }
+            });
+          }
+        }
+      }
+      if (shouldRender) render();
     });
     observer.observe(document.body, { childList: true, subtree: true });
   })();
