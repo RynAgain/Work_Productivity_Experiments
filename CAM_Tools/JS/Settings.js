@@ -166,7 +166,7 @@
     fontFamily: 'Segoe UI, Arial, sans-serif',
     borderTopRightRadius: '12px',
     borderBottomRightRadius: '12px',
-    transform: 'translateX(-400px)', // 260px menu + 36px button + 8px margin
+    transform: 'translateX(-10000px)', // 260px menu + 36px button + 8px margin
     transition: 'transform .25s cubic-bezier(.4,0,.2,1)',
     boxShadow: 'none',
     pointerEvents: 'none',
