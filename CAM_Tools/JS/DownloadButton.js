@@ -106,6 +106,32 @@
             headerBar.appendChild(closeButton);
             formContainer.appendChild(headerBar);
 
+            // Info/disclaimer box at the top of the overlay
+            var infoBox = document.createElement('div');
+            infoBox.style.background = '#f5f7fa';
+            infoBox.style.color = '#222';
+            infoBox.style.borderLeft = '4px solid #004E36';
+            infoBox.style.padding = '14px 18px 14px 16px';
+            infoBox.style.margin = '0 18px 10px 18px';
+            infoBox.style.borderRadius = '6px';
+            infoBox.style.fontSize = '14px';
+            infoBox.style.lineHeight = '1.6';
+            infoBox.style.boxShadow = '0 1px 4px rgba(0,0,0,0.04)';
+            infoBox.innerHTML = `
+                <div style="display:flex;align-items:flex-start;gap:10px;">
+                    <svg width="20" height="20" fill="#004E36" viewBox="0 0 20 20" style="flex-shrink:0;margin-top:2px;">
+                        <circle cx="10" cy="10" r="10" fill="#e0e0e0"/>
+                        <text x="10" y="15" text-anchor="middle" font-size="13" font-family="Segoe UI, Arial, sans-serif" fill="#004E36" font-weight="bold">i</text>
+                    </svg>
+                    <div>
+                        <strong>Download Data</strong>: Download item data as a CSV file based on your selected filters.<br>
+                        <strong>How to use:</strong> Select your options below and click <b>Download</b>.<br>
+                        <strong>Disclaimer:</strong> The downloaded file <b>cannot be directly uploaded</b> elsewhere. You must convert or format it as required for uploads.
+                    </div>
+                </div>
+            `;
+            formContainer.appendChild(infoBox);
+
             // Content area
             var contentArea = document.createElement('div');
             contentArea.style.padding = '20px 24px 18px 24px';
