@@ -131,7 +131,9 @@ infoBox.style.lineHeight = '1.7';
 infoBox.style.boxShadow = '0 2px 12px rgba(0,0,0,0.10)';
 infoBox.style.zIndex = '2002';
 infoBox.style.minWidth = '240px';
-infoBox.style.maxWidth = '320px';
+infoBox.style.maxWidth = '340px';
+infoBox.style.maxHeight = '60vh';
+infoBox.style.overflowY = 'auto';
 infoBox.style.transition = 'opacity 0.2s';
 infoBox.setAttribute('role', 'dialog');
 infoBox.setAttribute('aria-modal', 'false');
@@ -199,6 +201,27 @@ setTimeout(function() {
     if (infoIcon && infoBox) {
         function showInfoBox() {
             infoBox.style.display = 'block';
+            // Clamp position to viewport
+            setTimeout(function() {
+                var rect = infoBox.getBoundingClientRect();
+                var pad = 8;
+                var vpW = window.innerWidth, vpH = window.innerHeight;
+                // Clamp left/right
+                if (rect.right > vpW - pad) {
+                    infoBox.style.left = Math.max(16, vpW - rect.width - pad) + 'px';
+                }
+                if (rect.left < pad) {
+                    infoBox.style.left = pad + 'px';
+                }
+                // Clamp top/bottom
+                if (rect.bottom > vpH - pad) {
+                    var newTop = Math.max(8, vpH - rect.height - pad);
+                    infoBox.style.top = newTop + 'px';
+                }
+                if (rect.top < pad) {
+                    infoBox.style.top = pad + 'px';
+                }
+            }, 0);
             infoBox.focus();
         }
         function hideInfoBox() {
