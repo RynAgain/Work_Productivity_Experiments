@@ -366,16 +366,12 @@
     ` +
     `<label style="display:block;margin-top:10px">
        <span style="font-weight:500;display:block;margin-bottom:4px">Cursor Emoji</span>
-       <select id="cursorEmoji" style="width:100%;padding:7px 10px;border:1px solid #ccc;border-radius:5px">
-         <option value="normal" ${state.cursorEmoji === 'normal' ? 'selected' : ''}>Normal</option>
-         <option value="🖊️" ${state.cursorEmoji === '🖊️' ? 'selected' : ''}>🖊️ Pen</option>
-         <option value="🦄" ${state.cursorEmoji === '🦄' ? 'selected' : ''}>🦄 Unicorn</option>
-         <option value="🔥" ${state.cursorEmoji === '🔥' ? 'selected' : ''}>🔥 Fire</option>
-         <option value="👾" ${state.cursorEmoji === '👾' ? 'selected' : ''}>👾 Alien</option>
-         <option value="💡" ${state.cursorEmoji === '💡' ? 'selected' : ''}>💡 Lightbulb</option>
-         <option value="⭐" ${state.cursorEmoji === '⭐' ? 'selected' : ''}>⭐ Star</option>
-         <option value="🍕" ${state.cursorEmoji === '🍕' ? 'selected' : ''}>🍕 Pizza</option>
-       </select>
+       <div id="cursorEmojiPicker" style="position:relative;">
+         <input id="cursorEmojiSearch" type="text" placeholder="Search emoji..." style="width:100%;padding:7px 10px 7px 32px;border:1px solid #ccc;border-radius:5px 5px 0 0;font-size:15px;box-sizing:border-box;margin-bottom:0;">
+         <span style="position:absolute;left:8px;top:10px;font-size:16px;pointer-events:none;opacity:0.6;">🔍</span>
+         <div id="cursorEmojiList" style="max-height:120px;overflow-y:auto;border:1px solid #ccc;border-top:none;border-radius:0 0 5px 5px;background:#fff;box-shadow:0 2px 8px rgba(0,0,0,0.04);">
+         </div>
+       </div>
      </label>
     `;
     // Wiring
@@ -390,7 +386,131 @@
       });
     };
     settingsMenu.querySelector('#themeColor').oninput = e => setState({ themeColor: e.target.value });
-    settingsMenu.querySelector('#cursorEmoji').onchange = e => setState({ cursorEmoji: e.target.value });
+
+    // Emoji options (food and fun)
+    const emojiOptions = [
+      { value: 'normal', label: 'Normal' },
+      { value: '🖊️', label: '🖊️ Pen' },
+      { value: '🦄', label: '🦄 Unicorn' },
+      { value: '🔥', label: '🔥 Fire' },
+      { value: '👾', label: '👾 Alien' },
+      { value: '💡', label: '💡 Lightbulb' },
+      { value: '⭐', label: '⭐ Star' },
+      { value: '🍕', label: '🍕 Pizza' },
+      { value: '🍔', label: '🍔 Burger' },
+      { value: '🍟', label: '🍟 Fries' },
+      { value: '🌭', label: '🌭 Hot Dog' },
+      { value: '🍿', label: '🍿 Popcorn' },
+      { value: '🥓', label: '🥓 Bacon' },
+      { value: '🍳', label: '🍳 Fried Egg' },
+      { value: '🥞', label: '🥞 Pancakes' },
+      { value: '🧇', label: '🧇 Waffle' },
+      { value: '🥨', label: '🥨 Pretzel' },
+      { value: '🥐', label: '🥐 Croissant' },
+      { value: '🥯', label: '🥯 Bagel' },
+      { value: '🍞', label: '🍞 Bread' },
+      { value: '🧀', label: '🧀 Cheese' },
+      { value: '🍖', label: '🍖 Meat' },
+      { value: '🍗', label: '🍗 Drumstick' },
+      { value: '🥩', label: '🥩 Steak' },
+      { value: '🍤', label: '🍤 Shrimp' },
+      { value: '🍣', label: '🍣 Sushi' },
+      { value: '🍱', label: '🍱 Bento' },
+      { value: '🍛', label: '🍛 Curry' },
+      { value: '🍜', label: '🍜 Ramen' },
+      { value: '🍝', label: '🍝 Spaghetti' },
+      { value: '🍠', label: '🍠 Sweet Potato' },
+      { value: '🍢', label: '🍢 Oden' },
+      { value: '🍡', label: '🍡 Dango' },
+      { value: '🍧', label: '🍧 Shaved Ice' },
+      { value: '🍨', label: '🍨 Ice Cream' },
+      { value: '🍦', label: '🍦 Soft Serve' },
+      { value: '🍰', label: '🍰 Cake' },
+      { value: '🎂', label: '🎂 Birthday Cake' },
+      { value: '🧁', label: '🧁 Cupcake' },
+      { value: '🍮', label: '🍮 Flan' },
+      { value: '🍭', label: '🍭 Lollipop' },
+      { value: '🍬', label: '🍬 Candy' },
+      { value: '🍫', label: '🍫 Chocolate' },
+      { value: '🍩', label: '🍩 Donut' },
+      { value: '🍪', label: '🍪 Cookie' },
+      { value: '🥧', label: '🥧 Pie' },
+      { value: '🥤', label: '🥤 Soda' },
+      { value: '🧃', label: '🧃 Juice' },
+      { value: '🧉', label: '🧉 Mate' },
+      { value: '🍺', label: '🍺 Beer' },
+      { value: '🍻', label: '🍻 Cheers' },
+      { value: '🥂', label: '🥂 Champagne' },
+      { value: '🍷', label: '🍷 Wine' },
+      { value: '🥛', label: '🥛 Milk' },
+      { value: '☕', label: '☕ Coffee' },
+      { value: '🧊', label: '🧊 Ice' }
+    ];
+
+    // Render emoji list
+    function renderEmojiList(filter) {
+      const list = settingsMenu.querySelector('#cursorEmojiList');
+      list.innerHTML = '';
+      const filtered = emojiOptions.filter(opt =>
+        opt.label.toLowerCase().includes(filter.toLowerCase()) ||
+        opt.value.toLowerCase().includes(filter.toLowerCase())
+      );
+      filtered.forEach(opt => {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.style.display = 'flex';
+        btn.style.alignItems = 'center';
+        btn.style.width = '100%';
+        btn.style.padding = '6px 10px';
+        btn.style.fontSize = '18px';
+        btn.style.background = opt.value === state.cursorEmoji ? '#e0e0e0' : '#fff';
+        btn.style.border = 'none';
+        btn.style.cursor = 'pointer';
+        btn.style.borderBottom = '1px solid #f0f0f0';
+        btn.style.justifyContent = 'flex-start';
+        btn.style.gap = '10px';
+        btn.innerHTML = `<span style="font-size:20px">${opt.value !== 'normal' ? opt.value : '🖱️'}</span> <span style="font-size:15px">${opt.label}</span>`;
+        btn.onclick = () => {
+          setState({ cursorEmoji: opt.value });
+          // Close dropdown (blur input)
+          settingsMenu.querySelector('#cursorEmojiSearch').blur();
+        };
+        list.appendChild(btn);
+      });
+      if (filtered.length === 0) {
+        const noRes = document.createElement('div');
+        noRes.style.padding = '10px';
+        noRes.style.color = '#888';
+        noRes.style.textAlign = 'center';
+        noRes.textContent = 'No results';
+        list.appendChild(noRes);
+      }
+    }
+
+    // Initial render
+    renderEmojiList('');
+
+    // Search filter logic
+    const searchInput = settingsMenu.querySelector('#cursorEmojiSearch');
+    searchInput.value = '';
+    searchInput.oninput = e => renderEmojiList(e.target.value);
+
+    // Keyboard navigation for emoji list
+    searchInput.onkeydown = function(e) {
+      const list = settingsMenu.querySelector('#cursorEmojiList');
+      const btns = Array.from(list.querySelectorAll('button'));
+      if (!btns.length) return;
+      let idx = btns.findIndex(b => b === document.activeElement);
+      if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        if (idx === -1 || idx === btns.length - 1) btns[0].focus();
+        else btns[idx + 1].focus();
+      } else if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        if (idx <= 0) btns[btns.length - 1].focus();
+        else btns[idx - 1].focus();
+      }
+    };
   }
 
   // ------------------------------------------------------------------
