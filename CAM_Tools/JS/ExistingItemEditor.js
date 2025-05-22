@@ -1,360 +1,347 @@
-/* eslint‑env browser */
-(function () {
-  'use strict';
-
-  /* ------------------------------------------------------------------ *
-   *  ICON + CONSTANTS
-   * ------------------------------------------------------------------ */
-  const editorIcon = `
-    <svg width="22" height="22" fill="none" stroke="#fff" stroke-width="2.2"
-         stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
-      <path d="M12 19l7-7 3 3-7 7-3-3z" fill="#004E36" stroke="#fff" stroke-width="1.5"/>
-      <path d="M18 13l-6 6M2 12l6 6M3 3l18 18" stroke="#fff" stroke-width="1.5"/>
-    </svg>`;
-
-  const COLS = [
-    'Store - 3 Letter Code',
-    'Item Name',
-    'Item PLU/UPC',
-    'Availability',
-    'Current Inventory',
-    'Sales Floor Capacity',
-    'Tracking Start Date',
-    'Tracking End Date'
-  ];
-
-  const environment = window.location.hostname.includes('gamma') ? 'gamma' : 'prod';
-  const apiUrlBase  = `https://${environment}.cam.wfm.amazon.dev/api/`;
-
-  /* ------------------------------------------------------------------ *
-   *  MAIN ENTRY POINT
-   * ------------------------------------------------------------------ */
-  function openExistingItemEditor () {
-    console.log('[ExistingItemEditor] opening…');
-
-    /* ----------  overlay + container  (single creation) --------------- */
-    let overlay   = document.getElementById('editorOverlay');
-    let container = document.getElementById('editorContainer');
-
-    if (!overlay) {
-      overlay = Object.assign(document.createElement('div'), {
-        id   : 'editorOverlay',
-        style: `
-          position:fixed; inset:0;
-          display:flex; justify-content:center; align-items:center;
-          background:rgba(0,0,0,.5); z-index:1001;`
-      });
-      document.body.appendChild(overlay);
-    }
-
-    if (!container) {
-      container = Object.assign(document.createElement('div'), {
-        id   : 'editorContainer',
-        style: `
-          position:relative; width:80vw; height:80vh; background:#fff;
-          border-radius:12px; overflow:hidden;
-          box-shadow:0 8px 32px rgba(0,0,0,.18), 0 1.5px 6px rgba(0,78,54,.10);`
-      });
-      overlay.appendChild(container);
-    }
-
-    /* ----------  build (or locate) the form --------------------------- */
-    let form = container.querySelector('#editorForm');
-    if (!form) {
-      form = Object.assign(document.createElement('form'), { id:'editorForm' });
-      form.innerHTML = `
-        <label style="font-weight:bold;margin-top:6px;display:block;">PLU(s):</label>
-        <input type="text" id="pluInput" placeholder="Enter PLU(s) separated by commas"
-               style="width:100%;padding:6px 8px;border:1px solid #ccc;border-radius:5px;font-size:14px;">
-
-        <label style="font-weight:bold;margin-top:10px;display:block;">By:</label>
-        <select id="bySelect"
-                style="width:100%;padding:6px 8px;border:1px solid #ccc;border-radius:5px;font-size:14px;">
-          <option value="Store">Store</option>
-          <option value="Region">Region</option>
-        </select>
-
-        <label style="font-weight:bold;margin-top:10px;display:block;">Store/Region:</label>
-        <input type="text" id="storeRegionInput"
-               placeholder="Enter Store/Region codes separated by commas"
-               style="width:100%;padding:6px 8px;border:1px solid #ccc;border-radius:5px;font-size:14px;">
-
-        <label style="display:block;margin:10px 0;">
-          <input type="checkbox" id="allStoresCheckbox"> All Stores
-        </label>
-
-        <button type="button" id="fetchDataButton"
-                style="width:100%;margin-top:10px;background:#004E36;color:#fff;
-                       border:none;border-radius:5px;padding:8px 0;font-size:15px;cursor:pointer;">
-          Fetch Data
-        </button>`;
-      container.appendChild(form);
-    }
-
-    /* ----------  sheet wrapper (for Handsontable) --------------------- */
-    let sheetDiv = container.querySelector('#sheetWrapper');
-    if (!sheetDiv) {
-      sheetDiv = Object.assign(document.createElement('div'), {
-        id   : 'sheetWrapper',
-        style: 'width:100%;height:calc(100% - 180px);margin-top:10px;'
-      });
-      container.appendChild(sheetDiv);
-    }
-
-    /* ----------  Handsontable  --------------------------------------- */
-    let hot;
+(function() {
+    'use strict';
+    var xssLink = document.createElement('link');
+    xssLink.rel = 'stylesheet';
+    xssLink.href = 'https://unpkg.com/x-data-spreadsheet@1.1.5/dist/xspreadsheet.css';
+    document.head.appendChild(xssLink);
+    // Expose the function to the global scope for testing
     try {
-      hot = new Handsontable(sheetDiv, {
-        data        : [],
-        renderAllRows: false,
-        colHeaders  : COLS,
-        rowHeaders  : true,
-        contextMenu : true,
-        width       : '100%',
-        height      : '100%',
-        licenseKey  : 'non-commercial-and-evaluation'
-      });
-    } catch (err) {
-      console.error('[ExistingItemEditor] Handsontable init failed:', err);
-      document.body.removeChild(overlay);
-      return;
+        module.exports = {
+            addExistingItemEditorButton
+        };
+    } catch (e) {
+        // Handle the error if needed
     }
 
-    /* ----------  close, filename, DL & upload buttons ---------------- */
-    if (!container.querySelector('#closeBtn')) {
-      const closeBtn = Object.assign(document.createElement('button'), {
-        id        : 'closeBtn',
-        innerHTML : '&times;',
-        title     : 'Close',
-        style     : `
-          position:absolute; top:10px; right:10px; padding:0 8px;
-          font-size:26px; line-height:28px;
-          background:none; border:none; cursor:pointer;`
-      });
-      closeBtn.onclick = () => document.body.removeChild(overlay);
-      container.appendChild(closeBtn);
-    }
+    function addExistingItemEditorButton() {
+        console.log('Attempting to add Existing Item Editor button');
 
-    if (!container.querySelector('#fileNameInput')) {
-      const nameInput = Object.assign(document.createElement('input'), {
-        id          : 'fileNameInput',
-        type        : 'text',
-        placeholder : 'Enter file name',
-        style       : `
-          position:absolute; bottom:50px; right:10px; padding:6px 8px;
-          border:1px solid #ccc; border-radius:4px; font-size:15px;`
-      });
-      container.appendChild(nameInput);
-    }
-
-    const makeActionBtn = (id, label, right, cb) => {
-      // return existing button if present
-      let btn = container.querySelector(`#${id}`);
-      if (btn) return btn;
-
-      // otherwise create it
-      btn = Object.assign(document.createElement('button'), {
-        id,
-        innerText : label,
-        style     : `
-          position:absolute; bottom:10px; right:${right}px;
-          padding:6px 12px; font-size:15px; cursor:pointer;`,
-        onclick   : cb
-      });
-      container.appendChild(btn);
-      return btn;
-    };
-
-    const downloadBtn = makeActionBtn('downloadBtn', 'Download CSV', 10, () => {
-      const file = (document.getElementById('fileNameInput').value.trim() || 'ExistingCamItems') + '.csv';
-      downloadCSV(hot.getSourceData(), file);
-    });
-
-    const uploadBtn = makeActionBtn('uploadBtn', 'Upload', 110, () => uploadData(hot.getSourceData()));
-
-    downloadBtn.style.display = 'none';
-    uploadBtn.style.display = 'none';
-    overlay.style.display = 'none';
-
-    document.getElementById('fetchDataButton').addEventListener('click', () => {
-        fetchDataButtonLogic();
-    });
-
-    function fetchDataButtonLogic() {
-        const plus  = [...new Set(document.getElementById('pluInput')
-                         .value.split(',').map(p=>p.trim()).filter(Boolean))];
-        const by    = document.getElementById('bySelect').value;
-        const codes = [...new Set(document.getElementById('storeRegionInput')
-                         .value.split(',').map(s=>s.trim()).filter(Boolean))];
-        const all   = document.getElementById('allStoresCheckbox').checked;
-
-        fetchData(plus, by, codes, all)
-            .then(rows => {
-                hot.loadData(rows.map(r => COLS.map(c => r[c] ?? '')));
-                document.getElementById('editorContainer').style.display = 'block';
-                downloadBtn.style.display = 'block';
-                uploadBtn.style.display = 'block';
-                overlay.style.display = 'flex';
-            })
-            .catch(err => console.error('[ExistingItemEditor] fetchData error:', err));
-    }
-
-    function fetchDataButtonLogic() {
-        const plus  = [...new Set(document.getElementById('pluInput')
-                         .value.split(',').map(p=>p.trim()).filter(Boolean))];
-        const by    = document.getElementById('bySelect').value;
-        const codes = [...new Set(document.getElementById('storeRegionInput')
-                         .value.split(',').map(s=>s.trim()).filter(Boolean))];
-        const all   = document.getElementById('allStoresCheckbox').checked;
-
-        fetchData(plus, by, codes, all)
-            .then(rows => {
-                hot.loadData(rows.map(r => COLS.map(c => r[c] ?? '')));
-                document.getElementById('editorContainer').style.display = 'block';
-            })
-            .catch(err => console.error('[ExistingItemEditor] fetchData error:', err));
-    }
-
-    /* ----------  Fetch‑Data button logic ----------------------------- */
-    document.getElementById('fetchDataButton').onclick = () => {
-      const plus  = [...new Set(document.getElementById('pluInput')
-                       .value.split(',').map(p=>p.trim()).filter(Boolean))];
-      const by    = document.getElementById('bySelect').value;
-      const codes = [...new Set(document.getElementById('storeRegionInput')
-                       .value.split(',').map(s=>s.trim()).filter(Boolean))];
-      const all   = document.getElementById('allStoresCheckbox').checked;
-
-      document.getElementById('editorContainer').style.display = 'block';
-      fetchData(plus, by, codes, all)
-        .then(rows => hot.loadData(rows.map(r => COLS.map(c => r[c] ?? ''))))
-        .catch(err => console.error('[ExistingItemEditor] fetchData error:', err));
-    };
-
-  }
-
-  /* ------------------------------------------------------------------ *
-   *  DATA FETCHING
-   * ------------------------------------------------------------------ */
-  function fetchData (pluList = [], by = 'Store', codes = [], allStores = false) {
-    return new Promise((resolve, reject) => {
-      const hdrStores = {
-        'accept'       : '*/*',
-        'content-type' : 'application/x-amz-json-1.0',
-        'x-amz-target' : 'WfmCamBackendService.GetStoresInformation'
-      };
-
-      fetch(apiUrlBase, {
-        method      : 'POST',
-        headers     : hdrStores,
-        body        : '{}',
-        credentials : 'include'
-      })
-      .then(r => r.json())
-      .then(storeData => {
-        if (!storeData?.storesInformation) throw new Error('Invalid store data');
-
-        // determine TLCs
-        const storeIds = [];
-        Object.values(storeData.storesInformation).forEach(states =>
-          Object.values(states).forEach(stores =>
-            stores.forEach(s => storeIds.push(s.storeTLC))
-          )
-        );
-
-        let targetStores = storeIds;
-        if (!allStores) {
-          if (by === 'Region') {
-            const regionMap = {};
-            Object.entries(storeData.storesInformation).forEach(([region, states]) => {
-              Object.values(states).forEach(stores =>
-                stores.forEach(s => {
-                  if (!regionMap[region]) regionMap[region] = [];
-                  regionMap[region].push(s.storeTLC);
-                })
-              );
-            });
-            targetStores = codes.flatMap(c => regionMap[c] || []);
-          } else { // by Store
-            targetStores = storeIds.filter(id => codes.includes(id));
-          }
+        // Check if the button already exists
+        if (document.getElementById('existingItemEditorButton')) {
+            console.log('Existing Item Editor button already exists');
+            return;
         }
 
-        return Promise.all(targetStores.map(id => fetchItemsForStore(id, pluList)));
-      })
-      .then(all => resolve(all.flat()))
-      .catch(err => reject(err));
-    });
-  }
+        // Create the button using shared button styling
+        var editorButton = document.createElement('button');
+        editorButton.id = 'existingItemEditorButton';
+        editorButton.innerHTML = `
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-pencil-square" viewBox="0 0 16 16"><path d="M15.502 1.94a.5.5 0 0 1 0 .706l-1 1a.5.5 0 0 1-.708 0l-1-1a.5.5 0 0 1 0-.708l1-1a.5.5 0 0 1 .708 0l1 1zm-1.75 2.456-1-1L4 11.146V12h.854l8.898-8.898z"/><path fill-rule="evenodd" d="M1 13.5A1.5 1.5 0 0 0 2.5 15h11a1.5 1.5 0 0 0 1.5-1.5v-7a.5.5 0 0 0-1 0v7a.5.5 0 0 1-.5.5h-11a.5.5 0 0 1-.5-.5v-11a.5.5 0 0 1 .5-.5H9a.5.5 0 0 0 0-1H2.5A1.5 1.5 0 0 0 1 2.5v11z"/></svg> Edit Existing Item`;
+        editorButton.className = 'button'; // Use common button class for consistent styling
 
-  function fetchItemsForStore (storeId, pluList) {
-    const hdrItems = {
-      'accept'       : '*/*',
-      'content-type' : 'application/x-amz-json-1.0',
-      'x-amz-target' : 'WfmCamBackendService.GetItemsAvailability'
-    };
+        // Set positioning to align with other UI elements
+        editorButton.style.position = 'fixed';
+        editorButton.style.bottom = '50px';
+        editorButton.style.left = '0';
+        editorButton.style.width = '20%';
+        editorButton.style.height = '40px';
+        editorButton.style.zIndex = '1000';
 
-    const payload = {
-      filterContext    : { storeIds:[storeId] },
-      paginationContext: { pageNumber:0, pageSize:10000 }
-    };
+        document.body.appendChild(editorButton);
+        console.log('Existing Item Editor button added to the page');
 
-    return fetch(apiUrlBase, {
-      method      : 'POST',
-      headers     : hdrItems,
-      body        : JSON.stringify(payload),
-      credentials : 'include'
-    })
-    .then(r => r.json())
-    .then(d => (d.itemsAvailability || [])
-      .filter(item => pluList.length === 0 || pluList.includes(item.wfmScanCode))
-      .map(item => ({
-        'Store - 3 Letter Code' : storeId,
-        'Item Name'             : item.itemName,
-        'Item PLU/UPC'          : item.wfmScanCode,
-        'Availability'          : item.inventoryStatus,
-        'Current Inventory'     : item.inventoryStatus === 'Unlimited'
-                                  ? '0'
-                                  : String(
-                                      Math.max(0,
-                                        Math.min(10000, parseInt(item.currentInventoryQuantity) || 0))),
-        'Sales Floor Capacity'  : '',
-        'Tracking Start Date'   : '',
-        'Tracking End Date'     : ''
-      })))
-    .catch(err => {
-      console.error(`[ExistingItemEditor] store ${storeId} error:`, err);
-      return [];
-    });
-  }
+        // Add click event to show options overlay
+        editorButton.addEventListener('click', function() {
+            console.log('Existing Item Editor button clicked');
 
-  /* ------------------------------------------------------------------ *
-   *  CSV  +  UPLOAD PLACEHOLDERS
-   * ------------------------------------------------------------------ */
-  function downloadCSV (rows2D, fileName) {
-    const csv  = rows2D.map(r => r.map(v => `"${v ?? ''}"`).join(',')).join('\n');
-    const blob = new Blob([csv], { type:'text/csv;charset=utf-8' });
-    const link = Object.assign(document.createElement('a'), {
-      href     : URL.createObjectURL(blob),
-      download : fileName,
-      style    : 'display:none'
-    });
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-  }
+            // Create overlay for editor options
+            var overlay = document.createElement('div');
+            overlay.id = 'existingItemEditorOverlay';
+            overlay.style.position = 'fixed';
+            overlay.style.top = '0';
+            overlay.style.left = '0';
+            overlay.style.width = '100vw';
+            overlay.style.height = '100vh';
+            overlay.style.background = 'rgba(0, 0, 0, 0.5)';
+            overlay.style.zIndex = '1001';
+            overlay.style.display = 'flex';
+            overlay.style.justifyContent = 'center';
+            overlay.style.alignItems = 'center';
 
-  function uploadData (rows2D) {
-    console.log('[ExistingItemEditor] upload placeholder', rows2D);
-    // TODO: implement upload logic
-  }
+            // Create form container for options
+            var formContainer = document.createElement('div');
+            formContainer.style.position = 'relative';
+            formContainer.style.background = '#fff';
+            formContainer.style.padding = '0';
+            formContainer.style.borderRadius = '12px';
+            formContainer.style.width = '360px';
+            formContainer.style.boxShadow = '0 8px 32px rgba(0,0,0,0.18), 0 1.5px 6px rgba(0,78,54,0.10)';
+            formContainer.style.border = '1.5px solid #e0e0e0';
+            formContainer.style.fontFamily = 'Segoe UI, Arial, sans-serif';
+            formContainer.style.overflow = 'hidden';
 
-  /* ------------------------------------------------------------------ *
-   *  EXPORT  (settings quick‑tools can pick these up)
-   * ------------------------------------------------------------------ */
-  try {
-    module.exports = { openExistingItemEditor, editorIcon };
-  } catch { // non‑module context
-    window.openExistingItemEditor = openExistingItemEditor;
-    window.editorIcon             = editorIcon;
-  }
+            // Header bar
+            var headerBar = document.createElement('div');
+            headerBar.style.background = '#004E36';
+            headerBar.style.color = '#fff';
+            headerBar.style.padding = '16px 24px 12px 24px';
+            headerBar.style.fontSize = '20px';
+            headerBar.style.fontWeight = 'bold';
+            headerBar.style.letterSpacing = '0.5px';
+            headerBar.style.display = 'flex';
+            headerBar.style.alignItems = 'center';
+            headerBar.style.justifyContent = 'space-between';
+
+            headerBar.innerHTML = `
+                <span style="display:flex;align-items:center;gap:8px;">
+                    Edit Existing Item
+                    <span id="existingItemEditorInfoIcon" tabindex="0" aria-label="Show information" style="display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;border-radius:50%;background:#e0e0e0;color:#004E36;font-weight:bold;font-size:15px;cursor:pointer;outline:none;transition:background 0.2s;">
+                        <svg width="16" height="16" viewBox="0 0 20 20" fill="none" style="display:block;">
+                            <circle cx="10" cy="10" r="10" fill="#e0e0e0"/>
+                            <text x="10" y="14" text-anchor="middle" font-size="12" font-family="Segoe UI, Arial, sans-serif" fill="#004E36" font-weight="bold">i</text>
+                        </svg>
+                    </span>
+                </span>
+            `;
+
+            // Close button
+            var closeButton = document.createElement('span');
+            closeButton.innerHTML = '&times;';
+            closeButton.id = 'existingItemEditorOverlayCloseButton';
+            closeButton.style.fontSize = '28px';
+            closeButton.style.cursor = 'pointer';
+            closeButton.style.marginLeft = '16px';
+            closeButton.style.color = '#fff';
+            closeButton.style.background = 'transparent';
+            closeButton.style.border = 'none';
+            closeButton.style.padding = '0 4px';
+            closeButton.style.borderRadius = '4px';
+            closeButton.style.transition = 'background 0.2s';
+            closeButton.addEventListener('mouseenter', function() {
+                closeButton.style.background = 'rgba(0,0,0,0.12)';
+            });
+            closeButton.addEventListener('mouseleave', function() {
+                closeButton.style.background = 'transparent';
+            });
+            closeButton.addEventListener('click', function() {
+                document.body.removeChild(overlay);
+            });
+            headerBar.appendChild(closeButton);
+            formContainer.appendChild(headerBar);
+
+            // Info/disclaimer box (hidden by default, shown when info icon is clicked)
+            var infoBox = document.createElement('div');
+            infoBox.id = 'existingItemEditorInfoBox';
+            infoBox.style.display = 'none';
+            infoBox.style.position = 'absolute';
+            infoBox.style.top = '54px';
+            infoBox.style.left = '24px';
+            infoBox.style.background = '#f5f7fa';
+            infoBox.style.color = '#222';
+            infoBox.style.borderLeft = '4px solid #004E36';
+            infoBox.style.padding = '16px 22px 16px 18px';
+            infoBox.style.borderRadius = '7px';
+            infoBox.style.fontSize = '15px';
+            infoBox.style.lineHeight = '1.7';
+            infoBox.style.boxShadow = '0 2px 12px rgba(0,0,0,0.10)';
+            infoBox.style.zIndex = '2002';
+            infoBox.style.minWidth = '270px';
+            infoBox.style.maxWidth = '340px';
+            infoBox.style.maxHeight = '60vh';
+            infoBox.style.overflowY = 'auto';
+            infoBox.style.transition = 'opacity 0.2s';
+            infoBox.setAttribute('role', 'dialog');
+            infoBox.setAttribute('aria-modal', 'false');
+            infoBox.tabIndex = -1;
+            infoBox.innerHTML = `
+                <div style="display:flex;align-items:flex-start;gap:12px;">
+                    <svg width="22" height="22" fill="#004E36" viewBox="0 0 20 20" style="flex-shrink:0;margin-top:2px;">
+                        <circle cx="10" cy="10" r="10" fill="#e0e0e0"/>
+                        <text x="10" y="15" text-anchor="middle" font-size="13" font-family="Segoe UI, Arial, sans-serif" fill="#004E36" font-weight="bold">i</text>
+                    </svg>
+                    <div style="flex:1;">
+                        <div style="font-weight:600;margin-bottom:2px;">Edit Existing Item (In Development)</div>
+                        Use this tool to fetch and edit item data for a specific PLU and Store/Region.<br>
+                        <div style="margin:7px 0 0 0;font-weight:600;">How to use:</div>
+                        <ol style="margin:7px 0 0 18px;padding:0 0 0 0;">
+                            <li>Enter the PLU code of the item you wish to edit.</li>
+                            <li>Enter the Store or Region code where the item exists.</li>
+                            <li>Click <b>Edit Item</b> to fetch the current data for that item.</li>
+                            <li>Once loaded, you can implement further logic to edit and save changes.</li>
+                        </ol>
+                        <div style="margin:7px 0 0 0;font-weight:600;">Tips:</div>
+                        <ul style="margin:4px 0 0 18px;padding:0 0 0 0;">
+                            <li>Ensure the PLU and Store/Region codes are correct for best results.</li>
+                            <li>If no item is found, double-check your input values.</li>
+                        </ul>
+                        <div style="margin:7px 0 0 0;font-weight:600;">Disclaimer:</div>
+                        Editing functionality must be implemented as needed for your workflow.
+                    </div>
+                    <button id="closeEditorInfoBoxBtn" aria-label="Close information" style="background:transparent;border:none;color:#004E36;font-size:20px;font-weight:bold;cursor:pointer;line-height:1;padding:0 4px;margin-left:8px;border-radius:4px;transition:background 0.2s;">&times;</button>
+                </div>
+            `;
+            formContainer.style.position = 'relative';
+            formContainer.appendChild(infoBox);
+
+            // Info icon click logic
+            setTimeout(function() {
+                var infoIcon = document.getElementById('existingItemEditorInfoIcon');
+                var infoBox = document.getElementById('existingItemEditorInfoBox');
+                if (infoIcon && infoBox) {
+                    function showInfoBox() {
+                        infoBox.style.display = 'block';
+                        // Clamp position to viewport
+                        setTimeout(function() {
+                            var rect = infoBox.getBoundingClientRect();
+                            var pad = 8;
+                            var vpW = window.innerWidth, vpH = window.innerHeight;
+                            // Clamp left/right
+                            if (rect.right > vpW - pad) {
+                                infoBox.style.left = Math.max(24, vpW - rect.width - pad) + 'px';
+                            }
+                            if (rect.left < pad) {
+                                infoBox.style.left = pad + 'px';
+                            }
+                            // Clamp top/bottom
+                            if (rect.bottom > vpH - pad) {
+                                var newTop = Math.max(8, vpH - rect.height - pad);
+                                infoBox.style.top = newTop + 'px';
+                            }
+                            if (rect.top < pad) {
+                                infoBox.style.top = pad + 'px';
+                            }
+                        }, 0);
+                        infoBox.focus();
+                    }
+                    function hideInfoBox() {
+                        infoBox.style.display = 'none';
+                        infoIcon.focus();
+                    }
+                    infoIcon.addEventListener('click', function(e) {
+                        e.stopPropagation();
+                        showInfoBox();
+                    });
+                    infoIcon.addEventListener('keydown', function(e) {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                            e.preventDefault();
+                            showInfoBox();
+                        }
+                    });
+                    // Close button inside infoBox
+                    var closeBtn = document.getElementById('closeEditorInfoBoxBtn');
+                    if (closeBtn) {
+                        closeBtn.addEventListener('click', function(e) {
+                            e.stopPropagation();
+                            hideInfoBox();
+                        });
+                    }
+                    // Dismiss infoBox on Escape key
+                    infoBox.addEventListener('keydown', function(e) {
+                        if (e.key === 'Escape') {
+                            hideInfoBox();
+                        }
+                    });
+                    // Optional: clicking outside infoBox closes it
+                    document.addEventListener('mousedown', function handler(e) {
+                        if (infoBox.style.display === 'block' && !infoBox.contains(e.target) && !infoIcon.contains(e.target)) {
+                            hideInfoBox();
+                        }
+                    });
+                }
+            }, 0);
+
+            // Content area
+            var contentArea = document.createElement('div');
+            contentArea.style.padding = '20px 24px 18px 24px';
+            contentArea.style.display = 'flex';
+            contentArea.style.flexDirection = 'column';
+            contentArea.style.gap = '10px';
+
+            // Main content HTML (example fields for editing an item)
+            contentArea.innerHTML = `
+                <label style="margin-top:2px;">PLU Code</label>
+                <input type="text" id="editPluInput" style="width:100%;margin-bottom:2px;padding:8px 10px;border:1px solid #ccc;border-radius:5px;font-size:15px;" placeholder="Enter PLU code">
+                <label style="margin-top:2px;">Store/Region</label>
+                <input type="text" id="editStoreRegionInput" style="width:100%;margin-bottom:2px;padding:8px 10px;border:1px solid #ccc;border-radius:5px;font-size:15px;" placeholder="Enter Store/Region code">
+                <button id="executeEditButton" class="button" style="width:100%;margin-top:12px;background:#004E36;color:#fff;border:none;border-radius:5px;padding:10px 0;font-size:16px;cursor:pointer;transition:background 0.2s;">Edit Item</button>
+                <div id="editProgress" style="display:none;margin-top:10px;text-align:center;font-size:16px;color:#004E36;">Waiting...</div>
+                <button id="cancelEditButton" class="button" style="width:100%;margin-top:10px;background:#e74c3c;color:#fff;border:none;border-radius:5px;padding:10px 0;font-size:16px;cursor:pointer;transition:background 0.2s;">Cancel</button>
+            `;
+            formContainer.appendChild(contentArea);
+
+            // Cancel edit: remove overlay
+            formContainer.querySelector('#cancelEditButton').addEventListener('click', function() {
+                document.body.removeChild(overlay);
+            });
+
+            overlay.appendChild(formContainer);
+            document.body.appendChild(overlay);
+
+            // Execute edit button event (API logic)
+            formContainer.querySelector('#executeEditButton').addEventListener('click', function() {
+                var progress = document.getElementById('editProgress');
+                progress.style.display = 'block';
+                progress.innerHTML = 'Processing...';
+
+                const pluCode = document.getElementById('editPluInput').value.trim();
+                const storeRegion = document.getElementById('editStoreRegionInput').value.trim();
+
+                if (!pluCode || !storeRegion) {
+                    progress.innerHTML = 'PLU and Store/Region required.';
+                    return;
+                }
+
+                // Determine the environment (prod or gamma)
+                const environment = window.location.hostname.includes('gamma') ? 'gamma' : 'prod';
+                const apiUrlBase = `https://${environment}.cam.wfm.amazon.dev/api/`;
+
+                // Example: Fetch item data for editing (adapt as needed)
+                const headers = {
+                    'accept': '*/*',
+                    'accept-encoding': 'gzip, deflate, br',
+                    'accept-language': 'en-US,en;q=0.9',
+                    'content-type': 'application/x-amz-json-1.0',
+                    'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)',
+                    'x-amz-target': 'WfmCamBackendService.GetItemsAvailability'
+                };
+
+                const payload = {
+                    "filterContext": {
+                        "storeIds": [storeRegion],
+                        "pluCodes": [pluCode]
+                    },
+                    "paginationContext": {
+                        "pageNumber": 0,
+                        "pageSize": 100
+                    }
+                };
+
+                fetch(apiUrlBase, {
+                    method: 'POST',
+                    headers: headers,
+                    body: JSON.stringify(payload),
+                    credentials: 'include'
+                })
+                .then(response => response.json())
+                .then(data => {
+                    console.log('Item data received:', data);
+                    if (data && data.itemsAvailability && data.itemsAvailability.length > 0) {
+                        progress.innerHTML = 'Item data loaded. (Implement edit logic here)';
+                        // Here you would show fields for editing and then allow saving changes via another API call.
+                    } else {
+                        progress.innerHTML = 'No item found for given PLU and Store/Region.';
+                    }
+                })
+                .catch(error => {
+                    console.error('Error fetching item data:', error);
+                    progress.innerHTML = 'An error occurred.';
+                });
+            });
+        });
+    }
+
+    // Use MutationObserver to detect changes and add the button when needed
+    const observer = new MutationObserver(addExistingItemEditorButton);
+    observer.observe(document.body, { childList: true, subtree: true });
+
+    // Expose for testing
+    try {
+        module.exports = {
+            addExistingItemEditorButton
+        };
+    } catch (e) {
+        // Handle the error if needed
+    }
+    // Initial attempt to add the button
+    addExistingItemEditorButton();
 })();

@@ -242,8 +242,12 @@
     {
       label: 'Existing Item Editor',
       tooltip: 'Edit Existing Items',
-      icon: window.editorIcon,
-      action: window.openExistingItemEditor
+      icon: `<svg width="22" height="22" viewBox="0 0 16 16" fill="none" stroke="#fff" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" xmlns="http://www.w3.org/2000/svg">
+        <rect x="1.5" y="1.5" width="13" height="13" rx="2" fill="none" stroke="#fff"/>
+        <path d="M12.146 3.354a.5.5 0 0 1 0 .708l-7.793 7.793a.5.5 0 0 1-.168.11l-2.5.833a.25.25 0 0 1-.316-.316l.833-2.5a.5.5 0 0 1 .11-.168l7.793-7.793a.5.5 0 0 1 .708 0l1.333 1.333zm-1.293-.647l1.333 1.333" stroke="#fff" fill="none"/>
+        <path d="M11.207 2.293l2.5 2.5" stroke="#fff" fill="none"/>
+      </svg>`,
+      action: () => document.getElementById('existingItemEditorButton')?.click()
     }
   ]; // ← array ends here (stray token removed)
 
