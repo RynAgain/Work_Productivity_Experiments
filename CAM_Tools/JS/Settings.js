@@ -279,7 +279,7 @@
         if (firstInput) firstInput.focus();
       }, 100);
     } else {
-      settingsMenu.style.transform = 'translateX(-296px)'; // 260px menu + 36px button = 296px
+      settingsMenu.style.transform = 'translateX(-4000px)'; // 260px menu + 36px button = 296px
       settingsMenu.style.boxShadow = 'none';
       settingsMenu.style.pointerEvents = 'none';
       settingsMenu.setAttribute('aria-hidden', 'true');

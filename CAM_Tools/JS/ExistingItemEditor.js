@@ -318,6 +318,160 @@
                     if (data && data.itemsAvailability && data.itemsAvailability.length > 0) {
                         progress.innerHTML = 'Item data loaded.';
 
+                        // --- Best Practices: Constants and Helpers ---
+                        const SPREADSHEET_CONTAINER_ID = 'existingItemSpreadsheetContainer';
+                        const DOWNLOAD_BTN_ID = 'downloadExistingItemCsvButton';
+                        const SHEET_WIDTH = 'min(95vw, 900px)';
+                        const SHEET_HEIGHT = '420px';
+                        const DESIRED_HEADERS = [
+                            'Store - 3 Letter Code',
+                            'Item Name',
+                            'Item PLU/UPC',
+                            'Availability',
+                            'Current Inventory',
+                            'Sales Floor Capacity',
+                            'Andon Cord',
+                            'Tracking Start Date',
+                            'Tracking End Date'
+                        ];
+
+                        function transformItemToRow(item, storeId) {
+                            return [
+                                storeId,
+                                item.itemName || '',
+                                item.wfmScanCode || '',
+                                item.inventoryStatus || '',
+                                (item.inventoryStatus === 'Unlimited' ? "0" : (Math.max(0, Math.min(10000, parseInt(item.currentInventoryQuantity) || 0))).toString()),
+                                '',
+                                item.andonCordState ? 'Enabled' : 'Disabled',
+                                '',
+                                ''
+                            ];
+                        }
+
+                        function toXSheetData(arr) {
+                            return {
+                                name: 'Sheet1',
+                                rows: arr.reduce((rows, row, rIdx) => {
+                                    rows[rIdx] = { cells: row.reduce((cells, val, cIdx) => {
+                                        cells[cIdx] = { text: val };
+                                        return cells;
+                                    }, {}) };
+                                    return rows;
+                                }, {})
+                            };
+                        }
+
+                        function removeElementById(id) {
+                            const el = document.getElementById(id);
+                            if (el) el.remove();
+                        }
+
+                        // --- Remove any previous spreadsheet container and download button ---
+                        removeElementById(SPREADSHEET_CONTAINER_ID);
+                        removeElementById(DOWNLOAD_BTN_ID);
+
+                        // --- Create spreadsheet container ---
+                        const sheetContainer = document.createElement('div');
+                        sheetContainer.id = SPREADSHEET_CONTAINER_ID;
+                        sheetContainer.style.width = SHEET_WIDTH;
+                        sheetContainer.style.height = SHEET_HEIGHT;
+                        sheetContainer.style.margin = '20px auto 0 auto';
+                        sheetContainer.style.background = '#fff';
+                        sheetContainer.style.border = '1.5px solid #e0e0e0';
+                        sheetContainer.style.borderRadius = '8px';
+                        sheetContainer.style.overflow = 'auto';
+                        sheetContainer.setAttribute('aria-label', 'Editable spreadsheet of item data');
+                        sheetContainer.setAttribute('tabindex', '0');
+                        // Responsive: max width, min width
+                        sheetContainer.style.maxWidth = '98vw';
+                        sheetContainer.style.minWidth = '320px';
+                        // Insert after progress
+                        progress.parentNode.insertBefore(sheetContainer, progress.nextSibling);
+
+                        // --- Prepare data for x-spreadsheet ---
+                        const items = data.itemsAvailability;
+                        const storeId = storeRegion;
+                        const sheetData = [
+                            DESIRED_HEADERS,
+                            ...items.map(item => transformItemToRow(item, storeId))
+                        ];
+                        const xsData = toXSheetData(sheetData);
+
+                        // --- Initialize x-spreadsheet ---
+                        let xs = null;
+                        if (window.x_spreadsheet) {
+                            xs = window.x_spreadsheet(sheetContainer, {
+                                showToolbar: true,
+                                showGrid: true,
+                                view: { height: 400, width: 880 },
+                                row: { len: sheetData.length, height: 28 },
+                                col: { len: DESIRED_HEADERS.length, width: 120 }
+                            });
+                            xs.loadData(xsData);
+                        } else {
+                            sheetContainer.innerHTML = '<div style="color:red;padding:20px;">x-spreadsheet library not loaded.</div>';
+                        }
+
+                        // --- Add Download CSV button ---
+                        const downloadBtn = document.createElement('button');
+                        downloadBtn.id = DOWNLOAD_BTN_ID;
+                        downloadBtn.textContent = 'Download CSV';
+                        downloadBtn.className = 'button';
+                        downloadBtn.style.width = '100%';
+                        downloadBtn.style.marginTop = '10px';
+                        downloadBtn.style.background = '#004E36';
+                        downloadBtn.style.color = '#fff';
+                        downloadBtn.style.border = 'none';
+                        downloadBtn.style.borderRadius = '5px';
+                        downloadBtn.style.padding = '10px 0';
+                        downloadBtn.style.fontSize = '16px';
+                        downloadBtn.style.cursor = 'pointer';
+                        downloadBtn.style.transition = 'background 0.2s';
+                        downloadBtn.setAttribute('aria-label', 'Download the current spreadsheet as CSV');
+                        downloadBtn.addEventListener('mouseenter', function() {
+                            downloadBtn.style.background = '#218838';
+                        });
+                        downloadBtn.addEventListener('mouseleave', function() {
+                            downloadBtn.style.background = '#004E36';
+                        });
+
+                        // Insert after spreadsheet
+                        sheetContainer.parentNode.insertBefore(downloadBtn, sheetContainer.nextSibling);
+
+                        downloadBtn.onclick = function() {
+                            if (!window.x_spreadsheet || !xs) {
+                                alert('Spreadsheet not loaded.');
+                                return;
+                            }
+                            const data = xs.getData();
+                            const rows = data.rows;
+                            // Find max column count for header
+                            let maxCol = 0;
+                            Object.values(rows).forEach(r => {
+                                const cLen = r.cells ? Math.max(...Object.keys(r.cells).map(Number)) + 1 : 0;
+                                if (cLen > maxCol) maxCol = cLen;
+                            });
+                            // Build CSV rows
+                            const csvRows = [];
+                            for (let r = 0; r < Object.keys(rows).length; r++) {
+                                const row = [];
+                                for (let c = 0; c < maxCol; c++) {
+                                    const cell = rows[r] && rows[r].cells && rows[r].cells[c] ? rows[r].cells[c].text : '';
+                                    row.push('"' + String(cell).replace(/"/g, '""') + '"');
+                                }
+                                csvRows.push(row.join(','));
+                            }
+                            const csvContent = csvRows.join('\n');
+                            const blob = new Blob([csvContent], { type: "text/csv" });
+                            const link = document.createElement("a");
+                            link.href = URL.createObjectURL(blob);
+                            link.download = "ExistingItemEdit.csv";
+                            document.body.appendChild(link);
+                            link.click();
+                            document.body.removeChild(link);
+                        };
+
                         // Add Download CSV button if not already present
                         if (!document.getElementById('downloadExistingItemCsvButton')) {
                             var downloadBtn = document.createElement('button');
