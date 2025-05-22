@@ -115,32 +115,94 @@
             });
             headerBar.appendChild(closeButton);
             formContainer.appendChild(headerBar);
+// Info/disclaimer box (hidden by default, shown when info icon is clicked)
+var infoBox = document.createElement('div');
+infoBox.id = 'downloadOverlayInfoBox';
+infoBox.style.display = 'none';
+infoBox.style.position = 'absolute';
+infoBox.style.top = '54px';
+infoBox.style.left = '24px';
+infoBox.style.background = '#f5f7fa';
+infoBox.style.color = '#222';
+infoBox.style.borderLeft = '4px solid #004E36';
+infoBox.style.padding = '16px 22px 16px 18px';
+infoBox.style.borderRadius = '7px';
+infoBox.style.fontSize = '15px';
+infoBox.style.lineHeight = '1.7';
+infoBox.style.boxShadow = '0 2px 12px rgba(0,0,0,0.10)';
+infoBox.style.zIndex = '2002';
+infoBox.style.minWidth = '270px';
+infoBox.style.maxWidth = '340px';
+infoBox.style.transition = 'opacity 0.2s';
+infoBox.setAttribute('role', 'dialog');
+infoBox.setAttribute('aria-modal', 'false');
+infoBox.tabIndex = -1;
+infoBox.innerHTML = `
+    <div style="display:flex;align-items:flex-start;gap:12px;">
+        <svg width="22" height="22" fill="#004E36" viewBox="0 0 20 20" style="flex-shrink:0;margin-top:2px;">
+            <circle cx="10" cy="10" r="10" fill="#e0e0e0"/>
+            <text x="10" y="15" text-anchor="middle" font-size="13" font-family="Segoe UI, Arial, sans-serif" fill="#004E36" font-weight="bold">i</text>
+        </svg>
+        <div style="flex:1;">
+            <div style="font-weight:600;margin-bottom:2px;">Download Data</div>
+            Download item data as a CSV file based on your selected filters.<br>
+            <div style="margin:7px 0 0 0;font-weight:600;">How to use:</div>
+            Select your options below and click <b>Download</b>.<br>
+            <div style="margin:7px 0 0 0;font-weight:600;">Disclaimer:</div>
+            The downloaded file <b>cannot be directly uploaded</b> elsewhere. You must convert or format it as required for uploads.
+        </div>
+        <button id="closeInfoBoxBtn" aria-label="Close information" style="background:transparent;border:none;color:#004E36;font-size:20px;font-weight:bold;cursor:pointer;line-height:1;padding:0 4px;margin-left:8px;border-radius:4px;transition:background 0.2s;">&times;</button>
+    </div>
+`;
+formContainer.style.position = 'relative';
+formContainer.appendChild(infoBox);
 
-            // Info/disclaimer box at the top of the overlay
-            var infoBox = document.createElement('div');
-            infoBox.style.background = '#f5f7fa';
-            infoBox.style.color = '#222';
-            infoBox.style.borderLeft = '4px solid #004E36';
-            infoBox.style.padding = '14px 18px 14px 16px';
-            infoBox.style.margin = '0 18px 10px 18px';
-            infoBox.style.borderRadius = '6px';
-            infoBox.style.fontSize = '14px';
-            infoBox.style.lineHeight = '1.6';
-            infoBox.style.boxShadow = '0 1px 4px rgba(0,0,0,0.04)';
-            infoBox.innerHTML = `
-                <div style="display:flex;align-items:flex-start;gap:10px;">
-                    <svg width="20" height="20" fill="#004E36" viewBox="0 0 20 20" style="flex-shrink:0;margin-top:2px;">
-                        <circle cx="10" cy="10" r="10" fill="#e0e0e0"/>
-                        <text x="10" y="15" text-anchor="middle" font-size="13" font-family="Segoe UI, Arial, sans-serif" fill="#004E36" font-weight="bold">i</text>
-                    </svg>
-                    <div>
-                        <strong>Download Data</strong>: Download item data as a CSV file based on your selected filters.<br>
-                        <strong>How to use:</strong> Select your options below and click <b>Download</b>.<br>
-                        <strong>Disclaimer:</strong> The downloaded file <b>cannot be directly uploaded</b> elsewhere. You must convert or format it as required for uploads.
-                    </div>
-                </div>
-            `;
-            formContainer.appendChild(infoBox);
+// Info icon click logic
+setTimeout(function() {
+    var infoIcon = document.getElementById('overlayInfoIcon');
+    var infoBox = document.getElementById('downloadOverlayInfoBox');
+    if (infoIcon && infoBox) {
+        function showInfoBox() {
+            infoBox.style.display = 'block';
+            infoBox.focus();
+        }
+        function hideInfoBox() {
+            infoBox.style.display = 'none';
+            infoIcon.focus();
+        }
+        infoIcon.addEventListener('click', function(e) {
+            e.stopPropagation();
+            showInfoBox();
+        });
+        infoIcon.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                showInfoBox();
+            }
+        });
+        // Close button inside infoBox
+        var closeBtn = document.getElementById('closeInfoBoxBtn');
+        if (closeBtn) {
+            closeBtn.addEventListener('click', function(e) {
+                e.stopPropagation();
+                hideInfoBox();
+            });
+        }
+        // Dismiss infoBox on Escape key
+        infoBox.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                hideInfoBox();
+            }
+        });
+        // Optional: clicking outside infoBox closes it
+        document.addEventListener('mousedown', function handler(e) {
+            if (infoBox.style.display === 'block' && !infoBox.contains(e.target) && !infoIcon.contains(e.target)) {
+                hideInfoBox();
+            }
+        });
+    }
+}, 0);
+
 
             // Content area
             var contentArea = document.createElement('div');
