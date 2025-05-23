@@ -371,23 +371,55 @@
                         removeElementById(SPREADSHEET_CONTAINER_ID);
                         removeElementById(DOWNLOAD_BTN_ID);
 
+                        // --- Create region/store selector container ---
+                        const selectorContainer = document.createElement('div');
+                        selectorContainer.style.display = 'flex';
+                        selectorContainer.style.alignItems = 'center';
+                        selectorContainer.style.justifyContent = 'flex-start';
+                        selectorContainer.style.gap = '12px';
+                        selectorContainer.style.margin = '24px 0 8px 0';
+                        selectorContainer.style.width = '100%';
+
+                        // Store/Region dropdown
+                        const storeRegionLabel = document.createElement('label');
+                        storeRegionLabel.textContent = 'Store/Region:';
+                        storeRegionLabel.style.fontWeight = '500';
+                        storeRegionLabel.style.marginRight = '6px';
+
+                        const storeRegionInput = document.createElement('input');
+                        storeRegionInput.type = 'text';
+                        storeRegionInput.id = 'editStoreRegionInputLive';
+                        storeRegionInput.value = storeRegion;
+                        storeRegionInput.placeholder = 'Enter Store/Region code';
+                        storeRegionInput.style.padding = '6px 10px';
+                        storeRegionInput.style.border = '1px solid #ccc';
+                        storeRegionInput.style.borderRadius = '5px';
+                        storeRegionInput.style.fontSize = '15px';
+                        storeRegionInput.style.width = '180px';
+
+                        selectorContainer.appendChild(storeRegionLabel);
+                        selectorContainer.appendChild(storeRegionInput);
+
+                        // Insert selector above spreadsheet
+                        progress.parentNode.insertBefore(selectorContainer, progress.nextSibling);
+
                         // --- Create spreadsheet container ---
                         const sheetContainer = document.createElement('div');
                         sheetContainer.id = SPREADSHEET_CONTAINER_ID;
-                        sheetContainer.style.width = SHEET_WIDTH;
-                        sheetContainer.style.height = SHEET_HEIGHT;
-                        sheetContainer.style.margin = '20px auto 0 auto';
+                        sheetContainer.style.width = '100%';
+                        sheetContainer.style.height = 'auto';
+                        sheetContainer.style.minHeight = '420px';
+                        sheetContainer.style.margin = '0 auto 0 auto';
                         sheetContainer.style.background = '#fff';
                         sheetContainer.style.border = '1.5px solid #e0e0e0';
                         sheetContainer.style.borderRadius = '8px';
                         sheetContainer.style.overflow = 'auto';
                         sheetContainer.setAttribute('aria-label', 'Editable spreadsheet of item data');
                         sheetContainer.setAttribute('tabindex', '0');
-                        // Responsive: max width, min width
                         sheetContainer.style.maxWidth = '98vw';
                         sheetContainer.style.minWidth = '320px';
-                        // Insert after progress
-                        progress.parentNode.insertBefore(sheetContainer, progress.nextSibling);
+                        // Insert after selector
+                        selectorContainer.parentNode.insertBefore(sheetContainer, selectorContainer.nextSibling);
 
                         // --- Prepare data for x-spreadsheet ---
                         const items = data.itemsAvailability;
@@ -401,14 +433,28 @@
                         // --- Initialize x-spreadsheet ---
                         let xs = null;
                         if (window.x_spreadsheet) {
+                            // Calculate numeric width based on container or fallback
+                            let containerWidth = sheetContainer.offsetWidth;
+                            if (!containerWidth || containerWidth < 600) containerWidth = Math.min(window.innerWidth * 0.95, 900);
+                            let containerHeight = Math.max(sheetData.length * 28 + 40, 420); // 28px per row + header
+
                             xs = window.x_spreadsheet(sheetContainer, {
                                 showToolbar: true,
                                 showGrid: true,
-                                view: { height: 400, width: 880 },
+                                view: { height: Math.floor(containerHeight), width: Math.floor(containerWidth) },
                                 row: { len: sheetData.length, height: 28 },
                                 col: { len: DESIRED_HEADERS.length, width: 120 }
                             });
                             xs.loadData(xsData);
+
+                            // Responsive: update spreadsheet size on window resize
+                            window.addEventListener('resize', function () {
+                                let newWidth = sheetContainer.offsetWidth;
+                                if (!newWidth || newWidth < 600) newWidth = Math.min(window.innerWidth * 0.95, 900);
+                                let newHeight = Math.max(sheetData.length * 28 + 40, 420);
+                                xs.sheet.data.view = { width: Math.floor(newWidth), height: Math.floor(newHeight) };
+                                xs.reload();
+                            });
                         } else {
                             sheetContainer.innerHTML = '<div style="color:red;padding:20px;">x-spreadsheet library not loaded.</div>';
                         }
