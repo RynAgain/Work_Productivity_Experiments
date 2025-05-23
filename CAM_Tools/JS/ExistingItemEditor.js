@@ -248,8 +248,8 @@
           // Always use the current storeId for this batch
           const thisStoreId = storeIds[i];
           const payload = {
-            filterContext: { storeIds: [thisStoreId], pluCodes: pluList },
-            paginationContext: { pageNumber: 0, pageSize: 100 }
+            filterContext: { storeIds: [thisStoreId] }, // fetch all items for the store
+            paginationContext: { pageNumber: 0, pageSize: 10000 }
           };
           const res = await fetch(url, {
             method: 'POST',
@@ -262,7 +262,7 @@
           });
           const data = await res.json();
           console.log(`[ExistingItemEditor] API result for store ${thisStoreId}:`, data);
-          const items = (data?.itemsAvailability || []).filter(item => pluList.includes(item.wfmScanCode));
+          const items = (data?.itemsAvailability || []);
           // Tag each item with its store for deduplication
           items.forEach(item => {
             item._eiStoreKey = item.storeTLC || thisStoreId;
@@ -279,14 +279,27 @@
           pluList.forEach(plu => missingPairs.push(`${plu} (${storeIds[i]})`));
         }
       }
-      // Deduplicate by (store, PLU)
-      const seen = new Set();
-      allItems = allItems.filter(item => {
-        const key = `${item._eiStoreKey}-${item.wfmScanCode}`;
-        if (seen.has(key)) return false;
-        seen.add(key);
-        return true;
+      // After all API calls, filter by PLU
+      allItems = allItems.filter(item => pluList.includes(item.wfmScanCode));
+      // Deduplicate by (store, PLU) - select the "best" record per pair
+      const bestByStorePlu = {};
+      allItems.forEach(item => {
+        const store = item._eiStoreKey || item.storeTLC || item.storeId || item.store || '';
+        const plu = item.wfmScanCode || '';
+        const key = `${store}::${plu}`;
+        // Example rule: prefer the item with the highest currentInventoryQuantity
+        if (!bestByStorePlu[key]) {
+          bestByStorePlu[key] = item;
+        } else {
+          const prev = bestByStorePlu[key];
+          const prevQty = parseInt(prev.currentInventoryQuantity) || 0;
+          const currQty = parseInt(item.currentInventoryQuantity) || 0;
+          if (currQty > prevQty) {
+            bestByStorePlu[key] = item;
+          }
+        }
       });
+      allItems = Object.values(bestByStorePlu);
       console.log('[ExistingItemEditor] Data sent to spreadsheet:', allItems);
     }
 
@@ -297,7 +310,7 @@
       // Store mode: single API call as before
       const payload = {
         filterContext: { storeIds, pluCodes: pluList },
-        paginationContext: { pageNumber: 0, pageSize: 100 }
+        paginationContext: { pageNumber: 0, pageSize: 10000 }
       };
       try {
         const res = await fetch(url, {
