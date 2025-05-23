@@ -256,6 +256,10 @@
           });
           const data = await res.json();
           const items = (data?.itemsAvailability || []).filter(item => pluList.includes(item.wfmScanCode));
+          // Tag each item with its store for deduplication
+          items.forEach(item => {
+            item._eiStoreKey = item.storeTLC || storeId;
+          });
           allItems.push(...items);
           // For each PLU, if not found in this store, add to missingPairs
           pluList.forEach(plu => {
@@ -268,6 +272,14 @@
           pluList.forEach(plu => missingPairs.push(`${plu} (${storeId})`));
         }
       }
+      // Deduplicate by (store, PLU)
+      const seen = new Set();
+      allItems = allItems.filter(item => {
+        const key = `${item._eiStoreKey}-${item.wfmScanCode}`;
+        if (seen.has(key)) return false;
+        seen.add(key);
+        return true;
+      });
     }
 
     let filteredItems = [];
