@@ -232,71 +232,90 @@
       }
     }
 
-    const payload = {
-      filterContext: { storeIds, pluCodes: pluList },
-      paginationContext: { pageNumber: 0, pageSize: 100 }
-    };
+    // For region, batch API calls per store (best practice)
+    let allItems = [];
+    let missingPairs = [];
+    if (by === 'Region') {
+      progress.textContent = 'Fetching items for each store…';
+      for (let i = 0; i < storeIds.length; i++) {
+        const storeId = storeIds[i];
+        progress.textContent = `Fetching items for store ${storeId} (${i + 1}/${storeIds.length})…`;
+        const payload = {
+          filterContext: { storeIds: [storeId], pluCodes: pluList },
+          paginationContext: { pageNumber: 0, pageSize: 100 }
+        };
+        try {
+          const res = await fetch(url, {
+            method: 'POST',
+            headers: {
+              'content-type': 'application/x-amz-json-1.0',
+              'x-amz-target': 'WfmCamBackendService.GetItemsAvailability'
+            },
+            body: JSON.stringify(payload),
+            credentials: 'include'
+          });
+          const data = await res.json();
+          const items = (data?.itemsAvailability || []).filter(item => pluList.includes(item.wfmScanCode));
+          allItems.push(...items);
+          // For each PLU, if not found in this store, add to missingPairs
+          pluList.forEach(plu => {
+            if (!items.some(item => item.wfmScanCode === plu)) {
+              missingPairs.push(`${plu} (${storeId})`);
+            }
+          });
+        } catch (err) {
+          console.error(`Error fetching items for store ${storeId}:`, err);
+          pluList.forEach(plu => missingPairs.push(`${plu} (${storeId})`));
+        }
+      }
+    }
 
-    try {
-      const res  = await fetch(url, {
-        method:'POST',
-        headers:{
-          'content-type':'application/x-amz-json-1.0',
-          'x-amz-target':'WfmCamBackendService.GetItemsAvailability'
-        },
-        body:JSON.stringify(payload),
-        credentials:'include'
-      });
-      const data = await res.json();
-      // Explicitly filter by PLU, as in DownloadButton.js
-      let allItems = data?.itemsAvailability || [];
-      let filteredItems = allItems.filter(item => pluList.includes(item.wfmScanCode));
-
-      // Group items by store
-      let itemsByStore = {};
-      allItems.forEach(item => {
-        const store = item.storeTLC || storeIds[0] || sr;
-        if (!itemsByStore[store]) itemsByStore[store] = [];
-        itemsByStore[store].push(item.wfmScanCode);
-      });
-
-      // For each store, find missing PLUs
-      let missingPluStore = [];
-      storeIds.forEach(store => {
-        const foundPlu = new Set(itemsByStore[store] || []);
+    let filteredItems = [];
+    if (by === 'Region') {
+      filteredItems = allItems;
+    } else {
+      // Store mode: single API call as before
+      const payload = {
+        filterContext: { storeIds, pluCodes: pluList },
+        paginationContext: { pageNumber: 0, pageSize: 100 }
+      };
+      try {
+        const res = await fetch(url, {
+          method: 'POST',
+          headers: {
+            'content-type': 'application/x-amz-json-1.0',
+            'x-amz-target': 'WfmCamBackendService.GetItemsAvailability'
+          },
+          body: JSON.stringify(payload),
+          credentials: 'include'
+        });
+        const data = await res.json();
+        allItems = data?.itemsAvailability || [];
+        filteredItems = allItems.filter(item => pluList.includes(item.wfmScanCode));
+        // For each PLU, if not found in this store, add to missingPairs
         pluList.forEach(plu => {
-          if (!foundPlu.has(plu)) {
-            missingPluStore.push(`${plu} (${store})`);
+          if (!filteredItems.some(item => item.wfmScanCode === plu)) {
+            missingPairs.push(`${plu} (${storeIds[0]})`);
           }
         });
-      });
-
-      // Only show failures (missing PLU/store pairs)
-      let missingPairs = [];
-      pluList.forEach(plu => {
-        storeIds.forEach(store => {
-          if (!((itemsByStore[store] || []).includes(plu))) {
-            missingPairs.push(`${plu} (${store})`);
-          }
-        });
-      });
-
-      if (filteredItems.length === 0) {
-        progress.textContent = `Not found: ${missingPairs.join(', ')}`;
+      } catch (err) {
+        console.error(err);
+        progress.textContent = 'Error loading item.';
         return;
       }
-
-      if (missingPairs.length > 0) {
-        progress.textContent = `Not found: ${missingPairs.join(', ')}`;
-      } else {
-        progress.textContent = 'Item(s) loaded.';
-      }
-      renderSpreadsheet(context, storeIds[0] || sr, filteredItems);
-
-    } catch (err) {
-      console.error(err);
-      progress.textContent = 'Error loading item.';
     }
+
+    if (filteredItems.length === 0) {
+      progress.textContent = `Not found: ${missingPairs.join(', ')}`;
+      return;
+    }
+
+    if (missingPairs.length > 0) {
+      progress.textContent = `Not found: ${missingPairs.join(', ')}`;
+    } else {
+      progress.textContent = 'Item(s) loaded.';
+    }
+    renderSpreadsheet(context, storeIds[0] || sr, filteredItems);
   };
 
   const renderSpreadsheet = (ctx, storeId, items) => {
