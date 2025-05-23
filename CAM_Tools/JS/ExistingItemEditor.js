@@ -380,7 +380,30 @@
                         selectorContainer.style.margin = '24px 0 8px 0';
                         selectorContainer.style.width = '100%';
 
-                        // Store/Region dropdown
+                        // By dropdown (Store/Region)
+                        const byLabel = document.createElement('label');
+                        byLabel.textContent = 'By:';
+                        byLabel.style.fontWeight = '500';
+                        byLabel.style.marginRight = '6px';
+
+                        const bySelect = document.createElement('select');
+                        bySelect.id = 'bySelectLive';
+                        bySelect.style.padding = '6px 10px';
+                        bySelect.style.border = '1px solid #ccc';
+                        bySelect.style.borderRadius = '5px';
+                        bySelect.style.fontSize = '15px';
+                        bySelect.style.marginRight = '10px';
+                        bySelect.style.width = '110px';
+                        const optionStore = document.createElement('option');
+                        optionStore.value = 'Store';
+                        optionStore.textContent = 'Store';
+                        const optionRegion = document.createElement('option');
+                        optionRegion.value = 'Region';
+                        optionRegion.textContent = 'Region';
+                        bySelect.appendChild(optionStore);
+                        bySelect.appendChild(optionRegion);
+
+                        // Store/Region input
                         const storeRegionLabel = document.createElement('label');
                         storeRegionLabel.textContent = 'Store/Region:';
                         storeRegionLabel.style.fontWeight = '500';
@@ -397,6 +420,8 @@
                         storeRegionInput.style.fontSize = '15px';
                         storeRegionInput.style.width = '180px';
 
+                        selectorContainer.appendChild(byLabel);
+                        selectorContainer.appendChild(bySelect);
                         selectorContainer.appendChild(storeRegionLabel);
                         selectorContainer.appendChild(storeRegionInput);
 
@@ -433,27 +458,21 @@
                         // --- Initialize x-spreadsheet ---
                         let xs = null;
                         if (window.x_spreadsheet) {
-                            // Calculate numeric width based on container or fallback
-                            let containerWidth = sheetContainer.offsetWidth;
-                            if (!containerWidth || containerWidth < 600) containerWidth = Math.min(window.innerWidth * 0.95, 900);
-                            let containerHeight = Math.max(sheetData.length * 28 + 40, 420); // 28px per row + header
-
+                            // Only use supported options for x-spreadsheet
                             xs = window.x_spreadsheet(sheetContainer, {
                                 showToolbar: true,
                                 showGrid: true,
-                                view: { height: Math.floor(containerHeight), width: Math.floor(containerWidth) },
                                 row: { len: sheetData.length, height: 28 },
                                 col: { len: DESIRED_HEADERS.length, width: 120 }
                             });
                             xs.loadData(xsData);
 
-                            // Responsive: update spreadsheet size on window resize
+                            // Responsive: let the container handle sizing
+                            sheetContainer.style.width = '100%';
+                            sheetContainer.style.height = Math.max(sheetData.length * 28 + 40, 420) + 'px';
                             window.addEventListener('resize', function () {
-                                let newWidth = sheetContainer.offsetWidth;
-                                if (!newWidth || newWidth < 600) newWidth = Math.min(window.innerWidth * 0.95, 900);
-                                let newHeight = Math.max(sheetData.length * 28 + 40, 420);
-                                xs.sheet.data.view = { width: Math.floor(newWidth), height: Math.floor(newHeight) };
-                                xs.reload();
+                                sheetContainer.style.width = '100%';
+                                sheetContainer.style.height = Math.max(sheetData.length * 28 + 40, 420) + 'px';
                             });
                         } else {
                             sheetContainer.innerHTML = '<div style="color:red;padding:20px;">x-spreadsheet library not loaded.</div>';
