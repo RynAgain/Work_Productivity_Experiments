@@ -156,7 +156,13 @@
       <label>PLU Code</label>
       <input type="text" id="ei-plu" placeholder="Enter PLU code">
 
-      <label>Store / Region</label>
+      <label style="font-weight:500;">By:</label>
+      <select id="ei-by" style="margin-bottom:8px;">
+        <option value="Store">Store</option>
+        <option value="Region">Region</option>
+      </select>
+
+      <label>Store / Region Code</label>
       <input type="text" id="ei-store" placeholder="Enter Store or Region code">
 
       <button id="ei-fetch" class="ei-action green">Edit Item</button>
@@ -184,13 +190,58 @@
 
     const plu  = $('#ei-plu').value.trim();
     const sr   = $('#ei-store').value.trim();
+    const by   = $('#ei-by').value;
     if (!plu || !sr) { progress.textContent = 'Both fields are required.'; return; }
 
     const env  = location.hostname.includes('gamma') ? 'gamma' : 'prod';
     const url  = `https://${env}.cam.wfm.amazon.dev/api/`;
+
+    let storeIds = [];
+    if (by === 'Store') {
+      storeIds = [sr];
+    } else {
+      // Fetch all stores, filter by region code
+      progress.textContent = 'Loading stores…';
+      try {
+        const resStores = await fetch(url, {
+          method: 'POST',
+          headers: {
+            'content-type': 'application/x-amz-json-1.0',
+            'x-amz-target': 'WfmCamBackendService.GetStoresInformation'
+          },
+          body: JSON.stringify({}),
+          credentials: 'include'
+        });
+        const storeData = await resStores.json();
+        if (!storeData?.storesInformation) {
+          progress.textContent = 'Failed to load store list.';
+          return;
+        }
+        // Find all storeTLCs in the given region code
+        for (const region in storeData.storesInformation) {
+          const regionCode = region.split('-').pop();
+          if (regionCode === sr) {
+            const states = storeData.storesInformation[region];
+            for (const state in states) {
+              const stores = states[state];
+              stores.forEach(store => storeIds.push(store.storeTLC));
+            }
+          }
+        }
+        if (!storeIds.length) {
+          progress.textContent = 'No stores found for region.';
+          return;
+        }
+      } catch (err) {
+        console.error(err);
+        progress.textContent = 'Error loading store list.';
+        return;
+      }
+    }
+
     const payload = {
-      filterContext   : { storeIds:[sr], pluCodes:[plu] },
-      paginationContext: { pageNumber:0, pageSize:100 }
+      filterContext: { storeIds, pluCodes: [plu] },
+      paginationContext: { pageNumber: 0, pageSize: 100 }
     };
 
     try {
@@ -210,7 +261,7 @@
       }
 
       progress.textContent = 'Item loaded.';
-      renderSpreadsheet(context, sr, data.itemsAvailability);
+      renderSpreadsheet(context, storeIds[0] || sr, data.itemsAvailability);
 
     } catch (err) {
       console.error(err);
@@ -228,14 +279,7 @@
     ctx.appendChild(selWrap);
 
     selWrap.innerHTML = `
-      <label style="font-weight:500;">By:
-        <select id="ei-by" style="margin-left:4px;">
-          <option>Store</option><option>Region</option>
-        </select>
-      </label>
-      <label style="font-weight:500;">Code:
-        <input id="ei-storeLive" value="${storeId}" style="margin-left:4px;width:140px;">
-      </label>`;
+      `;
 
     /* ---------- spreadsheet container ---------- */
     const sheetWrap = createEl('div', { id:SPREADSHEET_CONTAINER });
