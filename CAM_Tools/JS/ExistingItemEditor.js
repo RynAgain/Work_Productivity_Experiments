@@ -385,6 +385,55 @@
         r.cells ? Math.max(...Object.keys(r.cells).map(Number)) + 1 : 0));
       if (!maxC) { alert('No data to export'); return; }
 
+      // --- Validation ---
+      const errors = [];
+      // 1. Check headers
+      const headerRow = [...Array(maxC).keys()].map(c => (rows[0]?.cells?.[c]?.text || '').trim());
+      if (headerRow.join(',') !== HEADERS.join(',')) {
+        errors.push('Header row is incorrect or out of order.');
+      }
+
+      // 2. Check for duplicate (store, PLU) pairs and validate values
+      const seenPairs = new Set();
+      for (let r = 1; r < Object.keys(rows).length; r++) {
+        const row = rows[r];
+        if (!row || !row.cells) continue;
+        const store = (row.cells[0]?.text || '').trim();
+        const plu = (row.cells[2]?.text || '').trim();
+        const avail = (row.cells[3]?.text || '').trim();
+        const currInv = (row.cells[4]?.text || '').trim();
+        const andon = (row.cells[6]?.text || '').trim();
+
+        // Duplicate check
+        const key = `${store}::${plu}`;
+        if (seenPairs.has(key)) {
+          errors.push(`Line ${r + 1}: Duplicate Store/PLU pair (${store}, ${plu})`);
+        } else {
+          seenPairs.add(key);
+        }
+
+        // Availability check
+        if (avail !== 'Limited' && avail !== 'Unlimited') {
+          errors.push(`Line ${r + 1}: Availability must be "Limited" or "Unlimited"`);
+        }
+
+        // Andon Cord check
+        if (andon !== 'Enabled' && andon !== 'Disabled') {
+          errors.push(`Line ${r + 1}: Andon Cord must be "Enabled" or "Disabled"`);
+        }
+
+        // Inventory check
+        if (avail === 'Unlimited' && currInv !== '0') {
+          errors.push(`Line ${r + 1}: If Availability is "Unlimited", Current Inventory must be "0"`);
+        }
+      }
+
+      if (errors.length) {
+        alert('Validation failed:\n' + errors.join('\n'));
+        return;
+      }
+
+      // --- CSV Generation ---
       const csv = Object.keys(rows).map(r =>
         [...Array(maxC).keys()].map(c =>
           `"${(rows[r].cells?.[c]?.text || '').replace(/"/g, '""')}"`).join(',')).join('\n');
