@@ -281,6 +281,8 @@
       }
       // After all API calls, filter by PLU
       allItems = allItems.filter(item => pluList.includes(item.wfmScanCode));
+      // After all API calls, filter by PLU
+      allItems = allItems.filter(item => pluList.includes(item.wfmScanCode));
       // Deduplicate by (store, PLU) - select the "best" record per pair
       const bestByStorePlu = {};
       allItems.forEach(item => {
