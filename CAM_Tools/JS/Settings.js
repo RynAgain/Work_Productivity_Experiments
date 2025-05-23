@@ -247,7 +247,7 @@
         <path d="M12.146 3.354a.5.5 0 0 1 0 .708l-7.793 7.793a.5.5 0 0 1-.168.11l-2.5.833a.25.25 0 0 1-.316-.316l.833-2.5a.5.5 0 0 1 .11-.168l7.793-7.793a.5.5 0 0 1 .708 0l1.333 1.333zm-1.293-.647l1.333 1.333" stroke="#fff" fill="none"/>
         <path d="M11.207 2.293l2.5 2.5" stroke="#fff" fill="none"/>
       </svg>`,
-      action: () => document.getElementById('existingItemEditorButton')?.click()
+      action: () => document.getElementById('ei-openEditor')?.click()
     }
   ]; // ← array ends here (stray token removed)
 
@@ -258,7 +258,7 @@
   editorObserver.observe(document.body, { childList: true, subtree: true });
 
   // IDs for bottom bar buttons
-  const bottomButtonIds = ['redriveButton', 'addItemButton', 'downloadDataButton', 'activateButton', 'generalHelpToolsButton', 'existingItemEditorButton'];
+  const bottomButtonIds = ['redriveButton', 'addItemButton', 'downloadDataButton', 'activateButton', 'generalHelpToolsButton', 'ei-openEditor'];
 
   // ------------------------------------------------------------------
   //  RENDER FUNCTION

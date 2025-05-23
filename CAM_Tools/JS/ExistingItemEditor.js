@@ -179,10 +179,12 @@
     progress.style.display = 'block';
     progress.textContent   = 'Processing…';
 
-    const plu  = $('#ei-plu').value.trim();
+    // Support multiple PLUs, comma-separated
+    const pluInput = $('#ei-plu').value.trim();
     const sr   = $('#ei-store').value.trim();
     const by   = $('#ei-by').value;
-    if (!plu || !sr) { progress.textContent = 'Both fields are required.'; return; }
+    if (!pluInput || !sr) { progress.textContent = 'Both fields are required.'; return; }
+    const pluList = Array.from(new Set(pluInput.split(',').map(p => p.trim()).filter(Boolean)));
 
     const env  = location.hostname.includes('gamma') ? 'gamma' : 'prod';
     const url  = `https://${env}.cam.wfm.amazon.dev/api/`;
@@ -231,7 +233,7 @@
     }
 
     const payload = {
-      filterContext: { storeIds, pluCodes: [plu] },
+      filterContext: { storeIds, pluCodes: pluList },
       paginationContext: { pageNumber: 0, pageSize: 100 }
     };
 
@@ -247,13 +249,38 @@
       });
       const data = await res.json();
       // Explicitly filter by PLU, as in DownloadButton.js
-      let filteredItems = (data?.itemsAvailability || []).filter(item => item.wfmScanCode === plu);
+      let allItems = data?.itemsAvailability || [];
+      let filteredItems = allItems.filter(item => pluList.includes(item.wfmScanCode));
+
+      // Group items by store
+      let itemsByStore = {};
+      allItems.forEach(item => {
+        const store = item.storeTLC || storeIds[0] || sr;
+        if (!itemsByStore[store]) itemsByStore[store] = [];
+        itemsByStore[store].push(item.wfmScanCode);
+      });
+
+      // For each store, find missing PLUs
+      let missingPluStore = [];
+      storeIds.forEach(store => {
+        const foundPlu = new Set(itemsByStore[store] || []);
+        pluList.forEach(plu => {
+          if (!foundPlu.has(plu)) {
+            missingPluStore.push(`${plu} (${store})`);
+          }
+        });
+      });
+
       if (!filteredItems.length) {
-        progress.textContent = 'No item found for given PLU.'; //TODO: this handle is not ideal, should say which items weren't found and still load the ones that were
+        progress.textContent = `No items found for PLU(s): ${pluList.join(', ')} in store(s): ${storeIds.join(', ')}`;
         return;
       }
 
-      progress.textContent = 'Item loaded.';
+      if (missingPluStore.length > 0) {
+        progress.textContent = `Loaded ${filteredItems.length} item(s). Not found: ${missingPluStore.join(', ')}`;
+      } else {
+        progress.textContent = 'Item(s) loaded.';
+      }
       renderSpreadsheet(context, storeIds[0] || sr, filteredItems);
 
     } catch (err) {
