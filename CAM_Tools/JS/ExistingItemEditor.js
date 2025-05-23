@@ -271,13 +271,23 @@
         });
       });
 
-      if (!filteredItems.length) {
-        progress.textContent = `No items found for PLU(s): ${pluList.join(', ')} in store(s): ${storeIds.join(', ')}`;
+      // Only show failures (missing PLU/store pairs)
+      let missingPairs = [];
+      pluList.forEach(plu => {
+        storeIds.forEach(store => {
+          if (!((itemsByStore[store] || []).includes(plu))) {
+            missingPairs.push(`${plu} (${store})`);
+          }
+        });
+      });
+
+      if (filteredItems.length === 0) {
+        progress.textContent = `Not found: ${missingPairs.join(', ')}`;
         return;
       }
 
-      if (missingPluStore.length > 0) {
-        progress.textContent = `Loaded ${filteredItems.length} item(s). Not found: ${missingPluStore.join(', ')}`;
+      if (missingPairs.length > 0) {
+        progress.textContent = `Not found: ${missingPairs.join(', ')}`;
       } else {
         progress.textContent = 'Item(s) loaded.';
       }
