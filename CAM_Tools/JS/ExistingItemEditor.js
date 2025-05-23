@@ -337,18 +337,20 @@
         return;
       }
       const data = xsInstance.getData();
-      if (!data || !data.rows) {
+      // Debug log for troubleshooting
+      console.debug('Exporting spreadsheet data:', data);
+
+      // Try to extract rows from possible locations
+      let rows = data && data.rows ? data.rows : (data && data.sheet && data.sheet.data && data.sheet.data.rows ? data.sheet.data.rows : null);
+      if (!rows || Object.keys(rows).length === 0) {
         alert('No spreadsheet data found');
         return;
       }
-      const rows = data.rows;
       const maxC = Math.max(0, ...Object.values(rows).map(r => r.cells ? Math.max(...Object.keys(r.cells).map(Number)) + 1 : 0));
       if (maxC === 0) {
         alert('No data to export');
         return;
       }
-      // Debug log for troubleshooting
-      console.debug('Exporting spreadsheet data:', data);
 
       const csv = Object.keys(rows).map(r =>
         [...Array(maxC).keys()].map(c =>
