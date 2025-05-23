@@ -249,7 +249,7 @@
       // Explicitly filter by PLU, as in DownloadButton.js
       let filteredItems = (data?.itemsAvailability || []).filter(item => item.wfmScanCode === plu);
       if (!filteredItems.length) {
-        progress.textContent = 'No item found for given PLU.';
+        progress.textContent = 'No item found for given PLU.'; //TODO: this handle is not ideal, should say which items weren't found and still load the ones that were
         return;
       }
 
@@ -336,12 +336,16 @@
         alert('Spreadsheet not ready');
         return;
       }
-      const data = xsInstance.getData();
-      // Debug log for troubleshooting
-      console.debug('Exporting spreadsheet data:', data);
 
-      // Try to extract rows from possible locations
-      let rows = data && data.rows ? data.rows : (data && data.sheet && data.sheet.data && data.sheet.data.rows ? data.sheet.data.rows : null);
+      // Debug: log the xsInstance and its sheet property
+      console.debug('xsInstance:', xsInstance);
+      console.debug('xsInstance.sheet:', xsInstance.sheet);
+
+      // Try to extract the current data from xs.sheet.data.rows
+      let rows = xsInstance.sheet && xsInstance.sheet.data && xsInstance.sheet.data.rows
+        ? xsInstance.sheet.data.rows
+        : null;
+
       if (!rows || Object.keys(rows).length === 0) {
         alert('No spreadsheet data found');
         return;
