@@ -245,6 +245,12 @@
           paginationContext: { pageNumber: 0, pageSize: 100 }
         };
         try {
+          // Always use the current storeId for this batch
+          const thisStoreId = storeIds[i];
+          const payload = {
+            filterContext: { storeIds: [thisStoreId], pluCodes: pluList },
+            paginationContext: { pageNumber: 0, pageSize: 100 }
+          };
           const res = await fetch(url, {
             method: 'POST',
             headers: {
@@ -255,22 +261,22 @@
             credentials: 'include'
           });
           const data = await res.json();
-          console.log(`[ExistingItemEditor] API result for store ${storeId}:`, data);
+          console.log(`[ExistingItemEditor] API result for store ${thisStoreId}:`, data);
           const items = (data?.itemsAvailability || []).filter(item => pluList.includes(item.wfmScanCode));
           // Tag each item with its store for deduplication
           items.forEach(item => {
-            item._eiStoreKey = item.storeTLC || storeId;
+            item._eiStoreKey = item.storeTLC || thisStoreId;
           });
           allItems.push(...items);
           // For each PLU, if not found in this store, add to missingPairs
           pluList.forEach(plu => {
             if (!items.some(item => item.wfmScanCode === plu)) {
-              missingPairs.push(`${plu} (${storeId})`);
+              missingPairs.push(`${plu} (${thisStoreId})`);
             }
           });
         } catch (err) {
-          console.error(`Error fetching items for store ${storeId}:`, err);
-          pluList.forEach(plu => missingPairs.push(`${plu} (${storeId})`));
+          console.error(`Error fetching items for store ${storeIds[i]}:`, err);
+          pluList.forEach(plu => missingPairs.push(`${plu} (${storeIds[i]})`));
         }
       }
       // Deduplicate by (store, PLU)
