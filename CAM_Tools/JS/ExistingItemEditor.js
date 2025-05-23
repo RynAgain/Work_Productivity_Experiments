@@ -255,6 +255,7 @@
             credentials: 'include'
           });
           const data = await res.json();
+          console.log(`[ExistingItemEditor] API result for store ${storeId}:`, data);
           const items = (data?.itemsAvailability || []).filter(item => pluList.includes(item.wfmScanCode));
           // Tag each item with its store for deduplication
           items.forEach(item => {
@@ -280,6 +281,7 @@
         seen.add(key);
         return true;
       });
+      console.log('[ExistingItemEditor] Data sent to spreadsheet:', allItems);
     }
 
     let filteredItems = [];
@@ -327,6 +329,7 @@
     } else {
       progress.textContent = 'Item(s) loaded.';
     }
+    console.log('[ExistingItemEditor] Data sent to spreadsheet:', filteredItems);
     renderSpreadsheet(context, storeIds[0] || sr, filteredItems);
   };
 
