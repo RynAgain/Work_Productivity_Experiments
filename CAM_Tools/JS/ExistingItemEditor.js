@@ -337,33 +337,42 @@
         return;
       }
 
-      // Debug: log the xsInstance and its sheet property
-      console.debug('xsInstance:', xsInstance);
-      console.debug('xsInstance.sheet:', xsInstance.sheet);
+      // Use the official x-spreadsheet API to get the current sheet data
+      const sheetObj  = xsInstance.getData();            // returns one or many sheets
+      const sheetData = Array.isArray(sheetObj) ? sheetObj[0] : sheetObj;
 
-      // Try to extract the current data from xs.sheet.data.rows
-      let rows = xsInstance.sheet && xsInstance.sheet.data && xsInstance.sheet.data.rows
-        ? xsInstance.sheet.data.rows
-        : null;
-
+      const rows = sheetData && sheetData.rows ? sheetData.rows : null;
       if (!rows || Object.keys(rows).length === 0) {
-        alert('No spreadsheet data found');
+        alert('No data to export');
         return;
       }
-      const maxC = Math.max(0, ...Object.values(rows).map(r => r.cells ? Math.max(...Object.keys(r.cells).map(Number)) + 1 : 0));
+
+      // find the widest row so we know how many columns to emit
+      const maxC = Math.max(
+        0,
+        ...Object.values(rows).map(r =>
+          r.cells ? Math.max(...Object.keys(r.cells).map(Number)) + 1 : 0
+        )
+      );
       if (maxC === 0) {
         alert('No data to export');
         return;
       }
 
-      const csv = Object.keys(rows).map(r =>
-        [...Array(maxC).keys()].map(c =>
-          `"${(rows[r].cells?.[c]?.text || '').replace(/"/g, '""')}"`
-        ).join(',')
-      ).join('\n');
+      // build and download the CSV
+      const csv = Object.keys(rows)
+        .map(r =>
+          [...Array(maxC).keys()]
+            .map(c => `"${(rows[r].cells?.[c]?.text || '').replace(/"/g, '""')}"`)
+            .join(',')
+        )
+        .join('\n');
+
       const blob = new Blob([csv], { type: 'text/csv' });
-      const a = createEl('a', { href: URL.createObjectURL(blob), download: 'ExistingItemEdit.csv' });
-      document.body.appendChild(a); a.click(); a.remove();
+      const a    = createEl('a', { href: URL.createObjectURL(blob), download: 'ExistingItemEdit.csv' });
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
     };
   };
 
