@@ -168,10 +168,10 @@
       <button id="ei-fetch" class="ei-action green">Edit Item</button>
       <div id="ei-progress" style="display:none;margin-top:8px;text-align:center;font-size:15px;color:#004E36;">Waiting…</div>
 
-      <button id="ei-cancel" class="ei-action red">Cancel</button>`;
+      `;
 
-    // cancel button
-    $('#ei-cancel', body).onclick = () => overlay.remove();
+    // cancel button not really needed so i removed.
+    
 
     // fetch button
     $('#ei-fetch', body).onclick = () => fetchItem(body);
@@ -255,13 +255,15 @@
         credentials:'include'
       });
       const data = await res.json();
-      if (!data?.itemsAvailability?.length) {
-        progress.textContent = 'No item found.';
+      // Explicitly filter by PLU, as in DownloadButton.js
+      let filteredItems = (data?.itemsAvailability || []).filter(item => item.wfmScanCode === plu);
+      if (!filteredItems.length) {
+        progress.textContent = 'No item found for given PLU.';
         return;
       }
 
       progress.textContent = 'Item loaded.';
-      renderSpreadsheet(context, storeIds[0] || sr, data.itemsAvailability);
+      renderSpreadsheet(context, storeIds[0] || sr, filteredItems);
 
     } catch (err) {
       console.error(err);
