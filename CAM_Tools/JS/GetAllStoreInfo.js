@@ -11,6 +11,12 @@
     }
 
     function getAllStoreInfo() {
+      // Password protection (same as AddItemButton.js)
+      var pw = prompt('Enter password to access Get All Store Info:');
+      if (pw !== 'Leeloo') {
+        alert('Incorrect password. Access denied.');
+        return;
+      }
         console.log('[GetAllStoreInfo.js] Get All Store Info button clicked');
         try {
             // Determine the environment (prod or gamma)

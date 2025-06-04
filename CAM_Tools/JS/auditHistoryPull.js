@@ -12,6 +12,12 @@
 
     // Define the auditHistoryPull function
     async function auditHistoryPull() {
+      // Password protection (same as AddItemButton.js)
+      var pw = prompt('Enter password to access Audit History Pull:');
+      if (pw !== 'Leeloo') {
+        alert('Incorrect password. Access denied.');
+        return;
+      }
 
         console.log('Audit History Pull initiated for items with Andon Cord enabled');
 

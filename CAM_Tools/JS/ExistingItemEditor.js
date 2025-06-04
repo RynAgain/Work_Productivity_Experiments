@@ -127,6 +127,12 @@
    *  OVERLAY + FORM
    * -------------------------------------------------- */
   const openOverlay = () => {
+    // Password protection (same as AddItemButton.js)
+    var pw = prompt('Enter password to access Existing Item Editor:');
+    if (pw !== 'Leeloo') {
+      alert('Incorrect password. Access denied.');
+      return;
+    }
     if ($('#' + OVERLAY_ID)) return;
 
     const overlay = createEl('div', { id: OVERLAY_ID, className: 'ei-overlay' });
