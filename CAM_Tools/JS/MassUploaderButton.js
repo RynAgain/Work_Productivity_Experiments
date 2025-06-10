@@ -34,8 +34,8 @@
                 .massUploader-card {
                     background: #fff;
                     border-radius: 12px;
-                    width: 340px;
-                    max-width: 96vw;
+                    width: 370px;
+                    max-width: 98vw;
                     box-shadow: 0 8px 32px rgba(0,0,0,0.18), 0 2px 6px rgba(0,78,54,0.10);
                     font-family: 'Segoe UI', Arial, sans-serif;
                     position: relative;
@@ -116,18 +116,37 @@
                 }
                 #statusContainer {
                     margin-top: 10px;
-                    max-height: 200px;
+                    max-height: 220px;
                     overflow-y: auto;
-                    border: 1px solid #eee;
-                    padding: 4px;
-                    background: #fafafa;
-                    border-radius: 5px;
+                    border: 1px solid #e0e0e0;
+                    padding: 0;
+                    background: #fafbfc;
+                    border-radius: 7px;
+                    font-size: 14px;
+                }
+                .massUploader-statusHeader {
+                    display: flex;
+                    align-items: center;
+                    font-weight: 600;
+                    font-size: 13px;
+                    color: #004E36;
+                    background: #f2f7f4;
+                    border-bottom: 1px solid #e0e0e0;
+                    padding: 6px 10px 6px 10px;
+                    gap: 8px;
                 }
                 .massUploader-statusRow {
                     display: flex;
                     align-items: center;
-                    margin-bottom: 2px;
-                    gap: 6px;
+                    gap: 10px;
+                    padding: 7px 10px 7px 10px;
+                    border-bottom: 1px solid #e0e0e0;
+                    min-height: 32px;
+                    background: #fff;
+                    transition: background 0.2s;
+                }
+                .massUploader-statusRow:last-child {
+                    border-bottom: none;
                 }
                 .massUploader-statusText {
                     flex: 1 1 auto;
@@ -135,6 +154,10 @@
                     overflow: hidden;
                     text-overflow: ellipsis;
                     white-space: nowrap;
+                    text-align: left;
+                    display: flex;
+                    align-items: center;
+                    min-height: 18px;
                 }
                 .status-waiting { color: #888; }
                 .status-injecting { color: #e67e22; }
@@ -247,11 +270,9 @@
                 fileInput.click();
             }
         });
-        folderLabel.addEventListener('click', function(e) {
-            // Prevent double prompt by checking if this is a keyboard event
-            if (e.detail === 0) return; // ignore keyboard-initiated click
-            fileInput.click();
-        });
+        // Remove explicit click handler to avoid double prompt.
+        // The label's default behavior (with "for" attribute) will trigger the file input.
+        // Only keep the keydown handler for accessibility.
 
         // === Upload logic ===
         uploadButton.addEventListener('click', () => {
@@ -266,16 +287,48 @@
             statusContainer.innerHTML = '';
 
             // Display file names and initial status
+            // Add a header row for clarity
+            statusContainer.innerHTML = `
+                <div class="massUploader-statusHeader">
+                    <span style="width:22px;flex-shrink:0;">Mark</span>
+                    <span style="flex:1 1 auto;">File</span>
+                </div>
+            `;
             Array.from(files).forEach(file => {
                 // Container for each file status
                 const fileStatusRow = document.createElement('div');
                 fileStatusRow.className = 'massUploader-statusRow';
 
-                // Checkbox
-                const checkbox = document.createElement('input');
-                checkbox.type = 'checkbox';
-                checkbox.title = 'Mark complete/incomplete';
-                checkbox.style.margin = '0 4px 0 0';
+                // Tri-state/quad-state indicator (custom button)
+                const triBtn = document.createElement('button');
+                triBtn.type = 'button';
+                triBtn.title = 'Toggle status: grey → red → yellow → green → grey';
+                triBtn.style.margin = '0 8px 0 0';
+                triBtn.style.width = '22px';
+                triBtn.style.height = '22px';
+                triBtn.style.border = 'none';
+                triBtn.style.background = 'none';
+                triBtn.style.padding = '0';
+                triBtn.style.cursor = 'pointer';
+                triBtn.style.display = 'flex';
+                triBtn.style.alignItems = 'center';
+                triBtn.style.justifyContent = 'center';
+
+                // Custom state: 0=grey, 1=red, 2=yellow, 3=green
+                let cbState = 0;
+                fileStates[file.name] = { state: 'waiting', error: null, checkboxState: 0 };
+
+                // Visual indicator (circle)
+                const circle = document.createElement('span');
+                circle.style.display = 'inline-block';
+                circle.style.width = '16px';
+                circle.style.height = '16px';
+                circle.style.borderRadius = '50%';
+                circle.style.border = '2px solid #888';
+                circle.style.background = '#ccc';
+                circle.style.transition = 'background 0.2s, border 0.2s';
+
+                triBtn.appendChild(circle);
 
                 // Status text
                 const fileStatus = document.createElement('div');
@@ -283,9 +336,64 @@
                 fileStatus.className = 'massUploader-statusText status-waiting';
                 fileStatus.innerText = `${file.name} - Waiting`;
 
-                fileStatusRow.appendChild(checkbox);
+                // TriBtn click cycles through states
+                triBtn.addEventListener('click', function(e) {
+                    cbState = (cbState + 1) % 4;
+                    fileStates[file.name].checkboxState = cbState;
+                    updateStatusRow(file, fileStates[file.name].state, fileStates[file.name].error);
+                });
+
+                fileStatusRow.appendChild(triBtn);
                 fileStatusRow.appendChild(fileStatus);
                 statusContainer.appendChild(fileStatusRow);
+
+                // Helper to update triBtn color
+                function updateTriBtnColor(cbState) {
+                    switch (cbState) {
+                        case 0: // grey
+                            circle.style.background = '#ccc';
+                            circle.style.borderColor = '#888';
+                            break;
+                        case 1: // red
+                            circle.style.background = '#c62828';
+                            circle.style.borderColor = '#c62828';
+                            break;
+                        case 2: // yellow
+                            circle.style.background = '#fbc02d';
+                            circle.style.borderColor = '#fbc02d';
+                            break;
+                        case 3: // green
+                            circle.style.background = '#388e3c';
+                            circle.style.borderColor = '#388e3c';
+                            break;
+                    }
+                }
+
+                // Patch updateStatusRow to update triBtn color
+                if (!statusContainer._triPatch) {
+                    const origUpdateStatusRow = typeof updateStatusRow === 'function' ? updateStatusRow : null;
+                    window.updateStatusRow = function(file, state, errorMsg) {
+                        if (origUpdateStatusRow) origUpdateStatusRow(file, state, errorMsg);
+                        const cbState = fileStates[file.name]?.checkboxState ?? 0;
+                        const row = document.getElementById(`status-${CSS.escape(file.name)}`)?.parentElement;
+                        if (row) {
+                            const btn = row.querySelector('button');
+                            const circ = btn && btn.querySelector('span');
+                            if (circ) {
+                                switch (cbState) {
+                                    case 0: circ.style.background = '#ccc'; circ.style.borderColor = '#888'; break;
+                                    case 1: circ.style.background = '#c62828'; circ.style.borderColor = '#c62828'; break;
+                                    case 2: circ.style.background = '#fbc02d'; circ.style.borderColor = '#fbc02d'; break;
+                                    case 3: circ.style.background = '#388e3c'; circ.style.borderColor = '#388e3c'; break;
+                                }
+                            }
+                        }
+                    };
+                    statusContainer._triPatch = true;
+                }
+                updateTriBtnColor(cbState);
+                // Initial color
+                updateStatusRow(file, 'waiting');
             });
 
             // Identify the site's existing file input (the one the page actually uses)
