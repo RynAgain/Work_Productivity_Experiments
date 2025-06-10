@@ -240,13 +240,16 @@
         });
 
         // Keyboard accessibility for folder label
+        // Only trigger fileInput.click() on click, not on both click and keydown to avoid double prompt
         folderLabel.addEventListener('keydown', function(e) {
             if (e.key === 'Enter' || e.key === ' ') {
                 e.preventDefault();
                 fileInput.click();
             }
         });
-        folderLabel.addEventListener('click', function() {
+        folderLabel.addEventListener('click', function(e) {
+            // Prevent double prompt by checking if this is a keyboard event
+            if (e.detail === 0) return; // ignore keyboard-initiated click
             fileInput.click();
         });
 
