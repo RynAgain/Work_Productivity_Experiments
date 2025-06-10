@@ -21,6 +21,9 @@
     function addMassUploaderFunctionality() {
         console.log('Mass Uploader button clicked');
 
+        // Make fileStates accessible to all handlers
+        let fileStates = {};
+
         // === Inject modal styles if not already present ===
         if (!document.getElementById('massUploaderModalStyles')) {
             const style = document.createElement('style');
