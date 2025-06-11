@@ -352,6 +352,27 @@
       ctx.appendChild(incWrap);
     }
 
+    // --- Validate Button (always visible, after increment UI) ---
+    let validateBtn = $('#ei-validate-btn', ctx);
+    if (!validateBtn) {
+      validateBtn = createEl('button', {
+        id: 'ei-validate-btn',
+        className: 'ei-action',
+        style: 'background:#004E36;color:#fff;margin-top:10px;margin-bottom:0;font-size:15px;border-radius:5px;',
+        textContent: 'Validate'
+      });
+      ctx.appendChild(validateBtn);
+    }
+    validateBtn.onclick = () => {
+      const errors = validateSheet(xs);
+      highlightErrors(xs, errors);
+      if (errors.length) {
+        showInlineError(ctx, 'Validation warnings:<br>' + errors.map(e => `<div>• ${e.msg}</div>`).join(''));
+      } else {
+        clearInlineError(ctx);
+      }
+    };
+
     const toRow = (item) => [
       item._eiStoreKey || item.storeTLC || '',
       item.itemName || '',
@@ -658,7 +679,17 @@ validateBtn.onclick = () => {
   /* -------------------------------------------------- *
    *  ENTRY
    * -------------------------------------------------- */
-  new MutationObserver(addEditBtn).observe(document.body, { childList: true, subtree: true });
+  // Improved MutationObserver: disconnect after button is found/inserted
+  (function() {
+    const observer = new MutationObserver(() => {
+      if ($('#' + EDIT_BTN_ID)) {
+        observer.disconnect();
+      } else {
+        addEditBtn();
+      }
+    });
+    observer.observe(document.body, { childList: true, subtree: true });
+  })();
   addEditBtn();
 
   if (typeof module !== 'undefined') module.exports = { addEditBtn };
