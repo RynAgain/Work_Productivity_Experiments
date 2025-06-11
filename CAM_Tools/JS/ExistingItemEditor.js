@@ -321,9 +321,22 @@
     renderSpreadsheet(context, filteredItems);               // ⚠️  pass only items
   };
 
-  const renderSpreadsheet = (ctx, items) => {               // ⚠️  storeId removed
+  const renderSpreadsheet = (ctx, items) => {
     removeEl(SPREADSHEET_CONTAINER);
     removeEl(DOWNLOAD_BTN_ID);
+
+    // --- Inventory Increment UI ---
+    let incWrap = $('#ei-increment-wrap', ctx);
+    if (!incWrap) {
+      incWrap = createEl('div', { id: 'ei-increment-wrap', style: 'margin-bottom:12px;display:flex;align-items:center;gap:8px;' });
+      incWrap.innerHTML = `
+        <label style="font-weight:500;">Increment Inventory:</label>
+        <input id="ei-increment-input" type="number" value="1" style="width:80px;padding:5px 8px;border:1px solid #ccc;border-radius:5px;font-size:15px;">
+        <button id="ei-increment-btn" class="ei-action" style="background:#218838;color:#fff;padding:7px 18px;font-size:15px;border-radius:5px;">Apply</button>
+        <span style="color:#888;font-size:13px;">(Skips "Unlimited" rows)</span>
+      `;
+      ctx.insertBefore(incWrap, ctx.firstChild);
+    }
 
     const sheetWrap = createEl('div', { id: SPREADSHEET_CONTAINER });
     ctx.appendChild(sheetWrap);
@@ -353,50 +366,24 @@
     };
 
     let xs = null;
-    if (window.x_spreadsheet) {
-      xs = window.x_spreadsheet(sheetWrap, {
-        showToolbar: true, showGrid: true,
-        row: { len: dataArr.length, height: 28 },
-        col: { len: HEADERS.length, width: 120 }
-      });
-      xs.loadData(xsData);
+    let loadingMsg = createEl('div', { style: 'padding:16px;color:#004E36;font-weight:600;' }, SPINNER_HTML + ' Loading spreadsheet…');
+    sheetWrap.appendChild(loadingMsg);
 
-      const resize = () => {
-        sheetWrap.style.height = Math.max(dataArr.length * 28 + 40, 420) + 'px';
-      };
-      resize();
-      window.addEventListener('resize', debounce(resize));
-    } else {
-      sheetWrap.innerHTML = '<div style="padding:16px;color:red;">x-spreadsheet not loaded.</div>';
-    }
-
-    ctx._eiSpreadsheetInstance = xs;
-
-    const dl = createEl('button', {
-      id: DOWNLOAD_BTN_ID,
-      className: 'ei-action green',
-      textContent: 'Download CSV'
-    });
-    ctx.appendChild(dl);
-
-    dl.onclick = () => {
-      const xsInstance = ctx._eiSpreadsheetInstance;
-      if (!xsInstance) { alert('Spreadsheet not ready'); return; }
-
+    // --- Validation logic ---
+    function validateSheet(xsInstance) {
+      if (!xsInstance) return [];
       const sheetData = xsInstance.getData();
       const rows = sheetData?.rows;
-      if (!rows || !Object.keys(rows).length) { alert('No data to export'); return; }
-
+      if (!rows) return [];
       const maxC = Math.max(0, ...Object.values(rows).map(r =>
         r.cells ? Math.max(...Object.keys(r.cells).map(Number)) + 1 : 0));
-      if (!maxC) { alert('No data to export'); return; }
+      if (!maxC) return [];
 
-      // --- Validation ---
       const errors = [];
       // 1. Check headers
       const headerRow = [...Array(maxC).keys()].map(c => (rows[0]?.cells?.[c]?.text || '').trim());
       if (headerRow.join(',') !== HEADERS.join(',')) {
-        errors.push('Header row is incorrect or out of order.');
+        errors.push({ row: 0, col: null, msg: 'Header row is incorrect or out of order.' });
       }
 
       // 2. Check for duplicate (store, PLU) pairs and validate values
@@ -413,46 +400,203 @@
         // Duplicate check
         const key = `${store}::${plu}`;
         if (seenPairs.has(key)) {
-          errors.push(`Line ${r + 1}: Duplicate Store/PLU pair (${store}, ${plu})`);
+          errors.push({ row: r, col: 0, msg: `Duplicate Store/PLU pair (${store}, ${plu})` });
         } else {
           seenPairs.add(key);
         }
 
         // Availability check
         if (avail !== 'Limited' && avail !== 'Unlimited') {
-          errors.push(`Line ${r + 1}: Availability must be "Limited" or "Unlimited"`);
+          errors.push({ row: r, col: 3, msg: 'Availability must be "Limited" or "Unlimited"' });
         }
 
         // Andon Cord check
         if (andon !== 'Enabled' && andon !== 'Disabled') {
-          errors.push(`Line ${r + 1}: Andon Cord must be "Enabled" or "Disabled"`);
+          errors.push({ row: r, col: 6, msg: 'Andon Cord must be "Enabled" or "Disabled"' });
         }
 
         // Inventory check
         if (avail === 'Unlimited' && currInv !== '0') {
-          errors.push(`Line ${r + 1}: If Availability is "Unlimited", Current Inventory must be "0"`);
+          errors.push({ row: r, col: 4, msg: 'If Availability is "Unlimited", Current Inventory must be "0"' });
         }
       }
+      return errors;
+    }
 
-      if (errors.length) {
-        alert('Validation failed:\n' + errors.join('\n'));
-        return;
+    // --- Highlight errors in spreadsheet ---
+    function highlightErrors(xsInstance, errors) {
+      if (!xsInstance) return;
+      // Clear all cell styles first
+      const sheetData = xsInstance.getData();
+      for (const r in sheetData.rows) {
+        const row = sheetData.rows[r];
+        if (row && row.cells) {
+          for (const c in row.cells) {
+            if (row.cells[c].style) delete row.cells[c].style;
+          }
+        }
+      }
+      // Highlight errors
+      errors.forEach(e => {
+        if (e.row && e.col !== null && sheetData.rows[e.row] && sheetData.rows[e.row].cells[e.col]) {
+          sheetData.rows[e.row].cells[e.col].style = { color: '#fff', background: '#e74c3c' };
+        }
+      });
+      xsInstance.loadData(sheetData);
+    }
+
+    // --- Snap Unlimited inventory to zero ---
+    function snapUnlimitedToZero(xsInstance) {
+      if (!xsInstance) return;
+      const sheetData = xsInstance.getData();
+      for (const r in sheetData.rows) {
+        if (r === "0") continue; // skip header
+        const row = sheetData.rows[r];
+        if (row && row.cells) {
+          const avail = (row.cells[3]?.text || '').trim();
+          if (avail === 'Unlimited') {
+            if (row.cells[4]) row.cells[4].text = '0';
+          }
+        }
+      }
+      xsInstance.loadData(sheetData);
+    }
+
+    // --- Inventory Increment Handler ---
+    function incrementInventory(xsInstance, incValue) {
+      if (!xsInstance) return;
+      xsInstance.__undo = xsInstance.__undo || [];
+      const sheetData = xsInstance.getData();
+      // Save for undo
+      xsInstance.__undo.push(JSON.stringify(sheetData));
+      for (const r in sheetData.rows) {
+        if (r === "0") continue; // skip header
+        const row = sheetData.rows[r];
+        if (row && row.cells) {
+          const avail = (row.cells[3]?.text || '').trim();
+          if (avail !== 'Unlimited') {
+            let curr = parseInt(row.cells[4]?.text || '0', 10);
+            if (isNaN(curr)) curr = 0;
+            row.cells[4].text = String(Math.max(0, curr + incValue));
+          }
+        }
+      }
+      xsInstance.loadData(sheetData);
+      // Snap unlimited to zero after increment
+      snapUnlimitedToZero(xsInstance);
+      // Re-validate and highlight
+      const errors = validateSheet(xsInstance);
+      highlightErrors(xsInstance, errors);
+    }
+
+    // --- Spreadsheet Initialization ---
+    setTimeout(() => {
+      if (window.x_spreadsheet) {
+        sheetWrap.innerHTML = '';
+        xs = window.x_spreadsheet(sheetWrap, {
+          showToolbar: true, showGrid: true,
+          row: { len: dataArr.length, height: 28 },
+          col: { len: HEADERS.length, width: 120 }
+        });
+        xs.loadData(xsData);
+
+        const resize = () => {
+          sheetWrap.style.height = Math.max(dataArr.length * 28 + 40, 420) + 'px';
+        };
+        resize();
+        window.addEventListener('resize', debounce(resize));
+
+        // --- Hook up validation on every change ---
+        xs.on('cell-edited', () => {
+          snapUnlimitedToZero(xs);
+          const errors = validateSheet(xs);
+          highlightErrors(xs, errors);
+        });
+        xs.on('cell-selected', () => {
+          snapUnlimitedToZero(xs);
+          const errors = validateSheet(xs);
+          highlightErrors(xs, errors);
+        });
+        // Initial validation
+        snapUnlimitedToZero(xs);
+        const errors = validateSheet(xs);
+        highlightErrors(xs, errors);
+
+        // --- Inventory Increment Button ---
+        $('#ei-increment-btn', ctx).onclick = () => {
+          const incVal = parseInt($('#ei-increment-input', ctx).value, 10);
+          if (isNaN(incVal)) {
+            showInlineError(ctx, 'Please enter a valid number to increment.');
+            return;
+          }
+          incrementInventory(xs, incVal);
+        };
+
+        // --- Undo support for increment ---
+        if (!xs.undo) {
+          xs.undo = function() {
+            if (this.__undo && this.__undo.length) {
+              const prev = this.__undo.pop();
+              if (prev) this.loadData(JSON.parse(prev));
+            }
+          };
+        }
+        // Optionally, add a UI button for undo if desired
+
+      } else {
+        sheetWrap.innerHTML = '<div style="padding:16px;color:red;">x-spreadsheet not loaded.</div>';
       }
 
-      // --- CSV Generation ---
-      const csv = Object.keys(rows).map(r =>
-        [...Array(maxC).keys()].map(c =>
-          `"${(rows[r].cells?.[c]?.text || '').replace(/"/g, '""')}"`).join(',')).join('\n');
+      ctx._eiSpreadsheetInstance = xs;
 
-      const blob = new Blob([csv], { type: 'text/csv' });
-      const a = createEl('a', {
-        href: URL.createObjectURL(blob),
-        download: 'ExistingItemEdit.csv'
+      const dl = createEl('button', {
+        id: DOWNLOAD_BTN_ID,
+        className: 'ei-action green',
+        textContent: 'Download CSV'
       });
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-    };
+      ctx.appendChild(dl);
+
+      dl.onclick = () => {
+        const xsInstance = ctx._eiSpreadsheetInstance;
+        if (!xsInstance) { showInlineError(ctx, 'Spreadsheet not ready'); return; }
+
+        const sheetData = xsInstance.getData();
+        const rows = sheetData?.rows;
+        if (!rows || !Object.keys(rows).length) { showInlineError(ctx, 'No data to export'); return; }
+
+        const maxC = Math.max(0, ...Object.values(rows).map(r =>
+          r.cells ? Math.max(...Object.keys(r.cells).map(Number)) + 1 : 0));
+        if (!maxC) { showInlineError(ctx, 'No data to export'); return; }
+
+        // --- Validation ---
+        const errors = validateSheet(xsInstance);
+        highlightErrors(xsInstance, errors);
+
+        if (errors.length) {
+          // Show errors inline and allow user to continue with confirmation
+          showInlineError(ctx, 'Validation warnings:<br>' + errors.map(e => `<div>• ${e.msg}</div>`).join(''));
+          if (!confirmWarning('Validation warnings detected:\n' + errors.map(e => e.msg).join('\n'))) {
+            return;
+          }
+        } else {
+          clearInlineError(ctx);
+        }
+
+        // --- CSV Generation ---
+        const csv = Object.keys(rows).map(r =>
+          [...Array(maxC).keys()].map(c =>
+            `"${(rows[r].cells?.[c]?.text || '').replace(/"/g, '""')}"`).join(',')).join('\n');
+
+        const blob = new Blob([csv], { type: 'text/csv' });
+        const a = createEl('a', {
+          href: URL.createObjectURL(blob),
+          download: 'ExistingItemEdit.csv'
+        });
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+      };
+    }, 300); // Simulate loading delay for spinner
   };
 
   /* -------------------------------------------------- *
