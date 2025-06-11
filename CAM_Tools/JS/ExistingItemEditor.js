@@ -6,6 +6,7 @@
    * -------------------------------------------------- */
   const STYLE_ID               = 'ei-style';
   const SPREADSHEET_CSS        = 'https://unpkg.com/x-data-spreadsheet@1.1.5/dist/xspreadsheet.css';
+  const SPREADSHEET_JS         = 'https://unpkg.com/x-data-spreadsheet@1.1.5/dist/xspreadsheet.js'; // NEW
   const SPREADSHEET_CONTAINER  = 'ei-sheet';
   const DOWNLOAD_BTN_ID        = 'ei-downloadCsv';
   const EDIT_BTN_ID            = 'ei-openEditor';
@@ -490,63 +491,68 @@
       highlightErrors(xsInstance, errors);
     }
 
-    // --- Spreadsheet Initialization ---
-    setTimeout(() => {
-      if (window.x_spreadsheet) {
-        sheetWrap.innerHTML = '';
-        xs = window.x_spreadsheet(sheetWrap, {
-          showToolbar: true, showGrid: true,
-          row: { len: dataArr.length, height: 28 },
-          col: { len: HEADERS.length, width: 120 }
-        });
-        xs.loadData(xsData);
+    // --- Wait for spreadsheet library before initializing ---
+    const waitForLib = (cb, tries = 20) => {
+      if (window.x_spreadsheet) return cb();
+      if (tries <= 0) {
+        sheetWrap.innerHTML =
+          '<div style="padding:16px;color:red;">x‑spreadsheet failed to load.</div>';
+        return;
+      }
+      setTimeout(() => waitForLib(cb, tries - 1), 250);
+    };
 
-        const resize = () => {
-          sheetWrap.style.height = Math.max(dataArr.length * 28 + 40, 420) + 'px';
-        };
-        resize();
-        window.addEventListener('resize', debounce(resize));
+    waitForLib(() => {
+      sheetWrap.innerHTML = '';
+      xs = window.x_spreadsheet(sheetWrap, {
+        showToolbar: true, showGrid: true,
+        row: { len: dataArr.length, height: 28 },
+        col: { len: HEADERS.length, width: 120 }
+      });
+      xs.loadData(xsData);
 
-        // --- Hook up validation on every change ---
-        xs.on('cell-edited', () => {
-          snapUnlimitedToZero(xs);
-          const errors = validateSheet(xs);
-          highlightErrors(xs, errors);
-        });
-        xs.on('cell-selected', () => {
-          snapUnlimitedToZero(xs);
-          const errors = validateSheet(xs);
-          highlightErrors(xs, errors);
-        });
-        // Initial validation
+      const resize = () => {
+        sheetWrap.style.height = Math.max(dataArr.length * 28 + 40, 420) + 'px';
+      };
+      resize();
+      window.addEventListener('resize', debounce(resize));
+
+      // --- Hook up validation on every change ---
+      xs.on('cell-edited', () => {
         snapUnlimitedToZero(xs);
         const errors = validateSheet(xs);
         highlightErrors(xs, errors);
+      });
+      xs.on('cell-selected', () => {
+        snapUnlimitedToZero(xs);
+        const errors = validateSheet(xs);
+        highlightErrors(xs, errors);
+      });
+      // Initial validation
+      snapUnlimitedToZero(xs);
+      const errors = validateSheet(xs);
+      highlightErrors(xs, errors);
 
-        // --- Inventory Increment Button ---
-        $('#ei-increment-btn', ctx).onclick = () => {
-          const incVal = parseInt($('#ei-increment-input', ctx).value, 10);
-          if (isNaN(incVal)) {
-            showInlineError(ctx, 'Please enter a valid number to increment.');
-            return;
-          }
-          incrementInventory(xs, incVal);
-        };
-
-        // --- Undo support for increment ---
-        if (!xs.undo) {
-          xs.undo = function() {
-            if (this.__undo && this.__undo.length) {
-              const prev = this.__undo.pop();
-              if (prev) this.loadData(JSON.parse(prev));
-            }
-          };
+      // --- Inventory Increment Button ---
+      $('#ei-increment-btn', ctx).onclick = () => {
+        const incVal = parseInt($('#ei-increment-input', ctx).value, 10);
+        if (isNaN(incVal)) {
+          showInlineError(ctx, 'Please enter a valid number to increment.');
+          return;
         }
-        // Optionally, add a UI button for undo if desired
+        incrementInventory(xs, incVal);
+      };
 
-      } else {
-        sheetWrap.innerHTML = '<div style="padding:16px;color:red;">x-spreadsheet not loaded.</div>';
+      // --- Undo support for increment ---
+      if (!xs.undo) {
+        xs.undo = function() {
+          if (this.__undo && this.__undo.length) {
+            const prev = this.__undo.pop();
+            if (prev) this.loadData(JSON.parse(prev));
+          }
+        };
       }
+      // Optionally, add a UI button for undo if desired
 
       ctx._eiSpreadsheetInstance = xs;
 
@@ -597,7 +603,7 @@
         a.click();
         a.remove();
       };
-    }, 300); // Simulate loading delay for spinner
+    });
   };
 
   /* -------------------------------------------------- *
