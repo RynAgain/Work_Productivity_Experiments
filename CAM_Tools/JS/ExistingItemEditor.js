@@ -611,6 +611,8 @@ validateBtn.onclick = () => {
           showInlineError(ctx, 'Please enter a valid number to increment.');
           return;
         }
+        // Force spreadsheet to commit any in-progress edits before incrementing
+        if (xs && typeof xs.blur === 'function') xs.blur();
         incrementInventory(xs, incVal);
       };
 
