@@ -326,20 +326,21 @@
     removeEl(DOWNLOAD_BTN_ID);
 
     // --- Inventory Increment UI ---
+    const sheetWrap = createEl('div', { id: SPREADSHEET_CONTAINER });
+    ctx.appendChild(sheetWrap);
+
+    // --- Inventory Increment UI (move below spreadsheet for layout safety) ---
     let incWrap = $('#ei-increment-wrap', ctx);
     if (!incWrap) {
-      incWrap = createEl('div', { id: 'ei-increment-wrap', style: 'margin-bottom:12px;display:flex;align-items:center;gap:8px;' });
+      incWrap = createEl('div', { id: 'ei-increment-wrap', style: 'margin-top:12px;display:flex;align-items:center;gap:8px;' });
       incWrap.innerHTML = `
         <label style="font-weight:500;">Increment Inventory:</label>
         <input id="ei-increment-input" type="number" value="1" style="width:80px;padding:5px 8px;border:1px solid #ccc;border-radius:5px;font-size:15px;">
         <button id="ei-increment-btn" class="ei-action" style="background:#218838;color:#fff;padding:7px 18px;font-size:15px;border-radius:5px;">Apply</button>
         <span style="color:#888;font-size:13px;">(Skips "Unlimited" rows)</span>
       `;
-      ctx.insertBefore(incWrap, ctx.firstChild);
+      ctx.appendChild(incWrap);
     }
-
-    const sheetWrap = createEl('div', { id: SPREADSHEET_CONTAINER });
-    ctx.appendChild(sheetWrap);
 
     const toRow = (item) => [
       item._eiStoreKey || item.storeTLC || '',
