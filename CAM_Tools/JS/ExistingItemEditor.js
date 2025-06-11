@@ -83,11 +83,12 @@
   };
 
   /* -------------------------------------------------- *
-   *  IMPROVED DATA MODEL WITH BETTER SYNC
+   *  SAFE DATA MODEL - CONSERVATIVE OPERATIONS
    * -------------------------------------------------- */
   class SpreadsheetDataModel {
     constructor(initialData = []) {
       this.data = [HEADERS, ...initialData];
+      this.originalData = this.getData(); // Keep copy of original
     }
     
     // Get data as 2D array
@@ -156,95 +157,75 @@
       ).join('\n');
     }
     
-    // IMPROVED: Sync from spreadsheet using multiple methods
-    syncFromSpreadsheet(xs) {
+    // SAFE: Only read from spreadsheet, don't trust the data completely
+    tryReadFromSpreadsheet(xs) {
       try {
-        console.log('Attempting to sync from spreadsheet...');
+        console.log('Attempting to read current spreadsheet state...');
         
-        // Method 1: Try standard getData()
+        // Try to get data using the safest method
         let spreadsheetData = null;
         try {
           spreadsheetData = xs.getData();
-          console.log('Method 1 - getData() result:', spreadsheetData);
+          console.log('Read spreadsheet data:', spreadsheetData);
         } catch (error) {
-          console.log('Method 1 failed:', error);
-        }
-        
-        // Method 2: Try accessing internal data structures
-        if (!spreadsheetData || !spreadsheetData.rows) {
-          try {
-            if (xs.sheet && xs.sheet.data) {
-              spreadsheetData = xs.sheet.data;
-              console.log('Method 2 - sheet.data result:', spreadsheetData);
-            }
-          } catch (error) {
-            console.log('Method 2 failed:', error);
-          }
-        }
-        
-        // Method 3: Try workbook access
-        if (!spreadsheetData || !spreadsheetData.rows) {
-          try {
-            if (xs.workbook && xs.workbook.sheets && xs.workbook.sheets[0]) {
-              spreadsheetData = xs.workbook.sheets[0];
-              console.log('Method 3 - workbook result:', spreadsheetData);
-            }
-          } catch (error) {
-            console.log('Method 3 failed:', error);
-          }
-        }
-        
-        // Method 4: Try direct property access
-        if (!spreadsheetData || !spreadsheetData.rows) {
-          try {
-            const props = ['data', '_data', 'sheetData', '_sheetData'];
-            for (const prop of props) {
-              if (xs[prop] && xs[prop].rows) {
-                spreadsheetData = xs[prop];
-                console.log(`Method 4 - ${prop} result:`, spreadsheetData);
-                break;
-              }
-            }
-          } catch (error) {
-            console.log('Method 4 failed:', error);
-          }
-        }
-        
-        // Method 5: Try accessing through DOM (fallback)
-        if (!spreadsheetData || !spreadsheetData.rows) {
-          console.log('Attempting DOM-based data extraction...');
-          return this.syncFromDOM();
+          console.log('Could not read spreadsheet data:', error);
+          return false;
         }
         
         if (!spreadsheetData || !spreadsheetData.rows) {
-          console.error('All sync methods failed - no data found');
+          console.log('No valid rows in spreadsheet data');
           return false;
         }
         
         const rows = spreadsheetData.rows;
+        const rowKeys = Object.keys(rows).map(Number).sort((a, b) => a - b);
+        
+        // Sanity check: should have at least a header row
+        if (rowKeys.length === 0) {
+          console.log('No rows found in spreadsheet');
+          return false;
+        }
+        
+        // Sanity check: header row should exist and have correct columns
+        const headerRow = rows[0];
+        if (!headerRow || !headerRow.cells) {
+          console.log('Invalid header row structure');
+          return false;
+        }
+        
+        // Check if headers match what we expect
+        let headerValid = true;
+        for (let i = 0; i < Math.min(3, HEADERS.length); i++) { // Check first 3 headers
+          const cell = headerRow.cells[i];
+          const headerText = cell ? (cell.text || '') : '';
+          if (headerText !== HEADERS[i]) {
+            console.log(`Header mismatch at column ${i}: expected "${HEADERS[i]}", got "${headerText}"`);
+            headerValid = false;
+            break;
+          }
+        }
+        
+        if (!headerValid) {
+          console.log('Headers do not match expected format');
+          return false;
+        }
+        
+        // If we get here, the data looks valid - proceed with update
         const newData = [];
         
-        // Get all row indices and sort them
-        const rowKeys = Object.keys(rows).map(Number).sort((a, b) => a - b);
-        console.log('Found row keys:', rowKeys);
-        
-        // Process each row
         for (const rowIndex of rowKeys) {
           const row = rows[rowIndex];
           const newRow = [];
           
           if (row && row.cells) {
-            // Get all column indices and find the max
             const colKeys = Object.keys(row.cells).map(Number);
             const maxCol = Math.max(HEADERS.length - 1, ...colKeys);
             
-            // Extract cell values
             for (let c = 0; c <= maxCol; c++) {
               const cell = row.cells[c];
-              newRow[c] = cell ? (cell.text || cell.value || '') : '';
+              newRow[c] = cell ? (cell.text || '') : '';
             }
           } else {
-            // Empty row
             newRow.length = HEADERS.length;
             newRow.fill('');
           }
@@ -252,149 +233,50 @@
           newData[rowIndex] = newRow;
         }
         
-        // Fill any gaps in the array
+        // Fill any gaps
         for (let i = 0; i < newData.length; i++) {
           if (!newData[i]) {
             newData[i] = new Array(HEADERS.length).fill('');
           }
         }
         
-        console.log('Successfully synced data:', newData);
+        console.log('Successfully read valid data from spreadsheet:', newData);
         this.data = newData;
         return true;
         
       } catch (error) {
-        console.error('Error syncing from spreadsheet:', error);
-        return false;
-      }
-    }
-    
-    // NEW: Fallback method to extract data from DOM
-    syncFromDOM() {
-      try {
-        console.log('Attempting DOM-based sync...');
-        
-        // Find the spreadsheet container
-        const container = document.querySelector('#' + SPREADSHEET_CONTAINER);
-        if (!container) {
-          console.log('No spreadsheet container found');
-          return false;
-        }
-        
-        // Look for table cells in the spreadsheet
-        const cells = container.querySelectorAll('.x-spreadsheet-cell, .x-cell, [data-row][data-col]');
-        if (!cells.length) {
-          console.log('No spreadsheet cells found in DOM');
-          return false;
-        }
-        
-        const newData = [];
-        
-        cells.forEach(cell => {
-          try {
-            const row = parseInt(cell.getAttribute('data-row') || cell.getAttribute('row'), 10);
-            const col = parseInt(cell.getAttribute('data-col') || cell.getAttribute('col'), 10);
-            const value = cell.textContent || cell.innerText || '';
-            
-            if (!isNaN(row) && !isNaN(col)) {
-              if (!newData[row]) {
-                newData[row] = [];
-              }
-              newData[row][col] = value;
-            }
-          } catch (error) {
-            // Skip invalid cells
-          }
-        });
-        
-        if (newData.length > 0) {
-          // Fill gaps and ensure proper structure
-          const maxRow = newData.length;
-          for (let r = 0; r < maxRow; r++) {
-            if (!newData[r]) {
-              newData[r] = new Array(HEADERS.length).fill('');
-            } else {
-              while (newData[r].length < HEADERS.length) {
-                newData[r].push('');
-              }
-            }
-          }
-          
-          console.log('DOM sync successful:', newData);
-          this.data = newData;
-          return true;
-        }
-        
-        console.log('DOM sync found no data');
-        return false;
-        
-      } catch (error) {
-        console.error('DOM sync failed:', error);
+        console.error('Error reading from spreadsheet:', error);
         return false;
       }
     }
   }
 
   /* -------------------------------------------------- *
-   *  UTILITY FUNCTIONS FOR SPREADSHEET ACCESS
+   *  SAFE SPREADSHEET OPERATIONS
    * -------------------------------------------------- */
   
-  // Helper to get cell value using multiple methods
-  function getCellValue(xs, row, col) {
-    try {
-      // Method 1: Try cellText API
-      if (typeof xs.cellText === 'function') {
-        const value = xs.cellText(row, col);
-        if (value !== undefined && value !== null) {
-          return String(value);
+  // Helper to safely update individual cells without reloading entire spreadsheet
+  function safeUpdateCells(xs, updates) {
+    let successCount = 0;
+    
+    for (const update of updates) {
+      const { row, col, value } = update;
+      try {
+        // Try cellText method first
+        if (typeof xs.cellText === 'function') {
+          xs.cellText(row, col, String(value));
+          successCount++;
+          console.log(`Updated cell (${row}, ${col}) to "${value}"`);
+        } else {
+          console.log('cellText method not available');
+          break;
         }
+      } catch (error) {
+        console.error(`Error updating cell (${row}, ${col}):`, error);
       }
-      
-      // Method 2: Try direct data access
-      const data = xs.getData();
-      if (data && data.rows && data.rows[row] && data.rows[row].cells && data.rows[row].cells[col]) {
-        return data.rows[row].cells[col].text || '';
-      }
-      
-      return '';
-    } catch (error) {
-      console.log(`Error getting cell value (${row}, ${col}):`, error);
-      return '';
     }
-  }
-  
-  // Helper to set cell value using multiple methods
-  function setCellValue(xs, row, col, value) {
-    try {
-      // Method 1: Try cellText API
-      if (typeof xs.cellText === 'function') {
-        xs.cellText(row, col, String(value));
-        return true;
-      }
-      
-      // Method 2: Try direct data modification
-      const data = xs.getData();
-      if (data && data.rows) {
-        if (!data.rows[row]) {
-          data.rows[row] = { cells: {} };
-        }
-        if (!data.rows[row].cells) {
-          data.rows[row].cells = {};
-        }
-        if (!data.rows[row].cells[col]) {
-          data.rows[row].cells[col] = {};
-        }
-        
-        data.rows[row].cells[col].text = String(value);
-        xs.loadData(data);
-        return true;
-      }
-      
-      return false;
-    } catch (error) {
-      console.log(`Error setting cell value (${row}, ${col}):`, error);
-      return false;
-    }
+    
+    return successCount;
   }
 
   /* -------------------------------------------------- *
@@ -878,6 +760,7 @@
   function incrementInventoryInModel(dataModel, increment) {
     const data = dataModel.getData();
     let updatedCount = 0;
+    const cellUpdates = []; // Track what needs to be updated in spreadsheet
     
     // Process each row (skip header row 0)
     for (let r = 1; r < data.length; r++) {
@@ -893,21 +776,26 @@
       if (availability === 'Limited') {
         const newInventory = Math.max(0, Math.min(10000, currentInventory + increment));
         dataModel.setCell(r, 4, newInventory);
+        cellUpdates.push({ row: r, col: 4, value: newInventory });
         updatedCount++;
         console.log(`Row ${r}: Updated from ${currentInventory} to ${newInventory}`);
       } else if (availability === 'Unlimited') {
         // Ensure unlimited items stay at 0
-        dataModel.setCell(r, 4, '0');
+        if (currentInventory !== 0) {
+          dataModel.setCell(r, 4, '0');
+          cellUpdates.push({ row: r, col: 4, value: '0' });
+        }
       }
     }
     
-    console.log(`Updated ${updatedCount} rows`);
-    return updatedCount;
+    console.log(`Updated ${updatedCount} rows, ${cellUpdates.length} cell updates needed`);
+    return { updatedCount, cellUpdates };
   }
 
   function snapUnlimitedToZeroInModel(dataModel) {
     const data = dataModel.getData();
     let changed = false;
+    const cellUpdates = [];
     
     for (let r = 1; r < data.length; r++) {
       const availability = dataModel.getCell(r, 3);
@@ -915,15 +803,16 @@
       
       if (availability === 'Unlimited' && inventory !== '0') {
         dataModel.setCell(r, 4, '0');
+        cellUpdates.push({ row: r, col: 4, value: '0' });
         changed = true;
       }
     }
     
-    return changed;
+    return { changed, cellUpdates };
   }
 
   /* -------------------------------------------------- *
-   *  SPREADSHEET RENDERING - WITH IMPROVED SYNC
+   *  SAFE SPREADSHEET RENDERING
    * -------------------------------------------------- */
   const renderSpreadsheet = async (ctx, items) => {
     removeEl(SPREADSHEET_CONTAINER);
@@ -1022,19 +911,6 @@
       ctx._eiSpreadsheetInstance = xs;
       
       console.log('Spreadsheet initialized successfully');
-      
-      // Debug: Log spreadsheet object structure
-      setTimeout(() => {
-        console.log('Spreadsheet object structure:', {
-          xs: xs,
-          methods: Object.getOwnPropertyNames(xs),
-          getData: typeof xs.getData,
-          cellText: typeof xs.cellText,
-          sheet: xs.sheet,
-          workbook: xs.workbook,
-          data: xs.data
-        });
-      }, 1000);
 
       // Set up resize handling
       const resize = debounce(() => {
@@ -1052,14 +928,15 @@
         console.log('Validation triggered');
         clearInlineError(ctx);
         
-        // Try to sync current spreadsheet data to our model
-        const syncSuccess = dataModel.syncFromSpreadsheet(xs);
-        console.log('Sync result for validation:', syncSuccess);
+        // Try to read current spreadsheet data
+        const readSuccess = dataModel.tryReadFromSpreadsheet(xs);
+        console.log('Read result for validation:', readSuccess);
         
-        if (syncSuccess) {
-          console.log('Synced data for validation:', dataModel.getData());
+        if (readSuccess) {
+          console.log('Using current spreadsheet data for validation');
         } else {
-          console.log('Sync failed, using current model data for validation');
+          console.log('Using last known data for validation');
+          showInlineError(ctx, '<div style="color:orange;">Warning: Using last known data for validation. Make sure your changes are saved.</div>');
         }
         
         const errors = validateSpreadsheetData(dataModel);
@@ -1074,7 +951,7 @@
         }
       };
 
-      // Connect increment button
+      // Connect increment button - SAFE VERSION
       $('#ei-increment-btn', ctx).onclick = () => {
         console.log('Increment triggered');
         clearInlineError(ctx);
@@ -1085,29 +962,41 @@
           return;
         }
         
-        // Try to sync current spreadsheet data to our model
-        const syncSuccess = dataModel.syncFromSpreadsheet(xs);
-        console.log('Sync result for increment:', syncSuccess);
+        // Try to read current spreadsheet data first
+        const readSuccess = dataModel.tryReadFromSpreadsheet(xs);
+        console.log('Read result for increment:', readSuccess);
         
-        if (!syncSuccess) {
-          console.log('Sync failed, proceeding with current model data');
-          showInlineError(ctx, '<div style="color:orange;">Warning: Could not sync current changes. Proceeding with last known data.</div>');
+        if (!readSuccess) {
+          console.log('Could not read current spreadsheet state, using last known data');
+          showInlineError(ctx, '<div style="color:orange;">Warning: Using last known data for increment. Current changes may not be reflected.</div>');
         }
         
-        const updatedCount = incrementInventoryInModel(dataModel, incVal);
-        console.log('Increment result:', updatedCount);
+        // Perform increment on our data model
+        const result = incrementInventoryInModel(dataModel, incVal);
+        const { updatedCount, cellUpdates } = result;
         
-        // Update spreadsheet with new data
-        try {
-          xs.loadData(dataModel.toSpreadsheetFormat());
-        } catch (error) {
-          console.error('Error updating spreadsheet:', error);
-          showInlineError(ctx, 'Error updating spreadsheet view');
-          return;
-        }
+        console.log('Increment result:', { updatedCount, cellUpdates });
         
-        if (updatedCount > 0) {
-          showInlineError(ctx, `<div style="color:green;">✓ Updated ${updatedCount} rows by ${incVal}</div>`);
+        if (cellUpdates.length > 0) {
+          // Try to update individual cells safely
+          const updateSuccess = safeUpdateCells(xs, cellUpdates);
+          console.log(`Successfully updated ${updateSuccess}/${cellUpdates.length} cells`);
+          
+          if (updateSuccess > 0) {
+            showInlineError(ctx, `<div style="color:green;">✓ Updated ${updatedCount} rows by ${incVal} (${updateSuccess} cells modified)</div>`);
+          } else {
+            // Fallback: try full reload only if individual updates failed
+            console.log('Individual cell updates failed, attempting full reload...');
+            try {
+              const newData = dataModel.toSpreadsheetFormat();
+              console.log('Reloading with data:', newData);
+              xs.loadData(newData);
+              showInlineError(ctx, `<div style="color:green;">✓ Updated ${updatedCount} rows by ${incVal} (full reload)</div>`);
+            } catch (error) {
+              console.error('Full reload also failed:', error);
+              showInlineError(ctx, '<div style="color:red;">Error: Could not update spreadsheet. Changes saved to model but not visible.</div>');
+            }
+          }
         } else {
           showInlineError(ctx, '<div style="color:orange;">No rows were updated. Check that items have "Limited" availability.</div>');
         }
@@ -1123,20 +1012,27 @@
         }, 200);
       };
 
-      // Apply business rules on cell changes
+      // Apply business rules on cell changes (minimal interference)
       xs.on('cell-edited', (cell, ri, ci) => {
         console.log(`Cell edited: row ${ri}, col ${ci}, value:`, cell);
         
-        // Apply unlimited -> 0 rule
-        setTimeout(() => {
-          if (ci === 3) { // Availability column changed
-            const availability = cell.text || '';
-            if (availability === 'Unlimited') {
-              // Set inventory to 0 for unlimited items
-              setCellValue(xs, ri, 4, '0');
-            }
+        // Only apply the unlimited -> 0 rule, don't do any major updates
+        if (ci === 3) { // Availability column changed
+          const availability = cell.text || '';
+          if (availability === 'Unlimited') {
+            // Try to set inventory to 0 for unlimited items
+            setTimeout(() => {
+              try {
+                if (typeof xs.cellText === 'function') {
+                  xs.cellText(ri, 4, '0');
+                  console.log(`Auto-set row ${ri} inventory to 0 (Unlimited)`);
+                }
+              } catch (error) {
+                console.log('Could not auto-set inventory to 0:', error);
+              }
+            }, 100);
           }
-        }, 100);
+        }
       });
 
       // Add download button
@@ -1152,12 +1048,12 @@
         console.log('CSV download triggered');
         clearInlineError(ctx);
         
-        // Try to sync current spreadsheet data to our model
-        const syncSuccess = dataModel.syncFromSpreadsheet(xs);
-        console.log('Sync result for export:', syncSuccess);
+        // Try to read current spreadsheet data for export
+        const readSuccess = dataModel.tryReadFromSpreadsheet(xs);
+        console.log('Read result for export:', readSuccess);
         
-        if (!syncSuccess) {
-          showInlineError(ctx, 'Warning: Could not sync current changes. Using last known data for export.');
+        if (!readSuccess) {
+          showInlineError(ctx, '<div style="color:orange;">Warning: Using last known data for export. Current changes may not be included.</div>');
         }
         
         // Validate before export
