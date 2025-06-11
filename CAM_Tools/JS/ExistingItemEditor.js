@@ -439,7 +439,8 @@
     let isHighlighting = false;
     let isSnapping = false;
 
-    function highlightErrors(xsInstance, errors) {
+    // Debounce helper for highlightErrors
+    const debounceHighlightErrors = debounce(function(xsInstance, errors) {
       if (!xsInstance || isHighlighting) return;
       isHighlighting = true;
       try {
@@ -459,11 +460,14 @@
             sheetData.rows[e.row].cells[e.col].style = { color: '#fff', background: '#e74c3c' };
           }
         });
-        // Do NOT call xsInstance.loadData here to avoid breaking interactivity!
-        // Only call loadData after batch operations (increment, undo, etc.)
+        xsInstance.loadData(sheetData, true); // <- ADDED: repaint, preserve selection
       } finally {
         isHighlighting = false;
       }
+    }, 100);
+
+    function highlightErrors(xsInstance, errors) {
+      debounceHighlightErrors(xsInstance, errors);
     }
 
     // --- Snap Unlimited inventory to zero ---
