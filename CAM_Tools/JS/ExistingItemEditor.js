@@ -435,42 +435,56 @@
     }
 
     // --- Highlight errors in spreadsheet ---
+    // Guards to prevent infinite recursion
+    let isHighlighting = false;
+    let isSnapping = false;
+
     function highlightErrors(xsInstance, errors) {
-      if (!xsInstance) return;
-      // Clear all cell styles first
-      const sheetData = xsInstance.getData();
-      for (const r in sheetData.rows) {
-        const row = sheetData.rows[r];
-        if (row && row.cells) {
-          for (const c in row.cells) {
-            if (row.cells[c].style) delete row.cells[c].style;
+      if (!xsInstance || isHighlighting) return;
+      isHighlighting = true;
+      try {
+        // Clear all cell styles first
+        const sheetData = xsInstance.getData();
+        for (const r in sheetData.rows) {
+          const row = sheetData.rows[r];
+          if (row && row.cells) {
+            for (const c in row.cells) {
+              if (row.cells[c].style) delete row.cells[c].style;
+            }
           }
         }
+        // Highlight errors
+        errors.forEach(e => {
+          if (e.row && e.col !== null && sheetData.rows[e.row] && sheetData.rows[e.row].cells[e.col]) {
+            sheetData.rows[e.row].cells[e.col].style = { color: '#fff', background: '#e74c3c' };
+          }
+        });
+        xsInstance.loadData(sheetData);
+      } finally {
+        isHighlighting = false;
       }
-      // Highlight errors
-      errors.forEach(e => {
-        if (e.row && e.col !== null && sheetData.rows[e.row] && sheetData.rows[e.row].cells[e.col]) {
-          sheetData.rows[e.row].cells[e.col].style = { color: '#fff', background: '#e74c3c' };
-        }
-      });
-      xsInstance.loadData(sheetData);
     }
 
     // --- Snap Unlimited inventory to zero ---
     function snapUnlimitedToZero(xsInstance) {
-      if (!xsInstance) return;
-      const sheetData = xsInstance.getData();
-      for (const r in sheetData.rows) {
-        if (r === "0") continue; // skip header
-        const row = sheetData.rows[r];
-        if (row && row.cells) {
-          const avail = (row.cells[3]?.text || '').trim();
-          if (avail === 'Unlimited') {
-            if (row.cells[4]) row.cells[4].text = '0';
+      if (!xsInstance || isSnapping) return;
+      isSnapping = true;
+      try {
+        const sheetData = xsInstance.getData();
+        for (const r in sheetData.rows) {
+          if (r === "0") continue; // skip header
+          const row = sheetData.rows[r];
+          if (row && row.cells) {
+            const avail = (row.cells[3]?.text || '').trim();
+            if (avail === 'Unlimited') {
+              if (row.cells[4]) row.cells[4].text = '0';
+            }
           }
         }
+        xsInstance.loadData(sheetData);
+      } finally {
+        isSnapping = false;
       }
-      xsInstance.loadData(sheetData);
     }
 
     // --- Inventory Increment Handler ---
