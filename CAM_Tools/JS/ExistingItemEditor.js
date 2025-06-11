@@ -576,11 +576,7 @@ validateBtn.onclick = () => {
         const errors = validateSheet(xs);
         highlightErrors(xs, errors);
       });
-      xs.on('cell-selected', () => {
-        snapUnlimitedToZero(xs);
-        const errors = validateSheet(xs);
-        highlightErrors(xs, errors);
-      });
+      // Removed xs.on('cell-selected', ...) to fix "stuck cell" bug
       // Initial validation
       snapUnlimitedToZero(xs);
       const errors = validateSheet(xs);
