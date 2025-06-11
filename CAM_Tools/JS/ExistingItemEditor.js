@@ -549,26 +549,6 @@ if (!window.confirmWarning) window.confirmWarning = () => true;
       // Re-validate and highlight
       const errors = validateSheet(xsInstance);
       highlightErrors(xsInstance, errors);
-// --- Validate Button ---
-let validateBtn = $('#ei-validate-btn', ctx);
-if (!validateBtn) {
-  validateBtn = createEl('button', {
-    id: 'ei-validate-btn',
-    className: 'ei-action',
-    style: 'background:#004E36;color:#fff;margin-top:10px;margin-bottom:0;font-size:15px;border-radius:5px;',
-    textContent: 'Validate'
-  });
-  ctx.appendChild(validateBtn);
-}
-validateBtn.onclick = () => {
-  const errors = validateSheet(xs);
-  highlightErrors(xs, errors);
-  if (errors.length) {
-    showInlineError(ctx, 'Validation warnings:<br>' + errors.map(e => `<div>• ${e.msg}</div>`).join(''));
-  } else {
-    clearInlineError(ctx);
-  }
-};
     }
 
     // --- Wait for spreadsheet library before initializing ---
