@@ -83,13 +83,11 @@
   };
 
   /* -------------------------------------------------- *
-   *  DATA MODEL - FIXED TO PREVENT INFINITE LOOPS
+   *  SIMPLIFIED DATA MODEL - NO AUTO-SYNC
    * -------------------------------------------------- */
   class SpreadsheetDataModel {
     constructor(initialData = []) {
       this.data = [HEADERS, ...initialData];
-      this.listeners = [];
-      this.isUpdating = false; // Prevent circular updates
     }
     
     // Get data as 2D array
@@ -97,13 +95,9 @@
       return this.data.map(row => [...row]); // Return deep copy
     }
     
-    // Set data and notify listeners (with loop prevention)
-    setData(newData, silent = false) {
-      if (this.isUpdating) return; // Prevent recursive calls
+    // Set data completely
+    setData(newData) {
       this.data = newData.map(row => [...row]); // Store deep copy
-      if (!silent) {
-        this.notifyListeners();
-      }
     }
     
     // Get specific cell value
@@ -114,37 +108,13 @@
       return '';
     }
     
-    // Set specific cell value (with loop prevention)
-    setCell(row, col, value, silent = false) {
-      if (this.isUpdating) return; // Prevent recursive calls
-      
+    // Set specific cell value
+    setCell(row, col, value) {
       if (row >= 0 && row < this.data.length) {
         while (this.data[row].length <= col) {
           this.data[row].push('');
         }
         this.data[row][col] = String(value);
-        if (!silent) {
-          this.notifyListeners();
-        }
-      }
-    }
-    
-    // Batch update multiple cells without triggering listeners for each
-    batchUpdate(updates, callback) {
-      this.isUpdating = true;
-      try {
-        if (callback) {
-          callback(this);
-        }
-        if (updates) {
-          updates.forEach(update => {
-            const { row, col, value } = update;
-            this.setCell(row, col, value, true);
-          });
-        }
-      } finally {
-        this.isUpdating = false;
-        this.notifyListeners();
       }
     }
     
@@ -156,24 +126,6 @@
     // Get column count
     getColCount() {
       return Math.max(...this.data.map(row => row.length));
-    }
-    
-    // Add change listener
-    addListener(callback) {
-      this.listeners.push(callback);
-    }
-    
-    // Notify all listeners of changes (with loop prevention)
-    notifyListeners() {
-      if (this.isUpdating) return; // Don't notify during updates
-      
-      this.listeners.forEach(callback => {
-        try {
-          callback(this.data);
-        } catch (error) {
-          console.error('Error in data model listener:', error);
-        }
-      });
     }
     
     // Convert to x-spreadsheet format
@@ -202,6 +154,57 @@
       return this.data.map(row => 
         row.map(cell => `"${String(cell || '').replace(/"/g, '""')}"`).join(',')
       ).join('\n');
+    }
+    
+    // Sync from spreadsheet data
+    syncFromSpreadsheet(xs) {
+      try {
+        // Try to get current data from spreadsheet
+        const spreadsheetData = xs.getData();
+        if (!spreadsheetData || !spreadsheetData.rows) {
+          console.log('No spreadsheet data to sync');
+          return false;
+        }
+        
+        const rows = spreadsheetData.rows;
+        const newData = [];
+        
+        // Get max row index
+        const rowKeys = Object.keys(rows).map(Number).sort((a, b) => a - b);
+        
+        for (const rowIndex of rowKeys) {
+          const row = rows[rowIndex];
+          const newRow = [];
+          
+          if (row && row.cells) {
+            // Get max column index for this row
+            const colKeys = Object.keys(row.cells).map(Number).sort((a, b) => a - b);
+            const maxCol = Math.max(HEADERS.length - 1, ...colKeys);
+            
+            for (let c = 0; c <= maxCol; c++) {
+              const cell = row.cells[c];
+              newRow[c] = cell ? (cell.text || '') : '';
+            }
+          }
+          
+          newData[rowIndex] = newRow;
+        }
+        
+        // Fill any gaps in rows
+        for (let i = 0; i < newData.length; i++) {
+          if (!newData[i]) {
+            newData[i] = new Array(HEADERS.length).fill('');
+          }
+        }
+        
+        this.data = newData;
+        console.log('Successfully synced from spreadsheet:', this.data);
+        return true;
+        
+      } catch (error) {
+        console.error('Error syncing from spreadsheet:', error);
+        return false;
+      }
     }
   }
 
@@ -684,62 +687,54 @@
   }
 
   function incrementInventoryInModel(dataModel, increment) {
+    const data = dataModel.getData();
     let updatedCount = 0;
     
-    // Use batch update to prevent multiple notifications
-    dataModel.batchUpdate(null, (model) => {
-      const data = model.getData();
+    // Process each row (skip header row 0)
+    for (let r = 1; r < data.length; r++) {
+      const availability = dataModel.getCell(r, 3);
+      const currentInventory = parseInt(dataModel.getCell(r, 4), 10) || 0;
       
-      // Process each row (skip header row 0)
-      for (let r = 1; r < data.length; r++) {
-        const availability = model.getCell(r, 3);
-        const currentInventory = parseInt(model.getCell(r, 4), 10) || 0;
-        
-        // Skip empty rows
-        if (!availability) continue;
-        
-        console.log(`Row ${r}: Availability="${availability}", Current="${currentInventory}"`);
-        
-        // Only increment Limited items
-        if (availability === 'Limited') {
-          const newInventory = Math.max(0, Math.min(10000, currentInventory + increment));
-          model.setCell(r, 4, newInventory, true); // Silent update
-          updatedCount++;
-          console.log(`Row ${r}: Updated from ${currentInventory} to ${newInventory}`);
-        } else if (availability === 'Unlimited') {
-          // Ensure unlimited items stay at 0
-          model.setCell(r, 4, '0', true); // Silent update
-        }
+      // Skip empty rows
+      if (!availability) continue;
+      
+      console.log(`Row ${r}: Availability="${availability}", Current="${currentInventory}"`);
+      
+      // Only increment Limited items
+      if (availability === 'Limited') {
+        const newInventory = Math.max(0, Math.min(10000, currentInventory + increment));
+        dataModel.setCell(r, 4, newInventory);
+        updatedCount++;
+        console.log(`Row ${r}: Updated from ${currentInventory} to ${newInventory}`);
+      } else if (availability === 'Unlimited') {
+        // Ensure unlimited items stay at 0
+        dataModel.setCell(r, 4, '0');
       }
-    });
+    }
     
     console.log(`Updated ${updatedCount} rows`);
     return updatedCount;
   }
 
   function snapUnlimitedToZeroInModel(dataModel) {
+    const data = dataModel.getData();
     let changed = false;
     
-    // Use batch update to prevent multiple notifications
-    dataModel.batchUpdate(null, (model) => {
-      const data = model.getData();
+    for (let r = 1; r < data.length; r++) {
+      const availability = dataModel.getCell(r, 3);
+      const inventory = dataModel.getCell(r, 4);
       
-      for (let r = 1; r < data.length; r++) {
-        const availability = model.getCell(r, 3);
-        const inventory = model.getCell(r, 4);
-        
-        if (availability === 'Unlimited' && inventory !== '0') {
-          model.setCell(r, 4, '0', true); // Silent update
-          changed = true;
-        }
+      if (availability === 'Unlimited' && inventory !== '0') {
+        dataModel.setCell(r, 4, '0');
+        changed = true;
       }
-    });
+    }
     
     return changed;
   }
 
   /* -------------------------------------------------- *
-   *  SPREADSHEET RENDERING - WITH IMPROVED DATA MODEL
+   *  SPREADSHEET RENDERING - SIMPLIFIED APPROACH
    * -------------------------------------------------- */
   const renderSpreadsheet = async (ctx, items) => {
     removeEl(SPREADSHEET_CONTAINER);
@@ -801,7 +796,6 @@
     console.log('Initial data model:', dataModel.getData());
 
     let xs = null;
-    let isSpreadsheetUpdating = false; // Track when we're updating the spreadsheet
     
     const loadingMsg = createEl('div', { 
       style: 'padding:16px;color:#004E36;font-weight:600;text-align:center;' 
@@ -840,42 +834,6 @@
       
       console.log('Spreadsheet initialized successfully');
 
-      // Set up data model listener to update spreadsheet (with loop prevention)
-      dataModel.addListener((newData) => {
-        if (isSpreadsheetUpdating) return; // Prevent loop
-        
-        console.log('Data model changed, updating spreadsheet');
-        try {
-          isSpreadsheetUpdating = true;
-          xs.loadData(dataModel.toSpreadsheetFormat());
-        } catch (error) {
-          console.error('Error updating spreadsheet from data model:', error);
-        } finally {
-          isSpreadsheetUpdating = false;
-        }
-      });
-
-      // Set up spreadsheet change listener to update data model (with loop prevention)
-      xs.on('cell-edited', (cell, ri, ci) => {
-        if (isSpreadsheetUpdating || dataModel.isUpdating) return; // Prevent loop
-        
-        console.log(`Cell edited: row ${ri}, col ${ci}, value:`, cell);
-        try {
-          // Update our data model when spreadsheet changes
-          const newValue = cell.text || '';
-          dataModel.setCell(ri, ci, newValue, true); // Silent update to prevent loop
-          
-          // Apply business rules after a short delay
-          setTimeout(() => {
-            if (!isSpreadsheetUpdating && !dataModel.isUpdating) {
-              snapUnlimitedToZeroInModel(dataModel);
-            }
-          }, 100);
-        } catch (error) {
-          console.error('Error updating data model from spreadsheet:', error);
-        }
-      });
-
       // Set up resize handling
       const resize = debounce(() => {
         if (sheetWrap && xs) {
@@ -891,6 +849,11 @@
       validateBtn.onclick = () => {
         console.log('Validation triggered');
         clearInlineError(ctx);
+        
+        // First sync current spreadsheet data to our model
+        if (dataModel.syncFromSpreadsheet(xs)) {
+          console.log('Synced data for validation:', dataModel.getData());
+        }
         
         const errors = validateSpreadsheetData(dataModel);
         console.log('Validation errors found:', errors.length);
@@ -915,8 +878,23 @@
           return;
         }
         
+        // First sync current spreadsheet data to our model
+        if (!dataModel.syncFromSpreadsheet(xs)) {
+          showInlineError(ctx, 'Failed to sync current data. Please try again.');
+          return;
+        }
+        
         const updatedCount = incrementInventoryInModel(dataModel, incVal);
         console.log('Increment result:', updatedCount);
+        
+        // Update spreadsheet with new data
+        try {
+          xs.loadData(dataModel.toSpreadsheetFormat());
+        } catch (error) {
+          console.error('Error updating spreadsheet:', error);
+          showInlineError(ctx, 'Error updating spreadsheet view');
+          return;
+        }
         
         if (updatedCount > 0) {
           showInlineError(ctx, `<div style="color:green;">✓ Updated ${updatedCount} rows by ${incVal}</div>`);
@@ -935,14 +913,25 @@
         }, 200);
       };
 
-      // Initial business rules application
-      setTimeout(() => {
-        snapUnlimitedToZeroInModel(dataModel);
-        const errors = validateSpreadsheetData(dataModel);
-        if (errors.length > 0) {
-          console.log('Initial validation errors:', errors);
-        }
-      }, 1000);
+      // Apply business rules on cell changes
+      xs.on('cell-edited', (cell, ri, ci) => {
+        console.log(`Cell edited: row ${ri}, col ${ci}, value:`, cell);
+        
+        // Apply unlimited -> 0 rule
+        setTimeout(() => {
+          if (ci === 3) { // Availability column changed
+            const availability = cell.text || '';
+            if (availability === 'Unlimited') {
+              // Set inventory to 0 for unlimited items
+              try {
+                xs.cellText(ri, 4, '0');
+              } catch (error) {
+                console.log('Could not auto-set inventory to 0');
+              }
+            }
+          }
+        }, 100);
+      });
 
       // Add download button
       const dl = createEl('button', {
@@ -956,6 +945,11 @@
       dl.onclick = () => {
         console.log('CSV download triggered');
         clearInlineError(ctx);
+        
+        // Sync current spreadsheet data to our model
+        if (!dataModel.syncFromSpreadsheet(xs)) {
+          showInlineError(ctx, 'Failed to sync current data for export. Using last known data.');
+        }
         
         // Validate before export
         const errors = validateSpreadsheetData(dataModel);
