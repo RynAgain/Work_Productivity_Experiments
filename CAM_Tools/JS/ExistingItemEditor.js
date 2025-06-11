@@ -1,5 +1,9 @@
 (() => {
   'use strict';
+// Ensure error helpers are defined (stub if not present)
+if (!window.showInlineError) window.showInlineError = () => {};
+if (!window.clearInlineError) window.clearInlineError = () => {};
+if (!window.confirmWarning) window.confirmWarning = () => true;
 
   /* -------------------------------------------------- *
    *  CONSTANTS & HELPERS
