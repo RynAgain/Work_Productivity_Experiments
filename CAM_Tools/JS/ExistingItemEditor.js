@@ -459,7 +459,8 @@
             sheetData.rows[e.row].cells[e.col].style = { color: '#fff', background: '#e74c3c' };
           }
         });
-        xsInstance.loadData(sheetData);
+        // Do NOT call xsInstance.loadData here to avoid breaking interactivity!
+        // Only call loadData after batch operations (increment, undo, etc.)
       } finally {
         isHighlighting = false;
       }
@@ -471,17 +472,22 @@
       isSnapping = true;
       try {
         const sheetData = xsInstance.getData();
+        let changed = false;
         for (const r in sheetData.rows) {
           if (r === "0") continue; // skip header
           const row = sheetData.rows[r];
           if (row && row.cells) {
             const avail = (row.cells[3]?.text || '').trim();
             if (avail === 'Unlimited') {
-              if (row.cells[4]) row.cells[4].text = '0';
+              if (row.cells[4] && row.cells[4].text !== '0') {
+                row.cells[4].text = '0';
+                changed = true;
+              }
             }
           }
         }
-        xsInstance.loadData(sheetData);
+        // Only reload if something actually changed
+        if (changed) xsInstance.loadData(sheetData);
       } finally {
         isSnapping = false;
       }
