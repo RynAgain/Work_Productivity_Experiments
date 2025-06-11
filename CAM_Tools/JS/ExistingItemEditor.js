@@ -83,12 +83,13 @@
   };
 
   /* -------------------------------------------------- *
-   *  DATA MODEL - MAINTAIN OUR OWN COPY
+   *  DATA MODEL - FIXED TO PREVENT INFINITE LOOPS
    * -------------------------------------------------- */
   class SpreadsheetDataModel {
     constructor(initialData = []) {
       this.data = [HEADERS, ...initialData];
       this.listeners = [];
+      this.isUpdating = false; // Prevent circular updates
     }
     
     // Get data as 2D array
@@ -96,10 +97,13 @@
       return this.data.map(row => [...row]); // Return deep copy
     }
     
-    // Set data and notify listeners
-    setData(newData) {
+    // Set data and notify listeners (with loop prevention)
+    setData(newData, silent = false) {
+      if (this.isUpdating) return; // Prevent recursive calls
       this.data = newData.map(row => [...row]); // Store deep copy
-      this.notifyListeners();
+      if (!silent) {
+        this.notifyListeners();
+      }
     }
     
     // Get specific cell value
@@ -110,13 +114,36 @@
       return '';
     }
     
-    // Set specific cell value
-    setCell(row, col, value) {
+    // Set specific cell value (with loop prevention)
+    setCell(row, col, value, silent = false) {
+      if (this.isUpdating) return; // Prevent recursive calls
+      
       if (row >= 0 && row < this.data.length) {
         while (this.data[row].length <= col) {
           this.data[row].push('');
         }
         this.data[row][col] = String(value);
+        if (!silent) {
+          this.notifyListeners();
+        }
+      }
+    }
+    
+    // Batch update multiple cells without triggering listeners for each
+    batchUpdate(updates, callback) {
+      this.isUpdating = true;
+      try {
+        if (callback) {
+          callback(this);
+        }
+        if (updates) {
+          updates.forEach(update => {
+            const { row, col, value } = update;
+            this.setCell(row, col, value, true);
+          });
+        }
+      } finally {
+        this.isUpdating = false;
         this.notifyListeners();
       }
     }
@@ -136,8 +163,10 @@
       this.listeners.push(callback);
     }
     
-    // Notify all listeners of changes
+    // Notify all listeners of changes (with loop prevention)
     notifyListeners() {
+      if (this.isUpdating) return; // Don't notify during updates
+      
       this.listeners.forEach(callback => {
         try {
           callback(this.data);
@@ -655,54 +684,62 @@
   }
 
   function incrementInventoryInModel(dataModel, increment) {
-    const data = dataModel.getData();
     let updatedCount = 0;
     
-    // Process each row (skip header row 0)
-    for (let r = 1; r < data.length; r++) {
-      const availability = dataModel.getCell(r, 3);
-      const currentInventory = parseInt(dataModel.getCell(r, 4), 10) || 0;
+    // Use batch update to prevent multiple notifications
+    dataModel.batchUpdate(null, (model) => {
+      const data = model.getData();
       
-      // Skip empty rows
-      if (!availability) continue;
-      
-      console.log(`Row ${r}: Availability="${availability}", Current="${currentInventory}"`);
-      
-      // Only increment Limited items
-      if (availability === 'Limited') {
-        const newInventory = Math.max(0, Math.min(10000, currentInventory + increment));
-        dataModel.setCell(r, 4, newInventory);
-        updatedCount++;
-        console.log(`Row ${r}: Updated from ${currentInventory} to ${newInventory}`);
-      } else if (availability === 'Unlimited') {
-        // Ensure unlimited items stay at 0
-        dataModel.setCell(r, 4, '0');
+      // Process each row (skip header row 0)
+      for (let r = 1; r < data.length; r++) {
+        const availability = model.getCell(r, 3);
+        const currentInventory = parseInt(model.getCell(r, 4), 10) || 0;
+        
+        // Skip empty rows
+        if (!availability) continue;
+        
+        console.log(`Row ${r}: Availability="${availability}", Current="${currentInventory}"`);
+        
+        // Only increment Limited items
+        if (availability === 'Limited') {
+          const newInventory = Math.max(0, Math.min(10000, currentInventory + increment));
+          model.setCell(r, 4, newInventory, true); // Silent update
+          updatedCount++;
+          console.log(`Row ${r}: Updated from ${currentInventory} to ${newInventory}`);
+        } else if (availability === 'Unlimited') {
+          // Ensure unlimited items stay at 0
+          model.setCell(r, 4, '0', true); // Silent update
+        }
       }
-    }
+    });
     
     console.log(`Updated ${updatedCount} rows`);
     return updatedCount;
   }
 
   function snapUnlimitedToZeroInModel(dataModel) {
-    const data = dataModel.getData();
     let changed = false;
     
-    for (let r = 1; r < data.length; r++) {
-      const availability = dataModel.getCell(r, 3);
-      const inventory = dataModel.getCell(r, 4);
+    // Use batch update to prevent multiple notifications
+    dataModel.batchUpdate(null, (model) => {
+      const data = model.getData();
       
-      if (availability === 'Unlimited' && inventory !== '0') {
-        dataModel.setCell(r, 4, '0');
-        changed = true;
+      for (let r = 1; r < data.length; r++) {
+        const availability = model.getCell(r, 3);
+        const inventory = model.getCell(r, 4);
+        
+        if (availability === 'Unlimited' && inventory !== '0') {
+          model.setCell(r, 4, '0', true); // Silent update
+          changed = true;
+        }
       }
-    }
+    });
     
     return changed;
   }
 
   /* -------------------------------------------------- *
-   *  SPREADSHEET RENDERING - WITH DATA MODEL
+   *  SPREADSHEET RENDERING - WITH IMPROVED DATA MODEL
    * -------------------------------------------------- */
   const renderSpreadsheet = async (ctx, items) => {
     removeEl(SPREADSHEET_CONTAINER);
@@ -764,6 +801,8 @@
     console.log('Initial data model:', dataModel.getData());
 
     let xs = null;
+    let isSpreadsheetUpdating = false; // Track when we're updating the spreadsheet
+    
     const loadingMsg = createEl('div', { 
       style: 'padding:16px;color:#004E36;font-weight:600;text-align:center;' 
     }, SPINNER_HTML + ' Loading spreadsheet…');
@@ -801,26 +840,36 @@
       
       console.log('Spreadsheet initialized successfully');
 
-      // Set up data model listener to update spreadsheet
+      // Set up data model listener to update spreadsheet (with loop prevention)
       dataModel.addListener((newData) => {
-        console.log('Data model changed, updating spreadsheet:', newData);
+        if (isSpreadsheetUpdating) return; // Prevent loop
+        
+        console.log('Data model changed, updating spreadsheet');
         try {
+          isSpreadsheetUpdating = true;
           xs.loadData(dataModel.toSpreadsheetFormat());
         } catch (error) {
           console.error('Error updating spreadsheet from data model:', error);
+        } finally {
+          isSpreadsheetUpdating = false;
         }
       });
 
-      // Set up spreadsheet change listener to update data model
+      // Set up spreadsheet change listener to update data model (with loop prevention)
       xs.on('cell-edited', (cell, ri, ci) => {
+        if (isSpreadsheetUpdating || dataModel.isUpdating) return; // Prevent loop
+        
         console.log(`Cell edited: row ${ri}, col ${ci}, value:`, cell);
         try {
           // Update our data model when spreadsheet changes
-          dataModel.setCell(ri, ci, cell.text || '');
+          const newValue = cell.text || '';
+          dataModel.setCell(ri, ci, newValue, true); // Silent update to prevent loop
           
-          // Apply business rules
+          // Apply business rules after a short delay
           setTimeout(() => {
-            snapUnlimitedToZeroInModel(dataModel);
+            if (!isSpreadsheetUpdating && !dataModel.isUpdating) {
+              snapUnlimitedToZeroInModel(dataModel);
+            }
           }, 100);
         } catch (error) {
           console.error('Error updating data model from spreadsheet:', error);
