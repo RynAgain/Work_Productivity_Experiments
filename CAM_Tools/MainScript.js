@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         CAM_Admin_Tools
 // @namespace    http://tampermonkey.net/
-// @version      2.6.182    
+// @version      2.6.183    
 // @description  Main script to include button functionalities
 // @author       Ryan Satterfield
 // @match        https://*.cam.wfm.amazon.dev/*

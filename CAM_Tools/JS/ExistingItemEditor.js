@@ -466,7 +466,133 @@
   };
 
   /* -------------------------------------------------- *
-   *  VALIDATION FUNCTIONS - COMPLETELY REWRITTEN
+   *  SPREADSHEET DATA ACCESS UTILITIES
+   * -------------------------------------------------- */
+  
+  // Commit any active cell edits
+  function commitActiveEdits(xs) {
+    try {
+      if (xs && xs.editor) {
+        if (xs.editor.el && xs.editor.el.style.display !== 'none') {
+          console.log('Committing active editor changes');
+          xs.editor.set();
+        }
+      }
+    } catch (error) {
+      console.log('No active editor to commit or commit failed:', error);
+    }
+  }
+
+  // Get spreadsheet data with multiple fallback methods
+  function getSpreadsheetData(xs) {
+    if (!xs) {
+      console.error('No spreadsheet instance provided');
+      return null;
+    }
+
+    console.log('Attempting to get spreadsheet data...');
+    
+    // Method 1: Try standard getData()
+    try {
+      const data1 = xs.getData();
+      console.log('Method 1 - getData():', data1);
+      if (data1 && data1.rows && Object.keys(data1.rows).length > 0) {
+        return data1;
+      }
+    } catch (error) {
+      console.log('Method 1 failed:', error);
+    }
+
+    // Method 2: Try accessing internal data structure
+    try {
+      if (xs.sheet && xs.sheet.data) {
+        console.log('Method 2 - internal data:', xs.sheet.data);
+        return xs.sheet.data;
+      }
+    } catch (error) {
+      console.log('Method 2 failed:', error);
+    }
+
+    // Method 3: Try accessing workbook data
+    try {
+      if (xs.workbook && xs.workbook.sheets && xs.workbook.sheets[0]) {
+        console.log('Method 3 - workbook data:', xs.workbook.sheets[0]);
+        return xs.workbook.sheets[0];
+      }
+    } catch (error) {
+      console.log('Method 3 failed:', error);
+    }
+
+    // Method 4: Try direct sheet access
+    try {
+      if (xs.data) {
+        console.log('Method 4 - direct data:', xs.data);
+        return xs.data;
+      }
+    } catch (error) {
+      console.log('Method 4 failed:', error);
+    }
+
+    console.error('All methods to access spreadsheet data failed');
+    return null;
+  }
+
+  // Convert data to standard format for processing
+  function normalizeSpreadsheetData(data) {
+    if (!data) return null;
+
+    // If already in expected format
+    if (data.rows) {
+      return data;
+    }
+
+    // Try to find rows in various locations
+    if (data.data && data.data.rows) {
+      return data.data;
+    }
+
+    console.error('Could not normalize spreadsheet data format');
+    return null;
+  }
+
+  // Get cell value safely
+  function getCellValue(rows, rowIndex, colIndex) {
+    try {
+      const row = rows[rowIndex];
+      if (!row || !row.cells) return '';
+      
+      const cell = row.cells[colIndex];
+      if (!cell) return '';
+      
+      return cell.text || cell.value || '';
+    } catch (error) {
+      return '';
+    }
+  }
+
+  // Set cell value safely
+  function setCellValue(rows, rowIndex, colIndex, value) {
+    try {
+      if (!rows[rowIndex]) {
+        rows[rowIndex] = { cells: {} };
+      }
+      if (!rows[rowIndex].cells) {
+        rows[rowIndex].cells = {};
+      }
+      if (!rows[rowIndex].cells[colIndex]) {
+        rows[rowIndex].cells[colIndex] = {};
+      }
+      
+      rows[rowIndex].cells[colIndex].text = String(value);
+      return true;
+    } catch (error) {
+      console.error('Error setting cell value:', error);
+      return false;
+    }
+  }
+
+  /* -------------------------------------------------- *
+   *  VALIDATION FUNCTIONS - ROBUST VERSION
    * -------------------------------------------------- */
   function validateSheet(xs) {
     if (!xs) {
@@ -475,117 +601,111 @@
     }
     
     console.log('Starting validation...');
-    const errors = [];
     
-    try {
-      // Get current data using the correct x-spreadsheet API
-      const currentData = xs.getData();
-      console.log('Current spreadsheet data:', currentData);
-      
-      if (!currentData || !currentData.rows) {
-        console.error('No data found in spreadsheet');
-        return [];
-      }
-      
-      const rows = currentData.rows;
-      const rowCount = Object.keys(rows).length;
-      console.log(`Found ${rowCount} rows`);
-      
-      if (rowCount < 2) {
-        console.log('Not enough rows to validate');
-        return [];
-      }
-      
-      // Validate headers (row 0)
-      const headerRow = rows[0];
-      if (headerRow && headerRow.cells) {
-        for (let i = 0; i < HEADERS.length; i++) {
-          const expectedHeader = HEADERS[i];
-          const actualHeader = headerRow.cells[i] ? headerRow.cells[i].text : '';
-          if (actualHeader !== expectedHeader) {
-            errors.push({ 
-              row: 0, 
-              col: i, 
-              msg: `Header column ${i} should be "${expectedHeader}" but found "${actualHeader}"` 
-            });
-          }
-        }
-      }
-      
-      // Track duplicates
-      const seenPairs = new Set();
-      
-      // Validate data rows (skip row 0 which is headers)
-      for (let r = 1; r < rowCount; r++) {
-        const row = rows[r];
-        if (!row || !row.cells) continue;
-        
-        const store = (row.cells[0] && row.cells[0].text) || '';
-        const itemName = (row.cells[1] && row.cells[1].text) || '';
-        const plu = (row.cells[2] && row.cells[2].text) || '';
-        const availability = (row.cells[3] && row.cells[3].text) || '';
-        const inventory = (row.cells[4] && row.cells[4].text) || '';
-        const andon = (row.cells[6] && row.cells[6].text) || '';
-        
-        console.log(`Validating row ${r}: Store=${store}, PLU=${plu}, Avail=${availability}, Inv=${inventory}, Andon=${andon}`);
-        
-        // Check for duplicate store/PLU pairs
-        const pairKey = `${store.toUpperCase()}::${plu.toUpperCase()}`;
-        if (seenPairs.has(pairKey)) {
-          errors.push({ 
-            row: r, 
-            col: 0, 
-            msg: `Duplicate Store/PLU pair: ${store}/${plu}` 
-          });
-        } else {
-          seenPairs.add(pairKey);
-        }
-        
-        // Validate availability
-        if (availability !== 'Limited' && availability !== 'Unlimited') {
-          errors.push({ 
-            row: r, 
-            col: 3, 
-            msg: `Availability must be "Limited" or "Unlimited", found: "${availability}"` 
-          });
-        }
-        
-        // Validate andon cord
-        if (andon !== 'Enabled' && andon !== 'Disabled') {
-          errors.push({ 
-            row: r, 
-            col: 6, 
-            msg: `Andon Cord must be "Enabled" or "Disabled", found: "${andon}"` 
-          });
-        }
-        
-        // Validate inventory
-        const invNum = parseInt(inventory, 10);
-        if (isNaN(invNum) || invNum < 0 || invNum > 10000) {
-          errors.push({ 
-            row: r, 
-            col: 4, 
-            msg: `Current Inventory must be 0-10000, found: "${inventory}"` 
-          });
-        }
-        
-        // Special rule: Unlimited items should have 0 inventory
-        if (availability === 'Unlimited' && inventory !== '0') {
-          errors.push({ 
-            row: r, 
-            col: 4, 
-            msg: `Unlimited items must have 0 inventory, found: "${inventory}"` 
-          });
-        }
-      }
-      
-      console.log(`Validation complete. Found ${errors.length} errors:`, errors);
-      return errors;
-      
-    } catch (error) {
-      console.error('Error during validation:', error);
+    // Commit any active edits first
+    commitActiveEdits(xs);
+    
+    const rawData = getSpreadsheetData(xs);
+    const data = normalizeSpreadsheetData(rawData);
+    
+    if (!data || !data.rows) {
+      console.error('No valid data found for validation');
       return [];
     }
+    
+    const rows = data.rows;
+    const rowKeys = Object.keys(rows);
+    const errors = [];
+    
+    console.log(`Validating ${rowKeys.length} rows`);
+    
+    if (rowKeys.length < 2) {
+      console.log('Not enough rows to validate');
+      return [];
+    }
+    
+    // Validate headers (row 0)
+    for (let i = 0; i < HEADERS.length; i++) {
+      const expectedHeader = HEADERS[i];
+      const actualHeader = getCellValue(rows, 0, i);
+      if (actualHeader !== expectedHeader) {
+        errors.push({ 
+          row: 0, 
+          col: i, 
+          msg: `Header column ${i + 1} should be "${expectedHeader}" but found "${actualHeader}"` 
+        });
+      }
+    }
+    
+    // Track duplicates
+    const seenPairs = new Set();
+    
+    // Validate data rows (skip row 0 which is headers)
+    for (let r = 1; r < rowKeys.length; r++) {
+      const store = getCellValue(rows, r, 0);
+      const itemName = getCellValue(rows, r, 1);
+      const plu = getCellValue(rows, r, 2);
+      const availability = getCellValue(rows, r, 3);
+      const inventory = getCellValue(rows, r, 4);
+      const andon = getCellValue(rows, r, 6);
+      
+      // Skip empty rows
+      if (!store && !itemName && !plu) continue;
+      
+      console.log(`Validating row ${r}: Store=${store}, PLU=${plu}, Avail=${availability}, Inv=${inventory}, Andon=${andon}`);
+      
+      // Check for duplicate store/PLU pairs
+      const pairKey = `${store.toUpperCase()}::${plu.toUpperCase()}`;
+      if (seenPairs.has(pairKey)) {
+        errors.push({ 
+          row: r, 
+          col: 0, 
+          msg: `Duplicate Store/PLU pair: ${store}/${plu}` 
+        });
+      } else {
+        seenPairs.add(pairKey);
+      }
+      
+      // Validate availability
+      if (availability !== 'Limited' && availability !== 'Unlimited') {
+        errors.push({ 
+          row: r, 
+          col: 3, 
+          msg: `Availability must be "Limited" or "Unlimited", found: "${availability}"` 
+        });
+      }
+      
+      // Validate andon cord
+      if (andon !== 'Enabled' && andon !== 'Disabled') {
+        errors.push({ 
+          row: r, 
+          col: 6, 
+          msg: `Andon Cord must be "Enabled" or "Disabled", found: "${andon}"` 
+        });
+      }
+      
+      // Validate inventory
+      const invNum = parseInt(inventory, 10);
+      if (isNaN(invNum) || invNum < 0 || invNum > 10000) {
+        errors.push({ 
+          row: r, 
+          col: 4, 
+          msg: `Current Inventory must be 0-10000, found: "${inventory}"` 
+        });
+      }
+      
+      // Special rule: Unlimited items should have 0 inventory
+      if (availability === 'Unlimited' && inventory !== '0') {
+        errors.push({ 
+          row: r, 
+          col: 4, 
+          msg: `Unlimited items must have 0 inventory, found: "${inventory}"` 
+        });
+      }
+    }
+    
+    console.log(`Validation complete. Found ${errors.length} errors:`, errors);
+    return errors;
   }
 
   function highlightErrors(xs, errors) {
@@ -594,16 +714,31 @@
     console.log('Highlighting errors:', errors);
     
     try {
-      // Clear existing styles by reloading data
-      const currentData = xs.getData();
-      if (!currentData || !currentData.rows) return;
+      const rawData = getSpreadsheetData(xs);
+      const data = normalizeSpreadsheetData(rawData);
       
-      // Apply error styles to cells
+      if (!data || !data.rows) {
+        console.error('No data available for highlighting');
+        return;
+      }
+      
+      // Clear existing styles
+      Object.keys(data.rows).forEach(rowKey => {
+        const row = data.rows[rowKey];
+        if (row && row.cells) {
+          Object.keys(row.cells).forEach(colKey => {
+            if (row.cells[colKey].style) {
+              delete row.cells[colKey].style;
+            }
+          });
+        }
+      });
+      
+      // Apply error styles
       errors.forEach(error => {
         if (error.row !== null && error.col !== null) {
-          const row = currentData.rows[error.row];
+          const row = data.rows[error.row];
           if (row && row.cells && row.cells[error.col]) {
-            // Set cell style for error highlighting
             row.cells[error.col].style = {
               bgcolor: '#e74c3c',
               color: '#ffffff'
@@ -613,7 +748,7 @@
       });
       
       // Reload data with new styles
-      xs.loadData(currentData);
+      xs.loadData(data);
       
     } catch (error) {
       console.error('Error highlighting cells:', error);
@@ -621,98 +756,98 @@
   }
 
   /* -------------------------------------------------- *
-   *  SPREADSHEET OPERATIONS - COMPLETELY REWRITTEN
+   *  SPREADSHEET OPERATIONS - ROBUST VERSION
    * -------------------------------------------------- */
   function incrementInventory(xs, increment) {
     if (!xs) {
       console.error('No spreadsheet instance for increment');
-      return;
+      return 0;
     }
     
     console.log(`Incrementing inventory by ${increment}`);
     
-    try {
-      const currentData = xs.getData();
-      if (!currentData || !currentData.rows) {
-        console.error('No data to increment');
-        return;
-      }
-      
-      let updatedCount = 0;
-      const rowCount = Object.keys(currentData.rows).length;
-      
-      // Process each row (skip header row 0)
-      for (let r = 1; r < rowCount; r++) {
-        const row = currentData.rows[r];
-        if (!row || !row.cells) continue;
-        
-        const availabilityCell = row.cells[3];
-        const inventoryCell = row.cells[4];
-        
-        if (!availabilityCell || !inventoryCell) continue;
-        
-        const availability = availabilityCell.text || '';
-        const currentInventory = parseInt(inventoryCell.text || '0', 10);
-        
-        console.log(`Row ${r}: Availability="${availability}", Current="${currentInventory}"`);
-        
-        // Only increment Limited items
-        if (availability === 'Limited') {
-          const newInventory = Math.max(0, Math.min(10000, currentInventory + increment));
-          inventoryCell.text = String(newInventory);
-          updatedCount++;
-          console.log(`Row ${r}: Updated from ${currentInventory} to ${newInventory}`);
-        } else if (availability === 'Unlimited') {
-          // Ensure unlimited items stay at 0
-          inventoryCell.text = '0';
-        }
-      }
-      
-      console.log(`Updated ${updatedCount} rows`);
-      
-      // Reload the spreadsheet with updated data
-      xs.loadData(currentData);
-      
-      return updatedCount;
-      
-    } catch (error) {
-      console.error('Error incrementing inventory:', error);
+    // Commit any active edits first
+    commitActiveEdits(xs);
+    
+    const rawData = getSpreadsheetData(xs);
+    const data = normalizeSpreadsheetData(rawData);
+    
+    if (!data || !data.rows) {
+      console.error('No data available for increment');
       return 0;
     }
+    
+    const rows = data.rows;
+    const rowKeys = Object.keys(rows);
+    let updatedCount = 0;
+    
+    // Process each row (skip header row 0)
+    for (let r = 1; r < rowKeys.length; r++) {
+      const availability = getCellValue(rows, r, 3);
+      const currentInventory = parseInt(getCellValue(rows, r, 4), 10) || 0;
+      
+      // Skip empty rows
+      if (!availability) continue;
+      
+      console.log(`Row ${r}: Availability="${availability}", Current="${currentInventory}"`);
+      
+      // Only increment Limited items
+      if (availability === 'Limited') {
+        const newInventory = Math.max(0, Math.min(10000, currentInventory + increment));
+        if (setCellValue(rows, r, 4, newInventory)) {
+          updatedCount++;
+          console.log(`Row ${r}: Updated from ${currentInventory} to ${newInventory}`);
+        }
+      } else if (availability === 'Unlimited') {
+        // Ensure unlimited items stay at 0
+        setCellValue(rows, r, 4, '0');
+      }
+    }
+    
+    console.log(`Updated ${updatedCount} rows`);
+    
+    // Reload the spreadsheet with updated data
+    try {
+      xs.loadData(data);
+    } catch (error) {
+      console.error('Error reloading spreadsheet:', error);
+    }
+    
+    return updatedCount;
   }
 
   function snapUnlimitedToZero(xs) {
     if (!xs) return;
     
-    try {
-      const currentData = xs.getData();
-      if (!currentData || !currentData.rows) return;
+    // Commit any active edits first
+    commitActiveEdits(xs);
+    
+    const rawData = getSpreadsheetData(xs);
+    const data = normalizeSpreadsheetData(rawData);
+    
+    if (!data || !data.rows) return;
+    
+    const rows = data.rows;
+    const rowKeys = Object.keys(rows);
+    let changed = false;
+    
+    for (let r = 1; r < rowKeys.length; r++) {
+      const availability = getCellValue(rows, r, 3);
+      const inventory = getCellValue(rows, r, 4);
       
-      let changed = false;
-      const rowCount = Object.keys(currentData.rows).length;
-      
-      for (let r = 1; r < rowCount; r++) {
-        const row = currentData.rows[r];
-        if (!row || !row.cells) continue;
-        
-        const availabilityCell = row.cells[3];
-        const inventoryCell = row.cells[4];
-        
-        if (availabilityCell && inventoryCell) {
-          const availability = availabilityCell.text || '';
-          if (availability === 'Unlimited' && inventoryCell.text !== '0') {
-            inventoryCell.text = '0';
-            changed = true;
-          }
+      if (availability === 'Unlimited' && inventory !== '0') {
+        if (setCellValue(rows, r, 4, '0')) {
+          changed = true;
         }
       }
-      
-      if (changed) {
-        xs.loadData(currentData);
+    }
+    
+    if (changed) {
+      try {
+        xs.loadData(data);
+      } catch (error) {
+        console.error('Error reloading after snap:', error);
       }
-      
-    } catch (error) {
-      console.error('Error snapping unlimited to zero:', error);
     }
   }
 
@@ -722,59 +857,58 @@
       return null;
     }
     
-    try {
-      const currentData = xs.getData();
-      console.log('Exporting data:', currentData);
-      
-      if (!currentData || !currentData.rows) {
-        console.error('No data to export');
-        return null;
-      }
-      
-      const rows = currentData.rows;
-      const rowKeys = Object.keys(rows).sort((a, b) => parseInt(a) - parseInt(b));
-      
-      if (rowKeys.length === 0) {
-        console.error('No rows found');
-        return null;
-      }
-      
-      // Find max columns
-      let maxCols = 0;
-      rowKeys.forEach(rowKey => {
-        const row = rows[rowKey];
-        if (row && row.cells) {
-          const colKeys = Object.keys(row.cells).map(Number);
-          if (colKeys.length > 0) {
-            maxCols = Math.max(maxCols, Math.max(...colKeys) + 1);
-          }
-        }
-      });
-      
-      console.log(`Exporting ${rowKeys.length} rows with ${maxCols} columns`);
-      
-      // Generate CSV
-      const csvRows = rowKeys.map(rowKey => {
-        const row = rows[rowKey];
-        const csvCells = [];
-        
-        for (let c = 0; c < maxCols; c++) {
-          const cellText = (row && row.cells && row.cells[c] && row.cells[c].text) || '';
-          csvCells.push(`"${cellText.replace(/"/g, '""')}"`);
-        }
-        
-        return csvCells.join(',');
-      });
-      
-      const csv = csvRows.join('\n');
-      console.log('Generated CSV length:', csv.length);
-      
-      return csv;
-      
-    } catch (error) {
-      console.error('Error exporting CSV:', error);
+    // Commit any active edits first
+    commitActiveEdits(xs);
+    
+    const rawData = getSpreadsheetData(xs);
+    const data = normalizeSpreadsheetData(rawData);
+    
+    console.log('Exporting data:', data);
+    
+    if (!data || !data.rows) {
+      console.error('No data available for export');
       return null;
     }
+    
+    const rows = data.rows;
+    const rowKeys = Object.keys(rows).sort((a, b) => parseInt(a) - parseInt(b));
+    
+    if (rowKeys.length === 0) {
+      console.error('No rows found for export');
+      return null;
+    }
+    
+    // Find max columns
+    let maxCols = HEADERS.length; // Ensure we have at least header columns
+    rowKeys.forEach(rowKey => {
+      const row = rows[rowKey];
+      if (row && row.cells) {
+        const colKeys = Object.keys(row.cells).map(Number);
+        if (colKeys.length > 0) {
+          maxCols = Math.max(maxCols, Math.max(...colKeys) + 1);
+        }
+      }
+    });
+    
+    console.log(`Exporting ${rowKeys.length} rows with ${maxCols} columns`);
+    
+    // Generate CSV
+    const csvRows = rowKeys.map(rowKey => {
+      const csvCells = [];
+      
+      for (let c = 0; c < maxCols; c++) {
+        const cellText = getCellValue(rows, rowKey, c);
+        csvCells.push(`"${cellText.replace(/"/g, '""')}"`);
+      }
+      
+      return csvCells.join(',');
+    });
+    
+    const csv = csvRows.join('\n');
+    console.log('Generated CSV length:', csv.length);
+    console.log('CSV preview:', csv.substring(0, 200) + '...');
+    
+    return csv;
   }
 
   /* -------------------------------------------------- *
@@ -848,6 +982,8 @@
       });
     });
 
+    console.log('Initial spreadsheet data:', spreadsheetData);
+
     let xs = null;
     const loadingMsg = createEl('div', { 
       style: 'padding:16px;color:#004E36;font-weight:600;text-align:center;' 
@@ -878,13 +1014,19 @@
         }
       });
       
-      // Load data
+      // Load initial data
       xs.loadData(spreadsheetData);
       
       // Store reference immediately
       ctx._eiSpreadsheetInstance = xs;
       
       console.log('Spreadsheet initialized successfully');
+
+      // Test data access immediately
+      setTimeout(() => {
+        const testData = getSpreadsheetData(xs);
+        console.log('Test data access after init:', testData);
+      }, 1000);
 
       // Set up resize handling
       const resize = debounce(() => {
@@ -937,7 +1079,13 @@
         }
         
         const updatedCount = incrementInventory(xs, incVal);
-        showInlineError(ctx, `<div style="color:green;">✓ Updated ${updatedCount} rows by ${incVal}</div>`);
+        console.log('Increment result:', updatedCount);
+        
+        if (updatedCount > 0) {
+          showInlineError(ctx, `<div style="color:green;">✓ Updated ${updatedCount} rows by ${incVal}</div>`);
+        } else {
+          showInlineError(ctx, '<div style="color:orange;">No rows were updated. Check that items have "Limited" availability.</div>');
+        }
         
         // Re-validate after increment
         setTimeout(() => {
@@ -945,7 +1093,7 @@
           if (errors.length > 0) {
             highlightErrors(xs, errors);
           }
-        }, 100);
+        }, 200);
       };
 
       // Set up change listener for validation
@@ -967,7 +1115,7 @@
         if (errors.length > 0) {
           highlightErrors(xs, errors);
         }
-      }, 500);
+      }, 1000);
 
       // Add download button
       const dl = createEl('button', {
@@ -1003,7 +1151,7 @@
 
         const csv = exportToCSV(xs);
         if (!csv) {
-          showInlineError(ctx, 'Failed to generate CSV data');
+          showInlineError(ctx, 'Failed to generate CSV data. Please check console for details.');
           return;
         }
 
