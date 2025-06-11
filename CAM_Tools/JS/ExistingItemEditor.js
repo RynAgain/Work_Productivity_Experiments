@@ -83,6 +83,100 @@
   };
 
   /* -------------------------------------------------- *
+   *  DATA MODEL - MAINTAIN OUR OWN COPY
+   * -------------------------------------------------- */
+  class SpreadsheetDataModel {
+    constructor(initialData = []) {
+      this.data = [HEADERS, ...initialData];
+      this.listeners = [];
+    }
+    
+    // Get data as 2D array
+    getData() {
+      return this.data.map(row => [...row]); // Return deep copy
+    }
+    
+    // Set data and notify listeners
+    setData(newData) {
+      this.data = newData.map(row => [...row]); // Store deep copy
+      this.notifyListeners();
+    }
+    
+    // Get specific cell value
+    getCell(row, col) {
+      if (row >= 0 && row < this.data.length && col >= 0 && col < this.data[row].length) {
+        return this.data[row][col];
+      }
+      return '';
+    }
+    
+    // Set specific cell value
+    setCell(row, col, value) {
+      if (row >= 0 && row < this.data.length) {
+        while (this.data[row].length <= col) {
+          this.data[row].push('');
+        }
+        this.data[row][col] = String(value);
+        this.notifyListeners();
+      }
+    }
+    
+    // Get row count
+    getRowCount() {
+      return this.data.length;
+    }
+    
+    // Get column count
+    getColCount() {
+      return Math.max(...this.data.map(row => row.length));
+    }
+    
+    // Add change listener
+    addListener(callback) {
+      this.listeners.push(callback);
+    }
+    
+    // Notify all listeners of changes
+    notifyListeners() {
+      this.listeners.forEach(callback => {
+        try {
+          callback(this.data);
+        } catch (error) {
+          console.error('Error in data model listener:', error);
+        }
+      });
+    }
+    
+    // Convert to x-spreadsheet format
+    toSpreadsheetFormat() {
+      const result = {
+        name: 'ExistingItems',
+        rows: {}
+      };
+      
+      this.data.forEach((row, rowIndex) => {
+        result.rows[rowIndex] = {
+          cells: {}
+        };
+        row.forEach((cell, colIndex) => {
+          result.rows[rowIndex].cells[colIndex] = {
+            text: String(cell || '')
+          };
+        });
+      });
+      
+      return result;
+    }
+    
+    // Convert to CSV
+    toCSV() {
+      return this.data.map(row => 
+        row.map(cell => `"${String(cell || '').replace(/"/g, '""')}"`).join(',')
+      ).join('\n');
+    }
+  }
+
+  /* -------------------------------------------------- *
    *  LIBRARY LOADING
    * -------------------------------------------------- */
   const loadSpreadsheetLib = () => {
@@ -264,7 +358,7 @@
   };
 
   /* -------------------------------------------------- *
-   *  DATA FETCHING
+   *  DATA FETCHING - SAME AS BEFORE
    * -------------------------------------------------- */
   const fetchItem = async (context) => {
     const progress = $('#ei-progress', context);
@@ -466,168 +560,20 @@
   };
 
   /* -------------------------------------------------- *
-   *  SPREADSHEET DATA ACCESS UTILITIES
+   *  VALIDATION AND OPERATIONS - USING DATA MODEL
    * -------------------------------------------------- */
-  
-  // Commit any active cell edits
-  function commitActiveEdits(xs) {
-    try {
-      if (xs && xs.editor) {
-        if (xs.editor.el && xs.editor.el.style.display !== 'none') {
-          console.log('Committing active editor changes');
-          xs.editor.set();
-        }
-      }
-    } catch (error) {
-      console.log('No active editor to commit or commit failed:', error);
-    }
-  }
-
-  // Get spreadsheet data with multiple fallback methods
-  function getSpreadsheetData(xs) {
-    if (!xs) {
-      console.error('No spreadsheet instance provided');
-      return null;
-    }
-
-    console.log('Attempting to get spreadsheet data...');
-    
-    // Method 1: Try standard getData()
-    try {
-      const data1 = xs.getData();
-      console.log('Method 1 - getData():', data1);
-      if (data1 && data1.rows && Object.keys(data1.rows).length > 0) {
-        return data1;
-      }
-    } catch (error) {
-      console.log('Method 1 failed:', error);
-    }
-
-    // Method 2: Try accessing internal data structure
-    try {
-      if (xs.sheet && xs.sheet.data) {
-        console.log('Method 2 - internal data:', xs.sheet.data);
-        return xs.sheet.data;
-      }
-    } catch (error) {
-      console.log('Method 2 failed:', error);
-    }
-
-    // Method 3: Try accessing workbook data
-    try {
-      if (xs.workbook && xs.workbook.sheets && xs.workbook.sheets[0]) {
-        console.log('Method 3 - workbook data:', xs.workbook.sheets[0]);
-        return xs.workbook.sheets[0];
-      }
-    } catch (error) {
-      console.log('Method 3 failed:', error);
-    }
-
-    // Method 4: Try direct sheet access
-    try {
-      if (xs.data) {
-        console.log('Method 4 - direct data:', xs.data);
-        return xs.data;
-      }
-    } catch (error) {
-      console.log('Method 4 failed:', error);
-    }
-
-    console.error('All methods to access spreadsheet data failed');
-    return null;
-  }
-
-  // Convert data to standard format for processing
-  function normalizeSpreadsheetData(data) {
-    if (!data) return null;
-
-    // If already in expected format
-    if (data.rows) {
-      return data;
-    }
-
-    // Try to find rows in various locations
-    if (data.data && data.data.rows) {
-      return data.data;
-    }
-
-    console.error('Could not normalize spreadsheet data format');
-    return null;
-  }
-
-  // Get cell value safely
-  function getCellValue(rows, rowIndex, colIndex) {
-    try {
-      const row = rows[rowIndex];
-      if (!row || !row.cells) return '';
-      
-      const cell = row.cells[colIndex];
-      if (!cell) return '';
-      
-      return cell.text || cell.value || '';
-    } catch (error) {
-      return '';
-    }
-  }
-
-  // Set cell value safely
-  function setCellValue(rows, rowIndex, colIndex, value) {
-    try {
-      if (!rows[rowIndex]) {
-        rows[rowIndex] = { cells: {} };
-      }
-      if (!rows[rowIndex].cells) {
-        rows[rowIndex].cells = {};
-      }
-      if (!rows[rowIndex].cells[colIndex]) {
-        rows[rowIndex].cells[colIndex] = {};
-      }
-      
-      rows[rowIndex].cells[colIndex].text = String(value);
-      return true;
-    } catch (error) {
-      console.error('Error setting cell value:', error);
-      return false;
-    }
-  }
-
-  /* -------------------------------------------------- *
-   *  VALIDATION FUNCTIONS - ROBUST VERSION
-   * -------------------------------------------------- */
-  function validateSheet(xs) {
-    if (!xs) {
-      console.error('No spreadsheet instance provided to validateSheet');
-      return [];
-    }
-    
-    console.log('Starting validation...');
-    
-    // Commit any active edits first
-    commitActiveEdits(xs);
-    
-    const rawData = getSpreadsheetData(xs);
-    const data = normalizeSpreadsheetData(rawData);
-    
-    if (!data || !data.rows) {
-      console.error('No valid data found for validation');
-      return [];
-    }
-    
-    const rows = data.rows;
-    const rowKeys = Object.keys(rows);
+  function validateSpreadsheetData(dataModel) {
     const errors = [];
+    const data = dataModel.getData();
     
-    console.log(`Validating ${rowKeys.length} rows`);
-    
-    if (rowKeys.length < 2) {
-      console.log('Not enough rows to validate');
-      return [];
+    if (data.length < 1) {
+      return errors;
     }
     
     // Validate headers (row 0)
     for (let i = 0; i < HEADERS.length; i++) {
       const expectedHeader = HEADERS[i];
-      const actualHeader = getCellValue(rows, 0, i);
+      const actualHeader = dataModel.getCell(0, i);
       if (actualHeader !== expectedHeader) {
         errors.push({ 
           row: 0, 
@@ -641,13 +587,13 @@
     const seenPairs = new Set();
     
     // Validate data rows (skip row 0 which is headers)
-    for (let r = 1; r < rowKeys.length; r++) {
-      const store = getCellValue(rows, r, 0);
-      const itemName = getCellValue(rows, r, 1);
-      const plu = getCellValue(rows, r, 2);
-      const availability = getCellValue(rows, r, 3);
-      const inventory = getCellValue(rows, r, 4);
-      const andon = getCellValue(rows, r, 6);
+    for (let r = 1; r < data.length; r++) {
+      const store = dataModel.getCell(r, 0);
+      const itemName = dataModel.getCell(r, 1);
+      const plu = dataModel.getCell(r, 2);
+      const availability = dataModel.getCell(r, 3);
+      const inventory = dataModel.getCell(r, 4);
+      const andon = dataModel.getCell(r, 6);
       
       // Skip empty rows
       if (!store && !itemName && !plu) continue;
@@ -708,83 +654,14 @@
     return errors;
   }
 
-  function highlightErrors(xs, errors) {
-    if (!xs || !errors || errors.length === 0) return;
-    
-    console.log('Highlighting errors:', errors);
-    
-    try {
-      const rawData = getSpreadsheetData(xs);
-      const data = normalizeSpreadsheetData(rawData);
-      
-      if (!data || !data.rows) {
-        console.error('No data available for highlighting');
-        return;
-      }
-      
-      // Clear existing styles
-      Object.keys(data.rows).forEach(rowKey => {
-        const row = data.rows[rowKey];
-        if (row && row.cells) {
-          Object.keys(row.cells).forEach(colKey => {
-            if (row.cells[colKey].style) {
-              delete row.cells[colKey].style;
-            }
-          });
-        }
-      });
-      
-      // Apply error styles
-      errors.forEach(error => {
-        if (error.row !== null && error.col !== null) {
-          const row = data.rows[error.row];
-          if (row && row.cells && row.cells[error.col]) {
-            row.cells[error.col].style = {
-              bgcolor: '#e74c3c',
-              color: '#ffffff'
-            };
-          }
-        }
-      });
-      
-      // Reload data with new styles
-      xs.loadData(data);
-      
-    } catch (error) {
-      console.error('Error highlighting cells:', error);
-    }
-  }
-
-  /* -------------------------------------------------- *
-   *  SPREADSHEET OPERATIONS - ROBUST VERSION
-   * -------------------------------------------------- */
-  function incrementInventory(xs, increment) {
-    if (!xs) {
-      console.error('No spreadsheet instance for increment');
-      return 0;
-    }
-    
-    console.log(`Incrementing inventory by ${increment}`);
-    
-    // Commit any active edits first
-    commitActiveEdits(xs);
-    
-    const rawData = getSpreadsheetData(xs);
-    const data = normalizeSpreadsheetData(rawData);
-    
-    if (!data || !data.rows) {
-      console.error('No data available for increment');
-      return 0;
-    }
-    
-    const rows = data.rows;
-    const rowKeys = Object.keys(rows);
+  function incrementInventoryInModel(dataModel, increment) {
+    const data = dataModel.getData();
     let updatedCount = 0;
     
     // Process each row (skip header row 0)
-    for (let r = 1; r < rowKeys.length; r++) {
-      const availability = getCellValue(rows, r, 3);
-      const currentInventory = parseInt(getCellValue(rows, r, 4), 10) || 0;
+    for (let r = 1; r < data.length; r++) {
+      const availability = dataModel.getCell(r, 3);
+      const currentInventory = parseInt(dataModel.getCell(r, 4), 10) || 0;
       
       // Skip empty rows
       if (!availability) continue;
@@ -794,125 +671,38 @@
       // Only increment Limited items
       if (availability === 'Limited') {
         const newInventory = Math.max(0, Math.min(10000, currentInventory + increment));
-        if (setCellValue(rows, r, 4, newInventory)) {
-          updatedCount++;
-          console.log(`Row ${r}: Updated from ${currentInventory} to ${newInventory}`);
-        }
+        dataModel.setCell(r, 4, newInventory);
+        updatedCount++;
+        console.log(`Row ${r}: Updated from ${currentInventory} to ${newInventory}`);
       } else if (availability === 'Unlimited') {
         // Ensure unlimited items stay at 0
-        setCellValue(rows, r, 4, '0');
+        dataModel.setCell(r, 4, '0');
       }
     }
     
     console.log(`Updated ${updatedCount} rows`);
-    
-    // Reload the spreadsheet with updated data
-    try {
-      xs.loadData(data);
-    } catch (error) {
-      console.error('Error reloading spreadsheet:', error);
-    }
-    
     return updatedCount;
   }
 
-  function snapUnlimitedToZero(xs) {
-    if (!xs) return;
-    
-    // Commit any active edits first
-    commitActiveEdits(xs);
-    
-    const rawData = getSpreadsheetData(xs);
-    const data = normalizeSpreadsheetData(rawData);
-    
-    if (!data || !data.rows) return;
-    
-    const rows = data.rows;
-    const rowKeys = Object.keys(rows);
+  function snapUnlimitedToZeroInModel(dataModel) {
+    const data = dataModel.getData();
     let changed = false;
     
-    for (let r = 1; r < rowKeys.length; r++) {
-      const availability = getCellValue(rows, r, 3);
-      const inventory = getCellValue(rows, r, 4);
+    for (let r = 1; r < data.length; r++) {
+      const availability = dataModel.getCell(r, 3);
+      const inventory = dataModel.getCell(r, 4);
       
       if (availability === 'Unlimited' && inventory !== '0') {
-        if (setCellValue(rows, r, 4, '0')) {
-          changed = true;
-        }
+        dataModel.setCell(r, 4, '0');
+        changed = true;
       }
     }
     
-    if (changed) {
-      try {
-        xs.loadData(data);
-      } catch (error) {
-        console.error('Error reloading after snap:', error);
-      }
-    }
-  }
-
-  function exportToCSV(xs) {
-    if (!xs) {
-      console.error('No spreadsheet instance for CSV export');
-      return null;
-    }
-    
-    // Commit any active edits first
-    commitActiveEdits(xs);
-    
-    const rawData = getSpreadsheetData(xs);
-    const data = normalizeSpreadsheetData(rawData);
-    
-    console.log('Exporting data:', data);
-    
-    if (!data || !data.rows) {
-      console.error('No data available for export');
-      return null;
-    }
-    
-    const rows = data.rows;
-    const rowKeys = Object.keys(rows).sort((a, b) => parseInt(a) - parseInt(b));
-    
-    if (rowKeys.length === 0) {
-      console.error('No rows found for export');
-      return null;
-    }
-    
-    // Find max columns
-    let maxCols = HEADERS.length; // Ensure we have at least header columns
-    rowKeys.forEach(rowKey => {
-      const row = rows[rowKey];
-      if (row && row.cells) {
-        const colKeys = Object.keys(row.cells).map(Number);
-        if (colKeys.length > 0) {
-          maxCols = Math.max(maxCols, Math.max(...colKeys) + 1);
-        }
-      }
-    });
-    
-    console.log(`Exporting ${rowKeys.length} rows with ${maxCols} columns`);
-    
-    // Generate CSV
-    const csvRows = rowKeys.map(rowKey => {
-      const csvCells = [];
-      
-      for (let c = 0; c < maxCols; c++) {
-        const cellText = getCellValue(rows, rowKey, c);
-        csvCells.push(`"${cellText.replace(/"/g, '""')}"`);
-      }
-      
-      return csvCells.join(',');
-    });
-    
-    const csv = csvRows.join('\n');
-    console.log('Generated CSV length:', csv.length);
-    console.log('CSV preview:', csv.substring(0, 200) + '...');
-    
-    return csv;
+    return changed;
   }
 
   /* -------------------------------------------------- *
-   *  SPREADSHEET RENDERING
+   *  SPREADSHEET RENDERING - WITH DATA MODEL
    * -------------------------------------------------- */
   const renderSpreadsheet = async (ctx, items) => {
     removeEl(SPREADSHEET_CONTAINER);
@@ -950,7 +740,7 @@
       ctx.appendChild(validateBtn);
     }
 
-    // Prepare data
+    // Convert items to data rows
     const toRow = (item) => [
       item._eiStoreKey || item.storeTLC || '',
       item.itemName || '',
@@ -963,26 +753,15 @@
       ''
     ];
 
-    const dataArr = [HEADERS, ...items.map(toRow)];
+    const dataRows = items.map(toRow);
     
-    // Convert to x-spreadsheet format
-    const spreadsheetData = {
-      name: 'ExistingItems',
-      rows: {}
-    };
+    // Create data model
+    const dataModel = new SpreadsheetDataModel(dataRows);
     
-    dataArr.forEach((row, rowIndex) => {
-      spreadsheetData.rows[rowIndex] = {
-        cells: {}
-      };
-      row.forEach((cell, colIndex) => {
-        spreadsheetData.rows[rowIndex].cells[colIndex] = {
-          text: String(cell)
-        };
-      });
-    });
-
-    console.log('Initial spreadsheet data:', spreadsheetData);
+    // Store the data model reference
+    ctx._eiDataModel = dataModel;
+    
+    console.log('Initial data model:', dataModel.getData());
 
     let xs = null;
     const loadingMsg = createEl('div', { 
@@ -1001,11 +780,11 @@
         showGrid: true,
         showContextmenu: true,
         view: {
-          height: () => Math.max(dataArr.length * 25 + 100, 400),
+          height: () => Math.max(dataModel.getRowCount() * 25 + 100, 400),
           width: () => sheetWrap.clientWidth - 20
         },
         row: {
-          len: dataArr.length + 10,
+          len: dataModel.getRowCount() + 10,
           height: 25
         },
         col: {
@@ -1015,23 +794,43 @@
       });
       
       // Load initial data
-      xs.loadData(spreadsheetData);
+      xs.loadData(dataModel.toSpreadsheetFormat());
       
       // Store reference immediately
       ctx._eiSpreadsheetInstance = xs;
       
       console.log('Spreadsheet initialized successfully');
 
-      // Test data access immediately
-      setTimeout(() => {
-        const testData = getSpreadsheetData(xs);
-        console.log('Test data access after init:', testData);
-      }, 1000);
+      // Set up data model listener to update spreadsheet
+      dataModel.addListener((newData) => {
+        console.log('Data model changed, updating spreadsheet:', newData);
+        try {
+          xs.loadData(dataModel.toSpreadsheetFormat());
+        } catch (error) {
+          console.error('Error updating spreadsheet from data model:', error);
+        }
+      });
+
+      // Set up spreadsheet change listener to update data model
+      xs.on('cell-edited', (cell, ri, ci) => {
+        console.log(`Cell edited: row ${ri}, col ${ci}, value:`, cell);
+        try {
+          // Update our data model when spreadsheet changes
+          dataModel.setCell(ri, ci, cell.text || '');
+          
+          // Apply business rules
+          setTimeout(() => {
+            snapUnlimitedToZeroInModel(dataModel);
+          }, 100);
+        } catch (error) {
+          console.error('Error updating data model from spreadsheet:', error);
+        }
+      });
 
       // Set up resize handling
       const resize = debounce(() => {
         if (sheetWrap && xs) {
-          const newHeight = Math.max(dataArr.length * 25 + 100, 400);
+          const newHeight = Math.max(dataModel.getRowCount() * 25 + 100, 400);
           sheetWrap.style.height = `${newHeight}px`;
         }
       });
@@ -1044,16 +843,10 @@
         console.log('Validation triggered');
         clearInlineError(ctx);
         
-        if (!xs) {
-          showInlineError(ctx, 'Spreadsheet not ready');
-          return;
-        }
-        
-        const errors = validateSheet(xs);
+        const errors = validateSpreadsheetData(dataModel);
         console.log('Validation errors found:', errors.length);
         
         if (errors.length > 0) {
-          highlightErrors(xs, errors);
           const errorHtml = 'Validation warnings:<br>' + 
             errors.map(e => `<div>• Row ${e.row + 1}: ${e.msg}</div>`).join('');
           showInlineError(ctx, errorHtml);
@@ -1067,18 +860,13 @@
         console.log('Increment triggered');
         clearInlineError(ctx);
         
-        if (!xs) {
-          showInlineError(ctx, 'Spreadsheet not ready');
-          return;
-        }
-        
         const incVal = parseInt($('#ei-increment-input', ctx).value, 10);
         if (isNaN(incVal)) {
           showInlineError(ctx, 'Please enter a valid number');
           return;
         }
         
-        const updatedCount = incrementInventory(xs, incVal);
+        const updatedCount = incrementInventoryInModel(dataModel, incVal);
         console.log('Increment result:', updatedCount);
         
         if (updatedCount > 0) {
@@ -1089,31 +877,21 @@
         
         // Re-validate after increment
         setTimeout(() => {
-          const errors = validateSheet(xs);
+          const errors = validateSpreadsheetData(dataModel);
           if (errors.length > 0) {
-            highlightErrors(xs, errors);
+            const errorHtml = 'Validation warnings after increment:<br>' + 
+              errors.map(e => `<div>• Row ${e.row + 1}: ${e.msg}</div>`).join('');
+            showInlineError(ctx, errorHtml);
           }
         }, 200);
       };
 
-      // Set up change listener for validation
-      xs.on('cell-edited', (cell, ri, ci) => {
-        console.log(`Cell edited: row ${ri}, col ${ci}`);
-        setTimeout(() => {
-          snapUnlimitedToZero(xs);
-          const errors = validateSheet(xs);
-          if (errors.length > 0) {
-            highlightErrors(xs, errors);
-          }
-        }, 100);
-      });
-
-      // Initial snap and validation
+      // Initial business rules application
       setTimeout(() => {
-        snapUnlimitedToZero(xs);
-        const errors = validateSheet(xs);
+        snapUnlimitedToZeroInModel(dataModel);
+        const errors = validateSpreadsheetData(dataModel);
         if (errors.length > 0) {
-          highlightErrors(xs, errors);
+          console.log('Initial validation errors:', errors);
         }
       }, 1000);
 
@@ -1130,15 +908,9 @@
         console.log('CSV download triggered');
         clearInlineError(ctx);
         
-        if (!xs) {
-          showInlineError(ctx, 'Spreadsheet not ready');
-          return;
-        }
-
         // Validate before export
-        const errors = validateSheet(xs);
+        const errors = validateSpreadsheetData(dataModel);
         if (errors.length > 0) {
-          highlightErrors(xs, errors);
           const errorMsg = 'Validation warnings detected:\n' + 
             errors.map(e => `Row ${e.row + 1}: ${e.msg}`).join('\n') + 
             '\n\nDownload anyway?';
@@ -1149,11 +921,13 @@
           }
         }
 
-        const csv = exportToCSV(xs);
+        const csv = dataModel.toCSV();
         if (!csv) {
-          showInlineError(ctx, 'Failed to generate CSV data. Please check console for details.');
+          showInlineError(ctx, 'Failed to generate CSV data');
           return;
         }
+
+        console.log('Generated CSV preview:', csv.substring(0, 200) + '...');
 
         // Download the CSV
         const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
