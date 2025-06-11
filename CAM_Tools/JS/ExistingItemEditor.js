@@ -382,7 +382,7 @@
         ? '0'
         : String(Math.max(0, Math.min(10000, +item.currentInventoryQuantity || 0)))),
       '',
-      item.andonCordState ? 'Enabled' : 'Disabled',
+      item.andon ? 'Enabled' : 'Disabled',
       '',
       ''
     ];
@@ -420,7 +420,8 @@
 
       // 2. Check for duplicate (store, PLU) pairs and validate values
       const seenPairs = new Set();
-      for (let r = 1; r < Object.keys(rows).length; r++) {
+      for (const r in rows) {
+        if (r === "0") continue; // skip header
         const row = rows[r];
         if (!row || !row.cells) continue;
         const store = (row.cells[0]?.text || '').trim();
@@ -429,8 +430,8 @@
         const currInv = (row.cells[4]?.text || '').trim();
         const andon = (row.cells[6]?.text || '').trim();
 
-        // Duplicate check
-        const key = `${store}::${plu}`;
+        // Duplicate check (case-insensitive)
+        const key = `${store.toUpperCase()}::${plu.toUpperCase()}`;
         if (seenPairs.has(key)) {
           errors.push({ row: r, col: 0, msg: `Duplicate Store/PLU pair (${store}, ${plu})` });
         } else {
@@ -477,7 +478,7 @@
         }
         // Highlight errors
         errors.forEach(e => {
-          if (e.row && e.col !== null && sheetData.rows[e.row] && sheetData.rows[e.row].cells[e.col]) {
+          if (e.row !== null && e.col !== null && sheetData.rows[e.row] && sheetData.rows[e.row].cells[e.col]) {
             sheetData.rows[e.row].cells[e.col].style = { color: '#fff', background: '#e74c3c' };
           }
         });
@@ -492,6 +493,7 @@
     }
 
     // --- Snap Unlimited inventory to zero ---
+    // Throttle snapUnlimitedToZero to only run on export or increment
     function snapUnlimitedToZero(xsInstance) {
       if (!xsInstance || isSnapping) return;
       isSnapping = true;
@@ -593,7 +595,6 @@ validateBtn.onclick = () => {
 
       // --- Hook up validation on every change ---
       xs.on('cell-edited', () => {
-        snapUnlimitedToZero(xs);
         const errors = validateSheet(xs);
         highlightErrors(xs, errors);
       });
@@ -660,9 +661,11 @@ validateBtn.onclick = () => {
         }
 
         // --- CSV Generation ---
-        const csv = Object.keys(rows).map(r =>
-          [...Array(maxC).keys()].map(c =>
-            `"${(rows[r].cells?.[c]?.text || '').replace(/"/g, '""')}"`).join(',')).join('\n');
+        const csv = Object.keys(rows)
+          .sort((a, b) => +a - +b)
+          .map(r =>
+            [...Array(maxC).keys()].map(c =>
+              `"${(rows[r].cells?.[c]?.text || '').replace(/"/g, '""')}"`).join(',')).join('\n');
 
         const blob = new Blob([csv], { type: 'text/csv' });
         const a = createEl('a', {
