@@ -83,42 +83,6 @@
   };
 
   /* -------------------------------------------------- *
-   *  UPDATE QUEUE FOR SPREADSHEET OPERATIONS
-   * -------------------------------------------------- */
-  class UpdateQueue {
-    constructor() {
-      this.queue = [];
-      this.processing = false;
-    }
-    
-    async add(fn) {
-      return new Promise((resolve) => {
-        this.queue.push({ fn, resolve });
-        this.process();
-      });
-    }
-    
-    async process() {
-      if (this.processing || !this.queue.length) return;
-      
-      this.processing = true;
-      while (this.queue.length > 0) {
-        const { fn, resolve } = this.queue.shift();
-        try {
-          await fn();
-          resolve();
-        } catch (error) {
-          console.error('Update queue error:', error);
-          resolve();
-        }
-      }
-      this.processing = false;
-    }
-  }
-
-  const updateQueue = new UpdateQueue();
-
-  /* -------------------------------------------------- *
    *  LIBRARY LOADING
    * -------------------------------------------------- */
   const loadSpreadsheetLib = () => {
@@ -218,10 +182,6 @@
       window.removeEventListener('resize', resizeHandler);
       window.eiResizeHandler = null;
     }
-    
-    // Clear any pending updates
-    updateQueue.queue = [];
-    updateQueue.processing = false;
   };
 
   /* -------------------------------------------------- *
@@ -568,68 +528,95 @@
   }
 
   function highlightErrors(xsInstance, errors) {
-    updateQueue.add(async () => {
-      if (!xsInstance) return;
-      
-      const sheetData = xsInstance.getData();
-      
-      // Clear all cell styles first
-      for (const r in sheetData.rows) {
-        const row = sheetData.rows[r];
-        if (row && row.cells) {
-          for (const c in row.cells) {
-            if (row.cells[c].style) delete row.cells[c].style;
+    if (!xsInstance) return;
+    
+    console.log('Highlighting errors:', errors);
+    
+    const sheetData = xsInstance.getData();
+    if (!sheetData || !sheetData.rows) return;
+    
+    // Clear all cell styles first
+    Object.keys(sheetData.rows).forEach(rowKey => {
+      const row = sheetData.rows[rowKey];
+      if (row && row.cells) {
+        Object.keys(row.cells).forEach(colKey => {
+          if (row.cells[colKey].style) {
+            delete row.cells[colKey].style;
           }
-        }
+        });
       }
-      
-      // Highlight errors
-      errors.forEach(e => {
-        if (e.row !== null && e.col !== null && 
-            sheetData.rows[e.row] && 
-            sheetData.rows[e.row].cells[e.col]) {
-          sheetData.rows[e.row].cells[e.col].style = { 
+    });
+    
+    // Highlight errors
+    errors.forEach(e => {
+      if (e.row !== null && e.col !== null) {
+        const rowKey = String(e.row);
+        const colKey = String(e.col);
+        
+        if (sheetData.rows[rowKey] && 
+            sheetData.rows[rowKey].cells && 
+            sheetData.rows[rowKey].cells[colKey]) {
+          sheetData.rows[rowKey].cells[colKey].style = { 
             color: '#fff', 
             background: '#e74c3c' 
           };
         }
-      });
-      
-      xsInstance.loadData(sheetData, true);
+      }
     });
+    
+    xsInstance.loadData(sheetData, true);
   }
 
-  function snapUnlimitedToZero(xsInstance) {
-    updateQueue.add(async () => {
-      if (!xsInstance) return;
+  // FIXED: Snap unlimited function
+  function snapUnlimitedToZeroFixed(xsInstance) {
+    if (!xsInstance) return;
+    
+    const sheetData = xsInstance.getData();
+    if (!sheetData || !sheetData.rows) return;
+    
+    let changed = false;
+    
+    Object.keys(sheetData.rows).forEach(rowKey => {
+      if (rowKey === "0") return; // skip header
       
-      const sheetData = xsInstance.getData();
-      let changed = false;
+      const row = sheetData.rows[rowKey];
+      if (!row || !row.cells) return;
       
-      for (const r in sheetData.rows) {
-        if (r === "0") continue; // skip header
-        const row = sheetData.rows[r];
-        if (row && row.cells) {
-          const avail = (row.cells[3]?.text || '').trim();
-          if (avail === 'Unlimited') {
-            if (row.cells[4] && row.cells[4].text !== '0') {
-              row.cells[4].text = '0';
-              changed = true;
-            }
-          }
+      const availCell = row.cells[3];
+      const invCell = row.cells[4];
+      
+      if (availCell && invCell) {
+        const avail = (availCell.text || '').trim();
+        if (avail === 'Unlimited' && invCell.text !== '0') {
+          invCell.text = '0';
+          changed = true;
         }
       }
-      
-      if (changed) xsInstance.loadData(sheetData);
     });
+    
+    if (changed) {
+      xsInstance.loadData(sheetData);
+    }
   }
 
-  function incrementInventory(xsInstance, incValue) {
-    if (!xsInstance) return;
+  // FIXED: Increment function
+  function incrementInventoryFixed(xsInstance, incValue) {
+    if (!xsInstance) {
+      console.error('No spreadsheet instance');
+      return;
+    }
+    
+    console.log('Getting spreadsheet data...');
+    const sheetData = xsInstance.getData();
+    console.log('Sheet data:', sheetData);
+    
+    if (!sheetData || !sheetData.rows) {
+      console.error('No sheet data available');
+      return;
+    }
     
     // Save state for undo
     xsInstance.__undo = xsInstance.__undo || [];
-    const sheetData = xsInstance.getData();
     xsInstance.__undo.push(JSON.stringify(sheetData));
     
     // Keep only last 10 undo states
@@ -637,26 +624,139 @@
       xsInstance.__undo.shift();
     }
     
-    for (const r in sheetData.rows) {
-      if (r === "0") continue; // skip header
-      const row = sheetData.rows[r];
+    let updatedCount = 0;
+    
+    // Process each row
+    Object.keys(sheetData.rows).forEach(rowKey => {
+      if (rowKey === "0") return; // skip header
+      
+      const row = sheetData.rows[rowKey];
+      if (!row || !row.cells) return;
+      
+      const availCell = row.cells[3]; // Availability column
+      const invCell = row.cells[4];   // Current Inventory column
+      
+      if (!availCell || !invCell) return;
+      
+      const avail = (availCell.text || '').trim();
+      console.log(`Row ${rowKey}: Availability = "${avail}"`);
+      
+      if (avail !== 'Unlimited') {
+        let curr = parseInt(invCell.text || '0', 10);
+        if (isNaN(curr)) curr = 0;
+        
+        const newValue = Math.max(0, Math.min(10000, curr + incValue));
+        console.log(`Row ${rowKey}: ${curr} + ${incValue} = ${newValue}`);
+        
+        invCell.text = String(newValue);
+        updatedCount++;
+      }
+    });
+    
+    console.log(`Updated ${updatedCount} rows`);
+    
+    // Reload the data to refresh the display
+    xsInstance.loadData(sheetData);
+    
+    // Apply other fixes
+    setTimeout(() => {
+      snapUnlimitedToZeroFixed(xsInstance);
+      const errors = validateSheet(xsInstance);
+      highlightErrors(xsInstance, errors);
+    }, 100);
+  }
+
+  // FIXED: CSV Download function
+  function downloadCSVFixed(ctx) {
+    const xsInstance = ctx._eiSpreadsheetInstance;
+    if (!xsInstance) { 
+      showInlineError(ctx, 'Spreadsheet not ready'); 
+      return; 
+    }
+
+    console.log('Getting data for CSV export...');
+    const sheetData = xsInstance.getData();
+    console.log('Sheet data for export:', sheetData);
+    
+    if (!sheetData || !sheetData.rows) {
+      showInlineError(ctx, 'No spreadsheet data available');
+      return;
+    }
+
+    const rows = sheetData.rows;
+    const rowKeys = Object.keys(rows);
+    
+    if (rowKeys.length === 0) { 
+      showInlineError(ctx, 'No data rows found'); 
+      return; 
+    }
+
+    console.log('Found rows:', rowKeys);
+
+    // Find maximum number of columns
+    let maxC = 0;
+    rowKeys.forEach(rowKey => {
+      const row = rows[rowKey];
       if (row && row.cells) {
-        const avail = (row.cells[3]?.text || '').trim();
-        if (avail !== 'Unlimited') {
-          let curr = parseInt(row.cells[4]?.text || '0', 10);
-          if (isNaN(curr)) curr = 0;
-          const newValue = Math.max(0, Math.min(10000, curr + incValue));
-          row.cells[4].text = String(newValue);
+        const colKeys = Object.keys(row.cells).map(Number);
+        if (colKeys.length > 0) {
+          maxC = Math.max(maxC, Math.max(...colKeys) + 1);
         }
       }
+    });
+
+    if (maxC === 0) { 
+      showInlineError(ctx, 'No data columns found'); 
+      return; 
     }
-    
-    xsInstance.loadData(sheetData);
-    snapUnlimitedToZero(xsInstance);
-    
-    // Re-validate and highlight
+
+    console.log('Max columns:', maxC);
+
+    // Validation before export
     const errors = validateSheet(xsInstance);
-    highlightErrors(xsInstance, errors);
+    if (errors.length) {
+      showInlineError(ctx, 'Validation warnings:<br>' + errors.map(e => `<div>• ${e.msg}</div>`).join(''));
+      if (!confirmWarning('Validation warnings detected:\n' + errors.map(e => e.msg).join('\n') + '\n\nDo you want to download anyway?')) {
+        return;
+      }
+    } else {
+      clearInlineError(ctx);
+    }
+
+    // CSV Generation
+    const csvRows = rowKeys
+      .sort((a, b) => parseInt(a) - parseInt(b)) // Sort numerically
+      .map(rowKey => {
+        const row = rows[rowKey];
+        const csvCells = [];
+        
+        for (let c = 0; c < maxC; c++) {
+          const cellText = (row && row.cells && row.cells[c] && row.cells[c].text) || '';
+          csvCells.push(`"${cellText.replace(/"/g, '""')}"`);
+        }
+        
+        return csvCells.join(',');
+      });
+
+    const csv = csvRows.join('\n');
+    console.log('Generated CSV preview:', csv.substring(0, 200) + '...');
+
+    if (!csv.trim()) {
+      showInlineError(ctx, 'Generated CSV is empty');
+      return;
+    }
+
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const a = createEl('a', {
+      href: URL.createObjectURL(blob),
+      download: `ExistingItemEdit_${new Date().toISOString().slice(0,10)}.csv`
+    });
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(a.href);
+    
+    showInlineError(ctx, '<div style="color:green;">✓ CSV downloaded successfully!</div>');
   }
 
   /* -------------------------------------------------- *
@@ -738,6 +838,9 @@
       });
       xs.loadData(xsData);
 
+      // Store instance reference IMMEDIATELY after creation
+      ctx._eiSpreadsheetInstance = xs;
+
       // Resize handler
       const resize = debounce(() => {
         if (sheetWrap && xs) {
@@ -748,43 +851,68 @@
       window.addEventListener('resize', resize);
       resize();
 
-      // Set up event handlers
+      // FIXED: Validation button handler - connect AFTER xs is created
       validateBtn.onclick = () => {
+        console.log('Validate clicked, xs:', xs); // Debug log
+        if (!xs) {
+          showInlineError(ctx, 'Spreadsheet not ready');
+          return;
+        }
         const errors = validateSheet(xs);
+        console.log('Validation errors:', errors); // Debug log
         highlightErrors(xs, errors);
         if (errors.length) {
           showInlineError(ctx, 'Validation warnings:<br>' + errors.map(e => `<div>• ${e.msg}</div>`).join(''));
         } else {
           clearInlineError(ctx);
+          showInlineError(ctx, '<div style="color:green;">✓ Validation passed!</div>');
         }
       };
 
-      // Inventory increment handler
+      // FIXED: Inventory increment handler
       $('#ei-increment-btn', ctx).onclick = () => {
+        console.log('Increment clicked, xs:', xs); // Debug log
+        if (!xs) {
+          showInlineError(ctx, 'Spreadsheet not ready');
+          return;
+        }
+        
         const incVal = parseInt($('#ei-increment-input', ctx).value, 10);
         if (isNaN(incVal)) {
           showInlineError(ctx, 'Please enter a valid number to increment.');
           return;
         }
         
-        if (xs && typeof xs.blur === 'function') xs.blur();
-        incrementInventory(xs, incVal);
+        console.log('Incrementing by:', incVal); // Debug log
+        
+        // Force commit any current edits
+        try {
+          if (xs.editor && xs.editor.el) {
+            xs.editor.set();
+          }
+        } catch (e) {
+          console.log('No active editor to commit');
+        }
+        
+        incrementInventoryFixed(xs, incVal);
         clearInlineError(ctx);
+        showInlineError(ctx, `<div style="color:green;">✓ Incremented inventory by ${incVal}</div>`);
       };
 
       // Hook up validation on every change
       xs.on('cell-edited', () => {
-        const errors = validateSheet(xs);
-        highlightErrors(xs, errors);
+        setTimeout(() => {
+          const errors = validateSheet(xs);
+          highlightErrors(xs, errors);
+        }, 100);
       });
 
       // Initial validation
-      snapUnlimitedToZero(xs);
-      const errors = validateSheet(xs);
-      highlightErrors(xs, errors);
-
-      // Store instance reference
-      ctx._eiSpreadsheetInstance = xs;
+      setTimeout(() => {
+        snapUnlimitedToZeroFixed(xs);
+        const errors = validateSheet(xs);
+        highlightErrors(xs, errors);
+      }, 200);
 
       // Add download button
       const dl = createEl('button', {
@@ -795,57 +923,7 @@
       });
       ctx.appendChild(dl);
 
-      dl.onclick = () => {
-        const xsInstance = ctx._eiSpreadsheetInstance;
-        if (!xsInstance) { 
-          showInlineError(ctx, 'Spreadsheet not ready'); 
-          return; 
-        }
-
-        const sheetData = xsInstance.getData();
-        const rows = sheetData?.rows;
-        if (!rows || !Object.keys(rows).length) { 
-          showInlineError(ctx, 'No data to export'); 
-          return; 
-        }
-
-        const maxC = Math.max(0, ...Object.values(rows).map(r =>
-          r.cells ? Math.max(...Object.keys(r.cells).map(Number)) + 1 : 0));
-        if (!maxC) { 
-          showInlineError(ctx, 'No data to export'); 
-          return; 
-        }
-
-        // Validation before export
-        const errors = validateSheet(xsInstance);
-        highlightErrors(xsInstance, errors);
-
-        if (errors.length) {
-          showInlineError(ctx, 'Validation warnings:<br>' + errors.map(e => `<div>• ${e.msg}</div>`).join(''));
-          if (!confirmWarning('Validation warnings detected:\n' + errors.map(e => e.msg).join('\n') + '\n\nDo you want to download anyway?')) {
-            return;
-          }
-        } else {
-          clearInlineError(ctx);
-        }
-
-        // CSV Generation
-        const csv = Object.keys(rows)
-          .sort((a, b) => +a - +b)
-          .map(r =>
-            [...Array(maxC).keys()].map(c =>
-              `"${(rows[r].cells?.[c]?.text || '').replace(/"/g, '""')}"`).join(',')).join('\n');
-
-        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-        const a = createEl('a', {
-          href: URL.createObjectURL(blob),
-          download: `ExistingItemEdit_${new Date().toISOString().slice(0,10)}.csv`
-        });
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        URL.revokeObjectURL(a.href);
-      };
+      dl.onclick = () => downloadCSVFixed(ctx);
       
     } catch (error) {
       console.error('Failed to initialize spreadsheet:', error);
