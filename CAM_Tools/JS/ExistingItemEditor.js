@@ -83,7 +83,7 @@
   };
 
   /* -------------------------------------------------- *
-   *  SIMPLIFIED DATA MODEL - NO AUTO-SYNC
+   *  IMPROVED DATA MODEL WITH BETTER SYNC
    * -------------------------------------------------- */
   class SpreadsheetDataModel {
     constructor(initialData = []) {
@@ -156,55 +156,244 @@
       ).join('\n');
     }
     
-    // Sync from spreadsheet data
+    // IMPROVED: Sync from spreadsheet using multiple methods
     syncFromSpreadsheet(xs) {
       try {
-        // Try to get current data from spreadsheet
-        const spreadsheetData = xs.getData();
+        console.log('Attempting to sync from spreadsheet...');
+        
+        // Method 1: Try standard getData()
+        let spreadsheetData = null;
+        try {
+          spreadsheetData = xs.getData();
+          console.log('Method 1 - getData() result:', spreadsheetData);
+        } catch (error) {
+          console.log('Method 1 failed:', error);
+        }
+        
+        // Method 2: Try accessing internal data structures
         if (!spreadsheetData || !spreadsheetData.rows) {
-          console.log('No spreadsheet data to sync');
+          try {
+            if (xs.sheet && xs.sheet.data) {
+              spreadsheetData = xs.sheet.data;
+              console.log('Method 2 - sheet.data result:', spreadsheetData);
+            }
+          } catch (error) {
+            console.log('Method 2 failed:', error);
+          }
+        }
+        
+        // Method 3: Try workbook access
+        if (!spreadsheetData || !spreadsheetData.rows) {
+          try {
+            if (xs.workbook && xs.workbook.sheets && xs.workbook.sheets[0]) {
+              spreadsheetData = xs.workbook.sheets[0];
+              console.log('Method 3 - workbook result:', spreadsheetData);
+            }
+          } catch (error) {
+            console.log('Method 3 failed:', error);
+          }
+        }
+        
+        // Method 4: Try direct property access
+        if (!spreadsheetData || !spreadsheetData.rows) {
+          try {
+            const props = ['data', '_data', 'sheetData', '_sheetData'];
+            for (const prop of props) {
+              if (xs[prop] && xs[prop].rows) {
+                spreadsheetData = xs[prop];
+                console.log(`Method 4 - ${prop} result:`, spreadsheetData);
+                break;
+              }
+            }
+          } catch (error) {
+            console.log('Method 4 failed:', error);
+          }
+        }
+        
+        // Method 5: Try accessing through DOM (fallback)
+        if (!spreadsheetData || !spreadsheetData.rows) {
+          console.log('Attempting DOM-based data extraction...');
+          return this.syncFromDOM();
+        }
+        
+        if (!spreadsheetData || !spreadsheetData.rows) {
+          console.error('All sync methods failed - no data found');
           return false;
         }
         
         const rows = spreadsheetData.rows;
         const newData = [];
         
-        // Get max row index
+        // Get all row indices and sort them
         const rowKeys = Object.keys(rows).map(Number).sort((a, b) => a - b);
+        console.log('Found row keys:', rowKeys);
         
+        // Process each row
         for (const rowIndex of rowKeys) {
           const row = rows[rowIndex];
           const newRow = [];
           
           if (row && row.cells) {
-            // Get max column index for this row
-            const colKeys = Object.keys(row.cells).map(Number).sort((a, b) => a - b);
+            // Get all column indices and find the max
+            const colKeys = Object.keys(row.cells).map(Number);
             const maxCol = Math.max(HEADERS.length - 1, ...colKeys);
             
+            // Extract cell values
             for (let c = 0; c <= maxCol; c++) {
               const cell = row.cells[c];
-              newRow[c] = cell ? (cell.text || '') : '';
+              newRow[c] = cell ? (cell.text || cell.value || '') : '';
             }
+          } else {
+            // Empty row
+            newRow.length = HEADERS.length;
+            newRow.fill('');
           }
           
           newData[rowIndex] = newRow;
         }
         
-        // Fill any gaps in rows
+        // Fill any gaps in the array
         for (let i = 0; i < newData.length; i++) {
           if (!newData[i]) {
             newData[i] = new Array(HEADERS.length).fill('');
           }
         }
         
+        console.log('Successfully synced data:', newData);
         this.data = newData;
-        console.log('Successfully synced from spreadsheet:', this.data);
         return true;
         
       } catch (error) {
         console.error('Error syncing from spreadsheet:', error);
         return false;
       }
+    }
+    
+    // NEW: Fallback method to extract data from DOM
+    syncFromDOM() {
+      try {
+        console.log('Attempting DOM-based sync...');
+        
+        // Find the spreadsheet container
+        const container = document.querySelector('#' + SPREADSHEET_CONTAINER);
+        if (!container) {
+          console.log('No spreadsheet container found');
+          return false;
+        }
+        
+        // Look for table cells in the spreadsheet
+        const cells = container.querySelectorAll('.x-spreadsheet-cell, .x-cell, [data-row][data-col]');
+        if (!cells.length) {
+          console.log('No spreadsheet cells found in DOM');
+          return false;
+        }
+        
+        const newData = [];
+        
+        cells.forEach(cell => {
+          try {
+            const row = parseInt(cell.getAttribute('data-row') || cell.getAttribute('row'), 10);
+            const col = parseInt(cell.getAttribute('data-col') || cell.getAttribute('col'), 10);
+            const value = cell.textContent || cell.innerText || '';
+            
+            if (!isNaN(row) && !isNaN(col)) {
+              if (!newData[row]) {
+                newData[row] = [];
+              }
+              newData[row][col] = value;
+            }
+          } catch (error) {
+            // Skip invalid cells
+          }
+        });
+        
+        if (newData.length > 0) {
+          // Fill gaps and ensure proper structure
+          const maxRow = newData.length;
+          for (let r = 0; r < maxRow; r++) {
+            if (!newData[r]) {
+              newData[r] = new Array(HEADERS.length).fill('');
+            } else {
+              while (newData[r].length < HEADERS.length) {
+                newData[r].push('');
+              }
+            }
+          }
+          
+          console.log('DOM sync successful:', newData);
+          this.data = newData;
+          return true;
+        }
+        
+        console.log('DOM sync found no data');
+        return false;
+        
+      } catch (error) {
+        console.error('DOM sync failed:', error);
+        return false;
+      }
+    }
+  }
+
+  /* -------------------------------------------------- *
+   *  UTILITY FUNCTIONS FOR SPREADSHEET ACCESS
+   * -------------------------------------------------- */
+  
+  // Helper to get cell value using multiple methods
+  function getCellValue(xs, row, col) {
+    try {
+      // Method 1: Try cellText API
+      if (typeof xs.cellText === 'function') {
+        const value = xs.cellText(row, col);
+        if (value !== undefined && value !== null) {
+          return String(value);
+        }
+      }
+      
+      // Method 2: Try direct data access
+      const data = xs.getData();
+      if (data && data.rows && data.rows[row] && data.rows[row].cells && data.rows[row].cells[col]) {
+        return data.rows[row].cells[col].text || '';
+      }
+      
+      return '';
+    } catch (error) {
+      console.log(`Error getting cell value (${row}, ${col}):`, error);
+      return '';
+    }
+  }
+  
+  // Helper to set cell value using multiple methods
+  function setCellValue(xs, row, col, value) {
+    try {
+      // Method 1: Try cellText API
+      if (typeof xs.cellText === 'function') {
+        xs.cellText(row, col, String(value));
+        return true;
+      }
+      
+      // Method 2: Try direct data modification
+      const data = xs.getData();
+      if (data && data.rows) {
+        if (!data.rows[row]) {
+          data.rows[row] = { cells: {} };
+        }
+        if (!data.rows[row].cells) {
+          data.rows[row].cells = {};
+        }
+        if (!data.rows[row].cells[col]) {
+          data.rows[row].cells[col] = {};
+        }
+        
+        data.rows[row].cells[col].text = String(value);
+        xs.loadData(data);
+        return true;
+      }
+      
+      return false;
+    } catch (error) {
+      console.log(`Error setting cell value (${row}, ${col}):`, error);
+      return false;
     }
   }
 
@@ -734,7 +923,7 @@
   }
 
   /* -------------------------------------------------- *
-   *  SPREADSHEET RENDERING - SIMPLIFIED APPROACH
+   *  SPREADSHEET RENDERING - WITH IMPROVED SYNC
    * -------------------------------------------------- */
   const renderSpreadsheet = async (ctx, items) => {
     removeEl(SPREADSHEET_CONTAINER);
@@ -833,6 +1022,19 @@
       ctx._eiSpreadsheetInstance = xs;
       
       console.log('Spreadsheet initialized successfully');
+      
+      // Debug: Log spreadsheet object structure
+      setTimeout(() => {
+        console.log('Spreadsheet object structure:', {
+          xs: xs,
+          methods: Object.getOwnPropertyNames(xs),
+          getData: typeof xs.getData,
+          cellText: typeof xs.cellText,
+          sheet: xs.sheet,
+          workbook: xs.workbook,
+          data: xs.data
+        });
+      }, 1000);
 
       // Set up resize handling
       const resize = debounce(() => {
@@ -850,9 +1052,14 @@
         console.log('Validation triggered');
         clearInlineError(ctx);
         
-        // First sync current spreadsheet data to our model
-        if (dataModel.syncFromSpreadsheet(xs)) {
+        // Try to sync current spreadsheet data to our model
+        const syncSuccess = dataModel.syncFromSpreadsheet(xs);
+        console.log('Sync result for validation:', syncSuccess);
+        
+        if (syncSuccess) {
           console.log('Synced data for validation:', dataModel.getData());
+        } else {
+          console.log('Sync failed, using current model data for validation');
         }
         
         const errors = validateSpreadsheetData(dataModel);
@@ -878,10 +1085,13 @@
           return;
         }
         
-        // First sync current spreadsheet data to our model
-        if (!dataModel.syncFromSpreadsheet(xs)) {
-          showInlineError(ctx, 'Failed to sync current data. Please try again.');
-          return;
+        // Try to sync current spreadsheet data to our model
+        const syncSuccess = dataModel.syncFromSpreadsheet(xs);
+        console.log('Sync result for increment:', syncSuccess);
+        
+        if (!syncSuccess) {
+          console.log('Sync failed, proceeding with current model data');
+          showInlineError(ctx, '<div style="color:orange;">Warning: Could not sync current changes. Proceeding with last known data.</div>');
         }
         
         const updatedCount = incrementInventoryInModel(dataModel, incVal);
@@ -923,11 +1133,7 @@
             const availability = cell.text || '';
             if (availability === 'Unlimited') {
               // Set inventory to 0 for unlimited items
-              try {
-                xs.cellText(ri, 4, '0');
-              } catch (error) {
-                console.log('Could not auto-set inventory to 0');
-              }
+              setCellValue(xs, ri, 4, '0');
             }
           }
         }, 100);
@@ -946,9 +1152,12 @@
         console.log('CSV download triggered');
         clearInlineError(ctx);
         
-        // Sync current spreadsheet data to our model
-        if (!dataModel.syncFromSpreadsheet(xs)) {
-          showInlineError(ctx, 'Failed to sync current data for export. Using last known data.');
+        // Try to sync current spreadsheet data to our model
+        const syncSuccess = dataModel.syncFromSpreadsheet(xs);
+        console.log('Sync result for export:', syncSuccess);
+        
+        if (!syncSuccess) {
+          showInlineError(ctx, 'Warning: Could not sync current changes. Using last known data for export.');
         }
         
         // Validate before export
