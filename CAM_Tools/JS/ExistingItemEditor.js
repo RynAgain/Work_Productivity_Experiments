@@ -7,6 +7,15 @@
   const STYLE_ID               = 'ei-style';
   const SPREADSHEET_CSS        = 'https://unpkg.com/x-data-spreadsheet@1.1.5/dist/xspreadsheet.css';
   const SPREADSHEET_JS         = 'https://unpkg.com/x-data-spreadsheet@1.1.5/dist/xspreadsheet.js'; // NEW
+
+  // Spinner HTML for loading/progress (GLOBAL SCOPE)
+  const SPINNER_HTML = `<span class="ei-spinner" style="display:inline-block;width:22px;height:22px;vertical-align:middle;">
+    <svg viewBox="0 0 50 50" style="width:22px;height:22px;">
+      <circle cx="25" cy="25" r="20" fill="none" stroke="#004E36" stroke-width="5" stroke-linecap="round" stroke-dasharray="31.4 31.4" transform="rotate(-90 25 25)">
+        <animateTransform attributeName="transform" type="rotate" from="0 25 25" to="360 25 25" dur="0.8s" repeatCount="indefinite"/>
+      </circle>
+    </svg>
+  </span>`;
   const SPREADSHEET_CONTAINER  = 'ei-sheet';
   const DOWNLOAD_BTN_ID        = 'ei-downloadCsv';
   const EDIT_BTN_ID            = 'ei-openEditor';
