@@ -434,9 +434,19 @@
     if (!$('#' + STYLE_ID)) {
       const style = createEl('style', { id: STYLE_ID });
       style.textContent = `
+        /* MAIN CONTAINER PADDING */
+        #ei-interface {
+          padding: 0 25px;
+          max-width: calc(100vw - 50px);
+          box-sizing: border-box;
+          margin: 0 auto;
+          position: relative;
+          width: 100%;
+        }
+        
         .ei-btn{
           position:fixed;bottom:calc(50px + env(safe-area-inset-bottom));
-          left:12px;z-index:1000;min-width:180px;
+          left:25px;z-index:1000;min-width:180px;
           padding:9px 14px;border:none;border-radius:6px;
           font:600 15px/1 'Segoe UI',sans-serif;color:#fff;
           background:#004E36;cursor:pointer;
@@ -444,30 +454,53 @@
           transition:background .2s;
         }
         .ei-btn:hover{background:#056a48;}
+        
         .ei-overlay{
           position:fixed;inset:0;background:rgba(0,0,0,.5);
           display:flex;justify-content:center;align-items:center;z-index:1001;
+          padding: 25px;
+          box-sizing: border-box;
         }
+        
         .ei-card{
           background:#fff;border-radius:12px;
-          width:min(96vw,1400px);max-height:90vh;display:flex;flex-direction:column;
+          width:min(calc(96vw - 50px),1350px);max-height:calc(90vh - 50px);
+          display:flex;flex-direction:column;
           box-shadow:0 8px 32px rgba(0,0,0,.18);overflow:hidden;
+          margin: 0 auto;
         }
+        
         .ei-header{
           background:#004E36;color:#fff;padding:16px 24px;
           font:600 20px/1 'Segoe UI',sans-serif;
           display:flex;justify-content:space-between;align-items:center;
+          flex-shrink: 0;
         }
         .ei-header button{all:unset;cursor:pointer;font-size:26px;}
-        .ei-body{padding:20px 24px;overflow:auto;}
+        
+        .ei-body{
+          padding:20px 24px;overflow:auto;
+          flex: 1;
+          min-width: 0; /* Prevent flex overflow */
+        }
+        
         label{font-weight:500;margin-top:6px;display:block;}
         input,select{
           width:100%;padding:7px 9px;margin-top:2px;
           font-size:15px;border:1px solid #ccc;border-radius:5px;
+          box-sizing: border-box;
         }
+        textarea {
+          width:100%;padding:7px 9px;margin-top:2px;
+          font-size:15px;border:1px solid #ccc;border-radius:5px;
+          box-sizing: border-box;
+          resize: vertical;
+        }
+        
         .ei-action{
           margin-top:12px;padding:10px 0;width:100%;
           border:none;border-radius:5px;font-size:16px;cursor:pointer;
+          box-sizing: border-box;
         }
         .green{background:#004E36;color:#fff;}
         .red{background:#e74c3c;color:#fff;}
@@ -476,8 +509,9 @@
         
         /* ENHANCED TABLE STYLES */
         .ei-table-container{
-          width:100%;margin-top:16px;border:1px solid #ddd;border-radius:8px;overflow:auto;
-          max-height:600px;background:#fff;position:relative;
+          width:100%;margin-top:16px;border:1px solid #ddd;border-radius:8px;
+          overflow:auto;max-height:600px;background:#fff;position:relative;
+          box-sizing: border-box;
         }
         .ei-table{
           width:100%;border-collapse:collapse;font-size:14px;min-width:1200px;
@@ -508,6 +542,7 @@
           width:100%;border:none;background:transparent;padding:6px 4px;
           font-family:inherit;font-size:inherit;outline:none;
           transition:all 0.2s;
+          box-sizing: border-box;
         }
         .ei-cell-input:focus, .ei-cell-select:focus{
           background:#fff;border:2px solid #004E36;border-radius:3px;
@@ -521,22 +556,27 @@
         .ei-toolbar{
           display:flex;align-items:center;gap:8px;margin-bottom:16px;
           padding:12px;background:#f8f9fa;border-radius:6px;flex-wrap:wrap;
+          box-sizing: border-box;
+          width: 100%;
         }
         .ei-toolbar-group{
           display:flex;align-items:center;gap:6px;
           border-right:1px solid #ddd;padding-right:12px;margin-right:4px;
+          flex-shrink: 0;
         }
         .ei-toolbar-group:last-child{border-right:none;margin-right:0;}
         .ei-toolbar button{
           padding:6px 12px;border:1px solid #ddd;background:#fff;
           border-radius:4px;cursor:pointer;font-size:13px;
           transition:all 0.2s;
+          white-space: nowrap;
         }
         .ei-toolbar button:hover:not(:disabled){background:#f0f0f0;}
         .ei-toolbar button:disabled{opacity:0.5;cursor:not-allowed;}
         .ei-toolbar input, .ei-toolbar select{
           padding:6px 8px;border:1px solid #ddd;border-radius:4px;
           font-size:13px;min-width:120px;
+          box-sizing: border-box;
         }
         
         /* FILTER BAR */
@@ -544,13 +584,17 @@
           display:flex;align-items:center;gap:8px;margin-bottom:12px;
           padding:10px;background:#fff;border:1px solid #ddd;border-radius:6px;
           flex-wrap:wrap;
+          box-sizing: border-box;
+          width: 100%;
         }
         .ei-filter-bar input, .ei-filter-bar select{
           padding:6px 8px;border:1px solid #ccc;border-radius:4px;font-size:13px;
+          box-sizing: border-box;
         }
         .ei-filter-bar button{
           padding:6px 12px;border:1px solid #ddd;background:#f8f9fa;
           border-radius:4px;cursor:pointer;font-size:13px;
+          white-space: nowrap;
         }
         
         /* BULK OPERATIONS */
@@ -558,15 +602,21 @@
           display:flex;align-items:center;gap:8px;margin-top:12px;
           padding:10px;background:#e8f5e8;border:1px solid #c8e6c9;
           border-radius:6px;flex-wrap:wrap;
+          box-sizing: border-box;
+          width: 100%;
         }
         .ei-bulk-ops button{
           padding:6px 12px;border:none;border-radius:4px;
           cursor:pointer;font-size:13px;color:#fff;
+          white-space: nowrap;
         }
         .ei-bulk-ops .bulk-limited{background:#2ecc71;}
         .ei-bulk-ops .bulk-unlimited{background:#95a5a6;}
         .ei-bulk-ops .bulk-delete{background:#e74c3c;}
         .ei-bulk-ops .bulk-inventory{background:#3498db;}
+        .ei-bulk-ops input{
+          box-sizing: border-box;
+        }
         
         /* AUTO-SAVE INDICATOR */
         .ei-autosave-indicator{
@@ -592,14 +642,82 @@
         #ei-error-message{
           padding:10px;background:#fee;border:1px solid #fcc;
           border-radius:5px;color:#c33;font-size:14px;
+          box-sizing: border-box;
+          word-wrap: break-word;
+        }
+        
+        /* PROGRESS BAR STYLES */
+        #ei-progress {
+          box-sizing: border-box;
+        }
+        .progress-bar {
+          box-sizing: border-box;
+        }
+        .progress-fill {
+          box-sizing: border-box;
+        }
+        
+        /* CLOSE BUTTON */
+        .ei-close-btn {
+          position: fixed;
+          top: 25px;
+          right: 25px;
+          z-index: 1002;
+          background: #e74c3c;
+          color: white;
+          border: none;
+          border-radius: 50%;
+          width: 40px;
+          height: 40px;
+          font-size: 20px;
+          cursor: pointer;
+          box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+          transition: background 0.2s;
+        }
+        .ei-close-btn:hover {
+          background: #c0392b;
         }
         
         @media(max-width:768px){
-          .ei-btn{left:4px;right:4px;width:calc(100% - 8px);}
-          .ei-toolbar, .ei-filter-bar, .ei-bulk-ops{flex-direction:column;align-items:stretch;}
-          .ei-toolbar-group{border-right:none;border-bottom:1px solid #ddd;padding-bottom:8px;margin-bottom:8px;}
+          #ei-interface {
+            padding: 0 10px;
+            max-width: calc(100vw - 20px);
+          }
+          
+          .ei-btn{
+            left:10px;right:10px;width:calc(100% - 20px);
+            min-width: auto;
+          }
+          
+          .ei-overlay {
+            padding: 10px;
+          }
+          
+          .ei-card {
+            width: calc(100vw - 20px);
+            max-height: calc(90vh - 20px);
+          }
+          
+          .ei-close-btn {
+            top: 10px;
+            right: 10px;
+          }
+          
+          .ei-toolbar, .ei-filter-bar, .ei-bulk-ops{
+            flex-direction:column;align-items:stretch;
+          }
+          .ei-toolbar-group{
+            border-right:none;border-bottom:1px solid #ddd;
+            padding-bottom:8px;margin-bottom:8px;
+            justify-content: center;
+          }
           .ei-table{font-size:12px;min-width:800px;}
           .ei-table th, .ei-table td{padding:4px 2px;min-width:80px;}
+          
+          .ei-toolbar button, .ei-filter-bar button, .ei-bulk-ops button {
+            flex: 1;
+            min-width: 0;
+          }
         }`;
       document.head.appendChild(style);
     }
@@ -905,12 +1023,54 @@
   };
 
   /* -------------------------------------------------- *
+   *  CLOSE BUTTON FUNCTION
+   * -------------------------------------------------- */
+  const addCloseButton = (container) => {
+    const closeButton = createEl('button', {
+      className: 'ei-close-btn',
+      innerHTML: '&times;',
+      title: 'Close Editor'
+    });
+    
+    closeButton.onclick = () => {
+      if (confirm('Close the editor? Any unsaved changes will be lost.')) {
+        container.remove();
+        closeButton.remove();
+        // Clean up managers
+        if (container._eiAutoSaveManager) {
+          container._eiAutoSaveManager.destroy();
+        }
+      }
+    };
+    
+    document.body.appendChild(closeButton);
+    
+    // Remove close button when container is removed
+    const observer = new MutationObserver((mutations) => {
+      mutations.forEach((mutation) => {
+        mutation.removedNodes.forEach((node) => {
+          if (node === container) {
+            closeButton.remove();
+            observer.disconnect();
+          }
+        });
+      });
+    });
+    observer.observe(document.body, { childList: true });
+  };
+
+  /* -------------------------------------------------- *
    *  ENHANCED TABLE RENDERING WITH ALL FEATURES
    * -------------------------------------------------- */
   const renderTable = (ctx, items) => {
-    // Clear existing elements
+    // Clear existing elements more thoroughly
     removeEl(TABLE_CONTAINER);
     removeEl(DOWNLOAD_BTN_ID);
+    removeEl('ei-interface'); // Clear any existing interface
+    
+    // Remove any stray elements that might have escaped
+    const strayElements = document.querySelectorAll('[id^="ei-"]:not(#ei-openEditor):not(#ei-style)');
+    strayElements.forEach(el => el.remove());
     
     // Convert items to rows
     const dataRows = items.map(item => [
@@ -930,15 +1090,17 @@
     const autoSaveManager = new AutoSaveManager(dataModel);
     const validationManager = new ValidationManager();
     
+    // Create a container for the entire interface with proper containment
+    const interfaceContainer = createEl('div', { 
+      id: 'ei-interface'
+    });
+    document.body.appendChild(interfaceContainer); // Append to body instead of ctx
+    
     // Store references
-    ctx._eiDataModel = dataModel;
-    ctx._eiUndoManager = undoManager;
-    ctx._eiAutoSaveManager = autoSaveManager;
-    ctx._eiValidationManager = validationManager;
-
-    // Create a container for the entire interface
-    const interfaceContainer = createEl('div', { id: 'ei-interface' });
-    ctx.appendChild(interfaceContainer);
+    interfaceContainer._eiDataModel = dataModel;
+    interfaceContainer._eiUndoManager = undoManager;
+    interfaceContainer._eiAutoSaveManager = autoSaveManager;
+    interfaceContainer._eiValidationManager = validationManager;
 
     // Add toolbar
     addToolbar(interfaceContainer, dataModel, undoManager, autoSaveManager);
@@ -957,6 +1119,9 @@
     
     // Set up keyboard shortcuts
     setupKeyboardShortcuts(dataModel, undoManager, autoSaveManager);
+    
+    // Add close button to interface
+    addCloseButton(interfaceContainer);
   };
 
   const addToolbar = (container, dataModel, undoManager, autoSaveManager) => {
@@ -1371,25 +1536,25 @@
 
   const addControls = (container, dataModel, undoManager, autoSaveManager, validationManager) => {
     const controlsHtml = `
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-top:20px;">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-top:20px;width:100%;box-sizing:border-box;">
         <div id="ei-increment-wrap">
           <label style="font-weight:500;">Increment Inventory:</label>
-          <div style="display:flex;align-items:center;gap:8px;margin-top:4px;">
+          <div style="display:flex;align-items:center;gap:8px;margin-top:4px;flex-wrap:wrap;">
             <input id="ei-increment-input" type="number" value="1" min="-999" max="999" 
-                   style="width:80px;padding:6px;border:1px solid #ccc;border-radius:4px;">
+                   style="width:80px;padding:6px;border:1px solid #ccc;border-radius:4px;box-sizing:border-box;">
             <button id="ei-increment-btn" class="ei-action blue" 
-                    style="padding:6px 18px;font-size:14px;margin-top:0;">Apply</button>
-            <span style="color:#666;font-size:12px;">(Limited items only)</span>
+                    style="padding:6px 18px;font-size:14px;margin-top:0;white-space:nowrap;">Apply</button>
+            <span style="color:#666;font-size:12px;flex-shrink:0;">(Limited items only)</span>
           </div>
         </div>
         
         <div>
           <label style="font-weight:500;">Quick Actions:</label>
-          <div style="display:flex;gap:8px;margin-top:4px;">
+          <div style="display:flex;gap:8px;margin-top:4px;flex-wrap:wrap;">
             <button id="ei-validate-all-btn" class="ei-action green" 
-                    style="padding:6px 12px;font-size:14px;margin-top:0;flex:1;">Validate All</button>
+                    style="padding:6px 12px;font-size:14px;margin-top:0;flex:1;min-width:100px;">Validate All</button>
             <button id="ei-download-btn" class="ei-action blue" 
-                    style="padding:6px 12px;font-size:14px;margin-top:0;flex:1;">Download CSV</button>
+                    style="padding:6px 12px;font-size:14px;margin-top:0;flex:1;min-width:100px;">Download CSV</button>
           </div>
         </div>
       </div>
