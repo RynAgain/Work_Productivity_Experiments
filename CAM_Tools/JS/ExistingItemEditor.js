@@ -744,7 +744,7 @@
    * -------------------------------------------------- */
   const openOverlay = () => {
     var pw = prompt('Enter password to access Existing Item Editor:');
-    if (pw !== 'Leeloo') {
+    if (pw !== 'Baker') {
       alert('Incorrect password. Access denied.');
       return;
     }
