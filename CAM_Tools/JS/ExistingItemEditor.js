@@ -744,10 +744,10 @@
    * -------------------------------------------------- */
   const openOverlay = () => {
     var pw = prompt('Enter password to access Existing Item Editor:');
-    if (pw !== 'Baker') {
-      alert('Incorrect password. Access denied.');
-      return;
-    }
+    //if (pw !== 'Baker') {
+    //  alert('Incorrect password. Access denied.');
+    //  return;
+    //}  //Removed password prompt, it is no longer needed
     if ($('#' + OVERLAY_ID)) return;
 
     const overlay = createEl('div', { id: OVERLAY_ID, className: 'ei-overlay' });
