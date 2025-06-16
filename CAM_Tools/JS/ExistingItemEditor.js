@@ -613,6 +613,8 @@
         .ei-bulk-ops .bulk-limited{background:#2ecc71;}
         .ei-bulk-ops .bulk-unlimited{background:#95a5a6;}
         .ei-bulk-ops .bulk-delete{background:#e74c3c;}
+        .ei-bulk-ops .bulk-andon-enabled{background:#27ae60;}
+        .ei-bulk-ops .bulk-andon-disabled{background:#e67e22;}
         .ei-bulk-ops .bulk-inventory{background:#3498db;}
         .ei-bulk-ops input{
           box-sizing: border-box;
@@ -1445,10 +1447,11 @@
       <button class="bulk-unlimited">Set to Unlimited</button>
       <input type="number" id="ei-bulk-inventory" placeholder="Inventory" style="width:100px;" min="0" max="10000">
       <button class="bulk-inventory">Set Inventory</button>
+      <button class="bulk-andon-enabled">Enable Andon</button>
+      <button class="bulk-andon-disabled">Disable Andon</button>
       <button class="bulk-delete">Delete Selected</button>
       <span id="ei-selected-count" style="margin-left:10px;font-size:12px;color:#666;"></span>
     `;
-    
     container.appendChild(bulkOps);
     
     // Show/hide bulk operations based on selection
@@ -1513,6 +1516,31 @@
       }
     };
     
+    bulkOps.querySelector('.bulk-andon-enabled').onclick = () => {
+      const selected = getSelectedRows();
+      if (selected.length && confirm(`Enable Andon Cord for ${selected.length} rows?`)) {
+        undoManager.saveState(`Bulk enable Andon for ${selected.length} rows`);
+        selected.forEach(rowIndex => {
+          dataModel.setCell(rowIndex, 6, 'Enabled');
+        });
+        updateTableFromModel();
+        autoSaveManager.manualSave();
+        showInlineError(container, `<div style="color:green;">✓ Enabled Andon Cord for ${selected.length} rows</div>`);
+      }
+    };
+
+    bulkOps.querySelector('.bulk-andon-disabled').onclick = () => {
+      const selected = getSelectedRows();
+      if (selected.length && confirm(`Disable Andon Cord for ${selected.length} rows?`)) {
+        undoManager.saveState(`Bulk disable Andon for ${selected.length} rows`);
+        selected.forEach(rowIndex => {
+          dataModel.setCell(rowIndex, 6, 'Disabled');
+        });
+        updateTableFromModel();
+        autoSaveManager.manualSave();
+        showInlineError(container, `<div style="color:orange;">✓ Disabled Andon Cord for ${selected.length} rows</div>`);
+      }
+    };
     bulkOps.querySelector('.bulk-delete').onclick = () => {
       const selected = getSelectedRows();
       if (selected.length && confirm(`Delete ${selected.length} selected rows? This cannot be undone via undo.`)) {
