@@ -769,15 +769,21 @@
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;">
         <div>
           <label>PLU Code(s)</label>
-          <textarea id="ei-plu" placeholder="Enter PLU codes (one per line or comma-separated)" 
+          <textarea id="ei-plu" placeholder="Enter PLU codes (one per line or comma-separated)"
                    style="height:80px;resize:vertical;"></textarea>
           <small style="color:#666;">Supports multiple PLUs: separate by comma or new line</small>
+          <label style="font-weight:500;display:flex;align-items:center;gap:8px;margin-top:8px;">
+            <input type="checkbox" id="ei-all-plus" style="margin-right:8px;"> All PLUs
+          </label>
         </div>
         <div>
           <label>Store / Region Code(s)</label>
-          <textarea id="ei-store" placeholder="Enter Store or Region codes (one per line or comma-separated)" 
+          <textarea id="ei-store" placeholder="Enter Store or Region codes (one per line or comma-separated)"
                    style="height:80px;resize:vertical;"></textarea>
           <small style="color:#666;">Supports multiple stores/regions</small>
+          <label style="font-weight:500;display:flex;align-items:center;gap:8px;margin-top:8px;">
+            <input type="checkbox" id="ei-all-stores" style="margin-right:8px;"> All Stores/Regions
+          </label>
         </div>
       </div>
       
@@ -785,6 +791,19 @@
       <select id="ei-by" style="margin-bottom:8px;">
         <option value="Store">Store</option>
         <option value="Region">Region</option>
+      </select>
+
+      <label style="margin-top:8px;">Team Filter (optional):</label>
+      <select id="ei-team-filter" style="margin-bottom:8px;">
+        <option value="">All Teams</option>
+        <option value="Coffee">Coffee</option>
+        <option value="Prepared">Prepared</option>
+        <option value="Foods">Foods</option>
+        <option value="Bakery">Bakery</option>
+        <option value="Seafood">Seafood</option>
+        <option value="Specialty">Specialty</option>
+        <option value="Grocery">Grocery</option>
+        <option value="Sushi">Sushi</option>
       </select>
 
       <button id="ei-fetch" class="ei-action green">Edit Items</button>
@@ -851,7 +870,15 @@
       return;
     }
     
-    progressText.textContent = `Found ${pluList.length} PLUs and ${inputList.length} ${by.toLowerCase()}(s)`;
+    if (allPlusChecked && allStoresChecked) {
+      progressText.textContent = 'Loading all PLUs from all stores...';
+    } else if (allPlusChecked) {
+      progressText.textContent = `Loading all PLUs from ${inputList.length} ${by.toLowerCase()}(s)`;
+    } else if (allStoresChecked) {
+      progressText.textContent = `Loading ${pluList.length} PLUs from all stores`;
+    } else {
+      progressText.textContent = `Found ${pluList.length} PLUs and ${inputList.length} ${by.toLowerCase()}(s)`;
+    }
     progressFill.style.width = '10%';
 
     const env = location.hostname.includes('gamma') ? 'gamma' : 'prod';
@@ -860,7 +887,12 @@
     try {
       let allStoreIds = [];
       
-      if (by === 'Store') {
+      if (allStoresChecked) {
+        // Get all stores from all regions
+        progressText.textContent = 'Loading all stores...';
+        progressFill.style.width = '20%';
+        allStoreIds = await getAllStores(url);
+      } else if (by === 'Store') {
         allStoreIds = inputList;
         progressFill.style.width = '20%';
       } else {
@@ -1266,6 +1298,7 @@
     $('#ei-search').oninput = applyFilters;
     $('#ei-filter-availability').onchange = applyFilters;
     $('#ei-filter-andon').onchange = applyFilters;
+    $('#ei-filter-team').onchange = applyFilters;
     $('#ei-filter-inventory-min').oninput = applyFilters;
     $('#ei-filter-inventory-max').oninput = applyFilters;
     
@@ -1273,6 +1306,7 @@
       $('#ei-search').value = '';
       $('#ei-filter-availability').value = '';
       $('#ei-filter-andon').value = '';
+      $('#ei-filter-team').value = '';
       $('#ei-filter-inventory-min').value = '';
       $('#ei-filter-inventory-max').value = '';
       applyFilters();
@@ -1282,7 +1316,7 @@
     setTimeout(applyFilters, 100);
   };
 
-  const addTable = (container, dataModel, undoManager, autoSaveManager, validationManager) => {
+  const addTable = (container, dataModel, undoManager, autoSaveManager, validationManager, teamData = []) => {
     const tableContainer = createEl('div', { id: TABLE_CONTAINER, className: 'ei-table-container' });
     const table = createEl('table', { id: 'ei-data-table', className: 'ei-table' });
     
@@ -1314,6 +1348,7 @@
         const actualRowIndex = rowIndex + 1;
         const tr = createEl('tr');
         tr.dataset.row = actualRowIndex;
+        tr.dataset.team = teamData[rowIndex] || '';
         
         // Selection checkbox
         const selectTd = createEl('td');
