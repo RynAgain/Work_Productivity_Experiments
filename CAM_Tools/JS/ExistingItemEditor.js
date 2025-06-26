@@ -772,8 +772,9 @@
           <textarea id="ei-plu" placeholder="Enter PLU codes (one per line or comma-separated)"
                    style="height:80px;resize:vertical;"></textarea>
           <small style="color:#666;">Supports multiple PLUs: separate by comma or new line</small>
-          <label style="font-weight:500;display:flex;align-items:center;gap:8px;margin-top:8px;">
-            <input type="checkbox" id="ei-all-plus" style="margin-right:8px;"> All PLUs
+          <label style="font-weight:500;display:flex;align-items:center;gap:8px;margin-top:8px;padding:8px;background:#e8f5e8;border:1px solid #c8e6c9;border-radius:6px;cursor:pointer;transition:background 0.2s;">
+            <input type="checkbox" id="ei-all-plus" style="margin:0;transform:scale(1.2);">
+            <span style="color:#2e7d32;">✓ All PLUs</span>
           </label>
         </div>
         <div>
@@ -816,6 +817,53 @@
     
     $('#ei-fetch', body).onclick = () => fetchItems(body);
 
+    // Handle checkbox interactions with enhanced styling
+    $('#ei-all-plus', body).onchange = function() {
+      const pluTextarea = $('#ei-plu', body);
+      const label = this.closest('label');
+      pluTextarea.disabled = this.checked;
+      if (this.checked) {
+        pluTextarea.style.opacity = '0.5';
+        pluTextarea.style.background = '#f5f5f5';
+        pluTextarea.placeholder = '✓ All PLUs selected - input disabled';
+        pluTextarea.value = '';
+        label.style.background = '#c8e6c9';
+        label.style.borderColor = '#4caf50';
+      } else {
+        pluTextarea.style.opacity = '1';
+        pluTextarea.style.background = '#fff';
+        pluTextarea.placeholder = 'Enter PLU codes (one per line or comma-separated)';
+        label.style.background = '#e8f5e8';
+        label.style.borderColor = '#c8e6c9';
+      }
+    };
+
+    $('#ei-all-stores', body).onchange = function() {
+      const storeTextarea = $('#ei-store', body);
+      const bySelect = $('#ei-by', body);
+      const label = this.closest('label');
+      storeTextarea.disabled = this.checked;
+      bySelect.disabled = this.checked;
+      if (this.checked) {
+        storeTextarea.style.opacity = '0.5';
+        storeTextarea.style.background = '#f5f5f5';
+        bySelect.style.opacity = '0.5';
+        bySelect.style.background = '#f5f5f5';
+        storeTextarea.placeholder = '🌐 All stores/regions selected - input disabled';
+        storeTextarea.value = '';
+        label.style.background = '#bbdefb';
+        label.style.borderColor = '#2196f3';
+      } else {
+        storeTextarea.style.opacity = '1';
+        storeTextarea.style.background = '#fff';
+        bySelect.style.opacity = '1';
+        bySelect.style.background = '#fff';
+        storeTextarea.placeholder = 'Enter Store or Region codes (one per line or comma-separated)';
+        label.style.background = '#e3f2fd';
+        label.style.borderColor = '#bbdefb';
+      }
+    };
+
     overlay.onclick = (e) => {
       if (e.target === overlay) overlay.remove();
     };
@@ -840,34 +888,49 @@
     const pluInput = $('#ei-plu').value.trim();
     const storeInput = $('#ei-store').value.trim();
     const by = $('#ei-by').value;
+    const allPlusChecked = $('#ei-all-plus').checked;
+    const allStoresChecked = $('#ei-all-stores').checked;
+    const teamFilter = $('#ei-team-filter').value;
     
-    if (!pluInput || !storeInput) {
-      progressText.textContent = 'Both PLU and Store/Region fields are required.';
+    // Validate inputs based on checkbox states
+    if (!allPlusChecked && !pluInput.trim()) {
+      progressText.textContent = 'PLU field is required unless "All PLUs" is selected.';
+      return;
+    }
+    
+    if (!allStoresChecked && !storeInput.trim()) {
+      progressText.textContent = 'Store/Region field is required unless "All Stores/Regions" is selected.';
       return;
     }
     
     // Parse PLUs (support both comma and newline separation)
-    const pluList = [...new Set(
-      pluInput.split(/[,\n]/)
-        .map(p => p.trim())
-        .filter(p => p && /^[0-9A-Za-z\-]+$/.test(p))
-    )];
-    
-    // Parse Stores/Regions
-    const inputList = [...new Set(
-      storeInput.split(/[,\n]/)
-        .map(s => s.trim().toUpperCase())
-        .filter(Boolean)
-    )];
-    
-    if (!pluList.length) {
-      progressText.textContent = 'No valid PLU codes found.';
-      return;
+    let pluList = [];
+    if (!allPlusChecked) {
+      pluList = [...new Set(
+        pluInput.split(/[,\n]/)
+          .map(p => p.trim())
+          .filter(p => p && /^[0-9A-Za-z\-]+$/.test(p))
+      )];
+      
+      if (!pluList.length) {
+        progressText.textContent = 'No valid PLU codes found.';
+        return;
+      }
     }
     
-    if (!inputList.length) {
-      progressText.textContent = 'No valid store/region codes found.';
-      return;
+    // Parse Stores/Regions
+    let inputList = [];
+    if (!allStoresChecked) {
+      inputList = [...new Set(
+        storeInput.split(/[,\n]/)
+          .map(s => s.trim().toUpperCase())
+          .filter(Boolean)
+      )];
+      
+      if (!inputList.length) {
+        progressText.textContent = 'No valid store/region codes found.';
+        return;
+      }
     }
     
     if (allPlusChecked && allStoresChecked) {
