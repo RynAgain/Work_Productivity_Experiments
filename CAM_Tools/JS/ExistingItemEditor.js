@@ -1009,9 +1009,21 @@
       
       // Remove duplicates and filter
       const uniqueItems = removeDuplicateItems(allItems);
-      const filteredItems = uniqueItems.filter(item => 
-        pluList.some(plu => item.wfmScanCode === plu)
-      );
+      let filteredItems = uniqueItems;
+      
+      // Filter by PLU if specific PLUs were provided (not "All PLUs")
+      if (!allPlusChecked && pluList.length > 0) {
+        filteredItems = filteredItems.filter(item =>
+          pluList.some(plu => item.wfmScanCode === plu)
+        );
+      }
+      
+      // Filter by team if team filter is selected
+      if (teamFilter) {
+        filteredItems = filteredItems.filter(item =>
+          item.team && item.team.toLowerCase() === teamFilter.toLowerCase()
+        );
+      }
       
       progressFill.style.width = '100%';
       
@@ -1358,22 +1370,33 @@
       $('#ei-filter-results').textContent = `Showing ${visibleCount} of ${rows.length} rows`;
     }, 300);
     
-    $('#ei-search').oninput = applyFilters;
-    $('#ei-filter-availability').onchange = applyFilters;
-    $('#ei-filter-andon').onchange = applyFilters;
-    $('#ei-filter-team').onchange = applyFilters;
-    $('#ei-filter-inventory-min').oninput = applyFilters;
-    $('#ei-filter-inventory-max').oninput = applyFilters;
+    // Add null checks for event handlers
+    const searchEl = $('#ei-search');
+    const availEl = $('#ei-filter-availability');
+    const andonEl = $('#ei-filter-andon');
+    const teamEl = $('#ei-filter-team');
+    const minInvEl = $('#ei-filter-inventory-min');
+    const maxInvEl = $('#ei-filter-inventory-max');
+    const clearFiltersEl = $('#ei-clear-filters');
     
-    $('#ei-clear-filters').onclick = () => {
-      $('#ei-search').value = '';
-      $('#ei-filter-availability').value = '';
-      $('#ei-filter-andon').value = '';
-      $('#ei-filter-team').value = '';
-      $('#ei-filter-inventory-min').value = '';
-      $('#ei-filter-inventory-max').value = '';
-      applyFilters();
-    };
+    if (searchEl) searchEl.oninput = applyFilters;
+    if (availEl) availEl.onchange = applyFilters;
+    if (andonEl) andonEl.onchange = applyFilters;
+    if (teamEl) teamEl.onchange = applyFilters;
+    if (minInvEl) minInvEl.oninput = applyFilters;
+    if (maxInvEl) maxInvEl.oninput = applyFilters;
+    
+    if (clearFiltersEl) {
+      clearFiltersEl.onclick = () => {
+        if (searchEl) searchEl.value = '';
+        if (availEl) availEl.value = '';
+        if (andonEl) andonEl.value = '';
+        if (teamEl) teamEl.value = '';
+        if (minInvEl) minInvEl.value = '';
+        if (maxInvEl) maxInvEl.value = '';
+        applyFilters();
+      };
+    }
     
     // Initial filter application
     setTimeout(applyFilters, 100);
