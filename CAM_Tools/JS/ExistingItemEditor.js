@@ -745,7 +745,7 @@
    *  ENHANCED OVERLAY WITH MULTI-INPUT
    * -------------------------------------------------- */
   const openOverlay = () => {
-    var pw = prompt('Enter password to access Existing Item Editor:');
+    //var pw = prompt('Enter password to access Existing Item Editor:');
     //if (pw !== 'Baker') {
     //  alert('Incorrect password. Access denied.');
     //  return;
