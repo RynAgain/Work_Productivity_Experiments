@@ -271,7 +271,7 @@
                 <span id="massUploaderInfoIcon" tabindex="0" aria-label="Show information" style="display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;border-radius:50%;background:#e0e0e0;color:#004E36;font-weight:bold;font-size:15px;cursor:pointer;outline:none;transition:background 0.2s;">
                     <svg width="16" height="16" viewBox="0 0 20 20" fill="none" style="display:block;">
                         <circle cx="10" cy="10" r="10" fill="#e0e0e0"/>
-                        <text x="10" y="14" text-anchor="middle" font-size="12" font-family="Segoe UI, Arial, sans-serif" fill="#004E36" font-weight="bold">i</text>
+                        <text x="10" y="14" text-anchor="middle" font-size="12" font-family="Arial" fill="#004E36" font-weight="bold">i</text>
                     </svg>
                 </span>
             </span>
@@ -300,7 +300,7 @@
             <div style="display:flex;align-items:flex-start;gap:12px;">
                 <svg width="22" height="22" fill="#004E36" viewBox="0 0 20 20" style="flex-shrink:0;margin-top:2px;">
                     <circle cx="10" cy="10" r="10" fill="#e0e0e0"/>
-                    <text x="10" y="15" text-anchor="middle" font-size="13" font-family="Segoe UI, Arial, sans-serif" fill="#004E36" font-weight="bold">i</text>
+                    <text x="10" y="15" text-anchor="middle" font-size="13" font-family="Arial" fill="#004E36" font-weight="bold">i</text>
                 </svg>
                 <div style="flex:1;">
                     <div style="font-weight:600;margin-bottom:2px;">Mass Upload & File Chunker</div>
