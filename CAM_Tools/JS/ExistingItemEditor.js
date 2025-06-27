@@ -951,10 +951,35 @@
       let allStoreIds = [];
       
       if (allStoresChecked) {
-        // Get all stores from all regions
+        // Get all stores from all regions (same logic as DownloadButton.js)
         progressText.textContent = 'Loading all stores...';
         progressFill.style.width = '20%';
-        allStoreIds = await getAllStores(url);
+        
+        const response = await fetch(url, {
+          method: 'POST',
+          headers: {
+            'content-type': 'application/x-amz-json-1.0',
+            'x-amz-target': 'WfmCamBackendService.GetStoresInformation'
+          },
+          body: JSON.stringify({}),
+          credentials: 'include'
+        });
+        
+        const storeData = await response.json();
+        if (!storeData || !storeData.storesInformation) {
+          throw new Error('Invalid store data received');
+        }
+        
+        // Build storeIds array from all regions (matching DownloadButton.js logic)
+        for (const region in storeData.storesInformation) {
+          const states = storeData.storesInformation[region];
+          for (const state in states) {
+            const stores = states[state];
+            stores.forEach(store => {
+              allStoreIds.push(store.storeTLC);
+            });
+          }
+        }
       } else if (by === 'Store') {
         allStoreIds = inputList;
         progressFill.style.width = '20%';
