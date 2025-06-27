@@ -658,3 +658,290 @@
                     return;
                 }
                 filesToUpload = Array.from(files);
+            } else if (selectedMethod === 'chunk') {
+                // CSV chunking and upload
+                const csvFile = csvFileInput.files[0];
+                if (!csvFile) {
+                    alert('Please select a CSV file to chunk and upload.');
+                    return;
+                }
+
+                const rowsPerFile = parseInt(document.getElementById('rowsPerChunk').value, 10);
+                if (isNaN(rowsPerFile) || rowsPerFile < 1) {
+                    alert('Please enter a valid number of rows per file.');
+                    return;
+                }
+
+                const doValidation = document.getElementById('uploadValidation').checked;
+
+                // Check if JSZip is available
+                if (typeof JSZip === 'undefined') {
+                    alert('JSZip library is required for chunking functionality. Please include it on your page.');
+                    return;
+                }
+
+                uploadButton.disabled = true;
+                statusContainer.innerHTML = '';
+
+                // Add status header for chunking
+                statusContainer.innerHTML = `
+                    <div class="massUploader-statusHeader">
+                        <span style="width:22px;flex-shrink:0;">Mark</span>
+                        <span style="flex:1 1 auto;">Processing</span>
+                    </div>
+                `;
+
+                // Add chunking status row
+                const chunkingStatusRow = document.createElement('div');
+                chunkingStatusRow.className = 'massUploader-statusRow';
+                chunkingStatusRow.innerHTML = `
+                    <span style="width:22px;flex-shrink:0;"></span>
+                    <div class="massUploader-statusText status-chunking">Chunking CSV file...</div>
+                `;
+                statusContainer.appendChild(chunkingStatusRow);
+
+                try {
+                    // Chunk the CSV file
+                    const chunks = await chunkCSVFile(csvFile, rowsPerFile, doValidation);
+                    
+                    // Update status
+                    chunkingStatusRow.querySelector('.massUploader-statusText').innerHTML = `Created ${chunks.length} chunks from ${csvFile.name}`;
+                    chunkingStatusRow.querySelector('.massUploader-statusText').className = 'massUploader-statusText status-success';
+                    
+                    filesToUpload = chunks;
+                } catch (error) {
+                    console.error('Error chunking CSV:', error);
+                    chunkingStatusRow.querySelector('.massUploader-statusText').innerHTML = `Error: ${error.message}`;
+                    chunkingStatusRow.querySelector('.massUploader-statusText').className = 'massUploader-statusText status-error';
+                    uploadButton.disabled = false;
+                    return;
+                }
+            }
+
+            uploadButton.disabled = true;
+
+            // Clear previous status (except chunking status if present)
+            if (selectedMethod === 'files') {
+                statusContainer.innerHTML = '';
+            }
+
+            // Display file names and initial status
+            if (statusContainer.innerHTML === '') {
+                statusContainer.innerHTML = `
+                    <div class="massUploader-statusHeader">
+                        <span style="width:22px;flex-shrink:0;">Mark</span>
+                        <span style="flex:1 1 auto;">File</span>
+                    </div>
+                `;
+            }
+
+            filesToUpload.forEach(file => {
+                // Container for each file status
+                const fileStatusRow = document.createElement('div');
+                fileStatusRow.className = 'massUploader-statusRow';
+
+                // Tri-state/quad-state indicator (custom button)
+                const triBtn = document.createElement('button');
+                triBtn.type = 'button';
+                triBtn.title = 'Toggle status: grey → red → yellow → green → grey';
+                triBtn.style.margin = '0 8px 0 0';
+                triBtn.style.width = '22px';
+                triBtn.style.height = '22px';
+                triBtn.style.border = 'none';
+                triBtn.style.background = 'none';
+                triBtn.style.padding = '0';
+                triBtn.style.cursor = 'pointer';
+                triBtn.style.display = 'flex';
+                triBtn.style.alignItems = 'center';
+                triBtn.style.justifyContent = 'center';
+
+                // Custom state: 0=grey, 1=red, 2=yellow, 3=green
+                let cbState = 0;
+                fileStates[file.name] = { state: 'waiting', error: null, checkboxState: 0 };
+
+                // Visual indicator (circle)
+                const circle = document.createElement('span');
+                circle.style.display = 'inline-block';
+                circle.style.width = '16px';
+                circle.style.height = '16px';
+                circle.style.borderRadius = '50%';
+                circle.style.border = '2px solid #888';
+                circle.style.background = '#ccc';
+                circle.style.transition = 'background 0.2s, border 0.2s';
+
+                triBtn.appendChild(circle);
+
+                // Status text
+                const fileStatus = document.createElement('div');
+                fileStatus.id = `status-${CSS.escape(file.name)}`;
+                fileStatus.className = 'massUploader-statusText status-waiting';
+                fileStatus.innerText = `${file.name} - Waiting`;
+
+                // TriBtn click cycles through states
+                triBtn.addEventListener('click', function(e) {
+                    cbState = (cbState + 1) % 4;
+                    fileStates[file.name].checkboxState = cbState;
+                    updateStatusRow(file, fileStates[file.name].state, fileStates[file.name].error);
+                });
+
+                fileStatusRow.appendChild(triBtn);
+                fileStatusRow.appendChild(fileStatus);
+                statusContainer.appendChild(fileStatusRow);
+
+                // Helper to update triBtn color
+                function updateTriBtnColor(cbState) {
+                    switch (cbState) {
+                        case 0: // grey
+                            circle.style.background = '#ccc';
+                            circle.style.borderColor = '#888';
+                            break;
+                        case 1: // red
+                            circle.style.background = '#c62828';
+                            circle.style.borderColor = '#c62828';
+                            break;
+                        case 2: // yellow
+                            circle.style.background = '#fbc02d';
+                            circle.style.borderColor = '#fbc02d';
+                            break;
+                        case 3: // green
+                            circle.style.background = '#388e3c';
+                            circle.style.borderColor = '#388e3c';
+                            break;
+                    }
+                }
+
+                // Patch updateStatusRow to update triBtn color
+                if (!statusContainer._triPatch) {
+                    const origUpdateStatusRow = typeof updateStatusRow === 'function' ? updateStatusRow : null;
+                    window.updateStatusRow = function(file, state, errorMsg) {
+                        if (origUpdateStatusRow) origUpdateStatusRow(file, state, errorMsg);
+                        const cbState = fileStates[file.name]?.checkboxState ?? 0;
+                        const row = document.getElementById(`status-${CSS.escape(file.name)}`)?.parentElement;
+                        if (row) {
+                            const btn = row.querySelector('button');
+                            const circ = btn && btn.querySelector('span');
+                            if (circ) {
+                                switch (cbState) {
+                                    case 0: circ.style.background = '#ccc'; circ.style.borderColor = '#888'; break;
+                                    case 1: circ.style.background = '#c62828'; circ.style.borderColor = '#c62828'; break;
+                                    case 2: circ.style.background = '#fbc02d'; circ.style.borderColor = '#fbc02d'; break;
+                                    case 3: circ.style.background = '#388e3c'; circ.style.borderColor = '#388e3c'; break;
+                                }
+                            }
+                        }
+                    };
+                    statusContainer._triPatch = true;
+                }
+                updateTriBtnColor(cbState);
+                // Initial color
+                updateStatusRow(file, 'waiting');
+            });
+
+            // Identify the site's existing file input (the one the page actually uses)
+            const siteFileInput = document.querySelector('input[type="file"]');
+            if (!siteFileInput) {
+                filesToUpload.forEach(file => {
+                    const fileStatusDiv = document.getElementById(`status-${CSS.escape(file.name)}`);
+                    if (fileStatusDiv) {
+                        fileStatusDiv.className = 'massUploader-statusText status-error';
+                        fileStatusDiv.innerText = `${file.name} - Error: Could not find the site's file input.`;
+                    }
+                });
+                uploadButton.disabled = false;
+                return;
+            }
+
+            // For each selected file, forcibly attach it & dispatch "change"
+            filesToUpload.forEach((file, index) => {
+                setTimeout(() => {
+                    // Update status to "Injecting"
+                    const fileStatusDiv = document.getElementById(`status-${CSS.escape(file.name)}`);
+                    if (fileStatusDiv) {
+                        fileStatusDiv.className = 'massUploader-statusText status-injecting';
+                        fileStatusDiv.innerText = `${file.name} - Injecting...`;
+                    }
+
+                    // 1) Programmatically set the .files property via DataTransfer
+                    const dt = new DataTransfer();
+                    dt.items.add(file);
+                    siteFileInput.files = dt.files;
+
+                    // 2) Dispatch a "change" event so the site sees the new file
+                    const event = new Event('change', { bubbles: true });
+                    siteFileInput.dispatchEvent(event);
+
+                    // After dispatching, start polling for toast/notification for up to 35 seconds
+                    let elapsed = 0;
+                    const pollingInterval = 1000; // poll every second
+                    const maxPollingTime = 35000; // 35 seconds
+                    const poll = setInterval(() => {
+                        const toastElement = document.querySelector('.toast, .notification, .banner');
+                        if (toastElement) {
+                            const toastMessage = toastElement.innerText.trim();
+                            if (fileStatusDiv) {
+                                fileStatusDiv.className = 'massUploader-statusText status-success';
+                                fileStatusDiv.innerText = `${file.name} - Injected. Status: ${toastMessage}`;
+                            }
+                            console.log(`Injected file: ${file.name} [${index + 1}/${filesToUpload.length}] - ${toastMessage}`);
+                            clearInterval(poll);
+                        }
+                        elapsed += pollingInterval;
+                        if (elapsed >= maxPollingTime) {
+                            if (fileStatusDiv && fileStatusDiv.innerText.indexOf("Status:") === -1) {
+                                fileStatusDiv.className = 'massUploader-statusText status-success';
+                                fileStatusDiv.innerText = `${file.name} - Injected.`;
+                            }
+                            clearInterval(poll);
+                        }
+                    }, pollingInterval);
+
+                }, index * 30000); // 30-second spacing between files
+            });
+
+            // Re-enable upload button after all files are processed (rough estimate)
+            setTimeout(() => {
+                uploadButton.disabled = false;
+            }, filesToUpload.length * 30000 + 1000);
+        });
+
+        // Trap focus inside modal
+        overlay.addEventListener('keydown', function(e) {
+            if (e.key === 'Tab') {
+                const focusable = overlay.querySelectorAll('button, [tabindex="0"], input[type="file"]');
+                const focusableArr = Array.from(focusable).filter(el => el.offsetParent !== null);
+                if (!focusableArr.length) return;
+                const first = focusableArr[0], last = focusableArr[focusableArr.length - 1];
+                if (e.shiftKey && document.activeElement === first) {
+                    last.focus();
+                    e.preventDefault();
+                } else if (!e.shiftKey && document.activeElement === last) {
+                    first.focus();
+                    e.preventDefault();
+                }
+            }
+            if (e.key === 'Escape') {
+                closeButton.click();
+            }
+        });
+    }
+
+    function wireUpMassUploaderButton() {
+        const massUploaderButton = document.getElementById('massUploaderButton');
+        if (massUploaderButton) {
+            massUploaderButton.addEventListener('click', addMassUploaderFunctionality);
+            return true;
+        }
+        return false;
+    }
+
+    // Try hooking up immediately
+    if (!wireUpMassUploaderButton()) {
+        // If the button isn't in the DOM yet, watch for changes
+        const observer = new MutationObserver(() => {
+            if (wireUpMassUploaderButton()) {
+                observer.disconnect();
+            }
+        });
+        observer.observe(document.body, { childList: true, subtree: true });
+    }
+})();
