@@ -18,6 +18,29 @@
     function addMassUploaderFunctionality() {
         console.log('Enhanced Mass Uploader button clicked');
 
+        // Inject helper script for file assignment (bypass userscript sandbox restrictions)
+        if (!window.__MU_injected) {
+            window.__MU_injected = true;
+            const s = document.createElement('script');
+            s.textContent = `
+                window.addEventListener('message', e => {
+                    if (e.data?.type === 'MU_SET_FILE') {
+                        const file = e.data.file;
+                        const input = [...document.querySelectorAll('input[type=file]')]
+                            .find(el => !el.id || !['massFileInput', 'csvFileInput'].includes(el.id));
+                        if (input) {
+                            const dt = new DataTransfer();
+                            dt.items.add(file);
+                            input.files = dt.files;
+                            input.dispatchEvent(new Event('change', { bubbles: true }));
+                        }
+                    }
+                });
+            `;
+            document.documentElement.appendChild(s);
+            s.remove();
+        }
+
         // Make fileStates accessible to all handlers
         let fileStates = {};
 
@@ -530,11 +553,19 @@
 
         // Function to update status row display and styling
         function updateStatusRow(file, state, errorMsg = '') {
-            const fileStatusDiv = document.getElementById(`status-${CSS.escape(file.name)}`);
-            if (!fileStatusDiv) return;
+            const fileKey = file.webkitRelativePath || file.name;
+            const fileId = `status-${btoa(fileKey).replace(/[=+/]/g, '')}`;
+            const fileStatusDiv = document.getElementById(fileId);
+            if (!fileStatusDiv) {
+                console.warn('[MassUploader] Status row not found for file:', fileKey);
+                return;
+            }
 
-            fileStates[file.name].state = state;
-            fileStates[file.name].error = errorMsg || null;
+            if (!fileStates[fileKey]) {
+                fileStates[fileKey] = { state: 'waiting', error: null, checkboxState: 0 };
+            }
+            fileStates[fileKey].state = state;
+            fileStates[fileKey].error = errorMsg || null;
 
             switch (state) {
                 case 'waiting':
@@ -559,7 +590,7 @@
             }
 
             // Update tri-button color based on current checkbox state
-            const cbState = fileStates[file.name]?.checkboxState ?? 0;
+            const cbState = fileStates[fileKey]?.checkboxState ?? 0;
             const row = fileStatusDiv.parentElement;
             if (row) {
                 const btn = row.querySelector('button');
@@ -577,6 +608,9 @@
 
         // Function to create individual file tracking row
         function createFileTrackingRow(file) {
+            const fileKey = file.webkitRelativePath || file.name;
+            const fileId = `status-${btoa(fileKey).replace(/[=+/]/g, '')}`;
+            
             // Container for each file status
             const fileStatusRow = document.createElement('div');
             fileStatusRow.className = 'massUploader-statusRow';
@@ -598,7 +632,7 @@
 
             // Custom state: 0=grey, 1=red, 2=yellow, 3=green
             let cbState = 0;
-            fileStates[file.name] = { state: 'waiting', error: null, checkboxState: 0 };
+            fileStates[fileKey] = { state: 'waiting', error: null, checkboxState: 0 };
 
             // Visual indicator (circle)
             const circle = document.createElement('span');
@@ -614,15 +648,15 @@
 
             // Status text
             const fileStatus = document.createElement('div');
-            fileStatus.id = `status-${CSS.escape(file.name)}`;
+            fileStatus.id = fileId;
             fileStatus.className = 'massUploader-statusText status-waiting';
             fileStatus.innerText = `${file.name} - Waiting`;
 
             // TriBtn click cycles through states
             triBtn.addEventListener('click', function(e) {
                 cbState = (cbState + 1) % 4;
-                fileStates[file.name].checkboxState = cbState;
-                updateStatusRow(file, fileStates[file.name].state, fileStates[file.name].error);
+                fileStates[fileKey].checkboxState = cbState;
+                updateStatusRow(file, fileStates[fileKey].state, fileStates[fileKey].error);
             });
 
             fileStatusRow.appendChild(triBtn);
@@ -833,11 +867,6 @@
 
                 const doValidation = document.getElementById('uploadValidation').checked;
 
-                // Check if JSZip is available
-                if (typeof JSZip === 'undefined') {
-                    alert('JSZip library is required for chunking functionality. Please include it on your page.');
-                    return;
-                }
 
                 uploadButton.disabled = true;
                 statusContainer.innerHTML = '';
@@ -893,15 +922,24 @@
                 }
             }
 
+            // Ensure status rows exist before proceeding with upload
+            if (filesToUpload.length > 0) {
+                // Check if status rows already exist, if not create them
+                const firstFileKey = filesToUpload[0].webkitRelativePath || filesToUpload[0].name;
+                const firstFileId = `status-${btoa(firstFileKey).replace(/[=+/]/g, '')}`;
+                if (!document.getElementById(firstFileId)) {
+                    // Status rows don't exist, create them now
+                    displayFilesWithStatus(filesToUpload);
+                }
+            }
+
             // Identify the site's existing file input (the one the page actually uses)
-            const siteFileInput = document.querySelector('input[type="file"]');
+            // Exclude our own internal file inputs
+            const siteFileInput = [...document.querySelectorAll('input[type="file"]')]
+                .find(el => !['massFileInput', 'csvFileInput'].includes(el.id));
             if (!siteFileInput) {
                 filesToUpload.forEach(file => {
-                    const fileStatusDiv = document.getElementById(`status-${CSS.escape(file.name)}`);
-                    if (fileStatusDiv) {
-                        fileStatusDiv.className = 'massUploader-statusText status-error';
-                        fileStatusDiv.innerText = `${file.name} - Error: Could not find the site's file input.`;
-                    }
+                    updateStatusRow(file, 'error', 'Could not find the site\'s file input.');
                 });
                 uploadButton.disabled = false;
                 return;
@@ -911,42 +949,26 @@
             filesToUpload.forEach((file, index) => {
                 setTimeout(() => {
                     // Update status to "Injecting"
-                    const fileStatusDiv = document.getElementById(`status-${CSS.escape(file.name)}`);
-                    if (fileStatusDiv) {
-                        fileStatusDiv.className = 'massUploader-statusText status-injecting';
-                        fileStatusDiv.innerText = `${file.name} - Injecting...`;
-                    }
+                    updateStatusRow(file, 'injecting');
 
-                    // 1) Programmatically set the .files property via DataTransfer
-                    const dt = new DataTransfer();
-                    dt.items.add(file);
-                    siteFileInput.files = dt.files;
-
-                    // 2) Dispatch a "change" event so the site sees the new file
-                    const event = new Event('change', { bubbles: true });
-                    siteFileInput.dispatchEvent(event);
+                    // Send file to page context via postMessage (bypasses userscript sandbox restrictions)
+                    window.postMessage({ type: 'MU_SET_FILE', file }, '*');
 
                     // After dispatching, start polling for toast/notification for up to 35 seconds
                     let elapsed = 0;
                     const pollingInterval = 1000; // poll every second
                     const maxPollingTime = 35000; // 35 seconds
                     const poll = setInterval(() => {
-                        const toastElement = document.querySelector('.toast, .notification, .banner');
+                        const toastElement = document.querySelector('.toast, .notification, .banner, [role="alert"]');
                         if (toastElement) {
                             const toastMessage = toastElement.innerText.trim();
-                            if (fileStatusDiv) {
-                                fileStatusDiv.className = 'massUploader-statusText status-success';
-                                fileStatusDiv.innerText = `${file.name} - Injected. Status: ${toastMessage}`;
-                            }
+                            updateStatusRow(file, 'success', toastMessage);
                             console.log(`Injected file: ${file.name} [${index + 1}/${filesToUpload.length}] - ${toastMessage}`);
                             clearInterval(poll);
                         }
                         elapsed += pollingInterval;
                         if (elapsed >= maxPollingTime) {
-                            if (fileStatusDiv && fileStatusDiv.innerText.indexOf("Status:") === -1) {
-                                fileStatusDiv.className = 'massUploader-statusText status-success';
-                                fileStatusDiv.innerText = `${file.name} - Injected.`;
-                            }
+                            updateStatusRow(file, 'success');
                             clearInterval(poll);
                         }
                     }, pollingInterval);
@@ -963,8 +985,8 @@
         // Trap focus inside modal
         overlay.addEventListener('keydown', function(e) {
             if (e.key === 'Tab') {
-                const focusable = overlay.querySelectorAll('button, [tabindex="0"], input[type="file"]');
-                const focusableArr = Array.from(focusable).filter(el => el.offsetParent !== null);
+                const focusable = overlay.querySelectorAll('button, [href], input, select, textarea, [tabindex]');
+                const focusableArr = Array.from(focusable).filter(el => el.offsetParent !== null && !el.disabled);
                 if (!focusableArr.length) return;
                 const first = focusableArr[0], last = focusableArr[focusableArr.length - 1];
                 if (e.shiftKey && document.activeElement === first) {
