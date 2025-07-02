@@ -709,6 +709,16 @@
                     chunkingStatusRow.querySelector('.massUploader-statusText').className = 'massUploader-statusText status-success';
                     
                     filesToUpload = chunks;
+                    
+                    // Add file tracking header for chunk files
+                    const fileTrackingHeader = document.createElement('div');
+                    fileTrackingHeader.className = 'massUploader-statusHeader';
+                    fileTrackingHeader.innerHTML = `
+                        <span style="width:22px;flex-shrink:0;">Mark</span>
+                        <span style="flex:1 1 auto;">Chunk Files</span>
+                    `;
+                    statusContainer.appendChild(fileTrackingHeader);
+                    
                 } catch (error) {
                     console.error('Error chunking CSV:', error);
                     chunkingStatusRow.querySelector('.massUploader-statusText').innerHTML = `Error: ${error.message}`;
@@ -716,25 +726,21 @@
                     uploadButton.disabled = false;
                     return;
                 }
+            } else {
+                // For files method, start fresh with file tracking
+                statusContainer.innerHTML = '';
+                
+                // Add file tracking header for regular files
+                const fileTrackingHeader = document.createElement('div');
+                fileTrackingHeader.className = 'massUploader-statusHeader';
+                fileTrackingHeader.innerHTML = `
+                    <span style="width:22px;flex-shrink:0;">Mark</span>
+                    <span style="flex:1 1 auto;">Files</span>
+                `;
+                statusContainer.appendChild(fileTrackingHeader);
             }
 
             uploadButton.disabled = true;
-
-            // Add file tracking header for both methods
-            // For chunking method, we keep the chunking status and add file tracking below it
-            // For files method, we start fresh with file tracking
-            if (selectedMethod === 'files') {
-                statusContainer.innerHTML = '';
-            }
-            
-            // Always add the file tracking header
-            const fileTrackingHeader = document.createElement('div');
-            fileTrackingHeader.className = 'massUploader-statusHeader';
-            fileTrackingHeader.innerHTML = `
-                <span style="width:22px;flex-shrink:0;">Mark</span>
-                <span style="flex:1 1 auto;">${selectedMethod === 'chunk' ? 'Chunk Files' : 'Files'}</span>
-            `;
-            statusContainer.appendChild(fileTrackingHeader);
 
             filesToUpload.forEach(file => {
                 // Container for each file status
