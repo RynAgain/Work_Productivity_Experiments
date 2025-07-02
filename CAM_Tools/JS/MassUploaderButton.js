@@ -526,6 +526,127 @@
             if (folderLabel) folderLabel.focus();
         }, 0);
 
+        // Function to create individual file tracking row
+        function createFileTrackingRow(file) {
+            // Container for each file status
+            const fileStatusRow = document.createElement('div');
+            fileStatusRow.className = 'massUploader-statusRow';
+
+            // Tri-state/quad-state indicator (custom button)
+            const triBtn = document.createElement('button');
+            triBtn.type = 'button';
+            triBtn.title = 'Toggle status: grey → red → yellow → green → grey';
+            triBtn.style.margin = '0 8px 0 0';
+            triBtn.style.width = '22px';
+            triBtn.style.height = '22px';
+            triBtn.style.border = 'none';
+            triBtn.style.background = 'none';
+            triBtn.style.padding = '0';
+            triBtn.style.cursor = 'pointer';
+            triBtn.style.display = 'flex';
+            triBtn.style.alignItems = 'center';
+            triBtn.style.justifyContent = 'center';
+
+            // Custom state: 0=grey, 1=red, 2=yellow, 3=green
+            let cbState = 0;
+            fileStates[file.name] = { state: 'waiting', error: null, checkboxState: 0 };
+
+            // Visual indicator (circle)
+            const circle = document.createElement('span');
+            circle.style.display = 'inline-block';
+            circle.style.width = '16px';
+            circle.style.height = '16px';
+            circle.style.borderRadius = '50%';
+            circle.style.border = '2px solid #888';
+            circle.style.background = '#ccc';
+            circle.style.transition = 'background 0.2s, border 0.2s';
+
+            triBtn.appendChild(circle);
+
+            // Status text
+            const fileStatus = document.createElement('div');
+            fileStatus.id = `status-${CSS.escape(file.name)}`;
+            fileStatus.className = 'massUploader-statusText status-waiting';
+            fileStatus.innerText = `${file.name} - Waiting`;
+
+            // TriBtn click cycles through states
+            triBtn.addEventListener('click', function(e) {
+                cbState = (cbState + 1) % 4;
+                fileStates[file.name].checkboxState = cbState;
+                updateStatusRow(file, fileStates[file.name].state, fileStates[file.name].error);
+            });
+
+            fileStatusRow.appendChild(triBtn);
+            fileStatusRow.appendChild(fileStatus);
+            statusContainer.appendChild(fileStatusRow);
+
+            // Helper to update triBtn color
+            function updateTriBtnColor(cbState) {
+                switch (cbState) {
+                    case 0: // grey
+                        circle.style.background = '#ccc';
+                        circle.style.borderColor = '#888';
+                        break;
+                    case 1: // red
+                        circle.style.background = '#c62828';
+                        circle.style.borderColor = '#c62828';
+                        break;
+                    case 2: // yellow
+                        circle.style.background = '#fbc02d';
+                        circle.style.borderColor = '#fbc02d';
+                        break;
+                    case 3: // green
+                        circle.style.background = '#388e3c';
+                        circle.style.borderColor = '#388e3c';
+                        break;
+                }
+            }
+
+            // Patch updateStatusRow to update triBtn color
+            if (!statusContainer._triPatch) {
+                const origUpdateStatusRow = typeof updateStatusRow === 'function' ? updateStatusRow : null;
+                window.updateStatusRow = function(file, state, errorMsg) {
+                    if (origUpdateStatusRow) origUpdateStatusRow(file, state, errorMsg);
+                    const cbState = fileStates[file.name]?.checkboxState ?? 0;
+                    const row = document.getElementById(`status-${CSS.escape(file.name)}`)?.parentElement;
+                    if (row) {
+                        const btn = row.querySelector('button');
+                        const circ = btn && btn.querySelector('span');
+                        if (circ) {
+                            switch (cbState) {
+                                case 0: circ.style.background = '#ccc'; circ.style.borderColor = '#888'; break;
+                                case 1: circ.style.background = '#c62828'; circ.style.borderColor = '#c62828'; break;
+                                case 2: circ.style.background = '#fbc02d'; circ.style.borderColor = '#fbc02d'; break;
+                                case 3: circ.style.background = '#388e3c'; circ.style.borderColor = '#388e3c'; break;
+                            }
+                        }
+                    }
+                };
+                statusContainer._triPatch = true;
+            }
+            updateTriBtnColor(cbState);
+            // Initial color
+            updateStatusRow(file, 'waiting');
+        }
+
+        // Function to display files and create status tracking immediately when files are selected
+        function displayFilesWithStatus(files) {
+            // Clear previous status
+            statusContainer.innerHTML = '';
+
+            // Display file names and initial status
+            // Add a header row for clarity
+            statusContainer.innerHTML = `
+                <div class="massUploader-statusHeader">
+                    <span style="width:22px;flex-shrink:0;">Mark</span>
+                    <span style="flex:1 1 auto;">File</span>
+                </div>
+            `;
+            Array.from(files).forEach(file => {
+                createFileTrackingRow(file);
+            });
+        }
+
         // === Files upload logic ===
         const fileInput = document.getElementById('massFileInput');
         const folderLabel = document.querySelector('label[for="massFileInput"]');
@@ -650,126 +771,6 @@
             });
         }
 
-        // Function to create individual file tracking row
-        function createFileTrackingRow(file) {
-            // Container for each file status
-            const fileStatusRow = document.createElement('div');
-            fileStatusRow.className = 'massUploader-statusRow';
-
-            // Tri-state/quad-state indicator (custom button)
-            const triBtn = document.createElement('button');
-            triBtn.type = 'button';
-            triBtn.title = 'Toggle status: grey → red → yellow → green → grey';
-            triBtn.style.margin = '0 8px 0 0';
-            triBtn.style.width = '22px';
-            triBtn.style.height = '22px';
-            triBtn.style.border = 'none';
-            triBtn.style.background = 'none';
-            triBtn.style.padding = '0';
-            triBtn.style.cursor = 'pointer';
-            triBtn.style.display = 'flex';
-            triBtn.style.alignItems = 'center';
-            triBtn.style.justifyContent = 'center';
-
-            // Custom state: 0=grey, 1=red, 2=yellow, 3=green
-            let cbState = 0;
-            fileStates[file.name] = { state: 'waiting', error: null, checkboxState: 0 };
-
-            // Visual indicator (circle)
-            const circle = document.createElement('span');
-            circle.style.display = 'inline-block';
-            circle.style.width = '16px';
-            circle.style.height = '16px';
-            circle.style.borderRadius = '50%';
-            circle.style.border = '2px solid #888';
-            circle.style.background = '#ccc';
-            circle.style.transition = 'background 0.2s, border 0.2s';
-
-            triBtn.appendChild(circle);
-
-            // Status text
-            const fileStatus = document.createElement('div');
-            fileStatus.id = `status-${CSS.escape(file.name)}`;
-            fileStatus.className = 'massUploader-statusText status-waiting';
-            fileStatus.innerText = `${file.name} - Waiting`;
-
-            // TriBtn click cycles through states
-            triBtn.addEventListener('click', function(e) {
-                cbState = (cbState + 1) % 4;
-                fileStates[file.name].checkboxState = cbState;
-                updateStatusRow(file, fileStates[file.name].state, fileStates[file.name].error);
-            });
-
-            fileStatusRow.appendChild(triBtn);
-            fileStatusRow.appendChild(fileStatus);
-            statusContainer.appendChild(fileStatusRow);
-
-            // Helper to update triBtn color
-            function updateTriBtnColor(cbState) {
-                switch (cbState) {
-                    case 0: // grey
-                        circle.style.background = '#ccc';
-                        circle.style.borderColor = '#888';
-                        break;
-                    case 1: // red
-                        circle.style.background = '#c62828';
-                        circle.style.borderColor = '#c62828';
-                        break;
-                    case 2: // yellow
-                        circle.style.background = '#fbc02d';
-                        circle.style.borderColor = '#fbc02d';
-                        break;
-                    case 3: // green
-                        circle.style.background = '#388e3c';
-                        circle.style.borderColor = '#388e3c';
-                        break;
-                }
-            }
-
-            // Patch updateStatusRow to update triBtn color
-            if (!statusContainer._triPatch) {
-                const origUpdateStatusRow = typeof updateStatusRow === 'function' ? updateStatusRow : null;
-                window.updateStatusRow = function(file, state, errorMsg) {
-                    if (origUpdateStatusRow) origUpdateStatusRow(file, state, errorMsg);
-                    const cbState = fileStates[file.name]?.checkboxState ?? 0;
-                    const row = document.getElementById(`status-${CSS.escape(file.name)}`)?.parentElement;
-                    if (row) {
-                        const btn = row.querySelector('button');
-                        const circ = btn && btn.querySelector('span');
-                        if (circ) {
-                            switch (cbState) {
-                                case 0: circ.style.background = '#ccc'; circ.style.borderColor = '#888'; break;
-                                case 1: circ.style.background = '#c62828'; circ.style.borderColor = '#c62828'; break;
-                                case 2: circ.style.background = '#fbc02d'; circ.style.borderColor = '#fbc02d'; break;
-                                case 3: circ.style.background = '#388e3c'; circ.style.borderColor = '#388e3c'; break;
-                            }
-                        }
-                    }
-                };
-                statusContainer._triPatch = true;
-            }
-            updateTriBtnColor(cbState);
-            // Initial color
-            updateStatusRow(file, 'waiting');
-        }
-
-        // Function to display files and create status tracking immediately when files are selected
-        function displayFilesWithStatus(files) {
-            // Clear previous status
-            statusContainer.innerHTML = '';
-
-            // Display file names and initial status
-            // Add a header row for clarity
-            statusContainer.innerHTML = `
-                <div class="massUploader-statusHeader">
-                    <span style="width:22px;flex-shrink:0;">Mark</span>
-                    <span style="flex:1 1 auto;">File</span>
-                </div>
-            `;
-            Array.from(files).forEach(file => {
-                createFileTrackingRow(file);
-            });
-        }
 
         // === Upload logic ===
         uploadButton.addEventListener('click', async () => {
