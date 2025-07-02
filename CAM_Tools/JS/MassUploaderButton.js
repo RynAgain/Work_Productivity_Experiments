@@ -720,20 +720,21 @@
 
             uploadButton.disabled = true;
 
-            // Clear previous status (except chunking status if present)
+            // Add file tracking header for both methods
+            // For chunking method, we keep the chunking status and add file tracking below it
+            // For files method, we start fresh with file tracking
             if (selectedMethod === 'files') {
                 statusContainer.innerHTML = '';
             }
-
-            // Display file names and initial status
-            if (statusContainer.innerHTML === '') {
-                statusContainer.innerHTML = `
-                    <div class="massUploader-statusHeader">
-                        <span style="width:22px;flex-shrink:0;">Mark</span>
-                        <span style="flex:1 1 auto;">File</span>
-                    </div>
-                `;
-            }
+            
+            // Always add the file tracking header
+            const fileTrackingHeader = document.createElement('div');
+            fileTrackingHeader.className = 'massUploader-statusHeader';
+            fileTrackingHeader.innerHTML = `
+                <span style="width:22px;flex-shrink:0;">Mark</span>
+                <span style="flex:1 1 auto;">${selectedMethod === 'chunk' ? 'Chunk Files' : 'Files'}</span>
+            `;
+            statusContainer.appendChild(fileTrackingHeader);
 
             filesToUpload.forEach(file => {
                 // Container for each file status

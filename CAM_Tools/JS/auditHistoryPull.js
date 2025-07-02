@@ -457,7 +457,15 @@
                                 XLSX.utils.book_append_sheet(workbook, itemsWorksheet, 'ItemsAvailability');
 
                                 // For the audit history: reduce to one row per unique key
-                                const uniqueData = Array.from(new Map(compiledData.map(item => [item.uniqueKey, item])).values());
+                                // Create unique data by keeping the most recent entry for each uniqueKey
+                                const uniqueDataMap = new Map();
+                                compiledData.forEach(item => {
+                                    const existing = uniqueDataMap.get(item.uniqueKey);
+                                    if (!existing || new Date(item.updatedAt) > new Date(existing.updatedAt)) {
+                                        uniqueDataMap.set(item.uniqueKey, item);
+                                    }
+                                });
+                                const uniqueData = Array.from(uniqueDataMap.values());
                                 console.log('Unique Data Before Download:', uniqueData);
 
                                 if (uniqueData.length > 0) {
