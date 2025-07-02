@@ -528,6 +528,53 @@
             if (folderLabel) folderLabel.focus();
         }, 0);
 
+        // Function to update status row display and styling
+        function updateStatusRow(file, state, errorMsg = '') {
+            const fileStatusDiv = document.getElementById(`status-${CSS.escape(file.name)}`);
+            if (!fileStatusDiv) return;
+
+            fileStates[file.name].state = state;
+            fileStates[file.name].error = errorMsg || null;
+
+            switch (state) {
+                case 'waiting':
+                    fileStatusDiv.className = 'massUploader-statusText status-waiting';
+                    fileStatusDiv.innerText = `${file.name} - Waiting`;
+                    break;
+                case 'injecting':
+                    fileStatusDiv.className = 'massUploader-statusText status-injecting';
+                    fileStatusDiv.innerText = `${file.name} - Injecting...`;
+                    break;
+                case 'success':
+                    fileStatusDiv.className = 'massUploader-statusText status-success';
+                    fileStatusDiv.innerText = `${file.name} - Injected${errorMsg ? '. Status: ' + errorMsg : '.'}`;
+                    break;
+                case 'error':
+                    fileStatusDiv.className = 'massUploader-statusText status-error';
+                    fileStatusDiv.innerText = `${file.name} - Error: ${errorMsg}`;
+                    break;
+                default:
+                    fileStatusDiv.className = 'massUploader-statusText';
+                    fileStatusDiv.innerText = `${file.name} - ${state.charAt(0).toUpperCase() + state.slice(1)}`;
+            }
+
+            // Update tri-button color based on current checkbox state
+            const cbState = fileStates[file.name]?.checkboxState ?? 0;
+            const row = fileStatusDiv.parentElement;
+            if (row) {
+                const btn = row.querySelector('button');
+                const circ = btn && btn.querySelector('span');
+                if (circ) {
+                    switch (cbState) {
+                        case 0: circ.style.background = '#ccc'; circ.style.borderColor = '#888'; break;
+                        case 1: circ.style.background = '#c62828'; circ.style.borderColor = '#c62828'; break;
+                        case 2: circ.style.background = '#fbc02d'; circ.style.borderColor = '#fbc02d'; break;
+                        case 3: circ.style.background = '#388e3c'; circ.style.borderColor = '#388e3c'; break;
+                    }
+                }
+            }
+        }
+
         // Function to create individual file tracking row
         function createFileTrackingRow(file) {
             // Container for each file status
@@ -604,30 +651,8 @@
                 }
             }
 
-            // Patch updateStatusRow to update triBtn color
-            if (!statusContainer._triPatch) {
-                const origUpdateStatusRow = typeof updateStatusRow === 'function' ? updateStatusRow : null;
-                window.updateStatusRow = function(file, state, errorMsg) {
-                    if (origUpdateStatusRow) origUpdateStatusRow(file, state, errorMsg);
-                    const cbState = fileStates[file.name]?.checkboxState ?? 0;
-                    const row = document.getElementById(`status-${CSS.escape(file.name)}`)?.parentElement;
-                    if (row) {
-                        const btn = row.querySelector('button');
-                        const circ = btn && btn.querySelector('span');
-                        if (circ) {
-                            switch (cbState) {
-                                case 0: circ.style.background = '#ccc'; circ.style.borderColor = '#888'; break;
-                                case 1: circ.style.background = '#c62828'; circ.style.borderColor = '#c62828'; break;
-                                case 2: circ.style.background = '#fbc02d'; circ.style.borderColor = '#fbc02d'; break;
-                                case 3: circ.style.background = '#388e3c'; circ.style.borderColor = '#388e3c'; break;
-                            }
-                        }
-                    }
-                };
-                statusContainer._triPatch = true;
-            }
+            // Set initial tri-button color and status
             updateTriBtnColor(cbState);
-            // Initial color
             updateStatusRow(file, 'waiting');
         }
 
