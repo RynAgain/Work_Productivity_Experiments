@@ -528,10 +528,13 @@
 
         // Function to create individual file tracking row
         function createFileTrackingRow(file) {
-            console.log('createFileTrackingRow called for file:', file.name);
+            console.log('[MassUploader] createFileTrackingRow called for file:', file.name);
+            console.log('[MassUploader] statusContainer in createFileTrackingRow:', statusContainer);
+            
             // Container for each file status
             const fileStatusRow = document.createElement('div');
             fileStatusRow.className = 'massUploader-statusRow';
+            console.log('[MassUploader] Created fileStatusRow:', fileStatusRow);
 
             // Tri-state/quad-state indicator (custom button)
             const triBtn = document.createElement('button');
@@ -579,7 +582,11 @@
 
             fileStatusRow.appendChild(triBtn);
             fileStatusRow.appendChild(fileStatus);
+            console.log('[MassUploader] About to append fileStatusRow to statusContainer');
+            console.log('[MassUploader] fileStatusRow:', fileStatusRow);
+            console.log('[MassUploader] statusContainer before append:', statusContainer);
             statusContainer.appendChild(fileStatusRow);
+            console.log('[MassUploader] statusContainer after append:', statusContainer.innerHTML);
 
             // Helper to update triBtn color
             function updateTriBtnColor(cbState) {
@@ -628,16 +635,24 @@
             updateTriBtnColor(cbState);
             // Initial color
             updateStatusRow(file, 'waiting');
-            console.log('createFileTrackingRow completed for file:', file.name);
+            console.log('[MassUploader] createFileTrackingRow completed for file:', file.name);
         }
 
         // Function to display files and create status tracking immediately when files are selected
         function displayFilesWithStatus(files) {
-            console.log('displayFilesWithStatus called with files:', files);
-            console.log('statusContainer element:', statusContainer);
+            console.log('[MassUploader] displayFilesWithStatus called with files:', files);
+            console.log('[MassUploader] statusContainer element:', statusContainer);
+            console.log('[MassUploader] statusContainer exists:', !!statusContainer);
+            console.log('[MassUploader] statusContainer innerHTML before clear:', statusContainer ? statusContainer.innerHTML : 'N/A');
+            
+            if (!statusContainer) {
+                console.error('[MassUploader] statusContainer not found!');
+                return;
+            }
             
             // Clear previous status
             statusContainer.innerHTML = '';
+            console.log('[MassUploader] statusContainer cleared');
 
             // Display file names and initial status
             // Add a header row for clarity
@@ -647,12 +662,13 @@
                     <span style="flex:1 1 auto;">File</span>
                 </div>
             `;
-            console.log('Header added, now processing files...');
+            console.log('[MassUploader] Header added, statusContainer innerHTML after header:', statusContainer.innerHTML);
             Array.from(files).forEach((file, index) => {
-                console.log(`Processing file ${index + 1}:`, file.name);
+                console.log(`[MassUploader] Processing file ${index + 1}:`, file.name);
                 createFileTrackingRow(file);
+                console.log(`[MassUploader] After processing file ${index + 1}, statusContainer innerHTML:`, statusContainer.innerHTML);
             });
-            console.log('displayFilesWithStatus completed');
+            console.log('[MassUploader] displayFilesWithStatus completed');
         }
 
         // === Files upload logic ===
@@ -660,7 +676,7 @@
         const folderLabel = document.querySelector('label[for="massFileInput"]');
         
         fileInput.addEventListener('change', function() {
-            console.log('File input change event fired, files count:', this.files.length);
+            console.log('[MassUploader] File input change event fired, files count:', this.files.length);
             if (this.files.length > 0) {
                 const folderName = this.files[0].webkitRelativePath
                     ? this.files[0].webkitRelativePath.split('/')[0]
@@ -668,11 +684,11 @@
                 document.getElementById('selectedFolderLabel').textContent = "Selected folder: " + folderName;
                 uploadButton.disabled = false;
                 
-                console.log('About to call displayFilesWithStatus...');
+                console.log('[MassUploader] About to call displayFilesWithStatus...');
                 // Display files with status tracking immediately
                 displayFilesWithStatus(this.files);
             } else {
-                console.log('No files selected');
+                console.log('[MassUploader] No files selected');
                 document.getElementById('selectedFolderLabel').textContent = "No folder selected";
                 uploadButton.disabled = true;
                 // Clear status container
@@ -692,13 +708,13 @@
         const csvLabel = document.querySelector('label[for="csvFileInput"]');
         
         csvFileInput.addEventListener('change', function() {
-            console.log('CSV file input change event fired, files count:', this.files.length);
+            console.log('[MassUploader] CSV file input change event fired, files count:', this.files.length);
             if (this.files.length > 0) {
-                console.log('CSV file selected:', this.files[0].name);
+                console.log('[MassUploader] CSV file selected:', this.files[0].name);
                 document.getElementById('selectedFileLabel').textContent = "Selected file: " + this.files[0].name;
                 uploadButton.disabled = false;
             } else {
-                console.log('No CSV file selected');
+                console.log('[MassUploader] No CSV file selected');
                 document.getElementById('selectedFileLabel').textContent = "No file selected";
                 uploadButton.disabled = true;
             }
