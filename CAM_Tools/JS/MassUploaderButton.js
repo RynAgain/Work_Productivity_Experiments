@@ -528,6 +528,7 @@
 
         // Function to create individual file tracking row
         function createFileTrackingRow(file) {
+            console.log('createFileTrackingRow called for file:', file.name);
             // Container for each file status
             const fileStatusRow = document.createElement('div');
             fileStatusRow.className = 'massUploader-statusRow';
@@ -627,10 +628,14 @@
             updateTriBtnColor(cbState);
             // Initial color
             updateStatusRow(file, 'waiting');
+            console.log('createFileTrackingRow completed for file:', file.name);
         }
 
         // Function to display files and create status tracking immediately when files are selected
         function displayFilesWithStatus(files) {
+            console.log('displayFilesWithStatus called with files:', files);
+            console.log('statusContainer element:', statusContainer);
+            
             // Clear previous status
             statusContainer.innerHTML = '';
 
@@ -642,9 +647,12 @@
                     <span style="flex:1 1 auto;">File</span>
                 </div>
             `;
-            Array.from(files).forEach(file => {
+            console.log('Header added, now processing files...');
+            Array.from(files).forEach((file, index) => {
+                console.log(`Processing file ${index + 1}:`, file.name);
                 createFileTrackingRow(file);
             });
+            console.log('displayFilesWithStatus completed');
         }
 
         // === Files upload logic ===
@@ -652,6 +660,7 @@
         const folderLabel = document.querySelector('label[for="massFileInput"]');
         
         fileInput.addEventListener('change', function() {
+            console.log('File input change event fired, files count:', this.files.length);
             if (this.files.length > 0) {
                 const folderName = this.files[0].webkitRelativePath
                     ? this.files[0].webkitRelativePath.split('/')[0]
@@ -659,9 +668,11 @@
                 document.getElementById('selectedFolderLabel').textContent = "Selected folder: " + folderName;
                 uploadButton.disabled = false;
                 
+                console.log('About to call displayFilesWithStatus...');
                 // Display files with status tracking immediately
                 displayFilesWithStatus(this.files);
             } else {
+                console.log('No files selected');
                 document.getElementById('selectedFolderLabel').textContent = "No folder selected";
                 uploadButton.disabled = true;
                 // Clear status container
@@ -681,10 +692,13 @@
         const csvLabel = document.querySelector('label[for="csvFileInput"]');
         
         csvFileInput.addEventListener('change', function() {
+            console.log('CSV file input change event fired, files count:', this.files.length);
             if (this.files.length > 0) {
+                console.log('CSV file selected:', this.files[0].name);
                 document.getElementById('selectedFileLabel').textContent = "Selected file: " + this.files[0].name;
                 uploadButton.disabled = false;
             } else {
+                console.log('No CSV file selected');
                 document.getElementById('selectedFileLabel').textContent = "No file selected";
                 uploadButton.disabled = true;
             }

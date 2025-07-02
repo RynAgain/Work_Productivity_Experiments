@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mass Uploader Test</title>
+</head>
+<body>
+    <h1>Mass Uploader Test</h1>
+    <button id="massUploaderButton">Open Mass Uploader</button>
+    
+    <!-- Simulate the site's file input that the mass uploader looks for -->
+    <input type="file" id="siteFileInput" style="display: none;">
+    
+    <script src="CAM_Tools/JS/MassUploaderButton.js"></script>
+    
+    <script>
+        // Add some debugging to see if the script loads
+        console.log('Test page loaded');
+        
+        // Check if the mass uploader button exists
+        setTimeout(() => {
+            const btn = document.getElementById('massUploaderButton');
+            console.log('Mass uploader button found:', btn);
+            if (btn) {
+                console.log('Button has click listener attached');
+            }
+        }, 100);
+    </script>
+</body>
+</html>
