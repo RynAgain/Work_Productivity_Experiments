@@ -272,6 +272,17 @@
                     overflow-y: auto;
                     transition: opacity 0.2s;
                 }
+                
+                /* Fix for status container visibility */
+                .massUploader-body {
+                    flex: 1 1 auto;
+                    overflow-y: auto;
+                }
+                #statusContainer {
+                    flex: 1 1 auto;
+                    min-height: 120px;
+                    max-height: 50vh;
+                }
             `;
             document.head.appendChild(style);
         }
@@ -671,6 +682,9 @@
             console.log('[MassUploader] fileStatusRow to append:', fileStatusRow);
             statusContainer.appendChild(fileStatusRow);
             console.log('[MassUploader] fileStatusRow appended successfully');
+            
+            // Auto-scroll to keep the newest row in view
+            fileStatusRow.scrollIntoView({block: 'nearest'});
             console.log('[MassUploader] statusContainer after append:', statusContainer.innerHTML);
 
             // Helper to update triBtn color
