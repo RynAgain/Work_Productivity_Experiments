@@ -988,41 +988,131 @@
                 return;
             }
 
-            // For each selected file, forcibly attach it & dispatch "change"
-            filesToUpload.forEach((file, index) => {
-                setTimeout(() => {
-                    // Update status to "Injecting"
-                    updateStatusRow(file, 'injecting');
+            // Create skip wait button
+            const skipWaitButton = document.createElement('button');
+            skipWaitButton.id = 'skipWaitButton';
+            skipWaitButton.innerText = 'Skip Wait (Next File)';
+            skipWaitButton.style.cssText = `
+                background: #ff9800;
+                color: white;
+                border: none;
+                padding: 8px 16px;
+                border-radius: 4px;
+                cursor: pointer;
+                font-size: 13px;
+                margin-top: 10px;
+                display: none;
+            `;
+            skipWaitButton.addEventListener('mouseover', () => {
+                skipWaitButton.style.background = '#f57c00';
+            });
+            skipWaitButton.addEventListener('mouseout', () => {
+                skipWaitButton.style.background = '#ff9800';
+            });
+            
+            // Insert skip button after upload button
+            uploadButton.parentNode.insertBefore(skipWaitButton, uploadButton.nextSibling);
 
-                    // Send file to page context via postMessage (bypasses userscript sandbox restrictions)
-                    window.postMessage({ type: 'MU_SET_FILE', file }, '*');
+            // Track timeouts and current upload state
+            let uploadTimeouts = [];
+            let countdownIntervals = [];
+            let currentUploadIndex = 0;
+            let isUploading = false;
 
-                    // After dispatching, start polling for toast/notification for up to 35 seconds
-                    let elapsed = 0;
-                    const pollingInterval = 1000; // poll every second
-                    const maxPollingTime = 35000; // 35 seconds
-                    const poll = setInterval(() => {
-                        const toastElement = document.querySelector('.toast, .notification, .banner, [role="alert"]');
-                        if (toastElement) {
-                            const toastMessage = toastElement.innerText.trim();
-                            updateStatusRow(file, 'success', toastMessage);
-                            console.log(`Injected file: ${file.name} [${index + 1}/${filesToUpload.length}] - ${toastMessage}`);
-                            clearInterval(poll);
+            // Function to process next file
+            function processNextFile() {
+                if (currentUploadIndex >= filesToUpload.length) {
+                    // All files processed
+                    uploadButton.disabled = false;
+                    skipWaitButton.style.display = 'none';
+                    isUploading = false;
+                    return;
+                }
+
+                const file = filesToUpload[currentUploadIndex];
+                const index = currentUploadIndex;
+                
+                // Update status to "Injecting"
+                updateStatusRow(file, 'injecting');
+
+                // Send file to page context via postMessage (bypasses userscript sandbox restrictions)
+                window.postMessage({ type: 'MU_SET_FILE', file }, '*');
+
+                // After dispatching, start polling for toast/notification for up to 35 seconds
+                let elapsed = 0;
+                const pollingInterval = 1000; // poll every second
+                const maxPollingTime = 35000; // 35 seconds
+                const poll = setInterval(() => {
+                    const toastElement = document.querySelector('.toast, .notification, .banner, [role="alert"]');
+                    if (toastElement) {
+                        const toastMessage = toastElement.innerText.trim();
+                        updateStatusRow(file, 'success', toastMessage);
+                        console.log(`Injected file: ${file.name} [${index + 1}/${filesToUpload.length}] - ${toastMessage}`);
+                        clearInterval(poll);
+                    }
+                    elapsed += pollingInterval;
+                    if (elapsed >= maxPollingTime) {
+                        updateStatusRow(file, 'success');
+                        clearInterval(poll);
+                    }
+                }, pollingInterval);
+
+                currentUploadIndex++;
+                
+                // Schedule next file (if not the last one)
+                if (currentUploadIndex < filesToUpload.length) {
+                    skipWaitButton.style.display = 'block';
+                    
+                    // Start countdown timer
+                    let timeRemaining = 30;
+                    const nextFileName = filesToUpload[currentUploadIndex].name;
+                    
+                    // Update button text immediately
+                    skipWaitButton.innerText = `Skip Wait (${timeRemaining}s) - Next: ${nextFileName}`;
+                    
+                    // Countdown interval
+                    const countdownInterval = setInterval(() => {
+                        timeRemaining--;
+                        if (timeRemaining > 0) {
+                            skipWaitButton.innerText = `Skip Wait (${timeRemaining}s) - Next: ${nextFileName}`;
+                        } else {
+                            clearInterval(countdownInterval);
                         }
-                        elapsed += pollingInterval;
-                        if (elapsed >= maxPollingTime) {
-                            updateStatusRow(file, 'success');
-                            clearInterval(poll);
-                        }
-                    }, pollingInterval);
+                    }, 1000);
+                    
+                    countdownIntervals.push(countdownInterval);
+                    
+                    const nextTimeout = setTimeout(() => {
+                        clearInterval(countdownInterval);
+                        skipWaitButton.style.display = 'none';
+                        processNextFile();
+                    }, 30000); // 30-second spacing
+                    
+                    uploadTimeouts.push(nextTimeout);
+                } else {
+                    // Last file, hide skip button and re-enable upload
+                    setTimeout(() => {
+                        uploadButton.disabled = false;
+                        skipWaitButton.style.display = 'none';
+                        isUploading = false;
+                    }, 1000);
+                }
+            }
 
-                }, index * 30000); // 30-second spacing between files
+            // Skip wait button functionality
+            skipWaitButton.addEventListener('click', () => {
+                // Clear any pending timeouts and countdown intervals
+                uploadTimeouts.forEach(timeout => clearTimeout(timeout));
+                countdownIntervals.forEach(interval => clearInterval(interval));
+                uploadTimeouts = [];
+                countdownIntervals = [];
+                skipWaitButton.style.display = 'none';
+                processNextFile();
             });
 
-            // Re-enable upload button after all files are processed (rough estimate)
-            setTimeout(() => {
-                uploadButton.disabled = false;
-            }, filesToUpload.length * 30000 + 1000);
+            // Start the upload process
+            isUploading = true;
+            processNextFile();
         });
 
         // Trap focus inside modal
