@@ -248,6 +248,7 @@
                 .status-waiting { color: #888; }
                 .status-injecting { color: #e67e22; }
                 .status-success { color: #388e3c; }
+                .status-warning { color: #ff9800; font-weight: 500; }
                 .status-error { color: #c62828; }
                 .status-chunking { color: #2196f3; }
                 
@@ -282,6 +283,41 @@
                     flex: 1 1 auto;
                     min-height: 120px;
                     max-height: 50vh;
+                }
+                
+                /* Summary styling */
+                .massUploader-summary {
+                    margin-top: 15px;
+                    padding: 12px;
+                    border: 2px solid #004E36;
+                    border-radius: 6px;
+                    background: #f8f9fa;
+                }
+                .massUploader-summary h4 {
+                    margin: 0 0 8px 0;
+                    color: #004E36;
+                    font-size: 16px;
+                }
+                .massUploader-summary p {
+                    margin: 4px 0;
+                    font-size: 14px;
+                }
+                .massUploader-summary details {
+                    margin-top: 8px;
+                }
+                .massUploader-summary summary {
+                    cursor: pointer;
+                    font-weight: bold;
+                    color: #c62828;
+                    font-size: 14px;
+                }
+                .massUploader-summary ul {
+                    margin: 8px 0;
+                    padding-left: 20px;
+                }
+                .massUploader-summary li {
+                    margin: 4px 0;
+                    font-size: 13px;
                 }
             `;
             document.head.appendChild(style);
@@ -592,6 +628,10 @@
                 case 'success':
                     fileStatusDiv.className = 'massUploader-statusText status-success';
                     fileStatusDiv.innerText = `${file.name} - Injected${errorMsg ? '. Status: ' + errorMsg : '.'}`;
+                    break;
+                case 'warning':
+                    fileStatusDiv.className = 'massUploader-statusText status-warning';
+                    fileStatusDiv.innerText = `${file.name} - Partial Success: ${errorMsg}`;
                     break;
                 case 'error':
                     fileStatusDiv.className = 'massUploader-statusText status-error';
@@ -1018,11 +1058,186 @@
             let countdownIntervals = [];
             let currentUploadIndex = 0;
             let isUploading = false;
+            let failedFiles = []; // Track files that failed to upload
+            let processedAlerts = new Set(); // Avoid processing duplicate alerts
+
+            // Function to classify alerts based on content and visual cues
+            function classifyAlert(alertElement, alertText) {
+                const alertStyle = window.getComputedStyle(alertElement);
+                const backgroundColor = alertStyle.backgroundColor;
+                const color = alertStyle.color;
+                const hasDownloadLink = alertElement.querySelector('a[href*="download"], a[href*="error"]') !== null;
+                
+                // Normalize text for pattern matching
+                const normalizedText = alertText.toLowerCase().trim();
+                
+                console.log('[MassUploader] Classifying alert:', {
+                    text: alertText,
+                    backgroundColor,
+                    color,
+                    hasDownloadLink
+                });
+                
+                // Success patterns
+                if (normalizedText.includes('successfully uploaded') && normalizedText.includes('.csv')) {
+                    return {
+                        type: 'success_file',
+                        severity: 'success',
+                        message: alertText,
+                        shouldProceed: true
+                    };
+                }
+                
+                // Partial failure with download link
+                if (normalizedText.includes('records failed to upload') && hasDownloadLink) {
+                    return {
+                        type: 'partial_failure',
+                        severity: 'warning',
+                        message: alertText,
+                        shouldProceed: true, // Can proceed but mark as partial failure
+                        hasErrorFile: true
+                    };
+                }
+                
+                // Partial success (usually paired with failure)
+                if (normalizedText.includes('records successfully uploaded') && !normalizedText.includes('.csv')) {
+                    return {
+                        type: 'partial_success',
+                        severity: 'info',
+                        message: alertText,
+                        shouldProceed: true
+                    };
+                }
+                
+                // Validation errors
+                if (normalizedText.includes('validation error') || normalizedText.includes('headers must be')) {
+                    return {
+                        type: 'validation_error',
+                        severity: 'error',
+                        message: alertText,
+                        shouldProceed: false // Stop processing
+                    };
+                }
+                
+                // Server errors
+                if (normalizedText.includes('server error') || normalizedText.includes('try again later')) {
+                    return {
+                        type: 'server_error',
+                        severity: 'error',
+                        message: alertText,
+                        shouldProceed: false // Stop processing
+                    };
+                }
+                
+                // Generic success (fallback)
+                if (normalizedText.includes('success')) {
+                    return {
+                        type: 'generic_success',
+                        severity: 'success',
+                        message: alertText,
+                        shouldProceed: true
+                    };
+                }
+                
+                // Unknown alert type
+                return {
+                    type: 'unknown',
+                    severity: 'info',
+                    message: alertText,
+                    shouldProceed: true // Default to proceed unless explicitly an error
+                };
+            }
+
+            // Enhanced polling function for alert detection
+            function pollForAlerts(file, index, onComplete) {
+                let elapsed = 0;
+                const pollingInterval = 100; // Poll every 100ms for better responsiveness
+                const maxPollingTime = 45000; // 45 seconds to account for larger files
+                let alertsDetected = [];
+                let finalOutcome = null;
+                
+                console.log(`[MassUploader] Starting alert polling for file: ${file.name}`);
+                
+                const poll = setInterval(() => {
+                    // Look for alerts with mdn-alert-message attribute
+                    const alertElements = document.querySelectorAll('div[mdn-alert-message]');
+                    
+                    alertElements.forEach(alertElement => {
+                        const alertText = alertElement.innerText.trim();
+                        const alertId = `${alertText}_${Date.now()}`;
+                        
+                        // Skip if we've already processed this alert
+                        if (processedAlerts.has(alertText)) {
+                            return;
+                        }
+                        
+                        processedAlerts.add(alertText);
+                        const classification = classifyAlert(alertElement, alertText);
+                        alertsDetected.push(classification);
+                        
+                        console.log(`[MassUploader] Alert detected for ${file.name}:`, classification);
+                        
+                        // Update status based on alert type
+                        switch (classification.type) {
+                            case 'success_file':
+                                updateStatusRow(file, 'success', classification.message);
+                                finalOutcome = 'success';
+                                break;
+                            case 'partial_failure':
+                                updateStatusRow(file, 'warning', classification.message);
+                                finalOutcome = 'partial_failure';
+                                failedFiles.push({
+                                    file: file,
+                                    reason: classification.message,
+                                    type: 'partial_failure'
+                                });
+                                break;
+                            case 'validation_error':
+                            case 'server_error':
+                                updateStatusRow(file, 'error', classification.message);
+                                finalOutcome = 'error';
+                                failedFiles.push({
+                                    file: file,
+                                    reason: classification.message,
+                                    type: classification.type
+                                });
+                                break;
+                            case 'partial_success':
+                                // Don't update status for partial success, wait for the main result
+                                break;
+                            default:
+                                if (classification.severity === 'success') {
+                                    updateStatusRow(file, 'success', classification.message);
+                                    finalOutcome = 'success';
+                                }
+                        }
+                        
+                        // If we have a definitive outcome and it's not a partial success, complete
+                        if (finalOutcome && classification.type !== 'partial_success') {
+                            clearInterval(poll);
+                            onComplete(finalOutcome, alertsDetected);
+                            return;
+                        }
+                    });
+                    
+                    elapsed += pollingInterval;
+                    if (elapsed >= maxPollingTime) {
+                        console.log(`[MassUploader] Polling timeout for ${file.name}, assuming success`);
+                        if (!finalOutcome) {
+                            updateStatusRow(file, 'success', 'Upload completed (no alerts detected)');
+                            finalOutcome = 'success';
+                        }
+                        clearInterval(poll);
+                        onComplete(finalOutcome || 'success', alertsDetected);
+                    }
+                }, pollingInterval);
+            }
 
             // Function to process next file
             function processNextFile() {
                 if (currentUploadIndex >= filesToUpload.length) {
-                    // All files processed
+                    // All files processed - show summary
+                    showUploadSummary();
                     uploadButton.disabled = false;
                     skipWaitButton.style.display = 'none';
                     isUploading = false;
@@ -1032,70 +1247,138 @@
                 const file = filesToUpload[currentUploadIndex];
                 const index = currentUploadIndex;
                 
+                console.log(`[MassUploader] Processing file ${index + 1}/${filesToUpload.length}: ${file.name}`);
+                
                 // Update status to "Injecting"
                 updateStatusRow(file, 'injecting');
 
                 // Send file to page context via postMessage (bypasses userscript sandbox restrictions)
                 window.postMessage({ type: 'MU_SET_FILE', file }, '*');
 
-                // After dispatching, start polling for toast/notification for up to 35 seconds
-                let elapsed = 0;
-                const pollingInterval = 1000; // poll every second
-                const maxPollingTime = 35000; // 35 seconds
-                const poll = setInterval(() => {
-                    const toastElement = document.querySelector('.toast, .notification, .banner, [role="alert"]');
-                    if (toastElement) {
-                        const toastMessage = toastElement.innerText.trim();
-                        updateStatusRow(file, 'success', toastMessage);
-                        console.log(`Injected file: ${file.name} [${index + 1}/${filesToUpload.length}] - ${toastMessage}`);
-                        clearInterval(poll);
-                    }
-                    elapsed += pollingInterval;
-                    if (elapsed >= maxPollingTime) {
-                        updateStatusRow(file, 'success');
-                        clearInterval(poll);
-                    }
-                }, pollingInterval);
-
-                currentUploadIndex++;
-                
-                // Schedule next file (if not the last one)
-                if (currentUploadIndex < filesToUpload.length) {
-                    skipWaitButton.style.display = 'block';
+                // Use enhanced alert polling
+                pollForAlerts(file, index, (outcome, alerts) => {
+                    console.log(`[MassUploader] File ${file.name} completed with outcome: ${outcome}`);
+                    console.log(`[MassUploader] Alerts detected:`, alerts);
                     
-                    // Start countdown timer
-                    let timeRemaining = 30;
-                    const nextFileName = filesToUpload[currentUploadIndex].name;
+                    currentUploadIndex++;
                     
-                    // Update button text immediately
-                    skipWaitButton.innerText = `Skip Wait (${timeRemaining}s) - Next: ${nextFileName}`;
-                    
-                    // Countdown interval
-                    const countdownInterval = setInterval(() => {
-                        timeRemaining--;
-                        if (timeRemaining > 0) {
-                            skipWaitButton.innerText = `Skip Wait (${timeRemaining}s) - Next: ${nextFileName}`;
-                        } else {
-                            clearInterval(countdownInterval);
+                    // Handle different outcomes
+                    if (outcome === 'error') {
+                        // For critical errors, ask user if they want to continue
+                        const shouldContinue = confirm(
+                            `Critical error occurred with file "${file.name}":\n\n${alerts[alerts.length - 1]?.message}\n\nDo you want to continue with the remaining files?`
+                        );
+                        
+                        if (!shouldContinue) {
+                            // Stop processing
+                            showUploadSummary();
+                            uploadButton.disabled = false;
+                            skipWaitButton.style.display = 'none';
+                            isUploading = false;
+                            return;
                         }
-                    }, 1000);
+                    }
                     
-                    countdownIntervals.push(countdownInterval);
+                    // Schedule next file (if not the last one)
+                    if (currentUploadIndex < filesToUpload.length) {
+                        skipWaitButton.style.display = 'block';
+                        
+                        // Determine wait time based on outcome
+                        let waitTime = 30000; // Default 30 seconds
+                        if (outcome === 'error' || outcome === 'partial_failure') {
+                            waitTime = 10000; // Shorter wait for failed files
+                        }
+                        
+                        // Start countdown timer
+                        let timeRemaining = Math.floor(waitTime / 1000);
+                        const nextFileName = filesToUpload[currentUploadIndex].name;
+                        
+                        // Update button text immediately
+                        skipWaitButton.innerText = `Skip Wait (${timeRemaining}s) - Next: ${nextFileName}`;
+                        
+                        // Countdown interval
+                        const countdownInterval = setInterval(() => {
+                            timeRemaining--;
+                            if (timeRemaining > 0) {
+                                skipWaitButton.innerText = `Skip Wait (${timeRemaining}s) - Next: ${nextFileName}`;
+                            } else {
+                                clearInterval(countdownInterval);
+                            }
+                        }, 1000);
+                        
+                        countdownIntervals.push(countdownInterval);
+                        
+                        const nextTimeout = setTimeout(() => {
+                            clearInterval(countdownInterval);
+                            skipWaitButton.style.display = 'none';
+                            processNextFile();
+                        }, waitTime);
+                        
+                        uploadTimeouts.push(nextTimeout);
+                    } else {
+                        // Last file, show summary and re-enable upload
+                        setTimeout(() => {
+                            showUploadSummary();
+                            uploadButton.disabled = false;
+                            skipWaitButton.style.display = 'none';
+                            isUploading = false;
+                        }, 1000);
+                    }
+                });
+            }
+
+            // Function to show upload summary
+            function showUploadSummary() {
+                const totalFiles = filesToUpload.length;
+                const failedCount = failedFiles.length;
+                const successCount = totalFiles - failedCount;
+                
+                console.log('[MassUploader] Upload Summary:', {
+                    total: totalFiles,
+                    successful: successCount,
+                    failed: failedCount,
+                    failedFiles: failedFiles
+                });
+                
+                // Create summary in status container
+                const summaryDiv = document.createElement('div');
+                summaryDiv.className = 'massUploader-summary';
+                summaryDiv.style.cssText = `
+                    margin-top: 15px;
+                    padding: 12px;
+                    border: 2px solid #004E36;
+                    border-radius: 6px;
+                    background: #f8f9fa;
+                `;
+                
+                let summaryHTML = `
+                    <h4 style="margin: 0 0 8px 0; color: #004E36;">Upload Summary</h4>
+                    <p style="margin: 4px 0;"><strong>Total Files:</strong> ${totalFiles}</p>
+                    <p style="margin: 4px 0; color: #388e3c;"><strong>Successful:</strong> ${successCount}</p>
+                `;
+                
+                if (failedCount > 0) {
+                    summaryHTML += `<p style="margin: 4px 0; color: #c62828;"><strong>Failed:</strong> ${failedCount}</p>`;
+                    summaryHTML += `<details style="margin-top: 8px;">
+                        <summary style="cursor: pointer; font-weight: bold; color: #c62828;">Failed Files Details</summary>
+                        <ul style="margin: 8px 0; padding-left: 20px;">`;
                     
-                    const nextTimeout = setTimeout(() => {
-                        clearInterval(countdownInterval);
-                        skipWaitButton.style.display = 'none';
-                        processNextFile();
-                    }, 30000); // 30-second spacing
+                    failedFiles.forEach(failed => {
+                        summaryHTML += `<li style="margin: 4px 0;">
+                            <strong>${failed.file.name}</strong><br>
+                            <small style="color: #666;">${failed.reason}</small>
+                        </li>`;
+                    });
                     
-                    uploadTimeouts.push(nextTimeout);
-                } else {
-                    // Last file, hide skip button and re-enable upload
-                    setTimeout(() => {
-                        uploadButton.disabled = false;
-                        skipWaitButton.style.display = 'none';
-                        isUploading = false;
-                    }, 1000);
+                    summaryHTML += `</ul></details>`;
+                }
+                
+                summaryDiv.innerHTML = summaryHTML;
+                
+                const statusContainer = document.getElementById('statusContainer');
+                if (statusContainer) {
+                    statusContainer.appendChild(summaryDiv);
+                    summaryDiv.scrollIntoView({block: 'nearest'});
                 }
             }
 
