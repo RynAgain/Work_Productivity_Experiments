@@ -1066,7 +1066,10 @@
                 const alertStyle = window.getComputedStyle(alertElement);
                 const backgroundColor = alertStyle.backgroundColor;
                 const color = alertStyle.color;
-                const hasDownloadLink = alertElement.querySelector('a[href*="download"], a[href*="error"]') !== null;
+                
+                // Check for download links more broadly
+                const hasDownloadLink = alertElement.querySelector('a[href*="download"], a[href*="error"], button[onclick*="download"], [class*="download"]') !== null ||
+                                       alertText.toLowerCase().includes('download error file');
                 
                 // Normalize text for pattern matching
                 const normalizedText = alertText.toLowerCase().trim();
@@ -1075,10 +1078,11 @@
                     text: alertText,
                     backgroundColor,
                     color,
-                    hasDownloadLink
+                    hasDownloadLink,
+                    normalizedText
                 });
                 
-                // Success patterns
+                // Success patterns - CSV file successfully uploaded
                 if (normalizedText.includes('successfully uploaded') && normalizedText.includes('.csv')) {
                     return {
                         type: 'success_file',
@@ -1088,14 +1092,15 @@
                     };
                 }
                 
-                // Partial failure with download link
-                if (normalizedText.includes('records failed to upload') && hasDownloadLink) {
+                // Partial failure - records failed to upload (with or without download link)
+                if (normalizedText.includes('records failed to upload') ||
+                    (normalizedText.includes('failed') && normalizedText.includes('upload'))) {
                     return {
                         type: 'partial_failure',
                         severity: 'warning',
                         message: alertText,
                         shouldProceed: true, // Can proceed but mark as partial failure
-                        hasErrorFile: true
+                        hasErrorFile: hasDownloadLink
                     };
                 }
                 
@@ -1203,13 +1208,35 @@
                                 });
                                 break;
                             case 'partial_success':
-                                // Don't update status for partial success, wait for the main result
+                                // Partial success usually comes with partial failure, don't override outcome
+                                if (!finalOutcome) {
+                                    console.log('[MassUploader] Partial success detected, waiting for more alerts...');
+                                }
                                 break;
                             default:
                                 if (classification.severity === 'success') {
                                     updateStatusRow(file, 'success', classification.message);
                                     finalOutcome = 'success';
                                 }
+                        }
+                        
+                        // Complete if we have a definitive outcome (not partial_success which is informational)
+                        if (finalOutcome && classification.type !== 'partial_success') {
+                            console.log(`[MassUploader] Completing with outcome: ${finalOutcome} for file: ${file.name}`);
+                            clearInterval(poll);
+                            onComplete(finalOutcome, alertsDetected);
+                            return;
+                        }
+                        
+                        // Special case: if we have both partial_failure and partial_success, complete with partial_failure
+                        const hasPartialFailure = alertsDetected.some(alert => alert.type === 'partial_failure');
+                        const hasPartialSuccess = alertsDetected.some(alert => alert.type === 'partial_success');
+                        if (hasPartialFailure && hasPartialSuccess && !finalOutcome) {
+                            console.log(`[MassUploader] Both partial failure and success detected, completing with partial_failure`);
+                            finalOutcome = 'partial_failure';
+                            clearInterval(poll);
+                            onComplete(finalOutcome, alertsDetected);
+                            return;
                         }
                         
                         // If we have a definitive outcome and it's not a partial success, complete
