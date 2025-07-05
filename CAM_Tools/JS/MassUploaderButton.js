@@ -1342,8 +1342,6 @@
                     console.log(`[MassUploader] File ${file.name} completed with outcome: ${outcome}`);
                     console.log(`[MassUploader] Alerts detected:`, alerts);
                     
-                    currentUploadIndex++;
-                    
                     // Handle different outcomes
                     if (outcome === 'error') {
                         // For critical errors, ask user if they want to continue
@@ -1360,6 +1358,9 @@
                             return;
                         }
                     }
+                    
+                    // Increment index only after processing is complete
+                    currentUploadIndex++;
                     
                     // Schedule next file (if not the last one)
                     if (currentUploadIndex < filesToUpload.length) {
