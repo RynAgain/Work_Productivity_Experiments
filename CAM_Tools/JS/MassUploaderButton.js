@@ -1223,8 +1223,17 @@
                 const maxPollingTime = 45000; // 45 seconds to account for larger files
                 let alertsDetected = [];
                 let finalOutcome = null;
+                let completed = false; // Guard to prevent double completion
                 
                 console.log(`[MassUploader] Starting alert polling for file: ${file.name}`);
+                
+                // Helper function to ensure completion happens only once
+                function finish(outcome) {
+                    if (completed) return; // Already called once
+                    completed = true;
+                    clearInterval(poll);
+                    onComplete(outcome, alertsDetected);
+                }
                 
                 const poll = setInterval(() => {
                     // Look for alerts with mdn-alert-message attribute
@@ -1287,8 +1296,7 @@
                         // BUT don't complete on partial_failure yet - wait for potential partial_success
                         if (finalOutcome && classification.type !== 'partial_success' && classification.type !== 'partial_failure') {
                             console.log(`[MassUploader] Completing with outcome: ${finalOutcome} for file: ${file.name}`);
-                            clearInterval(poll);
-                            onComplete(finalOutcome, alertsDetected);
+                            finish(finalOutcome);
                             return;
                         }
                         
@@ -1297,16 +1305,14 @@
                         const hasPartialSuccess = alertsDetected.some(alert => alert.type === 'partial_success');
                         if (hasPartialFailure && hasPartialSuccess) {
                             console.log(`[MassUploader] Both partial failure and success detected, completing with partial_failure`);
-                            clearInterval(poll);
-                            onComplete('partial_failure', alertsDetected);
+                            finish('partial_failure');
                             return;
                         }
                         
                         // If we have partial_failure but no partial_success after 3 seconds, complete
                         if (hasPartialFailure && !hasPartialSuccess && elapsed >= 3000) {
                             console.log(`[MassUploader] Partial failure detected without success alert after 3s, completing`);
-                            clearInterval(poll);
-                            onComplete('partial_failure', alertsDetected);
+                            finish('partial_failure');
                             return;
                         }
                     });
@@ -1318,8 +1324,7 @@
                             updateStatusRow(file, 'success', 'Upload completed (no alerts detected)');
                             finalOutcome = 'success';
                         }
-                        clearInterval(poll);
-                        onComplete(finalOutcome || 'success', alertsDetected);
+                        finish(finalOutcome || 'success');
                     }
                 }, pollingInterval);
             }
@@ -1346,6 +1351,9 @@
                 // Send file to page context via postMessage (bypasses userscript sandbox restrictions)
                 window.postMessage({ type: 'MU_SET_FILE', file }, '*');
 
+                // Clear processed alerts for this new file to prevent conflicts
+                processedAlerts.clear();
+                
                 // Use enhanced alert polling
                 pollForAlerts(file, index, (outcome, alerts) => {
                     console.log(`[MassUploader] File ${file.name} completed with outcome: ${outcome}`);
