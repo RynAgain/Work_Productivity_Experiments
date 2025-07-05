@@ -1284,7 +1284,8 @@
                         }
                         
                         // Complete if we have a definitive outcome (not partial_success which is informational)
-                        if (finalOutcome && classification.type !== 'partial_success') {
+                        // BUT don't complete on partial_failure yet - wait for potential partial_success
+                        if (finalOutcome && classification.type !== 'partial_success' && classification.type !== 'partial_failure') {
                             console.log(`[MassUploader] Completing with outcome: ${finalOutcome} for file: ${file.name}`);
                             clearInterval(poll);
                             onComplete(finalOutcome, alertsDetected);
@@ -1296,6 +1297,14 @@
                         const hasPartialSuccess = alertsDetected.some(alert => alert.type === 'partial_success');
                         if (hasPartialFailure && hasPartialSuccess) {
                             console.log(`[MassUploader] Both partial failure and success detected, completing with partial_failure`);
+                            clearInterval(poll);
+                            onComplete('partial_failure', alertsDetected);
+                            return;
+                        }
+                        
+                        // If we have partial_failure but no partial_success after 3 seconds, complete
+                        if (hasPartialFailure && !hasPartialSuccess && elapsed >= 3000) {
+                            console.log(`[MassUploader] Partial failure detected without success alert after 3s, completing`);
                             clearInterval(poll);
                             onComplete('partial_failure', alertsDetected);
                             return;
