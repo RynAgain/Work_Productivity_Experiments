@@ -1240,15 +1240,15 @@
                     const alertElements = document.querySelectorAll('div[mdn-alert-message]');
                     
                     alertElements.forEach(async (alertElement) => {
-                        const alertText = alertElement.innerText.trim();
-                        const alertId = `${alertText}_${Date.now()}`;
-                        
-                        // Skip if we've already processed this alert
-                        if (processedAlerts.has(alertText)) {
+                        // Skip if we've already processed this alert element
+                        if (alertElement.dataset.muProcessed) {
                             return;
                         }
                         
-                        processedAlerts.add(alertText);
+                        // Mark this element as processed
+                        alertElement.dataset.muProcessed = "true";
+                        
+                        const alertText = alertElement.innerText.trim();
                         const classification = await classifyAlert(alertElement, alertText, file.name);
                         alertsDetected.push(classification);
                         
@@ -1263,21 +1263,27 @@
                             case 'partial_failure':
                                 updateStatusRow(file, 'warning', classification.message);
                                 finalOutcome = 'partial_failure';
-                                failedFiles.push({
-                                    file: file,
-                                    reason: classification.message,
-                                    type: 'partial_failure'
-                                });
+                                // Only add to failedFiles if not already present
+                                if (!failedFiles.some(f => f.file === file && f.reason === classification.message)) {
+                                    failedFiles.push({
+                                        file: file,
+                                        reason: classification.message,
+                                        type: 'partial_failure'
+                                    });
+                                }
                                 break;
                             case 'validation_error':
                             case 'server_error':
                                 updateStatusRow(file, 'error', classification.message);
                                 finalOutcome = 'error';
-                                failedFiles.push({
-                                    file: file,
-                                    reason: classification.message,
-                                    type: classification.type
-                                });
+                                // Only add to failedFiles if not already present
+                                if (!failedFiles.some(f => f.file === file && f.reason === classification.message)) {
+                                    failedFiles.push({
+                                        file: file,
+                                        reason: classification.message,
+                                        type: classification.type
+                                    });
+                                }
                                 break;
                             case 'partial_success':
                                 // Partial success usually comes with partial failure, don't override outcome
@@ -1351,9 +1357,6 @@
                 // Send file to page context via postMessage (bypasses userscript sandbox restrictions)
                 window.postMessage({ type: 'MU_SET_FILE', file }, '*');
 
-                // Clear processed alerts for this new file to prevent conflicts
-                processedAlerts.clear();
-                
                 // Use enhanced alert polling
                 pollForAlerts(file, index, (outcome, alerts) => {
                     console.log(`[MassUploader] File ${file.name} completed with outcome: ${outcome}`);
@@ -1480,7 +1483,7 @@
             function showUploadSummary() {
                 const totalFiles = filesToUpload.length;
                 const failedCount = failedFiles.length;
-                const successCount = totalFiles - failedCount;
+                const successCount = Math.max(0, totalFiles - failedCount);
                 const masterErrorData = compileMasterErrorFile();
                 
                 console.log('[MassUploader] Upload Summary:', {
