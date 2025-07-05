@@ -1060,16 +1060,43 @@
             let isUploading = false;
             let failedFiles = []; // Track files that failed to upload
             let processedAlerts = new Set(); // Avoid processing duplicate alerts
+            let errorFileData = []; // Store downloaded error file data in memory
+            
+            // Function to download and save error file data
+            async function downloadErrorFile(downloadLink, fileName) {
+                try {
+                    console.log(`[MassUploader] Downloading error file for ${fileName}:`, downloadLink);
+                    const response = await fetch(downloadLink);
+                    if (response.ok) {
+                        const csvText = await response.text();
+                        const errorData = {
+                            fileName: fileName,
+                            downloadedAt: new Date().toISOString(),
+                            csvData: csvText,
+                            recordCount: csvText.split('\n').length - 1 // Subtract header
+                        };
+                        errorFileData.push(errorData);
+                        console.log(`[MassUploader] Error file data saved for ${fileName}, ${errorData.recordCount} failed records`);
+                        return errorData;
+                    } else {
+                        console.error(`[MassUploader] Failed to download error file for ${fileName}:`, response.status);
+                        return null;
+                    }
+                } catch (error) {
+                    console.error(`[MassUploader] Error downloading file for ${fileName}:`, error);
+                    return null;
+                }
+            }
 
             // Function to classify alerts based on content and visual cues
-            function classifyAlert(alertElement, alertText) {
+            async function classifyAlert(alertElement, alertText, fileName) {
                 const alertStyle = window.getComputedStyle(alertElement);
                 const backgroundColor = alertStyle.backgroundColor;
                 const color = alertStyle.color;
                 
-                // Check for download links more broadly
-                const hasDownloadLink = alertElement.querySelector('a[href*="download"], a[href*="error"], button[onclick*="download"], [class*="download"]') !== null ||
-                                       alertText.toLowerCase().includes('download error file');
+                // Check for download links and capture them
+                const downloadLinkElement = alertElement.querySelector('a[href*="download"], a[href*="error"], button[onclick*="download"], [class*="download"]');
+                const hasDownloadLink = downloadLinkElement !== null || alertText.toLowerCase().includes('download error file');
                 
                 // Normalize text for pattern matching
                 const normalizedText = alertText.toLowerCase().trim();
@@ -1082,75 +1109,111 @@
                     normalizedText
                 });
                 
+                console.log('[MassUploader] Alert text analysis:', {
+                    includesRecordsFailed: normalizedText.includes('records failed to upload'),
+                    includesFailed: normalizedText.includes('failed'),
+                    includesUpload: normalizedText.includes('upload'),
+                    includesRecordsSuccess: normalizedText.includes('records successfully uploaded'),
+                    includesCSV: normalizedText.includes('.csv'),
+                    includesSuccessfullyUploaded: normalizedText.includes('successfully uploaded')
+                });
+                
                 // Success patterns - CSV file successfully uploaded
                 if (normalizedText.includes('successfully uploaded') && normalizedText.includes('.csv')) {
-                    return {
+                    const result = {
                         type: 'success_file',
                         severity: 'success',
                         message: alertText,
                         shouldProceed: true
                     };
+                    console.log('[MassUploader] Classification: success_file', result);
+                    return result;
                 }
                 
                 // Partial failure - records failed to upload (with or without download link)
                 if (normalizedText.includes('records failed to upload') ||
                     (normalizedText.includes('failed') && normalizedText.includes('upload'))) {
-                    return {
+                    
+                    // If there's a download link, immediately download the error file
+                    let errorFileDownloaded = null;
+                    if (downloadLinkElement && downloadLinkElement.href) {
+                        try {
+                            errorFileDownloaded = await downloadErrorFile(downloadLinkElement.href, fileName);
+                        } catch (error) {
+                            console.error('[MassUploader] Failed to download error file:', error);
+                        }
+                    }
+                    
+                    const result = {
                         type: 'partial_failure',
                         severity: 'warning',
                         message: alertText,
                         shouldProceed: true, // Can proceed but mark as partial failure
-                        hasErrorFile: hasDownloadLink
+                        hasErrorFile: hasDownloadLink,
+                        errorFileData: errorFileDownloaded
                     };
+                    console.log('[MassUploader] Classification: partial_failure', result);
+                    return result;
                 }
                 
                 // Partial success (usually paired with failure)
                 if (normalizedText.includes('records successfully uploaded') && !normalizedText.includes('.csv')) {
-                    return {
+                    const result = {
                         type: 'partial_success',
                         severity: 'info',
                         message: alertText,
                         shouldProceed: true
                     };
+                    console.log('[MassUploader] Classification: partial_success', result);
+                    return result;
                 }
                 
                 // Validation errors
                 if (normalizedText.includes('validation error') || normalizedText.includes('headers must be')) {
-                    return {
+                    const result = {
                         type: 'validation_error',
                         severity: 'error',
                         message: alertText,
                         shouldProceed: false // Stop processing
                     };
+                    console.log('[MassUploader] Classification: validation_error', result);
+                    return result;
                 }
                 
                 // Server errors
                 if (normalizedText.includes('server error') || normalizedText.includes('try again later')) {
-                    return {
+                    const result = {
                         type: 'server_error',
                         severity: 'error',
                         message: alertText,
                         shouldProceed: false // Stop processing
                     };
+                    console.log('[MassUploader] Classification: server_error', result);
+                    return result;
                 }
                 
                 // Generic success (fallback)
                 if (normalizedText.includes('success')) {
-                    return {
+                    const result = {
                         type: 'generic_success',
                         severity: 'success',
                         message: alertText,
                         shouldProceed: true
                     };
+                    console.log('[MassUploader] Classification: generic_success', result);
+                    return result;
                 }
                 
                 // Unknown alert type
-                return {
+                const result = {
                     type: 'unknown',
                     severity: 'info',
                     message: alertText,
                     shouldProceed: true // Default to proceed unless explicitly an error
                 };
+                
+                console.log('[MassUploader] Classification result:', result);
+                return result;
             }
 
             // Enhanced polling function for alert detection
@@ -1167,7 +1230,7 @@
                     // Look for alerts with mdn-alert-message attribute
                     const alertElements = document.querySelectorAll('div[mdn-alert-message]');
                     
-                    alertElements.forEach(alertElement => {
+                    alertElements.forEach(async (alertElement) => {
                         const alertText = alertElement.innerText.trim();
                         const alertId = `${alertText}_${Date.now()}`;
                         
@@ -1177,7 +1240,7 @@
                         }
                         
                         processedAlerts.add(alertText);
-                        const classification = classifyAlert(alertElement, alertText);
+                        const classification = await classifyAlert(alertElement, alertText, file.name);
                         alertsDetected.push(classification);
                         
                         console.log(`[MassUploader] Alert detected for ${file.name}:`, classification);
@@ -1228,21 +1291,13 @@
                             return;
                         }
                         
-                        // Special case: if we have both partial_failure and partial_success, complete with partial_failure
+                        // Check for special case: both partial_failure and partial_success
                         const hasPartialFailure = alertsDetected.some(alert => alert.type === 'partial_failure');
                         const hasPartialSuccess = alertsDetected.some(alert => alert.type === 'partial_success');
-                        if (hasPartialFailure && hasPartialSuccess && !finalOutcome) {
+                        if (hasPartialFailure && hasPartialSuccess) {
                             console.log(`[MassUploader] Both partial failure and success detected, completing with partial_failure`);
-                            finalOutcome = 'partial_failure';
                             clearInterval(poll);
-                            onComplete(finalOutcome, alertsDetected);
-                            return;
-                        }
-                        
-                        // If we have a definitive outcome and it's not a partial success, complete
-                        if (finalOutcome && classification.type !== 'partial_success') {
-                            clearInterval(poll);
-                            onComplete(finalOutcome, alertsDetected);
+                            onComplete('partial_failure', alertsDetected);
                             return;
                         }
                     });
@@ -1354,17 +1409,69 @@
                 });
             }
 
+            // Function to compile master error file
+            function compileMasterErrorFile() {
+                if (errorFileData.length === 0) {
+                    return null;
+                }
+                
+                console.log('[MassUploader] Compiling master error file from', errorFileData.length, 'error files');
+                
+                // Combine all error CSV data
+                let masterCSV = '';
+                let totalFailedRecords = 0;
+                
+                errorFileData.forEach((errorFile, index) => {
+                    const lines = errorFile.csvData.split('\n');
+                    if (index === 0) {
+                        // Include header from first file
+                        masterCSV += lines.join('\n');
+                    } else {
+                        // Skip header for subsequent files, just add data rows
+                        const dataRows = lines.slice(1);
+                        if (dataRows.length > 0) {
+                            masterCSV += '\n' + dataRows.join('\n');
+                        }
+                    }
+                    totalFailedRecords += errorFile.recordCount;
+                });
+                
+                return {
+                    csvData: masterCSV,
+                    totalRecords: totalFailedRecords,
+                    sourceFiles: errorFileData.map(ef => ef.fileName),
+                    compiledAt: new Date().toISOString()
+                };
+            }
+            
+            // Function to download master error file
+            function downloadMasterErrorFile(masterErrorData) {
+                const blob = new Blob([masterErrorData.csvData], { type: 'text/csv' });
+                const url = URL.createObjectURL(blob);
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = `master_failed_records_${new Date().toISOString().slice(0, 19).replace(/:/g, '-')}.csv`;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                URL.revokeObjectURL(url);
+                console.log('[MassUploader] Master error file downloaded:', link.download);
+            }
+
             // Function to show upload summary
             function showUploadSummary() {
                 const totalFiles = filesToUpload.length;
                 const failedCount = failedFiles.length;
                 const successCount = totalFiles - failedCount;
+                const masterErrorData = compileMasterErrorFile();
                 
                 console.log('[MassUploader] Upload Summary:', {
                     total: totalFiles,
                     successful: successCount,
                     failed: failedCount,
-                    failedFiles: failedFiles
+                    failedFiles: failedFiles,
+                    errorFileData: errorFileData,
+                    masterErrorData: masterErrorData
                 });
                 
                 // Create summary in status container
@@ -1400,12 +1507,44 @@
                     summaryHTML += `</ul></details>`;
                 }
                 
+                // Add master error file section if we have error data
+                if (masterErrorData) {
+                    summaryHTML += `
+                        <div style="margin-top: 12px; padding: 8px; background: #fff3cd; border: 1px solid #ffeaa7; border-radius: 4px;">
+                            <h5 style="margin: 0 0 6px 0; color: #856404;">📄 Failed Records Compilation</h5>
+                            <p style="margin: 2px 0; font-size: 13px;"><strong>Total Failed Records:</strong> ${masterErrorData.totalRecords}</p>
+                            <p style="margin: 2px 0; font-size: 13px;"><strong>Source Files:</strong> ${masterErrorData.sourceFiles.length}</p>
+                            <button id="downloadMasterErrorFile" style="
+                                margin-top: 6px;
+                                background: #ff9800;
+                                color: white;
+                                border: none;
+                                padding: 6px 12px;
+                                border-radius: 4px;
+                                cursor: pointer;
+                                font-size: 12px;
+                                font-weight: bold;
+                            ">📥 Download Master Error File</button>
+                        </div>
+                    `;
+                }
+                
                 summaryDiv.innerHTML = summaryHTML;
                 
                 const statusContainer = document.getElementById('statusContainer');
                 if (statusContainer) {
                     statusContainer.appendChild(summaryDiv);
                     summaryDiv.scrollIntoView({block: 'nearest'});
+                    
+                    // Add event listener for master error file download
+                    if (masterErrorData) {
+                        const downloadButton = document.getElementById('downloadMasterErrorFile');
+                        if (downloadButton) {
+                            downloadButton.addEventListener('click', () => {
+                                downloadMasterErrorFile(masterErrorData);
+                            });
+                        }
+                    }
                 }
             }
 
