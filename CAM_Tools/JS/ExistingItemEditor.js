@@ -206,7 +206,7 @@
       this.lastSaveTime = null;
       
       this.startAutoSave();
-      this.checkForRecovery();
+      //this.checkForRecovery(); //disabling for now.  CX is a little buggy there have been complaints.  AND no one is using this feature.
     }
     
     generateSessionId() {

@@ -920,6 +920,304 @@
             });
         }
 
+        /**
+         * Centralized polling manager to prevent race conditions
+         * Ensures only one polling instance is active at a time
+         */
+        class PollingManager {
+            constructor() {
+                this.activePolling = null;
+                this.processedAlerts = new Map(); // fileId -> Set of alert IDs
+                this.pollingInterval = null;
+                this.maxPollingTime = 45000; // 45 seconds
+                this.pollingFrequency = 100; // Poll every 100ms
+                this.alertCleanupDelay = 100; // Small delay for cleanup
+            }
+            
+            /**
+             * Start polling for a specific file
+             * @param {File} file - The file being processed
+             * @param {number} fileIndex - Index of the file in the upload queue
+             * @returns {Promise} Promise that resolves with polling result
+             */
+            async startPolling(file, fileIndex) {
+                console.log(`[PollingManager] Starting polling for file: ${file.name} (index: ${fileIndex})`);
+                
+                // Ensure no active polling
+                if (this.activePolling) {
+                    console.log('[PollingManager] Waiting for existing polling to complete...');
+                    await this.waitForCompletion();
+                }
+                
+                // Clean up previous alerts to prevent cross-contamination
+                this.cleanupPreviousAlerts();
+                
+                // Start new polling session
+                const fileId = `file_${fileIndex}_${Date.now()}`;
+                return new Promise((resolve, reject) => {
+                    this.activePolling = {
+                        file,
+                        fileIndex,
+                        fileId,
+                        resolve,
+                        reject,
+                        startTime: Date.now(),
+                        alertsDetected: [],
+                        completed: false,
+                        finalOutcome: null
+                    };
+                    
+                    console.log(`[PollingManager] Created polling session: ${fileId}`);
+                    this.startPollingLoop();
+                });
+            }
+            
+            /**
+             * Start the main polling loop
+             */
+            startPollingLoop() {
+                let elapsed = 0;
+                
+                this.pollingInterval = setInterval(() => {
+                    if (!this.activePolling || this.activePolling.completed) {
+                        this.stopPolling();
+                        return;
+                    }
+                    
+                    this.checkForAlerts();
+                    
+                    elapsed += this.pollingFrequency;
+                    if (elapsed >= this.maxPollingTime) {
+                        console.log(`[PollingManager] Polling timeout for ${this.activePolling.file.name}`);
+                        this.completePolling('timeout');
+                    }
+                }, this.pollingFrequency);
+            }
+            
+            /**
+             * Check for new alerts and process them
+             */
+            checkForAlerts() {
+                const alertElements = document.querySelectorAll('div[mdn-alert-message]');
+                
+                alertElements.forEach(alertElement => {
+                    if (this.shouldProcessAlert(alertElement)) {
+                        this.processAlert(alertElement);
+                    }
+                });
+            }
+            
+            /**
+             * Determine if an alert should be processed by current polling session
+             * @param {Element} alertElement - The alert DOM element
+             * @returns {boolean} Whether to process this alert
+             */
+            shouldProcessAlert(alertElement) {
+                const fileId = this.activePolling.fileId;
+                
+                // Skip if already processed by this file
+                if (alertElement.dataset.muProcessedBy === fileId) {
+                    return false;
+                }
+                
+                // Skip if processed by any file (prevent cross-contamination)
+                if (alertElement.dataset.muProcessed === 'true') {
+                    return false;
+                }
+                
+                return true;
+            }
+            
+            /**
+             * Process a single alert element
+             * @param {Element} alertElement - The alert DOM element to process
+             */
+            async processAlert(alertElement) {
+                const fileId = this.activePolling.fileId;
+                const file = this.activePolling.file;
+                
+                // Mark as processed by this file to prevent reprocessing
+                alertElement.dataset.muProcessedBy = fileId;
+                alertElement.dataset.muProcessed = 'true';
+                alertElement.dataset.muFileIndex = this.activePolling.fileIndex;
+                
+                const alertText = alertElement.innerText.trim();
+                console.log(`[PollingManager] Processing alert for ${file.name}: ${alertText.substring(0, 100)}...`);
+                
+                try {
+                    const classification = await classifyAlert(alertElement, alertText, file.name);
+                    this.activePolling.alertsDetected.push(classification);
+                    
+                    // Update UI based on classification
+                    this.updateFileStatus(classification);
+                    
+                    // Check if this alert indicates completion
+                    if (this.shouldCompletePolling(classification)) {
+                        console.log(`[PollingManager] Completing polling with outcome: ${classification.type}`);
+                        this.completePolling(classification.type);
+                    }
+                } catch (error) {
+                    console.error(`[PollingManager] Error processing alert for ${file.name}:`, error);
+                }
+            }
+            
+            /**
+             * Update file status in UI based on alert classification
+             * @param {Object} classification - Alert classification result
+             */
+            updateFileStatus(classification) {
+                const file = this.activePolling.file;
+                
+                switch (classification.type) {
+                    case 'success_file':
+                        updateStatusRow(file, 'success', classification.message);
+                        this.activePolling.finalOutcome = 'success';
+                        break;
+                    case 'partial_failure':
+                        updateStatusRow(file, 'warning', classification.message);
+                        this.activePolling.finalOutcome = 'partial_failure';
+                        break;
+                    case 'validation_error':
+                    case 'server_error':
+                        updateStatusRow(file, 'error', classification.message);
+                        this.activePolling.finalOutcome = 'error';
+                        break;
+                    case 'partial_success':
+                        // Partial success usually comes with partial failure, don't override outcome
+                        if (!this.activePolling.finalOutcome) {
+                            console.log('[PollingManager] Partial success detected, waiting for more alerts...');
+                        }
+                        break;
+                    default:
+                        if (classification.severity === 'success') {
+                            updateStatusRow(file, 'success', classification.message);
+                            this.activePolling.finalOutcome = 'success';
+                        }
+                }
+            }
+            
+            /**
+             * Determine if polling should complete based on alert classification
+             * @param {Object} classification - Alert classification result
+             * @returns {boolean} Whether to complete polling
+             */
+            shouldCompletePolling(classification) {
+                // Complete on definitive outcomes
+                if (['success_file', 'validation_error', 'server_error'].includes(classification.type)) {
+                    return true;
+                }
+                
+                // Handle partial failure + partial success combination
+                const hasPartialFailure = this.activePolling.alertsDetected.some(alert => alert.type === 'partial_failure');
+                const hasPartialSuccess = this.activePolling.alertsDetected.some(alert => alert.type === 'partial_success');
+                
+                if (hasPartialFailure && hasPartialSuccess) {
+                    return true;
+                }
+                
+                // Wait for potential partial_success after partial_failure
+                if (hasPartialFailure && !hasPartialSuccess) {
+                    const elapsed = Date.now() - this.activePolling.startTime;
+                    return elapsed >= 3000; // 3 second wait
+                }
+                
+                return false;
+            }
+            
+            /**
+             * Complete the current polling session
+             * @param {string} outcome - Final outcome of the polling
+             */
+            completePolling(outcome) {
+                if (!this.activePolling || this.activePolling.completed) {
+                    return;
+                }
+                
+                console.log(`[PollingManager] Completing polling for ${this.activePolling.file.name} with outcome: ${outcome}`);
+                
+                this.activePolling.completed = true;
+                this.stopPolling();
+                
+                const result = {
+                    outcome: outcome || this.activePolling.finalOutcome || 'success',
+                    alerts: this.activePolling.alertsDetected,
+                    file: this.activePolling.file,
+                    fileIndex: this.activePolling.fileIndex,
+                    fileId: this.activePolling.fileId
+                };
+                
+                // Small delay to ensure all DOM updates complete
+                setTimeout(() => {
+                    this.activePolling.resolve(result);
+                    this.activePolling = null;
+                }, this.alertCleanupDelay);
+            }
+            
+            /**
+             * Stop the polling interval
+             */
+            stopPolling() {
+                if (this.pollingInterval) {
+                    clearInterval(this.pollingInterval);
+                    this.pollingInterval = null;
+                }
+            }
+            
+            /**
+             * Clean up alerts from previous polling sessions
+             */
+            cleanupPreviousAlerts() {
+                console.log('[PollingManager] Cleaning up previous alerts');
+                
+                // Remove old processed markers to prevent buildup
+                const oldAlerts = document.querySelectorAll('div[mdn-alert-message][data-mu-processed="true"]');
+                let cleanedCount = 0;
+                
+                oldAlerts.forEach(alert => {
+                    // Only clean up alerts that are not from the current session
+                    if (this.activePolling && alert.dataset.muProcessedBy === this.activePolling.fileId) {
+                        return; // Skip current session alerts
+                    }
+                    
+                    delete alert.dataset.muProcessed;
+                    delete alert.dataset.muProcessedBy;
+                    delete alert.dataset.muFileIndex;
+                    cleanedCount++;
+                });
+                
+                console.log(`[PollingManager] Cleaned up ${cleanedCount} old alert markers`);
+            }
+            
+            /**
+             * Wait for current polling to complete
+             * @returns {Promise} Promise that resolves when polling is complete
+             */
+            async waitForCompletion() {
+                if (!this.activePolling) {
+                    return;
+                }
+                
+                return new Promise((resolve) => {
+                    const checkCompletion = () => {
+                        if (!this.activePolling || this.activePolling.completed) {
+                            resolve();
+                        } else {
+                            setTimeout(checkCompletion, 50);
+                        }
+                    };
+                    checkCompletion();
+                });
+            }
+            
+            /**
+             * Check if polling is currently active
+             * @returns {boolean} Whether polling is active
+             */
+            isPollingActive() {
+                return this.activePolling !== null && !this.activePolling.completed;
+            }
+        }
+
 
         // === Upload logic ===
         uploadButton.addEventListener('click', async () => {
@@ -1061,6 +1359,9 @@
             let failedFiles = []; // Track files that failed to upload
             let processedAlerts = new Set(); // Avoid processing duplicate alerts
             let errorFileData = []; // Store downloaded error file data in memory
+            
+            // Initialize polling manager for centralized alert handling
+            const pollingManager = new PollingManager();
             
             // Function to download and save error file data
             async function downloadErrorFile(downloadLink, fileName) {
@@ -1216,129 +1517,16 @@
                 return result;
             }
 
-            // Enhanced polling function for alert detection
-            function pollForAlerts(file, index, onComplete) {
-                let elapsed = 0;
-                const pollingInterval = 100; // Poll every 100ms for better responsiveness
-                const maxPollingTime = 45000; // 45 seconds to account for larger files
-                let alertsDetected = [];
-                let finalOutcome = null;
-                let completed = false; // Guard to prevent double completion
+            /**
+             * Process the next file in the upload queue
+             * Uses managed polling to prevent race conditions
+             */
+            async function processNextFile() {
+                console.log(`[MassUploader] processNextFile() called - Index: ${currentUploadIndex}/${filesToUpload.length}`);
                 
-                console.log(`[MassUploader] Starting alert polling for file: ${file.name}`);
-                
-                // Helper function to ensure completion happens only once
-                function finish(outcome) {
-                    if (completed) return; // Already called once
-                    completed = true;
-                    clearInterval(poll);
-                    onComplete(outcome, alertsDetected);
-                }
-                
-                const poll = setInterval(() => {
-                    // Look for alerts with mdn-alert-message attribute
-                    const alertElements = document.querySelectorAll('div[mdn-alert-message]');
-                    
-                    alertElements.forEach(async (alertElement) => {
-                        // Skip if we've already processed this alert element
-                        if (alertElement.dataset.muProcessed) {
-                            return;
-                        }
-                        
-                        // Mark this element as processed
-                        alertElement.dataset.muProcessed = "true";
-                        
-                        const alertText = alertElement.innerText.trim();
-                        const classification = await classifyAlert(alertElement, alertText, file.name);
-                        alertsDetected.push(classification);
-                        
-                        console.log(`[MassUploader] Alert detected for ${file.name}:`, classification);
-                        
-                        // Update status based on alert type
-                        switch (classification.type) {
-                            case 'success_file':
-                                updateStatusRow(file, 'success', classification.message);
-                                finalOutcome = 'success';
-                                break;
-                            case 'partial_failure':
-                                updateStatusRow(file, 'warning', classification.message);
-                                finalOutcome = 'partial_failure';
-                                // Only add to failedFiles if not already present
-                                if (!failedFiles.some(f => f.file === file && f.reason === classification.message)) {
-                                    failedFiles.push({
-                                        file: file,
-                                        reason: classification.message,
-                                        type: 'partial_failure'
-                                    });
-                                }
-                                break;
-                            case 'validation_error':
-                            case 'server_error':
-                                updateStatusRow(file, 'error', classification.message);
-                                finalOutcome = 'error';
-                                // Only add to failedFiles if not already present
-                                if (!failedFiles.some(f => f.file === file && f.reason === classification.message)) {
-                                    failedFiles.push({
-                                        file: file,
-                                        reason: classification.message,
-                                        type: classification.type
-                                    });
-                                }
-                                break;
-                            case 'partial_success':
-                                // Partial success usually comes with partial failure, don't override outcome
-                                if (!finalOutcome) {
-                                    console.log('[MassUploader] Partial success detected, waiting for more alerts...');
-                                }
-                                break;
-                            default:
-                                if (classification.severity === 'success') {
-                                    updateStatusRow(file, 'success', classification.message);
-                                    finalOutcome = 'success';
-                                }
-                        }
-                        
-                        // Complete if we have a definitive outcome (not partial_success which is informational)
-                        // BUT don't complete on partial_failure yet - wait for potential partial_success
-                        if (finalOutcome && classification.type !== 'partial_success' && classification.type !== 'partial_failure') {
-                            console.log(`[MassUploader] Completing with outcome: ${finalOutcome} for file: ${file.name}`);
-                            finish(finalOutcome);
-                            return;
-                        }
-                        
-                        // Check for special case: both partial_failure and partial_success
-                        const hasPartialFailure = alertsDetected.some(alert => alert.type === 'partial_failure');
-                        const hasPartialSuccess = alertsDetected.some(alert => alert.type === 'partial_success');
-                        if (hasPartialFailure && hasPartialSuccess) {
-                            console.log(`[MassUploader] Both partial failure and success detected, completing with partial_failure`);
-                            finish('partial_failure');
-                            return;
-                        }
-                        
-                        // If we have partial_failure but no partial_success after 3 seconds, complete
-                        if (hasPartialFailure && !hasPartialSuccess && elapsed >= 3000) {
-                            console.log(`[MassUploader] Partial failure detected without success alert after 3s, completing`);
-                            finish('partial_failure');
-                            return;
-                        }
-                    });
-                    
-                    elapsed += pollingInterval;
-                    if (elapsed >= maxPollingTime) {
-                        console.log(`[MassUploader] Polling timeout for ${file.name}, assuming success`);
-                        if (!finalOutcome) {
-                            updateStatusRow(file, 'success', 'Upload completed (no alerts detected)');
-                            finalOutcome = 'success';
-                        }
-                        finish(finalOutcome || 'success');
-                    }
-                }, pollingInterval);
-            }
-
-            // Function to process next file
-            function processNextFile() {
                 if (currentUploadIndex >= filesToUpload.length) {
                     // All files processed - show summary
+                    console.log('[MassUploader] All files processed, showing summary');
                     showUploadSummary();
                     uploadButton.disabled = false;
                     skipWaitButton.style.display = 'none';
@@ -1347,9 +1535,7 @@
                 }
 
                 const file = filesToUpload[currentUploadIndex];
-                const index = currentUploadIndex;
-                
-                console.log(`[MassUploader] Processing file ${index + 1}/${filesToUpload.length}: ${file.name}`);
+                console.log(`[MassUploader] Processing file ${currentUploadIndex + 1}/${filesToUpload.length}: ${file.name}`);
                 
                 // Update status to "Injecting"
                 updateStatusRow(file, 'injecting');
@@ -1357,77 +1543,117 @@
                 // Send file to page context via postMessage (bypasses userscript sandbox restrictions)
                 window.postMessage({ type: 'MU_SET_FILE', file }, '*');
 
-                // Use enhanced alert polling
-                pollForAlerts(file, index, (outcome, alerts) => {
-                    console.log(`[MassUploader] File ${file.name} completed with outcome: ${outcome}`);
-                    console.log(`[MassUploader] Alerts detected:`, alerts);
+                try {
+                    // Use managed polling instead of direct pollForAlerts call
+                    const result = await pollingManager.startPolling(file, currentUploadIndex);
+                    console.log(`[MassUploader] File ${file.name} completed with result:`, result);
                     
-                    // Handle different outcomes
-                    if (outcome === 'error') {
-                        // For critical errors, ask user if they want to continue
-                        const shouldContinue = confirm(
-                            `Critical error occurred with file "${file.name}":\n\n${alerts[alerts.length - 1]?.message}\n\nDo you want to continue with the remaining files?`
-                        );
-                        
-                        if (!shouldContinue) {
-                            // Stop processing
-                            showUploadSummary();
-                            uploadButton.disabled = false;
-                            skipWaitButton.style.display = 'none';
-                            isUploading = false;
-                            return;
-                        }
+                    // Handle the completion result
+                    await handleFileCompletion(file, result);
+                    
+                } catch (error) {
+                    console.error(`[MassUploader] Error processing file ${file.name}:`, error);
+                    updateStatusRow(file, 'error', error.message);
+                    
+                    // Handle error completion
+                    await handleFileCompletion(file, {
+                        outcome: 'error',
+                        alerts: [{ message: error.message, type: 'error' }],
+                        file: file,
+                        fileIndex: currentUploadIndex
+                    });
+                }
+            }
+
+            /**
+             * Handle completion of a file upload
+             * @param {File} file - The completed file
+             * @param {Object} result - Result from polling manager
+             */
+            async function handleFileCompletion(file, result) {
+                const { outcome, alerts } = result;
+                
+                console.log(`[MassUploader] Handling completion for ${file.name} with outcome: ${outcome}`);
+                
+                // Handle different outcomes
+                if (outcome === 'error') {
+                    // For critical errors, ask user if they want to continue
+                    const alertMessage = alerts[alerts.length - 1]?.message || 'Unknown error';
+                    const shouldContinue = confirm(
+                        `Critical error occurred with file "${file.name}":\n\n${alertMessage}\n\nDo you want to continue with the remaining files?`
+                    );
+                    
+                    if (!shouldContinue) {
+                        // Stop processing
+                        console.log('[MassUploader] User chose to stop processing after error');
+                        showUploadSummary();
+                        uploadButton.disabled = false;
+                        skipWaitButton.style.display = 'none';
+                        isUploading = false;
+                        return;
+                    }
+                }
+                
+                // Update failed files tracking
+                if (outcome === 'partial_failure' || outcome === 'error') {
+                    const alertMessage = alerts[alerts.length - 1]?.message || 'Unknown error';
+                    if (!failedFiles.some(f => f.file === file && f.reason === alertMessage)) {
+                        failedFiles.push({
+                            file: file,
+                            reason: alertMessage,
+                            type: outcome
+                        });
+                    }
+                }
+                
+                // Increment index only after processing is complete
+                currentUploadIndex++;
+                
+                // Schedule next file (if not the last one)
+                if (currentUploadIndex < filesToUpload.length) {
+                    skipWaitButton.style.display = 'block';
+                    
+                    // Determine wait time based on outcome
+                    let waitTime = 30000; // Default 30 seconds
+                    if (outcome === 'error' || outcome === 'partial_failure') {
+                        waitTime = 10000; // Shorter wait for failed files
                     }
                     
-                    // Increment index only after processing is complete
-                    currentUploadIndex++;
+                    // Start countdown timer
+                    let timeRemaining = Math.floor(waitTime / 1000);
+                    const nextFileName = filesToUpload[currentUploadIndex].name;
                     
-                    // Schedule next file (if not the last one)
-                    if (currentUploadIndex < filesToUpload.length) {
-                        skipWaitButton.style.display = 'block';
-                        
-                        // Determine wait time based on outcome
-                        let waitTime = 30000; // Default 30 seconds
-                        if (outcome === 'error' || outcome === 'partial_failure') {
-                            waitTime = 10000; // Shorter wait for failed files
-                        }
-                        
-                        // Start countdown timer
-                        let timeRemaining = Math.floor(waitTime / 1000);
-                        const nextFileName = filesToUpload[currentUploadIndex].name;
-                        
-                        // Update button text immediately
-                        skipWaitButton.innerText = `Skip Wait (${timeRemaining}s) - Next: ${nextFileName}`;
-                        
-                        // Countdown interval
-                        const countdownInterval = setInterval(() => {
-                            timeRemaining--;
-                            if (timeRemaining > 0) {
-                                skipWaitButton.innerText = `Skip Wait (${timeRemaining}s) - Next: ${nextFileName}`;
-                            } else {
-                                clearInterval(countdownInterval);
-                            }
-                        }, 1000);
-                        
-                        countdownIntervals.push(countdownInterval);
-                        
-                        const nextTimeout = setTimeout(() => {
+                    // Update button text immediately
+                    skipWaitButton.innerText = `Skip Wait (${timeRemaining}s) - Next: ${nextFileName}`;
+                    
+                    // Countdown interval
+                    const countdownInterval = setInterval(() => {
+                        timeRemaining--;
+                        if (timeRemaining > 0) {
+                            skipWaitButton.innerText = `Skip Wait (${timeRemaining}s) - Next: ${nextFileName}`;
+                        } else {
                             clearInterval(countdownInterval);
-                            skipWaitButton.style.display = 'none';
-                            processNextFile();
-                        }, waitTime);
-                        
-                        uploadTimeouts.push(nextTimeout);
-                    } else {
-                        // Last file, show summary and re-enable upload
-                        setTimeout(() => {
-                            showUploadSummary();
-                            uploadButton.disabled = false;
-                            skipWaitButton.style.display = 'none';
-                            isUploading = false;
-                        }, 1000);
-                    }
-                });
+                        }
+                    }, 1000);
+                    
+                    countdownIntervals.push(countdownInterval);
+                    
+                    const nextTimeout = setTimeout(() => {
+                        clearInterval(countdownInterval);
+                        skipWaitButton.style.display = 'none';
+                        processNextFile();
+                    }, waitTime);
+                    
+                    uploadTimeouts.push(nextTimeout);
+                } else {
+                    // Last file, show summary and re-enable upload
+                    setTimeout(() => {
+                        showUploadSummary();
+                        uploadButton.disabled = false;
+                        skipWaitButton.style.display = 'none';
+                        isUploading = false;
+                    }, 1000);
+                }
             }
 
             // Function to compile master error file
@@ -1569,15 +1795,33 @@
                 }
             }
 
-            // Skip wait button functionality
-            skipWaitButton.addEventListener('click', () => {
+            // Enhanced skip wait button functionality with race condition prevention
+            skipWaitButton.addEventListener('click', async () => {
+                console.log('[MassUploader] Skip button clicked');
+                
                 // Clear any pending timeouts and countdown intervals
                 uploadTimeouts.forEach(timeout => clearTimeout(timeout));
                 countdownIntervals.forEach(interval => clearInterval(interval));
                 uploadTimeouts = [];
                 countdownIntervals = [];
+                
+                // Ensure any active polling completes before proceeding
+                if (pollingManager.isPollingActive()) {
+                    console.log('[MassUploader] Waiting for active polling to complete before skip...');
+                    skipWaitButton.innerText = 'Waiting for completion...';
+                    skipWaitButton.disabled = true;
+                    
+                    await pollingManager.waitForCompletion();
+                    
+                    skipWaitButton.disabled = false;
+                }
+                
                 skipWaitButton.style.display = 'none';
-                processNextFile();
+                
+                // Small delay to ensure cleanup completes
+                setTimeout(() => {
+                    processNextFile();
+                }, 100);
             });
 
             // Start the upload process
