@@ -1581,6 +1581,7 @@
             let isUploading = false;
             let failedFiles = []; // Track files that failed to upload
             let processedAlerts = new Set(); // Avoid processing duplicate alerts
+            let lastFileCompletionTime = 0; // Track when last file completed for minimum delay enforcement
             
             // Initialize polling manager for centralized alert handling
             const pollingManager = new PollingManager();
@@ -1640,6 +1641,9 @@
              */
             async function handleFileCompletion(file, result) {
                 const { outcome, alerts, completionTime } = result;
+                
+                // Track completion time for minimum delay enforcement
+                lastFileCompletionTime = completionTime || Date.now();
                 
                 console.log(`[MassUploader] Handling completion for ${file.name} with outcome: ${outcome}`);
                 
@@ -1874,7 +1878,7 @@
                 }
             }
 
-            // Enhanced skip wait button functionality with race condition prevention
+            // Enhanced skip wait button functionality with race condition prevention and minimum delay enforcement
             skipWaitButton.addEventListener('click', async () => {
                 console.log('[MassUploader] Skip button clicked');
                 
@@ -1895,12 +1899,29 @@
                     skipWaitButton.disabled = false;
                 }
                 
-                skipWaitButton.style.display = 'none';
+                // Enforce minimum 5-second delay even when skipping
+                const minimumDelay = 5000; // 5 seconds minimum
+                const timeSinceCompletion = Date.now() - lastFileCompletionTime;
+                const remainingDelay = Math.max(0, minimumDelay - timeSinceCompletion);
                 
-                // Small delay to ensure cleanup completes
-                setTimeout(() => {
-                    processNextFile();
-                }, 100);
+                if (remainingDelay > 0) {
+                    console.log(`[MassUploader] Enforcing ${remainingDelay}ms minimum delay before skip`);
+                    skipWaitButton.innerText = `Enforcing minimum delay (${Math.ceil(remainingDelay/1000)}s)...`;
+                    skipWaitButton.disabled = true;
+                    
+                    setTimeout(() => {
+                        skipWaitButton.disabled = false;
+                        skipWaitButton.style.display = 'none';
+                        processNextFile();
+                    }, remainingDelay);
+                } else {
+                    skipWaitButton.style.display = 'none';
+                    
+                    // Small delay to ensure cleanup completes
+                    setTimeout(() => {
+                        processNextFile();
+                    }, 100);
+                }
             });
 
             // Start the upload process
