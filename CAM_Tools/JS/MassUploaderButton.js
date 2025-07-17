@@ -478,7 +478,7 @@
             
             <div class="massUploader-input-group">
                 <label for="rowsPerChunk">Rows Per Chunk</label>
-                <input type="number" id="rowsPerChunk" value="1000" min="1" max="10000">
+                <input type="number" id="rowsPerChunk" value="1000" min="2" max="10000">
             </div>
             
             <label class="massUploader-radio-option">
@@ -1015,6 +1015,8 @@
              */
             shouldProcessAlert(alertElement) {
                 const fileId = this.activePolling.fileId;
+                const fileName = this.activePolling.file.name;
+                const alertText = alertElement.innerText.trim().toLowerCase();
                 
                 // Skip if already processed by this file
                 if (alertElement.dataset.muProcessedBy === fileId) {
@@ -1024,6 +1026,16 @@
                 // Skip if processed by any file (prevent cross-contamination)
                 if (alertElement.dataset.muProcessed === 'true') {
                     return false;
+                }
+                
+                // Enhanced filename matching for better alert attribution
+                // Success messages usually contain the filename, use this for better matching
+                if (alertText.includes('successfully uploaded') && fileName) {
+                    const baseFileName = fileName.replace('.csv', '').toLowerCase();
+                    if (!alertText.includes(baseFileName)) {
+                        console.log(`[PollingManager] Skipping alert - filename mismatch. Expected: ${baseFileName}, Alert: ${alertText.substring(0, 100)}`);
+                        return false; // This alert is likely for a different file
+                    }
                 }
                 
                 return true;
@@ -1399,8 +1411,8 @@
                 }
 
                 const rowsPerFile = parseInt(document.getElementById('rowsPerChunk').value, 10);
-                if (isNaN(rowsPerFile) || rowsPerFile < 1) {
-                    alert('Please enter a valid number of rows per file.');
+                if (isNaN(rowsPerFile) || rowsPerFile < 2) {
+                    alert('Please enter a valid number of rows per file (minimum 2 - header + at least 1 data row).');
                     return;
                 }
 
