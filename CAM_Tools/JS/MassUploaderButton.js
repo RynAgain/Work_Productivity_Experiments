@@ -1191,7 +1191,8 @@
                     alerts: this.activePolling.alertsDetected,
                     file: this.activePolling.file,
                     fileIndex: this.activePolling.fileIndex,
-                    fileId: this.activePolling.fileId
+                    fileId: this.activePolling.fileId,
+                    completionTime: Date.now() // Track when this file completed
                 };
                 
                 // Small delay to ensure all DOM updates complete
@@ -1638,7 +1639,7 @@
              * @param {Object} result - Result from polling manager
              */
             async function handleFileCompletion(file, result) {
-                const { outcome, alerts } = result;
+                const { outcome, alerts, completionTime } = result;
                 
                 console.log(`[MassUploader] Handling completion for ${file.name} with outcome: ${outcome}`);
                 
@@ -1680,11 +1681,21 @@
                 if (currentUploadIndex < filesToUpload.length) {
                     skipWaitButton.style.display = 'block';
                     
+                    // Enforce minimum 5-second delay between uploads to prevent race conditions
+                    const minimumDelay = 5000; // 5 seconds minimum
+                    const timeSinceCompletion = Date.now() - (completionTime || Date.now());
+                    const additionalDelayNeeded = Math.max(0, minimumDelay - timeSinceCompletion);
+                    
                     // Determine wait time based on outcome
-                    let waitTime = 30000; // Default 30 seconds
+                    let baseWaitTime = 30000; // Default 30 seconds
                     if (outcome === 'error' || outcome === 'partial_failure') {
-                        waitTime = 10000; // Shorter wait for failed files
+                        baseWaitTime = 10000; // Shorter wait for failed files
                     }
+                    
+                    // Ensure minimum delay is always enforced
+                    const waitTime = Math.max(baseWaitTime, minimumDelay + additionalDelayNeeded);
+                    
+                    console.log(`[MassUploader] Enforcing ${waitTime}ms delay (minimum ${minimumDelay}ms) before next file`);
                     
                     // Start countdown timer
                     let timeRemaining = Math.floor(waitTime / 1000);
