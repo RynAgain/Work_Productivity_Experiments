@@ -1016,7 +1016,8 @@
             shouldProcessAlert(alertElement) {
                 const fileId = this.activePolling.fileId;
                 const fileName = this.activePolling.file.name;
-                const alertText = alertElement.innerText.trim().toLowerCase();
+                const alertText = alertElement.innerText.trim();
+                const alertTextLower = alertText.toLowerCase();
                 
                 // Skip if already processed by this file
                 if (alertElement.dataset.muProcessedBy === fileId) {
@@ -1028,14 +1029,48 @@
                     return false;
                 }
                 
+                // Check if alert appeared before this polling session started (stale alert)
+                const alertTimestamp = alertElement.dataset.muAlertTimestamp;
+                if (alertTimestamp && parseInt(alertTimestamp) < this.activePolling.startTime) {
+                    console.log(`[PollingManager] Skipping stale alert from before polling started. Alert time: ${alertTimestamp}, Session start: ${this.activePolling.startTime}`);
+                    return false;
+                }
+                
                 // Enhanced filename matching for better alert attribution
                 // Success messages usually contain the filename, use this for better matching
-                if (alertText.includes('successfully uploaded') && fileName) {
-                    const baseFileName = fileName.replace('.csv', '').toLowerCase();
-                    if (!alertText.includes(baseFileName)) {
-                        console.log(`[PollingManager] Skipping alert - filename mismatch. Expected: ${baseFileName}, Alert: ${alertText.substring(0, 100)}`);
-                        return false; // This alert is likely for a different file
+                if (alertTextLower.includes('successfully upload') || alertTextLower.includes('successfully uploaded')) {
+                    if (fileName) {
+                        const baseFileName = fileName.replace('.csv', '').toLowerCase();
+                        
+                        // Check if the alert contains the current file's name
+                        const alertContainsCurrentFile = alertTextLower.includes(baseFileName);
+                        
+                        if (!alertContainsCurrentFile) {
+                            // Check if it contains any other chunk filename pattern
+                            const chunkPattern = /chunk_\d+/i;
+                            const alertChunkMatch = alertText.match(chunkPattern);
+                            const currentChunkMatch = fileName.match(chunkPattern);
+                            
+                            if (alertChunkMatch && currentChunkMatch) {
+                                const alertChunkNum = alertChunkMatch[0].toLowerCase();
+                                const currentChunkNum = currentChunkMatch[0].toLowerCase();
+                                
+                                if (alertChunkNum !== currentChunkNum) {
+                                    console.log(`[PollingManager] Skipping alert - chunk mismatch. Expected: ${currentChunkNum}, Alert contains: ${alertChunkNum}`);
+                                    console.log(`[PollingManager] Full alert text: ${alertText}`);
+                                    return false; // This alert is for a different chunk
+                                }
+                            } else {
+                                console.log(`[PollingManager] Skipping alert - filename mismatch. Expected: ${baseFileName}, Alert: ${alertText.substring(0, 100)}`);
+                                return false; // This alert is likely for a different file
+                            }
+                        }
                     }
+                }
+                
+                // Mark alert with timestamp when first encountered
+                if (!alertElement.dataset.muAlertTimestamp) {
+                    alertElement.dataset.muAlertTimestamp = Date.now().toString();
                 }
                 
                 return true;
@@ -1183,8 +1218,9 @@
                 console.log('[PollingManager] Cleaning up previous alerts');
                 
                 // Remove old processed markers to prevent buildup
-                const oldAlerts = document.querySelectorAll('div[mdn-alert-message][data-mu-processed="true"]');
+                const oldAlerts = document.querySelectorAll('div[mdn-alert-message]');
                 let cleanedCount = 0;
+                let removedCount = 0;
                 
                 oldAlerts.forEach(alert => {
                     // Only clean up alerts that are not from the current session
@@ -1192,13 +1228,29 @@
                         return; // Skip current session alerts
                     }
                     
-                    delete alert.dataset.muProcessed;
-                    delete alert.dataset.muProcessedBy;
-                    delete alert.dataset.muFileIndex;
-                    cleanedCount++;
+                    // Check if alert is stale (older than 10 seconds)
+                    const alertTimestamp = alert.dataset.muAlertTimestamp;
+                    const currentTime = Date.now();
+                    const isStale = alertTimestamp && (currentTime - parseInt(alertTimestamp)) > 10000; // 10 seconds
+                    
+                    if (isStale || alert.dataset.muProcessed === 'true') {
+                        // For stale alerts, remove them completely to prevent confusion
+                        if (isStale) {
+                            console.log(`[PollingManager] Removing stale alert: ${alert.innerText.substring(0, 50)}...`);
+                            alert.remove();
+                            removedCount++;
+                        } else {
+                            // Just clean markers for processed alerts
+                            delete alert.dataset.muProcessed;
+                            delete alert.dataset.muProcessedBy;
+                            delete alert.dataset.muFileIndex;
+                            delete alert.dataset.muAlertTimestamp;
+                            cleanedCount++;
+                        }
+                    }
                 });
                 
-                console.log(`[PollingManager] Cleaned up ${cleanedCount} old alert markers`);
+                console.log(`[PollingManager] Cleaned up ${cleanedCount} old alert markers, removed ${removedCount} stale alerts`);
             }
             
             /**
