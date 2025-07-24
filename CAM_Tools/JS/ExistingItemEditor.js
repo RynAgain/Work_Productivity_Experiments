@@ -659,6 +659,19 @@
           box-sizing: border-box;
         }
         
+        /* INCREMENT TYPE SELECTOR STYLES */
+        #ei-increment-type {
+          transition: border-color 0.2s, box-shadow 0.2s;
+        }
+        #ei-increment-type:focus {
+          border-color: #004E36;
+          box-shadow: 0 0 0 2px rgba(0,78,54,0.1);
+          outline: none;
+        }
+        #ei-increment-type:hover {
+          border-color: #056a48;
+        }
+        
         /* CLOSE BUTTON */
         .ei-close-btn {
           position: fixed;
@@ -1708,17 +1721,44 @@
     return selected;
   };
 
+  /* -------------------------------------------------- *
+   *  INPUT VALIDATION FOR INCREMENT FEATURE
+   * -------------------------------------------------- */
+  const validateIncrementInput = (type, value) => {
+    const numValue = parseFloat(value);
+    
+    if (isNaN(numValue)) {
+      return { valid: false, message: 'Please enter a valid number' };
+    }
+    
+    if (type === 'fixed') {
+      if (numValue < -999 || numValue > 999) {
+        return { valid: false, message: 'Fixed increment must be between -999 and 999' };
+      }
+    } else if (type === 'percentage') {
+      if (numValue < -100 || numValue > 1000) {
+        return { valid: false, message: 'Percentage must be between -100% and 1000%' };
+      }
+    }
+    
+    return { valid: true, value: numValue };
+  };
+
   const addControls = (container, dataModel, undoManager, autoSaveManager, validationManager) => {
     const controlsHtml = `
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-top:20px;width:100%;box-sizing:border-box;">
         <div id="ei-increment-wrap">
           <label style="font-weight:500;">Increment Inventory:</label>
           <div style="display:flex;align-items:center;gap:8px;margin-top:4px;flex-wrap:wrap;">
-            <input id="ei-increment-input" type="number" value="1" min="-999" max="999" 
+            <select id="ei-increment-type" style="width:100px;padding:6px;border:1px solid #ccc;border-radius:4px;box-sizing:border-box;">
+              <option value="fixed">Fixed</option>
+              <option value="percentage">Percentage</option>
+            </select>
+            <input id="ei-increment-input" type="number" value="1" min="-999" max="999" step="1" placeholder="e.g., 5"
                    style="width:80px;padding:6px;border:1px solid #ccc;border-radius:4px;box-sizing:border-box;">
-            <button id="ei-increment-btn" class="ei-action blue" 
+            <button id="ei-increment-btn" class="ei-action blue"
                     style="padding:6px 18px;font-size:14px;margin-top:0;white-space:nowrap;">Apply</button>
-            <span style="color:#666;font-size:12px;flex-shrink:0;">(Limited items only)</span>
+            <span id="ei-increment-help" style="color:#666;font-size:12px;flex-shrink:0;">(Limited items only, -999 to 999)</span>
           </div>
         </div>
         
@@ -1736,19 +1776,60 @@
     
     container.insertAdjacentHTML('beforeend', controlsHtml);
     
+    // Dynamic input field updates based on increment type
+    $('#ei-increment-type').onchange = (e) => {
+      const type = e.target.value;
+      const input = $('#ei-increment-input');
+      const help = $('#ei-increment-help');
+      
+      if (type === 'fixed') {
+        input.min = '-999';
+        input.max = '999';
+        input.step = '1';
+        input.placeholder = 'e.g., 5';
+        help.textContent = '(Limited items only, -999 to 999)';
+      } else if (type === 'percentage') {
+        input.min = '-100';
+        input.max = '1000';
+        input.step = '0.1';
+        input.placeholder = 'e.g., 10.5';
+        help.textContent = '(Limited items only, -100% to 1000%, rounded down)';
+      }
+    };
+    
     // Connect increment
     $('#ei-increment-btn').onclick = () => {
-      const incVal = parseInt($('#ei-increment-input').value, 10);
-      if (isNaN(incVal)) {
-        showInlineError(container, 'Please enter a valid number');
+      const type = $('#ei-increment-type').value;
+      const inputValue = $('#ei-increment-input').value;
+      
+      // Validate input
+      const validation = validateIncrementInput(type, inputValue);
+      if (!validation.valid) {
+        showInlineError(container, validation.message);
         return;
       }
       
-      undoManager.saveState(`Increment inventory by ${incVal}`);
-      const updatedCount = incrementInventory(dataModel, incVal);
+      // Confirm percentage operations for clarity
+      if (type === 'percentage' && !confirm(
+        `Apply ${validation.value}% increment to all Limited items?\n\n` +
+        `This will calculate ${validation.value}% of each item's current inventory ` +
+        `and add it (rounded down to whole numbers).`
+      )) {
+        return;
+      }
+      
+      // Execute increment
+      undoManager.saveState(`${type === 'fixed' ? 'Fixed' : 'Percentage'} increment by ${validation.value}${type === 'percentage' ? '%' : ''}`);
+      const result = incrementInventory(dataModel, validation.value, type);
       updateTableFromModel();
       autoSaveManager.manualSave();
-      showInlineError(container, `<div style="color:green;">✓ Incremented ${updatedCount} Limited items by ${incVal}</div>`);
+      
+      // Enhanced feedback message
+      const typeLabel = type === 'fixed' ? '' : '%';
+      const calculatedInfo = type === 'percentage' ? ` (${result.totalCalculated} total units added)` : '';
+      showInlineError(container,
+        `<div style="color:green;">✓ ${type === 'fixed' ? 'Fixed' : 'Percentage'} increment of ${validation.value}${typeLabel} applied to ${result.updatedCount} Limited items${calculatedInfo}</div>`
+      );
     };
     
     // Connect validation
@@ -1805,21 +1886,38 @@
     });
   };
 
-  const incrementInventory = (dataModel, increment) => {
+  const incrementInventory = (dataModel, increment, type = 'fixed') => {
     const data = dataModel.getData();
     let updatedCount = 0;
+    let totalCalculated = 0;
     
     for (let r = 1; r < data.length; r++) {
       const availability = dataModel.getCell(r, 3);
       if (availability === 'Limited') {
         const current = parseInt(dataModel.getCell(r, 4), 10) || 0;
-        const newValue = Math.max(0, Math.min(10000, current + increment));
+        let newValue;
+        
+        if (type === 'fixed') {
+          newValue = current + increment;
+          totalCalculated += increment;
+        } else if (type === 'percentage') {
+          // Calculate percentage increment and round down
+          const percentageIncrease = Math.floor(current * (increment / 100));
+          newValue = current + percentageIncrease;
+          totalCalculated += percentageIncrease;
+        }
+        
+        // Apply bounds checking
+        newValue = Math.max(0, Math.min(10000, newValue));
         dataModel.setCell(r, 4, newValue);
         updatedCount++;
       }
     }
     
-    return updatedCount;
+    return {
+      updatedCount,
+      totalCalculated: totalCalculated
+    };
   };
 
   const highlightErrors = (errors) => {

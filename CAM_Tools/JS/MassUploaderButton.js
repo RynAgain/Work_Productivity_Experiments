@@ -1683,8 +1683,6 @@
                 
                 // Schedule next file (if not the last one)
                 if (currentUploadIndex < filesToUpload.length) {
-                    skipWaitButton.style.display = 'block';
-                    
                     // Enforce minimum 5-second delay between uploads to prevent race conditions
                     const minimumDelay = 5000; // 5 seconds minimum
                     const timeSinceCompletion = Date.now() - (completionTime || Date.now());
@@ -1701,27 +1699,36 @@
                     
                     console.log(`[MassUploader] Enforcing ${waitTime}ms delay (minimum ${minimumDelay}ms) before next file`);
                     
-                    // Start countdown timer
-                    let timeRemaining = Math.floor(waitTime / 1000);
-                    const nextFileName = filesToUpload[currentUploadIndex].name;
+                    // Hide skip button initially - will show after minimum delay
+                    skipWaitButton.style.display = 'none';
                     
-                    // Update button text immediately
-                    skipWaitButton.innerText = `Skip Wait (${timeRemaining}s) - Next: ${nextFileName}`;
+                    // Show skip button after minimum delay has passed
+                    const showSkipTimeout = setTimeout(() => {
+                        skipWaitButton.style.display = 'block';
+                        
+                        // Start countdown timer from remaining time
+                        let timeRemaining = Math.floor((waitTime - minimumDelay) / 1000);
+                        const nextFileName = filesToUpload[currentUploadIndex].name;
+                        
+                        // Update button text
+                        skipWaitButton.innerText = `Skip Wait (${timeRemaining}s) - Next: ${nextFileName}`;
+                        
+                        // Countdown interval for remaining time
+                        const countdownInterval = setInterval(() => {
+                            timeRemaining--;
+                            if (timeRemaining > 0) {
+                                skipWaitButton.innerText = `Skip Wait (${timeRemaining}s) - Next: ${nextFileName}`;
+                            } else {
+                                clearInterval(countdownInterval);
+                            }
+                        }, 1000);
+                        
+                        countdownIntervals.push(countdownInterval);
+                    }, minimumDelay + additionalDelayNeeded);
                     
-                    // Countdown interval
-                    const countdownInterval = setInterval(() => {
-                        timeRemaining--;
-                        if (timeRemaining > 0) {
-                            skipWaitButton.innerText = `Skip Wait (${timeRemaining}s) - Next: ${nextFileName}`;
-                        } else {
-                            clearInterval(countdownInterval);
-                        }
-                    }, 1000);
-                    
-                    countdownIntervals.push(countdownInterval);
+                    uploadTimeouts.push(showSkipTimeout);
                     
                     const nextTimeout = setTimeout(() => {
-                        clearInterval(countdownInterval);
                         skipWaitButton.style.display = 'none';
                         processNextFile();
                     }, waitTime);
