@@ -811,8 +811,7 @@
       <select id="ei-team-filter" style="margin-bottom:8px;">
         <option value="">All Teams</option>
         <option value="Coffee">Coffee</option>
-        <option value="Prepared">Prepared</option>
-        <option value="Foods">Foods</option>
+        <option value="Prepared Foods">Prepared Foods</option>
         <option value="Bakery">Bakery</option>
         <option value="Seafood">Seafood</option>
         <option value="Specialty">Specialty</option>
