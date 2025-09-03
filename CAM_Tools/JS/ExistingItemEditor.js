@@ -616,6 +616,9 @@
         .ei-bulk-ops .bulk-andon-enabled{background:#27ae60;}
         .ei-bulk-ops .bulk-andon-disabled{background:#e67e22;}
         .ei-bulk-ops .bulk-inventory{background:#3498db;}
+        .ei-bulk-ops .bulk-capacity{background:#9b59b6;}
+        .ei-bulk-ops .bulk-tracking-start{background:#16a085;}
+        .ei-bulk-ops .bulk-tracking-end{background:#c0392b;}
         .ei-bulk-ops input{
           box-sizing: border-box;
         }
@@ -1493,17 +1496,23 @@
             input = createEl('select', { className: 'ei-cell-select' });
             input.innerHTML = '<option value="Enabled">Enabled</option><option value="Disabled">Disabled</option>';
             input.value = cell || 'Disabled';
-          } else if (colIndex === 4) { // Inventory
-            input = createEl('input', { 
-              className: 'ei-cell-input', 
-              type: 'number', 
-              min: '0', 
+          } else if (colIndex === 4 || colIndex === 5) { // Inventory or Sales Floor Capacity
+            input = createEl('input', {
+              className: 'ei-cell-input',
+              type: 'number',
+              min: '0',
               max: '10000',
               value: cell || '0'
             });
+          } else if (colIndex === 7 || colIndex === 8) { // Tracking Start Date or Tracking End Date
+            input = createEl('input', {
+              className: 'ei-cell-input',
+              type: 'date',
+              value: cell || ''
+            });
           } else {
-            input = createEl('input', { 
-              className: 'ei-cell-input', 
+            input = createEl('input', {
+              className: 'ei-cell-input',
               type: 'text',
               value: cell || ''
             });
@@ -1605,8 +1614,14 @@
       <button class="bulk-unlimited">Set to Unlimited</button>
       <input type="number" id="ei-bulk-inventory" placeholder="Inventory" style="width:100px;" min="0" max="10000">
       <button class="bulk-inventory">Set Inventory</button>
+      <input type="number" id="ei-bulk-capacity" placeholder="Capacity" style="width:100px;" min="0" max="10000">
+      <button class="bulk-capacity">Set Sales Floor Capacity</button>
       <button class="bulk-andon-enabled">Enable Andon</button>
       <button class="bulk-andon-disabled">Disable Andon</button>
+      <input type="date" id="ei-bulk-tracking-start" style="width:140px;">
+      <button class="bulk-tracking-start">Set Tracking Start Date</button>
+      <input type="date" id="ei-bulk-tracking-end" style="width:140px;">
+      <button class="bulk-tracking-end">Set Tracking End Date</button>
       <button class="bulk-delete">Delete Selected</button>
       <span id="ei-selected-count" style="margin-left:10px;font-size:12px;color:#666;"></span>
     `;
@@ -1674,6 +1689,26 @@
       }
     };
     
+    bulkOps.querySelector('.bulk-capacity').onclick = () => {
+      const selected = getSelectedRows();
+      const capacity = $('#ei-bulk-capacity').value;
+      
+      if (!capacity || isNaN(capacity) || capacity < 0 || capacity > 10000) {
+        showInlineError(container, 'Please enter a valid sales floor capacity value (0-10000)');
+        return;
+      }
+      
+      if (selected.length && confirm(`Set sales floor capacity to ${capacity} for ${selected.length} rows?`)) {
+        undoManager.saveState(`Bulk set sales floor capacity to ${capacity} for ${selected.length} rows`);
+        selected.forEach(rowIndex => {
+          dataModel.setCell(rowIndex, 5, capacity);
+        });
+        updateTableFromModel();
+        autoSaveManager.manualSave();
+        showInlineError(container, `<div style="color:green;">✓ Set sales floor capacity to ${capacity} for ${selected.length} rows</div>`);
+      }
+    };
+    
     bulkOps.querySelector('.bulk-andon-enabled').onclick = () => {
       const selected = getSelectedRows();
       if (selected.length && confirm(`Enable Andon Cord for ${selected.length} rows?`)) {
@@ -1697,6 +1732,60 @@
         updateTableFromModel();
         autoSaveManager.manualSave();
         showInlineError(container, `<div style="color:orange;">✓ Disabled Andon Cord for ${selected.length} rows</div>`);
+      }
+    };
+    
+    bulkOps.querySelector('.bulk-tracking-start').onclick = () => {
+      const selected = getSelectedRows();
+      const startDate = $('#ei-bulk-tracking-start').value;
+      
+      if (!startDate) {
+        showInlineError(container, 'Please select a tracking start date');
+        return;
+      }
+      
+      // Validate date format
+      const dateObj = new Date(startDate);
+      if (isNaN(dateObj.getTime())) {
+        showInlineError(container, 'Please enter a valid date');
+        return;
+      }
+      
+      if (selected.length && confirm(`Set tracking start date to ${startDate} for ${selected.length} rows?`)) {
+        undoManager.saveState(`Bulk set tracking start date to ${startDate} for ${selected.length} rows`);
+        selected.forEach(rowIndex => {
+          dataModel.setCell(rowIndex, 7, startDate);
+        });
+        updateTableFromModel();
+        autoSaveManager.manualSave();
+        showInlineError(container, `<div style="color:green;">✓ Set tracking start date to ${startDate} for ${selected.length} rows</div>`);
+      }
+    };
+    
+    bulkOps.querySelector('.bulk-tracking-end').onclick = () => {
+      const selected = getSelectedRows();
+      const endDate = $('#ei-bulk-tracking-end').value;
+      
+      if (!endDate) {
+        showInlineError(container, 'Please select a tracking end date');
+        return;
+      }
+      
+      // Validate date format
+      const dateObj = new Date(endDate);
+      if (isNaN(dateObj.getTime())) {
+        showInlineError(container, 'Please enter a valid date');
+        return;
+      }
+      
+      if (selected.length && confirm(`Set tracking end date to ${endDate} for ${selected.length} rows?`)) {
+        undoManager.saveState(`Bulk set tracking end date to ${endDate} for ${selected.length} rows`);
+        selected.forEach(rowIndex => {
+          dataModel.setCell(rowIndex, 8, endDate);
+        });
+        updateTableFromModel();
+        autoSaveManager.manualSave();
+        showInlineError(container, `<div style="color:green;">✓ Set tracking end date to ${endDate} for ${selected.length} rows</div>`);
       }
     };
     bulkOps.querySelector('.bulk-delete').onclick = () => {
