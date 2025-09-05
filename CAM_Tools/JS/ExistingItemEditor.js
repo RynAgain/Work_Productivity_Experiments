@@ -105,8 +105,27 @@
     }
     
     toCSV() {
-      return this.data.map(row => 
-        row.map(cell => `"${String(cell || '').replace(/"/g, '""')}"`).join(',')
+      return this.data.map((row, rowIndex) =>
+        row.map((cell, colIndex) => {
+          // Skip header row (index 0) - apply normal formatting
+          if (rowIndex === 0) {
+            return `"${String(cell || '').replace(/"/g, '""')}"`;
+          }
+          
+          // Apply blank field logic for specific columns
+          if (colIndex === 5) { // Sales Floor Capacity
+            if (cell === '0') {
+              return '""'; // Output as blank field
+            }
+          } else if (colIndex === 7 || colIndex === 8) { // Tracking Start Date or Tracking End Date
+            if (!cell || cell === '' || cell === null || cell === undefined) {
+              return '""'; // Output as blank field
+            }
+          }
+          
+          // Default CSV formatting for all other cases
+          return `"${String(cell || '').replace(/"/g, '""')}"`;
+        }).join(',')
       ).join('\n');
     }
   }

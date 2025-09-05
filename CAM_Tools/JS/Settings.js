@@ -19,11 +19,34 @@
   //  CENTRALIZED STATE
   // ------------------------------------------------------------------
   const SETTINGS_VERSION = 1;
-  const defaultSettings = { menuStyle: 'side', themeColor: '#004E36', cursorEmoji: 'normal', __version: SETTINGS_VERSION };
+  
+  // ------------------------------------------------------------------
+  //  UPDATE SYSTEM CONFIGURATION
+  // ------------------------------------------------------------------
+  const CAM_TOOLS_VERSION = '2.6.230'; // Extracted from MainScript.js @version
+  const GITHUB_API_URL = 'https://api.github.com/repos/RynAgain/Work_Productivity_Experiments/releases/latest';
+  const GITHUB_RAW_URL = 'https://raw.githubusercontent.com/RynAgain/Work_Productivity_Experiments/main/CAM_Tools/MainScript.js';
+  const UPDATE_CHECK_INTERVAL = 4 * 60 * 60 * 1000; // 8 hours in milliseconds
+  const UPDATE_STORAGE_PREFIX = 'cam_tools_update_';
+  
+  const defaultSettings = {
+    menuStyle: 'side',
+    themeColor: '#004E36',
+    cursorEmoji: 'normal',
+    autoCheckUpdates: true,
+    updateCheckInterval: UPDATE_CHECK_INTERVAL,
+    __version: SETTINGS_VERSION
+  };
   let state = {
     settingsMenuOpen: false,
     sideMenuOpen: false,
     bottomBarVisible: false,
+    // Update system state
+    updateModalOpen: false,
+    updateCheckInProgress: false,
+    lastUpdateCheck: 0,
+    availableUpdate: null,
+    skippedVersion: null,
     ...defaultSettings,
     ...getSettings()
   };
@@ -34,7 +57,9 @@
     setSettings({
       menuStyle: state.menuStyle,
       themeColor: state.themeColor,
-      cursorEmoji: state.cursorEmoji
+      cursorEmoji: state.cursorEmoji,
+      autoCheckUpdates: state.autoCheckUpdates,
+      updateCheckInterval: state.updateCheckInterval
     });
   }
 
@@ -51,6 +76,180 @@
       persistSettings();
       render();
     }
+  }
+
+  // ------------------------------------------------------------------
+  //  UPDATE SYSTEM STORAGE
+  // ------------------------------------------------------------------
+  function getUpdateData(key, defaultValue = null) {
+    try {
+      const stored = localStorage.getItem(UPDATE_STORAGE_PREFIX + key);
+      return stored ? JSON.parse(stored) : defaultValue;
+    } catch {
+      return defaultValue;
+    }
+  }
+
+  function setUpdateData(key, value) {
+    try {
+      localStorage.setItem(UPDATE_STORAGE_PREFIX + key, JSON.stringify(value));
+    } catch (error) {
+      console.warn('Failed to store update data:', error);
+    }
+  }
+
+  // ------------------------------------------------------------------
+  //  UPDATE SYSTEM CORE FUNCTIONALITY
+  // ------------------------------------------------------------------
+  let updateCheckInterval = null;
+
+  // Version comparison function - handles semantic versioning
+  function isNewerVersion(latest, current) {
+    const latestParts = latest.split('.').map(part => parseInt(part, 10));
+    const currentParts = current.split('.').map(part => parseInt(part, 10));
+    
+    const maxLength = Math.max(latestParts.length, currentParts.length);
+    while (latestParts.length < maxLength) latestParts.push(0);
+    while (currentParts.length < maxLength) currentParts.push(0);
+    
+    for (let i = 0; i < maxLength; i++) {
+      if (latestParts[i] > currentParts[i]) return true;
+      if (latestParts[i] < currentParts[i]) return false;
+    }
+    
+    return false;
+  }
+
+  // Extract version from MainScript.js content
+  function extractVersionFromScript(scriptContent) {
+    const versionMatch = scriptContent.match(/@version\s+([^\s]+)/);
+    return versionMatch ? versionMatch[1].trim() : null;
+  }
+
+  // Check for updates using GitHub API
+  async function checkForUpdates(showNoUpdateMessage = false) {
+    if (state.updateCheckInProgress) return;
+    
+    setState({ updateCheckInProgress: true });
+    
+    try {
+      const lastCheck = getUpdateData('lastVersionCheck', 0);
+      const now = Date.now();
+      
+      // Rate limiting - don't check too frequently unless manual
+      if (!showNoUpdateMessage && (now - lastCheck) < state.updateCheckInterval) {
+        setState({ updateCheckInProgress: false });
+        return;
+      }
+      
+      // Try GitHub API first for release info
+      let latestVersion = null;
+      try {
+        const response = await fetch(GITHUB_API_URL, {
+          cache: 'no-cache',
+          headers: { 'User-Agent': 'CAM-Tools-Update-Checker' }
+        });
+        
+        if (response.ok) {
+          const releaseData = await response.json();
+          latestVersion = releaseData.tag_name?.replace(/^v/, '') || null;
+        }
+      } catch (apiError) {
+        console.warn('GitHub API failed, trying raw file:', apiError);
+      }
+      
+      // Fallback to raw file if API fails
+      if (!latestVersion) {
+        const response = await fetch(GITHUB_RAW_URL, {
+          cache: 'no-cache',
+          headers: { 'User-Agent': 'CAM-Tools-Update-Checker' }
+        });
+        
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+        
+        const scriptContent = await response.text();
+        latestVersion = extractVersionFromScript(scriptContent);
+        
+        if (!latestVersion) {
+          throw new Error('Could not extract version from script');
+        }
+      }
+      
+      // Update check timestamp
+      setUpdateData('lastVersionCheck', now);
+      setState({ lastUpdateCheck: now });
+      
+      // Check if update is available
+      const skippedVersion = getUpdateData('skippedVersion');
+      const hasUpdate = isNewerVersion(latestVersion, CAM_TOOLS_VERSION);
+      const shouldNotify = hasUpdate && latestVersion !== skippedVersion;
+      
+      if (shouldNotify) {
+        setState({
+          availableUpdate: latestVersion,
+          updateModalOpen: true
+        });
+      } else if (showNoUpdateMessage) {
+        showUpdateStatusMessage(hasUpdate ? 'skipped' : 'current', latestVersion);
+      }
+      
+    } catch (error) {
+      console.error('Update check failed:', error);
+      if (showNoUpdateMessage) {
+        showUpdateStatusMessage('error', null, error.message);
+      }
+    } finally {
+      setState({ updateCheckInProgress: false });
+    }
+  }
+
+  // Show update status messages
+  function showUpdateStatusMessage(status, version, errorMsg) {
+    let message = '';
+    let icon = '';
+    
+    switch (status) {
+      case 'current':
+        icon = '✅';
+        message = `You're running the latest version!\n\nCurrent: ${CAM_TOOLS_VERSION}\nLatest: ${version}`;
+        break;
+      case 'skipped':
+        icon = '⏭️';
+        message = `Update available but skipped.\n\nCurrent: ${CAM_TOOLS_VERSION}\nLatest: ${version}\n\nYou can check again or change settings to see this update.`;
+        break;
+      case 'error':
+        icon = '❌';
+        message = `Failed to check for updates:\n${errorMsg}`;
+        break;
+    }
+    
+    alert(`${icon} CAM Tools Update Check\n\n${message}`);
+  }
+
+  // Initialize update checking
+  function initializeUpdateSystem() {
+    // Load stored data into state
+    setState({
+      lastUpdateCheck: getUpdateData('lastVersionCheck', 0),
+      skippedVersion: getUpdateData('skippedVersion')
+    });
+    
+    if (!state.autoCheckUpdates) return;
+    
+    // Initial check after startup delay
+    setTimeout(() => {
+      checkForUpdates(false);
+    }, 5000);
+    
+    // Set up periodic checking
+    if (updateCheckInterval) clearInterval(updateCheckInterval);
+    updateCheckInterval = setInterval(() => {
+      if (state.autoCheckUpdates) {
+        checkForUpdates(false);
+      }
+    }, state.updateCheckInterval);
   }
 
   // ------------------------------------------------------------------
@@ -206,6 +405,145 @@
   iconBar.setAttribute('role', 'menu');
 
   // ------------------------------------------------------------------
+  //  UPDATE NOTIFICATION MODAL
+  // ------------------------------------------------------------------
+  function createUpdateModal(latestVersion) {
+    const modal = document.createElement('div');
+    Object.assign(modal.style, {
+      position: 'fixed',
+      top: '0',
+      left: '0',
+      width: '100%',
+      height: '100%',
+      background: 'rgba(0, 0, 0, 0.6)',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      zIndex: '9999',
+      fontFamily: 'Segoe UI, Arial, sans-serif'
+    });
+
+    const modalContent = document.createElement('div');
+    Object.assign(modalContent.style, {
+      background: '#fff',
+      borderRadius: '12px',
+      padding: '24px',
+      maxWidth: '480px',
+      width: '90%',
+      boxShadow: '0 20px 60px rgba(0, 0, 0, 0.3)',
+      position: 'relative',
+      animation: 'fadeInScale 0.3s ease-out'
+    });
+
+    // Add animation keyframes
+    if (!document.getElementById('update-modal-animations')) {
+      const animationStyle = document.createElement('style');
+      animationStyle.id = 'update-modal-animations';
+      animationStyle.textContent = `
+        @keyframes fadeInScale {
+          from { opacity: 0; transform: scale(0.9); }
+          to { opacity: 1; transform: scale(1); }
+        }
+      `;
+      document.head.appendChild(animationStyle);
+    }
+
+    modalContent.innerHTML = `
+      <div style="display: flex; align-items: center; margin-bottom: 20px;">
+        <div style="width: 48px; height: 48px; background: ${state.themeColor}; border-radius: 50%;
+                    display: flex; align-items: center; justify-content: center; margin-right: 16px;">
+          <svg width="24" height="24" fill="white" viewBox="0 0 24 24">
+            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+          </svg>
+        </div>
+        <div>
+          <h2 style="margin: 0; font-size: 20px; font-weight: 600; color: #333;">
+            CAM Tools Update Available
+          </h2>
+          <p style="margin: 4px 0 0; color: #666; font-size: 14px;">
+            A new version is ready to install
+          </p>
+        </div>
+      </div>
+      
+      <div style="background: #f8f9fa; border-radius: 8px; padding: 16px; margin-bottom: 20px;">
+        <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+          <span style="font-weight: 500; color: #333;">Current Version:</span>
+          <span style="font-family: monospace; color: #666;">${CAM_TOOLS_VERSION}</span>
+        </div>
+        <div style="display: flex; justify-content: space-between;">
+          <span style="font-weight: 500; color: #333;">Latest Version:</span>
+          <span style="font-family: monospace; color: ${state.themeColor}; font-weight: 600;">${latestVersion}</span>
+        </div>
+      </div>
+      
+      <p style="color: #555; line-height: 1.5; margin-bottom: 24px;">
+        Click "Update Now" to open the latest version in a new tab. You'll need to install it manually through Tampermonkey.
+      </p>
+      
+      <div style="display: flex; gap: 12px; justify-content: flex-end;">
+        <button id="update-skip-btn" style="padding: 10px 20px; border: 1px solid #ddd; background: #fff;
+                color: #666; border-radius: 6px; cursor: pointer; font-size: 14px; font-weight: 500;">
+          Skip This Version
+        </button>
+        <button id="update-remind-btn" style="padding: 10px 20px; border: 1px solid ${state.themeColor};
+                background: #fff; color: ${state.themeColor}; border-radius: 6px; cursor: pointer;
+                font-size: 14px; font-weight: 500;">
+          Remind Me Later
+        </button>
+        <button id="update-now-btn" style="padding: 10px 24px; border: none; background: ${state.themeColor};
+                color: #fff; border-radius: 6px; cursor: pointer; font-size: 14px; font-weight: 600;">
+          Update Now
+        </button>
+      </div>
+    `;
+
+    // Event handlers
+    const updateBtn = modalContent.querySelector('#update-now-btn');
+    const remindBtn = modalContent.querySelector('#update-remind-btn');
+    const skipBtn = modalContent.querySelector('#update-skip-btn');
+
+    updateBtn.onclick = () => {
+      window.open(GITHUB_RAW_URL, '_blank');
+      closeUpdateModal();
+    };
+
+    remindBtn.onclick = () => {
+      setUpdateData('lastVersionCheck', 0); // Reset check timer
+      setState({ lastUpdateCheck: 0 });
+      closeUpdateModal();
+    };
+
+    skipBtn.onclick = () => {
+      setUpdateData('skippedVersion', latestVersion);
+      setState({ skippedVersion: latestVersion });
+      closeUpdateModal();
+    };
+
+    function closeUpdateModal() {
+      setState({ updateModalOpen: false, availableUpdate: null });
+      if (document.body.contains(modal)) {
+        document.body.removeChild(modal);
+      }
+    }
+
+    // Close on overlay click
+    modal.onclick = (e) => {
+      if (e.target === modal) closeUpdateModal();
+    };
+
+    // Keyboard support
+    modal.onkeydown = (e) => {
+      if (e.key === 'Escape') {
+        closeUpdateModal();
+      }
+    };
+
+    modal.appendChild(modalContent);
+    return modal;
+  }
+
+  // ------------------------------------------------------------------
   //  STATIC SIDE MENU CONFIGURATION
   // ------------------------------------------------------------------
   const sideMenuItems = [
@@ -288,6 +626,18 @@
     // Hamburger/Close Button
     toggleBtn.innerHTML = (state.sideMenuOpen || state.bottomBarVisible) ? closeSVG : hamburgerSVG;
     toggleBtn.title = (state.sideMenuOpen || state.bottomBarVisible) ? 'Hide Menu' : 'Show Menu';
+
+    // Update Modal
+    const existingModal = document.getElementById('cam-tools-update-modal');
+    if (state.updateModalOpen && state.availableUpdate) {
+      if (!existingModal) {
+        const modal = createUpdateModal(state.availableUpdate);
+        modal.id = 'cam-tools-update-modal';
+        document.body.appendChild(modal);
+      }
+    } else if (existingModal) {
+      document.body.removeChild(existingModal);
+    }
 
     // Icon Bar (side menu mode)
     if (state.menuStyle === 'side') {
@@ -377,6 +727,40 @@
          </div>
        </div>
      </label>
+     
+     <div style="border-top: 1px solid #eee; margin: 20px 0; padding-top: 20px;">
+       <div style="font-size: 16px; font-weight: 600; color: #333; margin-bottom: 12px; display: flex; align-items: center; gap: 8px;">
+         <svg width="18" height="18" fill="${state.themeColor}" viewBox="0 0 24 24">
+           <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+         </svg>
+         Update Settings
+       </div>
+       
+       <label style="display: flex; align-items: center; margin-bottom: 12px; cursor: pointer;">
+         <input type="checkbox" id="autoCheckUpdates" ${state.autoCheckUpdates ? 'checked' : ''}
+                style="margin-right: 8px; transform: scale(1.1);">
+         <span style="font-size: 14px; color: #555;">Automatically check for updates</span>
+       </label>
+       
+       <div style="display: flex; gap: 8px; margin-bottom: 12px;">
+         <button id="manual-update-check" style="flex: 1; padding: 8px 12px; border: 1px solid ${state.themeColor};
+                 background: #fff; color: ${state.themeColor}; border-radius: 5px; cursor: pointer;
+                 font-size: 13px; font-weight: 500; ${state.updateCheckInProgress ? 'opacity: 0.6; cursor: not-allowed;' : ''}">
+           ${state.updateCheckInProgress ? 'Checking...' : 'Check for Updates'}
+         </button>
+         <button id="reset-skipped-version" style="padding: 8px 12px; border: 1px solid #ddd;
+                 background: #fff; color: #666; border-radius: 5px; cursor: pointer;
+                 font-size: 13px; font-weight: 500;" title="Reset skipped version to see all updates">
+           Reset Skipped
+         </button>
+       </div>
+       
+       <div style="font-size: 12px; color: #888; line-height: 1.4;">
+         <div>Current Version: <span style="font-family: monospace; color: #333;">${CAM_TOOLS_VERSION}</span></div>
+         ${state.lastUpdateCheck ? `<div>Last Check: ${new Date(state.lastUpdateCheck).toLocaleString()}</div>` : ''}
+         ${state.skippedVersion ? `<div>Skipped Version: <span style="font-family: monospace;">${state.skippedVersion}</span></div>` : ''}
+       </div>
+     </div>
     `;
     // Wiring
     settingsMenu.querySelector('#settings-close').onclick = () => setState({ settingsMenuOpen: false });
@@ -390,6 +774,29 @@
       });
     };
     settingsMenu.querySelector('#themeColor').oninput = e => setState({ themeColor: e.target.value });
+    
+    // Update system event handlers
+    settingsMenu.querySelector('#autoCheckUpdates').onchange = e => {
+      setState({ autoCheckUpdates: e.target.checked });
+      if (e.target.checked) {
+        initializeUpdateSystem();
+      } else if (updateCheckInterval) {
+        clearInterval(updateCheckInterval);
+        updateCheckInterval = null;
+      }
+    };
+    
+    settingsMenu.querySelector('#manual-update-check').onclick = () => {
+      if (!state.updateCheckInProgress) {
+        checkForUpdates(true);
+      }
+    };
+    
+    settingsMenu.querySelector('#reset-skipped-version').onclick = () => {
+      setUpdateData('skippedVersion', null);
+      setState({ skippedVersion: null });
+      alert('✅ Skipped version reset! You\'ll now see all available updates.');
+    };
 
     // Emoji options (food and fun)
     const emojiOptions = [
@@ -537,12 +944,13 @@
   // Keyboard accessibility: ESC closes menus, trap focus
   document.addEventListener('keydown', function (e) {
     if (e.key === 'Escape') {
+      if (state.updateModalOpen) setState({ updateModalOpen: false, availableUpdate: null });
       if (state.settingsMenuOpen) setState({ settingsMenuOpen: false });
       if (state.sideMenuOpen) setState({ sideMenuOpen: false });
       if (state.bottomBarVisible) setState({ bottomBarVisible: false });
     }
-    // Trap focus in open menus
-    if (state.settingsMenuOpen || state.sideMenuOpen) {
+    // Trap focus in open menus and modals
+    if (state.settingsMenuOpen || state.sideMenuOpen || state.updateModalOpen) {
       const focusable = Array.from(document.querySelectorAll('button, [tabindex="0"], select, input'));
       const visible = focusable.filter(el => el.offsetParent !== null);
       if (!visible.length) return;
@@ -645,6 +1053,12 @@
 
   // Initial render
   render();
+
+  // ------------------------------------------------------------------
+  //  INITIALIZE UPDATE SYSTEM
+  // ------------------------------------------------------------------
+  // Initialize the update system after everything is mounted
+  initializeUpdateSystem();
 
   // Apply cursor emoji on load and when settings change
   function applyCursorEmoji(emoji) {
