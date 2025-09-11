@@ -71,7 +71,7 @@
             formContainer.style.background = '#fff';
             formContainer.style.padding = '0';
             formContainer.style.borderRadius = '12px';
-            formContainer.style.width = '300px';
+            formContainer.style.width = '700px';
             formContainer.style.maxWidth = '95vw';
             formContainer.style.boxShadow = '0 8px 32px rgba(0,0,0,0.18), 0 1.5px 6px rgba(0,78,54,0.10)';
             formContainer.style.border = '1.5px solid #e0e0e0';
@@ -146,19 +146,27 @@ infoBox.innerHTML = `
         </svg>
         <div style="flex:1;">
             <div style="font-weight:600;margin-bottom:2px;">Redrive Item(s)</div>
-            Use this tool to generate Redrive and Restore CSV files for selected items and stores.<br>
-            <div style="margin:7px 0 0 0;font-weight:600;">How to use:</div>
+            This tool provides two ways to generate redrive files with flipped Andon Cord states.<br>
+            <div style="margin:7px 0 0 0;font-weight:600;">Method 1 - Generate from API:</div>
             <ol style="margin:7px 0 0 18px;padding:0 0 0 0;">
                 <li>Enter one or more PLU codes (comma-separated) to select items.</li>
                 <li>Choose whether to filter by Store or Region, then enter the relevant codes.</li>
                 <li>Check "All Stores" to include all stores (overrides the Store/Region field).</li>
-                <li>Click <b>Generate Redrive Files</b> to fetch and compile the data. Progress will be shown.</li>
-                <li>When complete, a ZIP file containing Redrive and Restore CSVs (and chunks if large) will be downloaded.</li>
+                <li>Click <b>Generate Redrive Files</b> to fetch and compile the data.</li>
+                <li>Downloads a ZIP file containing both Redrive and Restore CSVs.</li>
+            </ol>
+            <div style="margin:7px 0 0 0;font-weight:600;">Method 2 - Upload & Convert:</div>
+            <ol style="margin:7px 0 0 18px;padding:0 0 0 0;">
+                <li>Upload a CSV file containing an "Andon Cord" column.</li>
+                <li>Review the conversion statistics showing how many states will be flipped.</li>
+                <li>Click <b>Make Redrive File</b> to download the converted CSV.</li>
+                <li>Enabled states become Disabled, and Disabled states become Enabled.</li>
             </ol>
             <div style="margin:7px 0 0 0;font-weight:600;">Tips:</div>
             <ul style="margin:4px 0 0 18px;padding:0 0 0 0;">
-                <li>Use filters to limit the data for faster downloads.</li>
-                <li>If you encounter issues, try reducing the number of stores or PLUs selected.</li>
+                <li>For API method: Use filters to limit data for faster downloads.</li>
+                <li>For upload method: Ensure your CSV has proper "Andon Cord" column headers.</li>
+                <li>Check conversion statistics before downloading to catch any issues.</li>
             </ul>
         </div>
         <button id="closeRedriveInfoBoxBtn" aria-label="Close information" style="background:transparent;border:none;color:#004E36;font-size:20px;font-weight:bold;cursor:pointer;line-height:1;padding:0 4px;margin-left:8px;border-radius:4px;transition:background 0.2s;">&times;</button>
@@ -261,17 +269,22 @@ setTimeout(function() {
 }, 0);
             formContainer.appendChild(headerBar);
 
-            // Content area
+            // Content area - Two column layout
             var contentArea = document.createElement('div');
             contentArea.style.padding = '12px 16px';
             contentArea.style.display = 'flex';
-            contentArea.style.flexDirection = 'column';
-            contentArea.style.gap = '6px';
+            contentArea.style.gap = '20px';
             contentArea.style.maxHeight = '80vh';
             contentArea.style.overflowY = 'auto';
 
-            // Main content HTML
-            contentArea.innerHTML = `
+            // Left column - Original functionality
+            var leftColumn = document.createElement('div');
+            leftColumn.style.flex = '1';
+            leftColumn.style.display = 'flex';
+            leftColumn.style.flexDirection = 'column';
+            leftColumn.style.gap = '6px';
+            leftColumn.innerHTML = `
+                <h3 style="margin:0 0 8px 0;font-size:16px;color:#004E36;font-weight:600;">Generate from API</h3>
                 <label style="margin-bottom:2px;">PLU(s)</label>
                 <input type="text" id="pluInput" style="width:100%;padding:6px 8px;border:1px solid #ccc;border-radius:5px;font-size:14px;" placeholder="Enter PLU(s) separated by commas">
                 <label style="margin-bottom:2px;">By</label>
@@ -290,6 +303,37 @@ setTimeout(function() {
                 </div>
                 <button id="generateRedriveFileButton" style="width:100%;margin-top:10px;background:#004E36;color:#fff;border:none;border-radius:5px;padding:8px 0;font-size:15px;cursor:pointer;transition:background 0.2s;">Generate Redrive Files</button>
             `;
+
+            // Separator
+            var separator = document.createElement('div');
+            separator.style.width = '1px';
+            separator.style.background = 'linear-gradient(to bottom, transparent, #ccc 20%, #ccc 80%, transparent)';
+            separator.style.minHeight = '200px';
+            separator.style.alignSelf = 'stretch';
+
+            // Right column - File upload functionality
+            var rightColumn = document.createElement('div');
+            rightColumn.style.flex = '1';
+            rightColumn.style.display = 'flex';
+            rightColumn.style.flexDirection = 'column';
+            rightColumn.style.gap = '6px';
+            rightColumn.innerHTML = `
+                <h3 style="margin:0 0 8px 0;font-size:16px;color:#004E36;font-weight:600;">Upload & Convert</h3>
+                <label style="margin-bottom:2px;">Upload CSV File</label>
+                <div style="position:relative;">
+                    <input type="file" id="csvFileInput" accept=".csv" style="width:100%;padding:6px 8px;border:1px solid #ccc;border-radius:5px;font-size:14px;cursor:pointer;">
+                </div>
+                <div id="fileUploadStatus" style="margin-top:4px;font-size:13px;color:#666;min-height:18px;"></div>
+                <div id="conversionStats" style="margin-top:8px;padding:8px;background:#f8f9fa;border-radius:5px;font-size:13px;display:none;">
+                    <div style="font-weight:600;margin-bottom:4px;color:#004E36;">Conversion Summary:</div>
+                    <div id="statsContent"></div>
+                </div>
+                <button id="makeRedriveFileButton" style="width:100%;margin-top:10px;background:#004E36;color:#fff;border:none;border-radius:5px;padding:8px 0;font-size:15px;cursor:pointer;transition:background 0.2s;opacity:0.5;" disabled>Make Redrive File</button>
+            `;
+
+            contentArea.appendChild(leftColumn);
+            contentArea.appendChild(separator);
+            contentArea.appendChild(rightColumn);
             formContainer.appendChild(contentArea);
 
             var loadingIndicator = document.createElement('div');
@@ -300,6 +344,10 @@ setTimeout(function() {
             loadingIndicator.style.fontSize = '16px';
             loadingIndicator.style.color = '#004E36';
             loadingIndicator.style.display = 'none';
+            loadingIndicator.style.padding = '8px';
+            loadingIndicator.style.background = '#f8f9fa';
+            loadingIndicator.style.borderRadius = '5px';
+            loadingIndicator.style.border = '1px solid #e0e0e0';
             formContainer.appendChild(loadingIndicator);
 
             overlay.appendChild(formContainer);
@@ -318,6 +366,178 @@ setTimeout(function() {
                 storeRegionInput.disabled = this.checked;
                 if (this.checked) {
                     storeRegionInput.value = '';
+                }
+            });
+
+            // File upload functionality
+            var uploadedCsvData = null;
+            var conversionStats = { enabled: 0, disabled: 0, total: 0 };
+
+            // CSV parsing function
+            function parseCSV(csvText) {
+                const lines = csvText.trim().split('\n');
+                if (lines.length < 2) {
+                    throw new Error('CSV file must have at least a header row and one data row');
+                }
+                
+                const headers = lines[0].split(',').map(h => h.replace(/"/g, '').trim());
+                const data = [];
+                
+                for (let i = 1; i < lines.length; i++) {
+                    const values = lines[i].split(',').map(v => v.replace(/"/g, '').trim());
+                    if (values.length === headers.length) {
+                        const row = {};
+                        headers.forEach((header, index) => {
+                            row[header] = values[index];
+                        });
+                        data.push(row);
+                    }
+                }
+                
+                return { headers, data };
+            }
+
+            // Function to flip andon cord states and generate stats
+            function processAndonCordFlipping(csvData) {
+                const processedData = [];
+                const stats = { enabled: 0, disabled: 0, total: 0, errors: 0 };
+                
+                csvData.data.forEach(row => {
+                    const processedRow = { ...row };
+                    const andonCordValue = row['Andon Cord'] || '';
+                    
+                    if (andonCordValue.toLowerCase() === 'enabled') {
+                        processedRow['Andon Cord'] = 'Disabled';
+                        stats.enabled++;
+                    } else if (andonCordValue.toLowerCase() === 'disabled') {
+                        processedRow['Andon Cord'] = 'Enabled';
+                        stats.disabled++;
+                    } else {
+                        // Handle unexpected values
+                        console.warn(`Unexpected Andon Cord value: "${andonCordValue}" - defaulting to Enabled`);
+                        processedRow['Andon Cord'] = 'Enabled';
+                        stats.errors++;
+                    }
+                    
+                    stats.total++;
+                    processedData.push(processedRow);
+                });
+                
+                return { data: processedData, headers: csvData.headers, stats };
+            }
+
+            // Function to convert data back to CSV
+            function dataToCSV(headers, data) {
+                const csvRows = [headers.join(',')];
+                data.forEach(row => {
+                    const values = headers.map(header => `"${row[header] || ''}"`);
+                    csvRows.push(values.join(','));
+                });
+                return csvRows.join('\n');
+            }
+
+            // File input change handler
+            document.getElementById('csvFileInput').addEventListener('change', function(event) {
+                const file = event.target.files[0];
+                const statusDiv = document.getElementById('fileUploadStatus');
+                const makeButton = document.getElementById('makeRedriveFileButton');
+                const statsDiv = document.getElementById('conversionStats');
+                
+                if (!file) {
+                    statusDiv.textContent = '';
+                    makeButton.disabled = true;
+                    makeButton.style.opacity = '0.5';
+                    statsDiv.style.display = 'none';
+                    uploadedCsvData = null;
+                    return;
+                }
+                
+                if (!file.name.toLowerCase().endsWith('.csv')) {
+                    statusDiv.textContent = 'Please select a CSV file';
+                    statusDiv.style.color = '#dc3545';
+                    makeButton.disabled = true;
+                    makeButton.style.opacity = '0.5';
+                    statsDiv.style.display = 'none';
+                    uploadedCsvData = null;
+                    return;
+                }
+                
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    try {
+                        const csvText = e.target.result;
+                        const parsedData = parseCSV(csvText);
+                        
+                        // Check if Andon Cord column exists
+                        if (!parsedData.headers.includes('Andon Cord')) {
+                            throw new Error('CSV file must contain an "Andon Cord" column');
+                        }
+                        
+                        // Process the data to generate stats
+                        const processed = processAndonCordFlipping(parsedData);
+                        uploadedCsvData = processed;
+                        conversionStats = processed.stats;
+                        
+                        // Update status
+                        statusDiv.textContent = `File loaded: ${file.name} (${processed.data.length} rows)`;
+                        statusDiv.style.color = '#28a745';
+                        
+                        // Show conversion stats
+                        const statsContent = document.getElementById('statsContent');
+                        let statsHtml = `
+                            <div>• Enabled → Disabled: <strong>${conversionStats.enabled}</strong></div>
+                            <div>• Disabled → Enabled: <strong>${conversionStats.disabled}</strong></div>
+                            <div>• Total rows: <strong>${conversionStats.total}</strong></div>
+                        `;
+                        if (conversionStats.errors > 0) {
+                            statsHtml += `<div style="color:#dc3545;">• Unexpected values (defaulted to Enabled): <strong>${conversionStats.errors}</strong></div>`;
+                        }
+                        statsContent.innerHTML = statsHtml;
+                        statsDiv.style.display = 'block';
+                        
+                        // Enable the button
+                        makeButton.disabled = false;
+                        makeButton.style.opacity = '1';
+                        
+                    } catch (error) {
+                        statusDiv.textContent = `Error: ${error.message}`;
+                        statusDiv.style.color = '#dc3545';
+                        makeButton.disabled = true;
+                        makeButton.style.opacity = '0.5';
+                        statsDiv.style.display = 'none';
+                        uploadedCsvData = null;
+                        console.error('CSV parsing error:', error);
+                    }
+                };
+                reader.readAsText(file);
+            });
+
+            // Make Redrive File button handler
+            document.getElementById('makeRedriveFileButton').addEventListener('click', function() {
+                if (!uploadedCsvData) {
+                    alert('Please upload a CSV file first');
+                    return;
+                }
+                
+                try {
+                    // Convert processed data back to CSV
+                    const csvContent = dataToCSV(uploadedCsvData.headers, uploadedCsvData.data);
+                    
+                    // Create and download the file
+                    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+                    const link = document.createElement('a');
+                    const url = URL.createObjectURL(blob);
+                    link.setAttribute('href', url);
+                    link.setAttribute('download', 'Redrive_Converted.csv');
+                    link.style.visibility = 'hidden';
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                    
+                    console.log('Redrive file generated successfully');
+                } catch (error) {
+                    alert(`Error generating redrive file: ${error.message}`);
+                    console.error('Error generating redrive file:', error);
                 }
             });
 
@@ -409,8 +629,22 @@ setTimeout(function() {
                                     console.log(`Data for store ${storeId}:`, data);
                                     return data.itemsAvailability.filter(item => pluInput.includes(item.wfmScanCode)).map(item => {
                                         // Transformations
-                                        const currentState = item.andonCordState ? 'Enabled' : 'Disabled';
-                                        const oppositeState = item.andonCordState ? 'Disabled' : 'Enabled';
+                                        // Handle andonCordState properly - it could be boolean, string, or other value
+                                        let currentState;
+                                        let oppositeState;
+                                        
+                                        if (typeof item.andonCordState === 'boolean') {
+                                            currentState = item.andonCordState ? 'Enabled' : 'Disabled';
+                                            oppositeState = item.andonCordState ? 'Disabled' : 'Enabled';
+                                        } else if (typeof item.andonCordState === 'string') {
+                                            currentState = item.andonCordState.toLowerCase() === 'enabled' ? 'Enabled' : 'Disabled';
+                                            oppositeState = item.andonCordState.toLowerCase() === 'enabled' ? 'Disabled' : 'Enabled';
+                                        } else {
+                                            // Default fallback - log the actual value for debugging
+                                            console.log(`Unexpected andonCordState value for item ${item.wfmScanCode}:`, item.andonCordState);
+                                            currentState = 'Disabled'; // Safe default
+                                            oppositeState = 'Enabled';
+                                        }
                                         return {
                                             'Store - 3 Letter Code': storeId,
                                             'originalAndonCord': currentState,
