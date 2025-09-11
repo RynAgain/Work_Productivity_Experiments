@@ -25,7 +25,7 @@
   // ------------------------------------------------------------------
   const CAM_TOOLS_VERSION = '2.6.232'; // Extracted from MainScript.js @version
   const GITHUB_API_URL = 'https://api.github.com/repos/RynAgain/Work_Productivity_Experiments/releases/latest';
-  const GITHUB_RAW_URL = 'https://raw.githubusercontent.com/RynAgain/Work_Productivity_Experiments/main/CAM_Tools/MainScript.js';
+  const GITHUB_RAW_URL = 'https://raw.githubusercontent.com/RynAgain/Work_Productivity_Experiments/main/CAM_Tools/MainScript.user.js';
   const UPDATE_CHECK_INTERVAL = 4 * 60 * 60 * 1000; // 8 hours in milliseconds
   const UPDATE_STORAGE_PREFIX = 'cam_tools_update_';
   
