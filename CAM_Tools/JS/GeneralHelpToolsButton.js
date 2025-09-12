@@ -207,7 +207,8 @@
             { id: 'auditHistoryPullButton', text: 'Audit History Pull' },
             { id: 'desyncFinderButton', text: 'Desync Finder' },
             { id: 'componentUploadBuilderButton', text: 'Component Upload Builder' },
-            { id: 'atcpropButton', text: 'ATC Propagation Tool' }
+            { id: 'prepFoodsInventoryButton', text: 'PFDS Inventory to Upload Converter'}
+            
         ];
 
         const buttonGrid = document.createElement('div');
@@ -288,7 +289,7 @@
         
         creditsLink.addEventListener('click', (event) => {
             event.preventDefault();
-            alert('Software Version: 2.6.x\nLast Update Date: 2025-05-30\nAuthor: Ryan Satterfield\nThis is an unofficial tool.');
+            alert('Software Version: 2.6.x\nLast Update Date: 2025-10\nAuthor: Ryan Satterfield\nThis is an unofficial tool.');
         });
         
         const dailyLink = document.createElement('a');
