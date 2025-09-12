@@ -133,17 +133,17 @@
                 const lines = data.split('\n').filter(line => line.trim() !== '');
                 const rows = lines.map(line => line.split(',').map(cell => cell.trim().replace(/"/g, '')));
 
-                // Find the header row that starts with "Purchasable UPC" in column A
+                // Find the header row that starts with "Purchasing UPC" in column A
                 let headerRowIndex = -1;
                 for (let i = 0; i < rows.length; i++) {
-                    if (rows[i][0] && rows[i][0].toLowerCase().includes('purchasable upc')) {
+                    if (rows[i][0] && rows[i][0].toLowerCase().includes('purchasing upc')) {
                         headerRowIndex = i;
                         break;
                     }
                 }
 
                 if (headerRowIndex === -1) {
-                    console.warn('Could not find "Purchasable UPC" header row');
+                    console.warn('Could not find "Purchasing UPC" header row');
                     callback([]);
                     return;
                 }
@@ -172,12 +172,14 @@
                     return;
                 }
 
-                // Find store code columns (everything after the main data columns)
-                const storeCodeStartIndex = Math.max(camUpcIndex, descriptionIndex, trackedInCamIndex, casePackIndex) + 1;
+                // Find store code columns - they start after "Select Sub-Team" column
+                const selectSubTeamIndex = headerRow.findIndex(h => h.includes('select sub-team'));
+                const storeCodeStartIndex = selectSubTeamIndex !== -1 ? selectSubTeamIndex + 1 : Math.max(camUpcIndex, descriptionIndex, trackedInCamIndex, casePackIndex) + 1;
                 const storeCodes = [];
                 for (let i = storeCodeStartIndex; i < headerRow.length; i++) {
                     const header = headerRow[i].trim();
-                    if (header && header.length === 3 && /^[A-Z]{3}$/i.test(header)) {
+                    // Store codes are typically 3-letter codes, but be more flexible with detection
+                    if (header && header.length >= 2 && header.length <= 4 && /^[A-Z]{2,4}$/i.test(header)) {
                         storeCodes.push({ index: i, code: header.toUpperCase() });
                     }
                 }
