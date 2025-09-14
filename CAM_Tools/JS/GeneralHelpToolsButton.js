@@ -133,7 +133,7 @@
     function createMainButton() {
         const button = document.createElement('button');
         button.id = 'generalHelpToolsButton';
-        button.innerHTML = 'General Help Tools';
+        button.innerHTML = '🛠️ General Help Tools';
         button.className = 'button';
         
         applyStyles(button, STYLES.button);
@@ -171,7 +171,7 @@
         applyStyles(headerBar, STYLES.headerBar);
         
         const title = document.createElement('span');
-        title.textContent = 'General Help Tools';
+        title.textContent = '🛠️ General Help Tools';
         
         const closeButton = document.createElement('span');
         closeButton.innerHTML = '&times;';
@@ -196,18 +196,18 @@
     // Create main tool buttons
     function createToolButtons() {
         const toolButtons = [
-            { id: 'pluDedupeListButton', text: 'PLU Dedupe & List' },
-            { id: 'scanCodeTo13PLUButton', text: 'Scan Code to 13-PLU' },
-            { id: 'pluToAsinButton', text: 'Basic PLU to ASIN' },
-            { id: 'getMerchantIdButton', text: 'Get eMerchant IDs from Store Code' },
-            { id: 'getAllStoreInfoButton', text: 'Get All Store Info' },
-            { id: 'meatInventoryToUploadConverterButton', text: 'Meat Inventory to Upload Converter' },
-            { id: 'filechunker', text: 'File Chunker' },
-            { id: 'massUploaderButton', text: 'Mass File Upload' },
-            { id: 'auditHistoryPullButton', text: 'Audit History Pull' },
-            { id: 'desyncFinderButton', text: 'Desync Finder' },
-            { id: 'componentUploadBuilderButton', text: 'Component Upload Builder' },
-            { id: 'prepFoodsInventoryButton', text: 'PFDS Inventory to Upload Converter'}
+            { id: 'pluDedupeListButton', text: '🔍 PLU Dedupe & List' },
+            { id: 'scanCodeTo13PLUButton', text: '🏷️ Scan Code to 13-PLU' },
+            { id: 'pluToAsinButton', text: '🔗 Basic PLU to ASIN' },
+            { id: 'getMerchantIdButton', text: '🏪 Get eMerchant IDs from Store Code' },
+            { id: 'getAllStoreInfoButton', text: '📊 Get All Store Info' },
+            { id: 'meatInventoryToUploadConverterButton', text: '🥩 Meat Inventory to Upload Converter' },
+            { id: 'filechunker', text: '✂️ File Chunker' },
+            { id: 'massUploaderButton', text: '📤 Mass File Upload' },
+            { id: 'auditHistoryPullButton', text: '📋 Audit History Pull' },
+            { id: 'desyncFinderButton', text: '🔄 Desync Finder' },
+            { id: 'componentUploadBuilderButton', text: '🔧 Component Upload Builder' }, //deprecated
+            { id: 'prepFoodsInventoryButton', text: '🥗 PFDS Inventory to Upload Converter'}
             
         ];
 
@@ -241,11 +241,11 @@
         const restrictedSection = document.createElement('div');
         
         const restrictedHeader = document.createElement('h4');
-        restrictedHeader.textContent = 'Restricted';
+        restrictedHeader.textContent = '🔒 Restricted';
         applyStyles(restrictedHeader, STYLES.restrictedHeader);
         
         const restrictedButtons = [
-            { id: 'auditHistoryDashboardButton', text: 'Audit History Dashboard' }
+            { id: 'auditHistoryDashboardButton', text: '📈 Audit History Dashboard' }
         ];
 
         const restrictedGrid = document.createElement('div');
@@ -284,7 +284,7 @@
         const creditsLink = document.createElement('a');
         creditsLink.href = '#';
         creditsLink.id = 'creditsLink';
-        creditsLink.textContent = 'Credits';
+        creditsLink.textContent = '👨‍💻 Credits';
         applyStyles(creditsLink, STYLES.link);
         
         creditsLink.addEventListener('click', (event) => {
@@ -296,7 +296,7 @@
         dailyLink.href = 'https://share.amazon.com/sites/WFM_eComm_ABI/_layouts/15/download.aspx?SourceUrl=%2Fsites%2FWFM%5FeComm%5FABI%2FShared%20Documents%2FWFMOAC%2FDailyInventory%2FWFMOAC%20Inventory%20Data%2Exlsx&FldUrl=&Source=https%3A%2F%2Fshare%2Eamazon%2Ecom%2Fsites%2FWFM%5FeComm%5FABI%2FShared%2520Documents%2FForms%2FAllItems%2Easpx%3FRootFolder%3D%252Fsites%252FWFM%255FeComm%255FABI%252FShared%2520Documents%252FWFMOAC%252FDailyInventory%26FolderCTID%3D0x0120007B3CF5C516656843AD728338D9C2AFA4';
         dailyLink.target = '_blank';
         dailyLink.id = 'dailyLink';
-        dailyLink.textContent = 'Daily Seller Inventory';
+        dailyLink.textContent = '📦 Daily Seller Inventory';
         applyStyles(dailyLink, STYLES.link);
         
         linksSection.appendChild(creditsLink);
@@ -314,7 +314,7 @@
         applyStyles(contentArea, STYLES.contentArea);
         
         const mainHeader = document.createElement('h3');
-        mainHeader.textContent = 'General Help Tools';
+        mainHeader.textContent = '🛠️ General Help Tools';
         applyStyles(mainHeader, STYLES.sectionHeader);
         
         // Assemble the modal
