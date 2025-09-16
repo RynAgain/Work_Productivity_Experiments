@@ -156,7 +156,7 @@
                 const camUpcIndex = headerRow.findIndex(h => h.includes('cam upc'));
                 const descriptionIndex = headerRow.findIndex(h => h.includes('description'));
                 const trackedInCamIndex = headerRow.findIndex(h => h.includes('tracked in cam'));
-                const casePackIndex = headerRow.findIndex(h => h.includes('case pack'));
+                const casePackIndex = headerRow.findIndex(h => h.includes('Cam order convert')); //adjusted to fix math.
 
                 console.log('Column indices:', {
                     camUpcIndex,
