@@ -91,19 +91,25 @@
                         let unpivotedData = [];
                         
                         workbook.SheetNames.forEach(sheetName => {
-                            console.log('Processing sheet:', sheetName);
-                            const sheet = workbook.Sheets[sheetName];
-                            // Remove style properties
-                            Object.keys(sheet).forEach(cell => {
-                                if (cell[0] !== '!') {
-                                    delete sheet[cell].s;
-                                }
-                            });
-                            const csvContent = XLSX.utils.sheet_to_csv(sheet, { raw: true });
-                            console.log('CSV Content for sheet', sheetName, ':', csvContent);
-                            processPFDSCSV(csvContent, function(groupData) {
-                                unpivotedData = unpivotedData.concat(groupData);
-                            });
+                            // Only process sheets with 2-letter region codes (FL, MA, etc.)
+                            // Ignore hidden sheets or sheets with longer names
+                            if (sheetName.length <= 2 && /^[A-Z]{2}$/i.test(sheetName.trim())) {
+                                console.log('Processing region sheet:', sheetName);
+                                const sheet = workbook.Sheets[sheetName];
+                                // Remove style properties
+                                Object.keys(sheet).forEach(cell => {
+                                    if (cell[0] !== '!') {
+                                        delete sheet[cell].s;
+                                    }
+                                });
+                                const csvContent = XLSX.utils.sheet_to_csv(sheet, { raw: true });
+                                console.log('CSV Content for sheet', sheetName, ':', csvContent);
+                                processPFDSCSV(csvContent, function(groupData) {
+                                    unpivotedData = unpivotedData.concat(groupData);
+                                });
+                            } else {
+                                console.log('Skipping non-region sheet:', sheetName);
+                            }
                         });
                         
                         // Filter out rows with empty PLU/UPC or non-numeric inventory
