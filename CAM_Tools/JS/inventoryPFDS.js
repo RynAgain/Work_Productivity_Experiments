@@ -104,7 +104,7 @@
                                 });
                                 const csvContent = XLSX.utils.sheet_to_csv(sheet, { raw: true });
                                 console.log('CSV Content for sheet', sheetName, ':', csvContent);
-                                processPFDSCSV(csvContent, function(groupData) {
+                                processPFDSCSV(csvContent, sheetName, function(groupData) {
                                     unpivotedData = unpivotedData.concat(groupData);
                                 });
                             } else {
@@ -134,7 +134,7 @@
             // =========================
 
             // Process PFDS CSV data according to the specific requirements
-            function processPFDSCSV(data, callback) {
+            function processPFDSCSV(data, sheetName, callback) {
                 // Split CSV into lines and then into cells
                 const lines = data.split('\n').filter(line => line.trim() !== '');
                 const rows = lines.map(line => line.split(',').map(cell => cell.trim().replace(/"/g, '')));
@@ -149,22 +149,22 @@
                 }
 
                 if (headerRowIndex === -1) {
-                    console.warn('Could not find "Purchasing UPC" header row');
+                    console.warn(`Sheet "${sheetName}": Could not find "Purchasing UPC" header row`);
                     callback([]);
                     return;
                 }
 
-                console.log('Found header row at index:', headerRowIndex);
+                console.log(`Sheet "${sheetName}": Found header row at index:`, headerRowIndex);
                 const headerRow = rows[headerRowIndex].map(h => h.toLowerCase().trim());
-                console.log('Header row:', headerRow);
+                console.log(`Sheet "${sheetName}": Header row:`, headerRow);
 
                 // Find key column indices
                 const camUpcIndex = headerRow.findIndex(h => h.includes('cam upc'));
                 const descriptionIndex = headerRow.findIndex(h => h.includes('description'));
                 const trackedInCamIndex = headerRow.findIndex(h => h.includes('tracked in cam'));
-                const casePackIndex = headerRow.findIndex(h => h.includes('Cam order convert')); //adjusted to fix math.
+                const casePackIndex = headerRow.findIndex(h => h.includes('cam order convert')); //adjusted to fix math.
 
-                console.log('Column indices:', {
+                console.log(`Sheet "${sheetName}": Column indices:`, {
                     camUpcIndex,
                     descriptionIndex,
                     trackedInCamIndex,
@@ -172,8 +172,16 @@
                 });
 
                 if (camUpcIndex === -1 || descriptionIndex === -1 || trackedInCamIndex === -1 || casePackIndex === -1) {
-                    console.error('Missing required columns');
-                    alert('Missing required columns in the spreadsheet. Please check the format.');
+                    const missingColumns = [];
+                    if (camUpcIndex === -1) missingColumns.push('CAM UPC');
+                    if (descriptionIndex === -1) missingColumns.push('Description');
+                    if (trackedInCamIndex === -1) missingColumns.push('Tracked in Cam');
+                    if (casePackIndex === -1) missingColumns.push('Case Pack');
+                    
+                    const errorMsg = `Sheet "${sheetName}": Missing required columns: ${missingColumns.join(', ')}`;
+                    console.error(errorMsg);
+                    console.error(`Sheet "${sheetName}": Available headers:`, headerRow);
+                    alert(`Error processing sheet "${sheetName}":\nMissing required columns: ${missingColumns.join(', ')}\n\nAvailable headers: ${headerRow.join(', ')}`);
                     callback([]);
                     return;
                 }
@@ -190,7 +198,7 @@
                     }
                 }
 
-                console.log('Found store codes:', storeCodes);
+                console.log(`Sheet "${sheetName}": Found store codes:`, storeCodes);
 
                 let allUnpivoted = [];
 
@@ -240,7 +248,7 @@
                     });
                 }
 
-                console.log('Unpivoted PFDS data:', allUnpivoted);
+                console.log(`Sheet "${sheetName}": Unpivoted PFDS data:`, allUnpivoted);
                 callback(allUnpivoted);
             }
 
