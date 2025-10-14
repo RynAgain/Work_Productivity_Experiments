@@ -379,7 +379,7 @@ setTimeout(function() {
                     // Update progress: Downloading
                     progress.innerHTML = 'Downloading';
 
-                    const batchSize = 10;
+                    const batchSize = 5;
                     const storeIdBatches = [];
                     for(let i = 0; i < storeIds.length; i += batchSize) {
                         storeIdBatches.push(storeIds.slice(i, i + batchSize));
@@ -403,7 +403,7 @@ setTimeout(function() {
                             },
                             "paginationContext": {
                                 "pageNumber": 0,
-                                "pageSize": 10000
+                                "pageSize": 9999
                             }
                         };
                         return fetch(apiUrlBase, {
