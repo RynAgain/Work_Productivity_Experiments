@@ -472,11 +472,15 @@ setTimeout(function() {
                         if(allItems.length > 0) {
                             const desiredHeaders = Object.keys(allItems[0]);
                             
-                            // Build CSV content using array for better performance
+                            // Build CSV content efficiently without stack overflow
                             const csvRows = [desiredHeaders.join(",")];
-                            csvRows.push(...allItems.map(e =>
-                                desiredHeaders.map(header => "\"" + (e[header] || "") + "\"").join(",")
-                            ));
+                            
+                            // Process items in chunks to avoid stack overflow
+                            for (let i = 0; i < allItems.length; i++) {
+                                const row = desiredHeaders.map(header => "\"" + (allItems[i][header] || "") + "\"").join(",");
+                                csvRows.push(row);
+                            }
+                            
                             const csvContent = csvRows.join("\n");
                             
                             // Use Blob instead of data URI to handle large files
