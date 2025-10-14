@@ -471,14 +471,27 @@ setTimeout(function() {
                         console.log('All items data:', allItems);
                         if(allItems.length > 0) {
                             const desiredHeaders = Object.keys(allItems[0]);
-                            const csvContent = "data:text/csv;charset=utf-8," + desiredHeaders.join(",") + "\n" + allItems.map(e => desiredHeaders.map(header => "\"" + (e[header] || "") + "\"").join(",")).join("\n");
-                            const encodedUri = encodeURI(csvContent);
+                            
+                            // Build CSV content using array for better performance
+                            const csvRows = [desiredHeaders.join(",")];
+                            csvRows.push(...allItems.map(e =>
+                                desiredHeaders.map(header => "\"" + (e[header] || "") + "\"").join(",")
+                            ));
+                            const csvContent = csvRows.join("\n");
+                            
+                            // Use Blob instead of data URI to handle large files
+                            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+                            const url = URL.createObjectURL(blob);
                             const link = document.createElement("a");
-                            link.setAttribute("href", encodedUri);
+                            link.setAttribute("href", url);
                             link.setAttribute("download", "Cam_Item_Data.csv");
                             document.body.appendChild(link);
                             link.click();
                             document.body.removeChild(link);
+                            
+                            // Clean up the blob URL
+                            URL.revokeObjectURL(url);
+                            
                             progress.innerHTML = 'Done';
                         } else {
                             progress.innerHTML = 'No data available.';
