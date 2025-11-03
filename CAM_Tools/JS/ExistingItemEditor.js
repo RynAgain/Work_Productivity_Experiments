@@ -54,6 +54,10 @@
     'Availability', 'Current Inventory', 'Sales Floor Capacity',
     'Andon Cord', 'Tracking Start Date', 'Tracking End Date'
   ];
+  
+  // Cosmetic column (not included in export)
+  const COSMETIC_HEADERS = ['Online Availability'];
+  const TOTAL_DISPLAY_COLUMNS = HEADERS.length + COSMETIC_HEADERS.length;
 
   const $  = (sel, ctx = document) => ctx.querySelector(sel);
   const $$ = (sel, ctx = document) => [...ctx.querySelectorAll(sel)];
@@ -92,6 +96,18 @@
     setCell(row, col, value) {
       if (!this.data[row]) this.data[row] = [];
       this.data[row][col] = String(value);
+    }
+    
+    // Get cosmetic column value (Online Availability)
+    getCosmeticColumn(row) {
+      const availability = this.getCell(row, 3); // Availability column
+      const inventory = this.getCell(row, 4); // Current Inventory column
+      
+      if (availability === 'Unlimited') {
+        return 'Unlimited';
+      } else {
+        return inventory || '0';
+      }
     }
     
     deleteRows(rowIndices) {
@@ -533,7 +549,25 @@
           box-sizing: border-box;
         }
         .ei-table{
-          width:100%;border-collapse:collapse;font-size:14px;min-width:1200px;
+          width:100%;border-collapse:collapse;font-size:14px;min-width:1300px;
+        }
+        
+        /* COSMETIC COLUMN STYLES */
+        .ei-cosmetic-column{
+          background:#f0f8ff !important;
+          color:#666;
+          font-style:italic;
+          text-align:center;
+          pointer-events:none;
+          user-select:none;
+        }
+        .ei-cosmetic-column input{
+          background:#f0f8ff !important;
+          border:none !important;
+          text-align:center;
+          cursor:default;
+          color:#666;
+          font-style:italic;
         }
         .ei-table th{
           background:#004E36;color:#fff;padding:12px 8px;text-align:left;
@@ -1382,6 +1416,11 @@
       </select>
       <input type="number" id="ei-filter-inventory-min" placeholder="Min Inv" style="width:80px;">
       <input type="number" id="ei-filter-inventory-max" placeholder="Max Inv" style="width:80px;">
+      <select id="ei-filter-online-availability">
+        <option value="">All Online Availability</option>
+        <option value="Unlimited">Unlimited Only</option>
+        <option value="Limited">Limited (with inventory)</option>
+      </select>
       <button id="ei-clear-filters">Clear Filters</button>
       <span id="ei-filter-results" style="font-size:12px;color:#666;"></span>
     `;
@@ -1395,6 +1434,7 @@
       const andonFilter = $('#ei-filter-andon').value;
       const minInv = parseInt($('#ei-filter-inventory-min').value) || 0;
       const maxInv = parseInt($('#ei-filter-inventory-max').value) || 10000;
+      const onlineAvailFilter = $('#ei-filter-online-availability').value;
       
       const table = $('#ei-data-table');
       const rows = table.querySelectorAll('tbody tr');
@@ -1411,16 +1451,28 @@
         const inventory = parseInt(cells[5].value) || 0;
         const andon = cells[7].value;
         
-        const matchesSearch = !searchTerm || 
-          store.includes(searchTerm) || 
-          item.includes(searchTerm) || 
+        // Get online availability value from cosmetic column
+        const onlineAvailCell = row.querySelector('.ei-cosmetic-column input');
+        const onlineAvail = onlineAvailCell ? onlineAvailCell.value : '';
+        
+        const matchesSearch = !searchTerm ||
+          store.includes(searchTerm) ||
+          item.includes(searchTerm) ||
           plu.includes(searchTerm);
         
         const matchesAvail = !availFilter || availability === availFilter;
         const matchesAndon = !andonFilter || andon === andonFilter;
         const matchesInventory = inventory >= minInv && inventory <= maxInv;
         
-        const isVisible = matchesSearch && matchesAvail && matchesAndon && matchesInventory;
+        // Online availability filter logic
+        let matchesOnlineAvail = true;
+        if (onlineAvailFilter === 'Unlimited') {
+          matchesOnlineAvail = onlineAvail === 'Unlimited';
+        } else if (onlineAvailFilter === 'Limited') {
+          matchesOnlineAvail = onlineAvail !== 'Unlimited' && onlineAvail !== '';
+        }
+        
+        const isVisible = matchesSearch && matchesAvail && matchesAndon && matchesInventory && matchesOnlineAvail;
         row.style.display = isVisible ? '' : 'none';
         
         if (isVisible) visibleCount++;
@@ -1436,6 +1488,7 @@
     const teamEl = $('#ei-filter-team');
     const minInvEl = $('#ei-filter-inventory-min');
     const maxInvEl = $('#ei-filter-inventory-max');
+    const onlineAvailEl = $('#ei-filter-online-availability');
     const clearFiltersEl = $('#ei-clear-filters');
     
     if (searchEl) searchEl.oninput = applyFilters;
@@ -1444,6 +1497,7 @@
     if (teamEl) teamEl.onchange = applyFilters;
     if (minInvEl) minInvEl.oninput = applyFilters;
     if (maxInvEl) maxInvEl.oninput = applyFilters;
+    if (onlineAvailEl) onlineAvailEl.onchange = applyFilters;
     
     if (clearFiltersEl) {
       clearFiltersEl.onclick = () => {
@@ -1453,6 +1507,7 @@
         if (teamEl) teamEl.value = '';
         if (minInvEl) minInvEl.value = '';
         if (maxInvEl) maxInvEl.value = '';
+        if (onlineAvailEl) onlineAvailEl.value = '';
         applyFilters();
       };
     }
@@ -1477,6 +1532,13 @@
     // Data headers
     HEADERS.forEach(header => {
       const th = createEl('th', {}, header);
+      headerRow.appendChild(th);
+    });
+    
+    // Cosmetic column header
+    COSMETIC_HEADERS.forEach(header => {
+      const th = createEl('th', { className: 'ei-cosmetic-column' }, header);
+      th.title = 'Read-only column for filtering (not included in export)';
       headerRow.appendChild(th);
     });
     
@@ -1556,6 +1618,14 @@
                 }
               }
               
+              // Update cosmetic column when availability or inventory changes
+              if (colIndex === 3 || colIndex === 4) {
+                const cosmeticInput = tr.querySelector('.ei-cosmetic-column input');
+                if (cosmeticInput) {
+                  cosmeticInput.value = dataModel.getCosmeticColumn(actualRowIndex);
+                }
+              }
+              
               // Real-time validation
               const cellErrors = validationManager.validateCell(actualRowIndex, colIndex, newValue, dataModel);
               if (cellErrors.length > 0) {
@@ -1580,6 +1650,20 @@
           td.appendChild(input);
           tr.appendChild(td);
         });
+        
+        // Add cosmetic column (Online Availability)
+        const cosmeticTd = createEl('td', { className: 'ei-cosmetic-column' });
+        const cosmeticValue = dataModel.getCosmeticColumn(actualRowIndex);
+        const cosmeticInput = createEl('input', {
+          className: 'ei-cell-input',
+          type: 'text',
+          value: cosmeticValue,
+          readOnly: true,
+          tabIndex: -1
+        });
+        cosmeticInput.title = 'Read-only: Shows "Unlimited" or current inventory number';
+        cosmeticTd.appendChild(cosmeticInput);
+        tr.appendChild(cosmeticTd);
         
         tbody.appendChild(tr);
       });

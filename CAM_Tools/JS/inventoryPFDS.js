@@ -133,11 +133,45 @@
             // UTILITY FUNCTIONS
             // =========================
 
+            // Proper CSV line parser that handles quoted fields with commas
+            function parseCSVLine(line) {
+                const result = [];
+                let current = '';
+                let inQuotes = false;
+                
+                for (let i = 0; i < line.length; i++) {
+                    const char = line[i];
+                    const nextChar = line[i + 1];
+                    
+                    if (char === '"') {
+                        if (inQuotes && nextChar === '"') {
+                            // Escaped quote (two quotes in a row)
+                            current += '"';
+                            i++; // Skip the next quote
+                        } else {
+                            // Toggle quote state
+                            inQuotes = !inQuotes;
+                        }
+                    } else if (char === ',' && !inQuotes) {
+                        // Field separator (only when not inside quotes)
+                        result.push(current.trim());
+                        current = '';
+                    } else {
+                        current += char;
+                    }
+                }
+                
+                // Add the last field
+                result.push(current.trim());
+                
+                return result;
+            }
+
             // Process PFDS CSV data according to the specific requirements
             function processPFDSCSV(data, sheetName, callback) {
-                // Split CSV into lines and then into cells
+                // Split CSV into lines and then into cells using proper CSV parsing
                 const lines = data.split('\n').filter(line => line.trim() !== '');
-                const rows = lines.map(line => line.split(',').map(cell => cell.trim().replace(/"/g, '')));
+                const rows = lines.map(line => parseCSVLine(line));
 
                 // Find the header row that starts with "Purchasing UPC" in column A
                 let headerRowIndex = -1;
