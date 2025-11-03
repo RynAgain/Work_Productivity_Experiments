@@ -1420,7 +1420,10 @@
         <option value="">All Online Availability</option>
         <option value="Unlimited">Unlimited Only</option>
         <option value="Limited">Limited (with inventory)</option>
+        <option value="Range">Range (Limited items)</option>
       </select>
+      <input type="number" id="ei-filter-online-min" placeholder="Min" style="width:70px;display:none;">
+      <input type="number" id="ei-filter-online-max" placeholder="Max" style="width:70px;display:none;">
       <button id="ei-clear-filters">Clear Filters</button>
       <span id="ei-filter-results" style="font-size:12px;color:#666;"></span>
     `;
@@ -1470,6 +1473,16 @@
           matchesOnlineAvail = onlineAvail === 'Unlimited';
         } else if (onlineAvailFilter === 'Limited') {
           matchesOnlineAvail = onlineAvail !== 'Unlimited' && onlineAvail !== '';
+        } else if (onlineAvailFilter === 'Range') {
+          // Range filter for Limited items with inventory
+          if (onlineAvail === 'Unlimited') {
+            matchesOnlineAvail = false;
+          } else {
+            const onlineInv = parseInt(onlineAvail) || 0;
+            const minOnline = parseInt($('#ei-filter-online-min').value) || 0;
+            const maxOnline = parseInt($('#ei-filter-online-max').value) || 10000;
+            matchesOnlineAvail = onlineInv >= minOnline && onlineInv <= maxOnline;
+          }
         }
         
         const isVisible = matchesSearch && matchesAvail && matchesAndon && matchesInventory && matchesOnlineAvail;
@@ -1497,7 +1510,28 @@
     if (teamEl) teamEl.onchange = applyFilters;
     if (minInvEl) minInvEl.oninput = applyFilters;
     if (maxInvEl) maxInvEl.oninput = applyFilters;
-    if (onlineAvailEl) onlineAvailEl.onchange = applyFilters;
+    if (onlineAvailEl) {
+      onlineAvailEl.onchange = () => {
+        const minInput = $('#ei-filter-online-min');
+        const maxInput = $('#ei-filter-online-max');
+        
+        // Show/hide range inputs based on selection
+        if (onlineAvailEl.value === 'Range') {
+          minInput.style.display = 'inline-block';
+          maxInput.style.display = 'inline-block';
+        } else {
+          minInput.style.display = 'none';
+          maxInput.style.display = 'none';
+        }
+        
+        applyFilters();
+      };
+    }
+    
+    const onlineMinEl = $('#ei-filter-online-min');
+    const onlineMaxEl = $('#ei-filter-online-max');
+    if (onlineMinEl) onlineMinEl.oninput = applyFilters;
+    if (onlineMaxEl) onlineMaxEl.oninput = applyFilters;
     
     if (clearFiltersEl) {
       clearFiltersEl.onclick = () => {
@@ -1507,7 +1541,19 @@
         if (teamEl) teamEl.value = '';
         if (minInvEl) minInvEl.value = '';
         if (maxInvEl) maxInvEl.value = '';
-        if (onlineAvailEl) onlineAvailEl.value = '';
+        if (onlineAvailEl) {
+          onlineAvailEl.value = '';
+          const minInput = $('#ei-filter-online-min');
+          const maxInput = $('#ei-filter-online-max');
+          if (minInput) {
+            minInput.value = '';
+            minInput.style.display = 'none';
+          }
+          if (maxInput) {
+            maxInput.value = '';
+            maxInput.style.display = 'none';
+          }
+        }
         applyFilters();
       };
     }
