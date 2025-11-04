@@ -1479,9 +1479,9 @@
         const inventory = parseInt(cells[5].value) || 0;
         const andon = cells[7].value;
         
-        // Get online availability value from cosmetic column
-        const onlineAvailCell = row.querySelector('.ei-cosmetic-column input');
-        const onlineAvail = onlineAvailCell ? onlineAvailCell.value : '';
+        // Get online availability value from cosmetic column (second cosmetic column)
+        const cosmeticCells = row.querySelectorAll('.ei-cosmetic-column input');
+        const onlineAvail = cosmeticCells.length >= 2 ? cosmeticCells[1].value : '';
         
         const matchesSearch = !searchTerm ||
           store.includes(searchTerm) ||
@@ -1689,11 +1689,13 @@
                 }
               }
               
-              // Update cosmetic column when availability or inventory changes
-              if (colIndex === 3 || colIndex === 4) {
-                const cosmeticInput = tr.querySelector('.ei-cosmetic-column input');
-                if (cosmeticInput) {
-                  cosmeticInput.value = dataModel.getCosmeticColumn(actualRowIndex);
+              // Update cosmetic columns when availability, inventory, or andon changes
+              if (colIndex === 3 || colIndex === 4 || colIndex === 6) {
+                const cosmeticInputs = tr.querySelectorAll('.ei-cosmetic-column input');
+                if (cosmeticInputs.length >= 2) {
+                  // First cosmetic column is Reserved Quantity (doesn't change)
+                  // Second cosmetic column is Online Availability (updates based on changes)
+                  cosmeticInputs[1].value = dataModel.getOnlineAvailability(actualRowIndex);
                 }
               }
               
@@ -1722,19 +1724,33 @@
           tr.appendChild(td);
         });
         
-        // Add cosmetic column (Online Availability)
-        const cosmeticTd = createEl('td', { className: 'ei-cosmetic-column' });
-        const cosmeticValue = dataModel.getCosmeticColumn(actualRowIndex);
-        const cosmeticInput = createEl('input', {
+        // Add cosmetic column 1: Reserved Quantity
+        const reservedTd = createEl('td', { className: 'ei-cosmetic-column' });
+        const reservedValue = dataModel.getReservedQuantity(actualRowIndex);
+        const reservedInput = createEl('input', {
           className: 'ei-cell-input',
           type: 'text',
-          value: cosmeticValue,
+          value: reservedValue,
           readOnly: true,
           tabIndex: -1
         });
-        cosmeticInput.title = 'Read-only: Shows "Unlimited" or current inventory number';
-        cosmeticTd.appendChild(cosmeticInput);
-        tr.appendChild(cosmeticTd);
+        reservedInput.title = 'Read-only: Reserved quantity from API';
+        reservedTd.appendChild(reservedInput);
+        tr.appendChild(reservedTd);
+        
+        // Add cosmetic column 2: Online Availability
+        const onlineTd = createEl('td', { className: 'ei-cosmetic-column' });
+        const onlineValue = dataModel.getOnlineAvailability(actualRowIndex);
+        const onlineInput = createEl('input', {
+          className: 'ei-cell-input',
+          type: 'text',
+          value: onlineValue,
+          readOnly: true,
+          tabIndex: -1
+        });
+        onlineInput.title = 'Read-only: Shows "0" if Andon enabled, "Unlimited" if unlimited, or (inventory - reserved) if limited';
+        onlineTd.appendChild(onlineInput);
+        tr.appendChild(onlineTd);
         
         tbody.appendChild(tr);
       });
