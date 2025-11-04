@@ -55,8 +55,8 @@
     'Andon Cord', 'Tracking Start Date', 'Tracking End Date'
   ];
   
-  // Cosmetic column (not included in export)
-  const COSMETIC_HEADERS = ['Online Availability'];
+  // Cosmetic columns (not included in export)
+  const COSMETIC_HEADERS = ['Reserved Quantity', 'Online Availability'];
   const TOTAL_DISPLAY_COLUMNS = HEADERS.length + COSMETIC_HEADERS.length;
 
   const $  = (sel, ctx = document) => ctx.querySelector(sel);
@@ -98,16 +98,32 @@
       this.data[row][col] = String(value);
     }
     
-    // Get cosmetic column value (Online Availability)
-    getCosmeticColumn(row) {
+    // Get reserved quantity cosmetic column value
+    getReservedQuantity(row) {
+      const reserved = this.reservedQuantities ? (this.reservedQuantities[row - 1] || 0) : 0;
+      return String(reserved);
+    }
+    
+    // Get online availability cosmetic column value
+    getOnlineAvailability(row) {
+      const andon = this.getCell(row, 6); // Andon Cord column
       const availability = this.getCell(row, 3); // Availability column
-      const inventory = this.getCell(row, 4); // Current Inventory column
+      const inventory = parseInt(this.getCell(row, 4)) || 0; // Current Inventory column
+      const reserved = this.reservedQuantities ? (this.reservedQuantities[row - 1] || 0) : 0;
       
+      // If Andon Cord is ON (Enabled) → show "0"
+      if (andon === 'Enabled') {
+        return '0';
+      }
+      
+      // If Andon Cord is OFF (Disabled) and Unlimited → show "Unlimited"
       if (availability === 'Unlimited') {
         return 'Unlimited';
-      } else {
-        return inventory || '0';
       }
+      
+      // If Andon Cord is OFF (Disabled) and Limited → show (current inventory - reserved quantity)
+      const onlineAvailable = Math.max(0, inventory - reserved);
+      return String(onlineAvailable);
     }
     
     deleteRows(rowIndices) {
@@ -560,6 +576,9 @@
           text-align:center;
           pointer-events:none;
           user-select:none;
+        }
+        .ei-table th.ei-cosmetic-column{
+          color:#000 !important;
         }
         .ei-cosmetic-column input{
           background:#f0f8ff !important;
@@ -1274,7 +1293,7 @@
     const strayElements = document.querySelectorAll('[id^="ei-"]:not(#ei-openEditor):not(#ei-style)');
     strayElements.forEach(el => el.remove());
     
-    // Convert items to rows
+    // Convert items to rows and store reserved quantity for cosmetic column calculation
     const dataRows = items.map(item => [
       item._eiStoreKey || item.storeTLC || '',
       item.itemName || '',
@@ -1286,8 +1305,14 @@
       '',
       ''
     ]);
+    
+    // Store reserved quantities for cosmetic column calculation
+    const reservedQuantities = items.map(item => item.reservedQuantity || 0);
 
     const dataModel = new TableDataModel(dataRows);
+    // Store reserved quantities in the data model for cosmetic column calculation
+    dataModel.reservedQuantities = reservedQuantities;
+    
     const undoManager = new UndoRedoManager(dataModel);
     const autoSaveManager = new AutoSaveManager(dataModel);
     const validationManager = new ValidationManager();
