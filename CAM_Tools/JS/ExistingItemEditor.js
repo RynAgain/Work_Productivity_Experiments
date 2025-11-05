@@ -1500,13 +1500,23 @@
           matchesOnlineAvail = onlineAvail !== 'Unlimited' && onlineAvail !== '';
         } else if (onlineAvailFilter === 'Range') {
           // Range filter for Limited items with inventory
-          if (onlineAvail === 'Unlimited') {
+          if (onlineAvail === 'Unlimited' || onlineAvail === '') {
             matchesOnlineAvail = false;
           } else {
-            const onlineInv = parseInt(onlineAvail) || 0;
-            const minOnline = parseInt($('#ei-filter-online-min').value) || 0;
-            const maxOnline = parseInt($('#ei-filter-online-max').value) || 10000;
-            matchesOnlineAvail = onlineInv >= minOnline && onlineInv <= maxOnline;
+            const onlineInv = parseInt(onlineAvail, 10);
+            const minOnlineInput = $('#ei-filter-online-min').value;
+            const maxOnlineInput = $('#ei-filter-online-max').value;
+            
+            // If no min/max specified, default to showing all
+            const minOnline = minOnlineInput !== '' ? parseInt(minOnlineInput, 10) : 0;
+            const maxOnline = maxOnlineInput !== '' ? parseInt(maxOnlineInput, 10) : 10000;
+            
+            // Check if the parsed value is valid
+            if (!isNaN(onlineInv)) {
+              matchesOnlineAvail = onlineInv >= minOnline && onlineInv <= maxOnline;
+            } else {
+              matchesOnlineAvail = false;
+            }
           }
         }
         
