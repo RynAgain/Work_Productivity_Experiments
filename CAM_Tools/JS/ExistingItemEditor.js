@@ -136,9 +136,9 @@
       });
     }
     
-    toCSV() {
-      return this.data.map((row, rowIndex) =>
-        row.map((cell, colIndex) => {
+    toCSV(includeCosmeticColumns = false) {
+      return this.data.map((row, rowIndex) => {
+        let csvRow = row.map((cell, colIndex) => {
           // Skip header row (index 0) - apply normal formatting
           if (rowIndex === 0) {
             return `"${String(cell || '').replace(/"/g, '""')}"`;
@@ -157,8 +157,26 @@
           
           // Default CSV formatting for all other cases
           return `"${String(cell || '').replace(/"/g, '""')}"`;
-        }).join(',')
-      ).join('\n');
+        });
+        
+        // Add cosmetic columns if requested
+        if (includeCosmeticColumns && rowIndex > 0) {
+          // Add Reserved Quantity
+          const reservedQty = this.getReservedQuantity(rowIndex);
+          csvRow.push(`"${String(reservedQty || '').replace(/"/g, '""')}"`);
+          
+          // Add Online Availability
+          const onlineAvail = this.getOnlineAvailability(rowIndex);
+          csvRow.push(`"${String(onlineAvail || '').replace(/"/g, '""')}"`);
+        } else if (includeCosmeticColumns && rowIndex === 0) {
+          // Add cosmetic headers
+          COSMETIC_HEADERS.forEach(header => {
+            csvRow.push(`"${String(header || '').replace(/"/g, '""')}"`);
+          });
+        }
+        
+        return csvRow.join(',');
+      }).join('\n');
     }
   }
 
@@ -2053,11 +2071,15 @@
         <div>
           <label style="font-weight:500;">Quick Actions:</label>
           <div style="display:flex;gap:8px;margin-top:4px;flex-wrap:wrap;">
-            <button id="ei-validate-all-btn" class="ei-action green" 
+            <button id="ei-validate-all-btn" class="ei-action green"
                     style="padding:6px 12px;font-size:14px;margin-top:0;flex:1;min-width:100px;">Validate All</button>
-            <button id="ei-download-btn" class="ei-action blue" 
+            <button id="ei-download-btn" class="ei-action blue"
                     style="padding:6px 12px;font-size:14px;margin-top:0;flex:1;min-width:100px;">Download CSV</button>
           </div>
+          <label style="font-weight:400;display:flex;align-items:center;gap:6px;margin-top:8px;font-size:13px;color:#666;">
+            <input type="checkbox" id="ei-include-cosmetic" style="margin:0;">
+            Include cosmetic columns (Reserved Qty, Online Availability) in CSV export
+          </label>
         </div>
       </div>
     `;
@@ -2144,7 +2166,10 @@
         return;
       }
 
-      const csv = dataModel.toCSV();
+      // Check if user wants to include cosmetic columns
+      const includeCosmeticColumns = $('#ei-include-cosmetic').checked;
+      const csv = dataModel.toCSV(includeCosmeticColumns);
+      
       const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
       const a = createEl('a', {
         href: URL.createObjectURL(blob),
@@ -2155,7 +2180,8 @@
       document.body.removeChild(a);
       URL.revokeObjectURL(a.href);
       
-      showInlineError(container, '<div style="color:green;">✓ CSV downloaded successfully!</div>');
+      const cosmeticMsg = includeCosmeticColumns ? ' (with cosmetic columns)' : '';
+      showInlineError(container, `<div style="color:green;">✓ CSV downloaded successfully${cosmeticMsg}!</div>`);
     };
   };
 
