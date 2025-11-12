@@ -629,20 +629,17 @@ setTimeout(function() {
                                     console.log(`Data for store ${storeId}:`, data);
                                     return data.itemsAvailability.filter(item => pluInput.includes(item.wfmScanCode)).map(item => {
                                         // Transformations
-                                        // Handle andonCordState properly - it could be boolean, string, or other value
+                                        // The API returns 'andon' as a boolean property (true = Enabled, false = Disabled)
+                                        // This matches DownloadButton.js line 424 and ExistingItemEditor.js line 1324
                                         let currentState;
                                         let oppositeState;
                                         
-                                        if (typeof item.andonCordState === 'boolean') {
-                                            currentState = item.andonCordState ? 'Enabled' : 'Disabled';
-                                            oppositeState = item.andonCordState ? 'Disabled' : 'Enabled';
-                                        } else if (typeof item.andonCordState === 'string') {
-                                            currentState = item.andonCordState.toLowerCase() === 'enabled' ? 'Enabled' : 'Disabled';
-                                            oppositeState = item.andonCordState.toLowerCase() === 'enabled' ? 'Disabled' : 'Enabled';
+                                        if (item.andon === true) {
+                                            currentState = 'Enabled';
+                                            oppositeState = 'Disabled';
                                         } else {
-                                            // Default fallback - log the actual value for debugging
-                                            console.log(`Unexpected andonCordState value for item ${item.wfmScanCode}:`, item.andonCordState);
-                                            currentState = 'Disabled'; // Safe default
+                                            // false, null, undefined, or any other falsy value = Disabled
+                                            currentState = 'Disabled';
                                             oppositeState = 'Enabled';
                                         }
                                         return {
