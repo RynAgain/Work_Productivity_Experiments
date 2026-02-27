@@ -19,8 +19,8 @@
         overlay.style.left = '0';
         overlay.style.width = '100%';
         overlay.style.height = '100%';
-        overlay.style.backgroundColor = 'rgba(0, 0, 0, 0.5)';
-        overlay.style.zIndex = '1001';
+        overlay.style.backgroundColor = 'rgba(0, 0, 0, 0.6)';
+        overlay.style.zIndex = '9995';
         overlay.style.display = 'flex';
         overlay.style.justifyContent = 'center';
         overlay.style.alignItems = 'center';
@@ -44,7 +44,8 @@
         // Container for the form
         var formContainer = document.createElement('div');
         formContainer.style.position = 'relative';
-        formContainer.style.backgroundColor = '#fff';
+        formContainer.style.backgroundColor = '#1a1a1a';
+        formContainer.style.color = '#f1f1f1';
         formContainer.style.padding = '20px';
         formContainer.style.borderRadius = '5px';
         formContainer.style.width = '300px';

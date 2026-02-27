@@ -11,11 +11,11 @@
     }
 
     function addActivateButton() {
-        console.log('Attempting to add activate/deactivate item(s) button');
+        console.log('[Activate] Attempting to add button');
 
         // Check if the button already exists
         if (document.getElementById('activateButton')) {
-            console.log('Activate/Deactivate item(s) button already exists');
+            console.log('[Activate] Button already exists');
             return;
         }
 
@@ -31,25 +31,26 @@
         activateButton.style.height = '40px';
         activateButton.style.zIndex = '1000';
         activateButton.style.fontSize = '14px';
-        activateButton.style.backgroundColor = '#004E36';
-        activateButton.style.color = '#fff';
-        activateButton.style.border = 'none';
-        activateButton.style.borderRadius = '5px';
-        activateButton.style.cursor = 'pointer !important';
+        activateButton.style.backgroundColor = '#1a1a1a';
+        activateButton.style.color = '#f1f1f1';
+        activateButton.style.border = '1px solid #303030';
+        activateButton.style.borderRadius = '4px';
+        activateButton.style.cursor = 'pointer';
+        activateButton.style.transition = 'background 150ms ease';
+        activateButton.style.fontFamily = "'Roboto', 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif";
 
-        // Append the button to the body
         document.body.appendChild(activateButton);
         activateButton.addEventListener('mouseover', function() {
-            activateButton.style.backgroundColor = '#218838';
+            activateButton.style.backgroundColor = '#242424';
         });
         activateButton.addEventListener('mouseout', function() {
-            activateButton.style.backgroundColor = '#004E36';
+            activateButton.style.backgroundColor = '#1a1a1a';
         });
-        console.log('Activate/Deactivate item(s) button added to the page');
+        console.log('[Activate] Button added');
 
         // Add click event to the activate/deactivate item(s) button
         activateButton.addEventListener('click', function() {
-            console.log('Activate/Deactivate Item(s) button clicked');
+            console.log('[Activate] Button clicked');
             
             // Create overlay
             const overlay = document.createElement('div');
@@ -59,8 +60,8 @@
             overlay.style.left = '0';
             overlay.style.width = '100vw';
             overlay.style.height = '100vh';
-            overlay.style.background = 'rgba(0,0,0,0.5)';
-            overlay.style.zIndex = '1001';
+            overlay.style.background = 'rgba(0,0,0,0.6)';
+            overlay.style.zIndex = '9995';
             overlay.style.display = 'flex';
             overlay.style.justifyContent = 'center';
             overlay.style.alignItems = 'center';
@@ -68,27 +69,30 @@
             // Card container
             const formContainer = document.createElement('div');
             formContainer.style.position = 'relative';
-            formContainer.style.background = '#fff';
+            formContainer.style.background = '#1a1a1a';
             formContainer.style.padding = '0';
             formContainer.style.borderRadius = '12px';
             formContainer.style.width = '300px';
-            formContainer.style.maxWidth = '120vw';
-            formContainer.style.boxShadow = '0 8px 32px rgba(0,0,0,0.18), 0 1.5px 6px rgba(0,78,54,0.10)';
-            formContainer.style.border = '1.5px solid #e0e0e0';
-            formContainer.style.fontFamily = 'Segoe UI, Arial, sans-serif';
+            formContainer.style.maxWidth = '95vw';
+            formContainer.style.maxHeight = '90vh';
+            formContainer.style.boxShadow = '0 20px 60px rgba(0,0,0,0.5)';
+            formContainer.style.border = '1px solid #303030';
+            formContainer.style.fontFamily = "'Roboto', 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif";
             formContainer.style.overflow = 'hidden';
+            formContainer.style.color = '#f1f1f1';
 
             // Header bar
-            var headerBar = document.createElement('div');
-            headerBar.style.background = '#004E36';
-            headerBar.style.color = '#fff';
-            headerBar.style.padding = '10px 16px 8px 16px';
-            headerBar.style.fontSize = '17px';
-            headerBar.style.fontWeight = 'bold';
-            headerBar.style.letterSpacing = '0.5px';
+            const headerBar = document.createElement('div');
+            headerBar.style.background = '#242424';
+            headerBar.style.color = '#f1f1f1';
+            headerBar.style.padding = '12px 16px';
+            headerBar.style.fontSize = '16px';
+            headerBar.style.fontWeight = '600';
+            headerBar.style.letterSpacing = '0.3px';
             headerBar.style.display = 'flex';
             headerBar.style.alignItems = 'center';
             headerBar.style.justifyContent = 'space-between';
+            headerBar.style.borderBottom = '1px solid #303030';
             headerBar.innerHTML = `<span>Activate/Deactivate Item(s)</span>`;
 
             // Close button
@@ -98,38 +102,39 @@
             closeButton.style.fontSize = '22px';
             closeButton.style.cursor = 'pointer';
             closeButton.style.marginLeft = '8px';
-            closeButton.style.color = '#fff';
+            closeButton.style.color = '#aaaaaa';
             closeButton.style.background = 'transparent';
             closeButton.style.border = 'none';
             closeButton.style.padding = '0 4px';
             closeButton.style.borderRadius = '4px';
-            closeButton.style.transition = 'background 0.2s';
+            closeButton.style.transition = 'color 150ms ease';
             closeButton.addEventListener('mouseenter', function() {
-                closeButton.style.background = 'rgba(0,0,0,0.12)';
+                closeButton.style.color = '#f1f1f1';
             });
             closeButton.addEventListener('mouseleave', function() {
-                closeButton.style.background = 'transparent';
+                closeButton.style.color = '#aaaaaa';
             });
             closeButton.addEventListener('click', function() {
                 document.body.removeChild(overlay);
             });
             headerBar.appendChild(closeButton);
 // Info/disclaimer box (hidden by default, shown when info icon is clicked)
-var infoBox = document.createElement('div');
+const infoBox = document.createElement('div');
 infoBox.id = 'activateOverlayInfoBox';
 infoBox.style.display = 'none';
 infoBox.style.position = 'absolute';
 infoBox.style.top = '48px';
 infoBox.style.left = '16px';
-infoBox.style.background = '#f5f7fa';
-infoBox.style.color = '#222';
-infoBox.style.borderLeft = '4px solid #004E36';
+infoBox.style.background = '#242424';
+infoBox.style.color = '#f1f1f1';
+infoBox.style.borderLeft = '4px solid var(--tm-accent-primary, #3ea6ff)';
 infoBox.style.padding = '14px 18px 14px 16px';
-infoBox.style.borderRadius = '7px';
-infoBox.style.fontSize = '15px';
+infoBox.style.borderRadius = '8px';
+infoBox.style.fontSize = '14px';
 infoBox.style.lineHeight = '1.7';
-infoBox.style.boxShadow = '0 2px 12px rgba(0,0,0,0.10)';
-infoBox.style.zIndex = '2002';
+infoBox.style.boxShadow = '0 4px 20px rgba(0,0,0,0.5)';
+infoBox.style.zIndex = '9999';
+infoBox.style.border = '1px solid #303030';
 infoBox.style.minWidth = '240px';
 infoBox.style.maxWidth = '340px';
 infoBox.style.maxHeight = '60vh';
@@ -140,12 +145,11 @@ infoBox.setAttribute('aria-modal', 'false');
 infoBox.tabIndex = -1;
 infoBox.innerHTML = `
     <div style="display:flex;align-items:flex-start;gap:12px;">
-        <svg width="22" height="22" fill="#004E36" viewBox="0 0 20 20" style="flex-shrink:0;margin-top:2px;">
-            <circle cx="10" cy="10" r="10" fill="#e0e0e0"/>
-            <text x="10" y="15" text-anchor="middle" font-size="13" font-family="Segoe UI, Arial, sans-serif" fill="#004E36" font-weight="bold">i</text>
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--tm-accent-primary, #3ea6ff)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;margin-top:2px;">
+            <circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/>
         </svg>
         <div style="flex:1;">
-            <div style="font-weight:600;margin-bottom:2px;">Activate/Deactivate Item(s)</div>
+            <div style="font-weight:600;margin-bottom:2px;color:#f1f1f1;">Activate/Deactivate Item(s)</div>
             Use this tool to generate upload files for activating or deactivating items in selected stores.<br>
             <div style="margin:7px 0 0 0;font-weight:600;">How to use:</div>
             <ol style="margin:7px 0 0 18px;padding:0 0 0 0;">
@@ -162,14 +166,14 @@ infoBox.innerHTML = `
                 <li>If you encounter issues, try reducing the number of stores or PLUs selected.</li>
             </ul>
         </div>
-        <button id="closeActivateInfoBoxBtn" aria-label="Close information" style="background:transparent;border:none;color:#004E36;font-size:20px;font-weight:bold;cursor:pointer;line-height:1;padding:0 4px;margin-left:8px;border-radius:4px;transition:background 0.2s;">&times;</button>
+        <button id="closeActivateInfoBoxBtn" aria-label="Close information" style="background:transparent;border:none;color:#aaaaaa;font-size:20px;font-weight:bold;cursor:pointer;line-height:1;padding:0 4px;margin-left:8px;border-radius:4px;transition:color 150ms ease;">&times;</button>
     </div>
 `;
 formContainer.style.position = 'relative';
 formContainer.appendChild(infoBox);
 
 // Add info icon to headerBar
-var infoIcon = document.createElement('span');
+const infoIcon = document.createElement('span');
 infoIcon.id = 'activateOverlayInfoIcon';
 infoIcon.tabIndex = 0;
 infoIcon.setAttribute('aria-label', 'Show information');
@@ -179,17 +183,16 @@ infoIcon.style.justifyContent = 'center';
 infoIcon.style.width = '20px';
 infoIcon.style.height = '20px';
 infoIcon.style.borderRadius = '50%';
-infoIcon.style.background = '#e0e0e0';
-infoIcon.style.color = '#004E36';
+infoIcon.style.background = '#3f3f3f';
+infoIcon.style.color = '#f1f1f1';
 infoIcon.style.fontWeight = 'bold';
 infoIcon.style.fontSize = '15px';
 infoIcon.style.cursor = 'pointer';
 infoIcon.style.marginLeft = '8px';
 infoIcon.style.transition = 'background 0.2s';
 infoIcon.innerHTML = `
-    <svg width="16" height="16" viewBox="0 0 20 20" fill="none" style="display:block;">
-        <circle cx="10" cy="10" r="10" fill="#e0e0e0"/>
-        <text x="10" y="14" text-anchor="middle" font-size="12" font-family="Segoe UI, Arial, sans-serif" fill="#004E36" font-weight="bold">i</text>
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:block;">
+        <circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/>
     </svg>
 `;
 headerBar.querySelector('span').appendChild(infoIcon);
@@ -263,8 +266,8 @@ setTimeout(function() {
             formContainer.appendChild(headerBar);
 
             // Content area
-            var contentArea = document.createElement('div');
-            contentArea.style.padding = '12px 16px';
+            const contentArea = document.createElement('div');
+            contentArea.style.padding = '16px';
             contentArea.style.display = 'flex';
             contentArea.style.flexDirection = 'column';
             contentArea.style.gap = '6px';
@@ -272,29 +275,31 @@ setTimeout(function() {
             contentArea.style.overflowY = 'auto';
 
             // Main content HTML
+            const iStyle = 'width:100%;padding:8px;border:1px solid #3f3f3f;border-radius:4px;font-size:14px;background:#0f0f0f;color:#f1f1f1;font-family:inherit;box-sizing:border-box;';
+            const lStyle = 'margin-bottom:2px;color:#aaaaaa;font-size:13px;';
             contentArea.innerHTML = `
-                <label style="margin-bottom:2px;">PLU(s)</label>
-                <input type="text" id="pluInput" style="width:100%;padding:6px 8px;border:1px solid #ccc;border-radius:5px;font-size:14px;" placeholder="Enter PLU(s) separated by commas">
-                <label style="margin-bottom:2px;">By</label>
-                <select id="bySelect" style="width:100%;padding:6px 8px;border:1px solid #ccc;border-radius:5px;font-size:14px;">
+                <label style="${lStyle}">PLU(s)</label>
+                <input type="text" id="pluInput" style="${iStyle}" placeholder="PLUs, comma-separated">
+                <label style="${lStyle}">By</label>
+                <select id="bySelect" style="${iStyle}">
                     <option value="Store">Store</option>
                     <option value="Region">Region</option>
                 </select>
                 <div style="display:flex;align-items:center;gap:8px;">
                     <div style="flex:1;">
-                        <label style="margin-bottom:2px;display:block;">Store/Region</label>
-                        <input type="text" id="storeRegionInput" style="width:100%;padding:6px 8px;border:1px solid #ccc;border-radius:5px;font-size:14px;" placeholder="Enter Store/Region codes separated by commas">
+                        <label style="${lStyle}display:block;">Store/Region</label>
+                        <input type="text" id="storeRegionInput" style="${iStyle}" placeholder="Codes, comma-separated">
                     </div>
-                    <label style="font-weight:500;display:flex;align-items:center;gap:4px;margin-top:18px;">
-                        <input type="checkbox" id="allStoresCheckbox" style="margin-right:4px;"> All Stores
+                    <label style="font-weight:500;display:flex;align-items:center;gap:4px;margin-top:18px;color:#aaaaaa;font-size:13px;">
+                        <input type="checkbox" id="allStoresCheckbox" style="margin-right:4px;accent-color:var(--tm-accent-primary, #3ea6ff);"> All Stores
                     </label>
                 </div>
-                <label style="margin-bottom:2px;">Andon Cord</label>
-                <select id="andonCordSelect" style="width:100%;padding:6px 8px;border:1px solid #ccc;border-radius:5px;font-size:14px;">
+                <label style="${lStyle}">Andon Cord</label>
+                <select id="andonCordSelect" style="${iStyle}">
                     <option value="Enabled">Enabled</option>
                     <option value="Disabled">Disabled</option>
                 </select>
-                <button id="generateUploadFileButton" style="width:100%;margin-top:10px;background:#004E36;color:#fff;border:none;border-radius:5px;padding:8px 0;font-size:15px;cursor:pointer;transition:background 0.2s;">Generate Upload File</button>
+                <button id="generateUploadFileButton" style="width:100%;margin-top:10px;background:var(--tm-accent-primary, #3ea6ff);color:#0f0f0f;border:none;border-radius:4px;padding:8px 0;font-size:14px;font-weight:500;cursor:pointer;transition:background 150ms ease;">Generate Upload File</button>
             `;
             formContainer.appendChild(contentArea);
             overlay.appendChild(formContainer);
@@ -331,8 +336,8 @@ setTimeout(function() {
                 loadingIndicator.innerHTML = 'Processing...';
                 loadingIndicator.style.textAlign = 'center';
                 loadingIndicator.style.marginTop = '10px';
-                loadingIndicator.style.fontSize = '16px';
-                loadingIndicator.style.color = '#004E36';
+                loadingIndicator.style.fontSize = '14px';
+                loadingIndicator.style.color = 'var(--tm-accent-primary, #3ea6ff)';
                 formContainer.appendChild(loadingIndicator);
 
                 // Determine the environment (prod or gamma)

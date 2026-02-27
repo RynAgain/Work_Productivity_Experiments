@@ -40,8 +40,9 @@
         scratchpadButton.style.left = '0';
         scratchpadButton.style.top = '10vh';
         scratchpadButton.style.zIndex = '2000';
-        scratchpadButton.style.background = '#004E36';
-        scratchpadButton.style.color = '#fff';
+        scratchpadButton.style.background = '#1a1a1a';
+        scratchpadButton.style.color = '#f1f1f1';
+        scratchpadButton.style.border = '1px solid #303030';
         scratchpadButton.style.border = 'none';
         scratchpadButton.style.borderRadius = '0 5px 5px 0';
         scratchpadButton.style.padding = '10px 0';
@@ -64,8 +65,9 @@
         scratchpadContainer.style.right = '20px';
         scratchpadContainer.style.width = '340px';
         scratchpadContainer.style.maxWidth = '95vw';
-        scratchpadContainer.style.background = '#fff';
-        scratchpadContainer.style.border = '1px solid #888';
+        scratchpadContainer.style.background = '#1a1a1a';
+        scratchpadContainer.style.border = '1px solid #303030';
+        scratchpadContainer.style.color = '#f1f1f1';
         scratchpadContainer.style.borderRadius = '8px';
         scratchpadContainer.style.boxShadow = '0 2px 12px rgba(0,0,0,0.25)';
         scratchpadContainer.style.display = 'none';
@@ -76,8 +78,9 @@
         header.style.display = 'flex';
         header.style.justifyContent = 'space-between';
         header.style.alignItems = 'center';
-        header.style.background = '#004E36';
-        header.style.color = '#fff';
+        header.style.background = '#242424';
+        header.style.color = '#f1f1f1';
+        header.style.borderBottom = '1px solid #303030';
         header.style.padding = '8px 12px';
         header.style.borderRadius = '8px 8px 0 0';
         header.style.cursor = 'move';
@@ -100,9 +103,10 @@ infoBox.style.display = 'none';
 infoBox.style.position = 'absolute';
 infoBox.style.top = '44px';
 infoBox.style.left = '12px';
-infoBox.style.background = '#f5f7fa';
-infoBox.style.color = '#222';
-infoBox.style.borderLeft = '4px solid #004E36';
+infoBox.style.background = '#242424';
+infoBox.style.color = '#f1f1f1';
+infoBox.style.borderLeft = '4px solid var(--tm-accent-primary, #3ea6ff)';
+infoBox.style.border = '1px solid #303030';
 infoBox.style.padding = '14px 18px 14px 16px';
 infoBox.style.borderRadius = '7px';
 infoBox.style.fontSize = '15px';
@@ -119,9 +123,8 @@ infoBox.setAttribute('aria-modal', 'false');
 infoBox.tabIndex = -1;
 infoBox.innerHTML = `
     <div style="display:flex;align-items:flex-start;gap:12px;">
-        <svg width="22" height="22" fill="#004E36" viewBox="0 0 20 20" style="flex-shrink:0;margin-top:2px;">
-            <circle cx="10" cy="10" r="10" fill="#e0e0e0"/>
-            <text x="10" y="15" text-anchor="middle" font-size="13" font-family="Segoe UI, Arial, sans-serif" fill="#004E36" font-weight="bold">i</text>
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--tm-accent-primary, #3ea6ff)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;margin-top:2px;">
+            <circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/>
         </svg>
         <div style="flex:1;">
             <div style="font-weight:600;margin-bottom:2px;">Scratchpad</div>
@@ -141,7 +144,7 @@ infoBox.innerHTML = `
                 <li>All data is stored locally in your browser and is not synced to the cloud.</li>
             </ul>
         </div>
-        <button id="closeScratchpadInfoBoxBtn" aria-label="Close information" style="background:transparent;border:none;color:#004E36;font-size:20px;font-weight:bold;cursor:pointer;line-height:1;padding:0 4px;margin-left:8px;border-radius:4px;transition:background 0.2s;">&times;</button>
+        <button id="closeScratchpadInfoBoxBtn" aria-label="Close information" style="background:transparent;border:none;color:#aaaaaa;font-size:20px;font-weight:bold;cursor:pointer;line-height:1;padding:0 4px;margin-left:8px;border-radius:4px;transition:color 150ms ease;">&times;</button>
     </div>
 `;
 scratchpadContainer.style.position = 'relative';
@@ -158,8 +161,8 @@ infoIcon.style.justifyContent = 'center';
 infoIcon.style.width = '20px';
 infoIcon.style.height = '20px';
 infoIcon.style.borderRadius = '50%';
-infoIcon.style.background = '#e0e0e0';
-infoIcon.style.color = '#004E36';
+infoIcon.style.background = '#3f3f3f';
+infoIcon.style.color = '#f1f1f1';
 infoIcon.style.fontWeight = 'bold';
 infoIcon.style.fontSize = '15px';
 infoIcon.style.cursor = 'pointer';
@@ -167,9 +170,9 @@ infoIcon.style.marginLeft = '8px';
 infoIcon.style.transition = 'background 0.2s';
 infoIcon.innerHTML = `
     <svg width="16" height="16" viewBox="0 0 20 20" fill="none" style="display:block;">
-        <circle cx="10" cy="10" r="10" fill="#e0e0e0"/>
-        <text x="10" y="14" text-anchor="middle" font-size="12" font-family="Segoe UI, Arial, sans-serif" fill="#004E36" font-weight="bold">i</text>
-    </svg>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:block;">
+            <circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/>
+        </svg>
 `;
 header.appendChild(infoIcon);
 
@@ -316,7 +319,7 @@ setTimeout(function() {
                     closeTabBtn.style.right = '2px';
                     closeTabBtn.style.top = '2px';
                     closeTabBtn.style.fontSize = '13px';
-                    closeTabBtn.style.color = '#888';
+                    closeTabBtn.style.color = '#717171';
                     closeTabBtn.style.cursor = 'pointer';
                     closeTabBtn.title = 'Close tab';
                     closeTabBtn.addEventListener('click', function(e) {

@@ -1,17 +1,8 @@
 (function () {
     'use strict';
 
-    // Expose the function to the global scope for testing
-    try {
-        module.exports = {
-            addRedriveButton
-        };
-    } catch (e) {
-        // Handle the error if needed
-    }
-
     function addRedriveButton() {
-        console.log('Attempting to add redrive button');
+        console.log('[Redrive] Attempting to add redrive button');
 
         // Check if the button already exists
         if (document.getElementById('redriveButton')) {
@@ -20,7 +11,7 @@
         }
 
         // Create the redrive button
-        var redriveButton = document.createElement('button');
+        const redriveButton = document.createElement('button');
         redriveButton.id = 'redriveButton';
         redriveButton.className = 'button';
         redriveButton.innerHTML = 'Redrive';
@@ -31,105 +22,110 @@
         redriveButton.style.height = '40px';
         redriveButton.style.zIndex = '1000';
         redriveButton.style.fontSize = '14px';
-        redriveButton.style.backgroundColor = '#004E36';
-        redriveButton.style.color = '#fff';
-        redriveButton.style.border = 'none';
-        redriveButton.style.borderRadius = '5px';
-        redriveButton.style.cursor = 'pointer !important';
+        redriveButton.style.backgroundColor = '#1a1a1a';
+        redriveButton.style.color = '#f1f1f1';
+        redriveButton.style.border = '1px solid #303030';
+        redriveButton.style.borderRadius = '4px';
+        redriveButton.style.cursor = 'pointer';
+        redriveButton.style.transition = 'background 150ms ease';
+        redriveButton.style.fontFamily = "'Roboto', 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif";
 
-        // Append the button to the body
         document.body.appendChild(redriveButton);
-        console.log('Redrive button added to the page');
+        console.log('[Redrive] Button added to the page');
         redriveButton.addEventListener('mouseover', function () {
-            redriveButton.style.backgroundColor = '#218838';
+            redriveButton.style.backgroundColor = '#242424';
         });
         redriveButton.addEventListener('mouseout', function () {
-            redriveButton.style.backgroundColor = '#004E36';
+            redriveButton.style.backgroundColor = '#1a1a1a';
         });
 
         // Add click event to the redrive button
         redriveButton.addEventListener('click', function () {
-            console.log('Redrive button clicked');
+            console.log('[Redrive] Button clicked');
 
             // Create overlay
-            var overlay = document.createElement('div');
+            const overlay = document.createElement('div');
             overlay.id = 'redriveOverlay';
             overlay.style.position = 'fixed';
             overlay.style.top = '0';
             overlay.style.left = '0';
             overlay.style.width = '100vw';
             overlay.style.height = '100vh';
-            overlay.style.background = 'rgba(0,0,0,0.5)';
-            overlay.style.zIndex = '1001';
+            overlay.style.background = 'rgba(0,0,0,0.6)';
+            overlay.style.zIndex = '9995';
             overlay.style.display = 'flex';
             overlay.style.justifyContent = 'center';
             overlay.style.alignItems = 'center';
 
-            // Card container
-            var formContainer = document.createElement('div');
+            // Card container (dark)
+            const formContainer = document.createElement('div');
             formContainer.style.position = 'relative';
-            formContainer.style.background = '#fff';
+            formContainer.style.background = '#1a1a1a';
             formContainer.style.padding = '0';
             formContainer.style.borderRadius = '12px';
             formContainer.style.width = '700px';
             formContainer.style.maxWidth = '95vw';
-            formContainer.style.boxShadow = '0 8px 32px rgba(0,0,0,0.18), 0 1.5px 6px rgba(0,78,54,0.10)';
-            formContainer.style.border = '1.5px solid #e0e0e0';
-            formContainer.style.fontFamily = 'Segoe UI, Arial, sans-serif';
+            formContainer.style.maxHeight = '90vh';
+            formContainer.style.boxShadow = '0 20px 60px rgba(0,0,0,0.5)';
+            formContainer.style.border = '1px solid #303030';
+            formContainer.style.fontFamily = "'Roboto', 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif";
             formContainer.style.overflow = 'hidden';
+            formContainer.style.color = '#f1f1f1';
 
-            // Header bar
-            var headerBar = document.createElement('div');
-            headerBar.style.background = '#004E36';
-            headerBar.style.color = '#fff';
-            headerBar.style.padding = '10px 16px 8px 16px';
-            headerBar.style.fontSize = '17px';
-            headerBar.style.fontWeight = 'bold';
-            headerBar.style.letterSpacing = '0.5px';
+            // Header bar (dark)
+            const headerBar = document.createElement('div');
+            headerBar.style.background = '#242424';
+            headerBar.style.color = '#f1f1f1';
+            headerBar.style.padding = '12px 16px';
+            headerBar.style.fontSize = '16px';
+            headerBar.style.fontWeight = '600';
+            headerBar.style.letterSpacing = '0.3px';
             headerBar.style.display = 'flex';
             headerBar.style.alignItems = 'center';
             headerBar.style.justifyContent = 'space-between';
+            headerBar.style.borderBottom = '1px solid #303030';
             headerBar.innerHTML = `<span>Redrive Item(s)</span>`;
 
             // Close button
-            var closeButton = document.createElement('span');
+            const closeButton = document.createElement('span');
             closeButton.innerHTML = '&times;';
             closeButton.id = 'redriveOverlayCloseButton';
             closeButton.style.fontSize = '22px';
             closeButton.style.cursor = 'pointer';
             closeButton.style.marginLeft = '8px';
-            closeButton.style.color = '#fff';
+            closeButton.style.color = '#aaaaaa';
             closeButton.style.background = 'transparent';
             closeButton.style.border = 'none';
             closeButton.style.padding = '0 4px';
             closeButton.style.borderRadius = '4px';
-            closeButton.style.transition = 'background 0.2s';
+            closeButton.style.transition = 'color 150ms ease';
             closeButton.addEventListener('mouseenter', function() {
-                closeButton.style.background = 'rgba(0,0,0,0.12)';
+                closeButton.style.color = '#f1f1f1';
             });
             closeButton.addEventListener('mouseleave', function() {
-                closeButton.style.background = 'transparent';
+                closeButton.style.color = '#aaaaaa';
             });
             closeButton.addEventListener('click', function () {
                 document.body.removeChild(overlay);
             });
             headerBar.appendChild(closeButton);
 // Info/disclaimer box (hidden by default, shown when info icon is clicked)
-var infoBox = document.createElement('div');
+const infoBox = document.createElement('div');
 infoBox.id = 'redriveOverlayInfoBox';
 infoBox.style.display = 'none';
 infoBox.style.position = 'absolute';
 infoBox.style.top = '48px';
 infoBox.style.left = '16px';
-infoBox.style.background = '#f5f7fa';
-infoBox.style.color = '#222';
-infoBox.style.borderLeft = '4px solid #004E36';
+infoBox.style.background = '#242424';
+infoBox.style.color = '#f1f1f1';
+infoBox.style.borderLeft = '4px solid var(--tm-accent-primary, #3ea6ff)';
 infoBox.style.padding = '14px 18px 14px 16px';
 infoBox.style.borderRadius = '7px';
 infoBox.style.fontSize = '15px';
 infoBox.style.lineHeight = '1.7';
-infoBox.style.boxShadow = '0 2px 12px rgba(0,0,0,0.10)';
-infoBox.style.zIndex = '2002';
+infoBox.style.boxShadow = '0 4px 20px rgba(0,0,0,0.5)';
+infoBox.style.zIndex = '9999';
+infoBox.style.border = '1px solid #303030';
 infoBox.style.minWidth = '240px';
 infoBox.style.maxWidth = '340px';
 infoBox.style.maxHeight = '60vh';
@@ -140,12 +136,11 @@ infoBox.setAttribute('aria-modal', 'false');
 infoBox.tabIndex = -1;
 infoBox.innerHTML = `
     <div style="display:flex;align-items:flex-start;gap:12px;">
-        <svg width="22" height="22" fill="#004E36" viewBox="0 0 20 20" style="flex-shrink:0;margin-top:2px;">
-            <circle cx="10" cy="10" r="10" fill="#e0e0e0"/>
-            <text x="10" y="15" text-anchor="middle" font-size="13" font-family="Segoe UI, Arial, sans-serif" fill="#004E36" font-weight="bold">i</text>
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--tm-accent-primary, #3ea6ff)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;margin-top:2px;">
+            <circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/>
         </svg>
         <div style="flex:1;">
-            <div style="font-weight:600;margin-bottom:2px;">Redrive Item(s)</div>
+            <div style="font-weight:600;margin-bottom:2px;color:#f1f1f1;">Redrive Item(s)</div>
             This tool provides two ways to generate redrive files with flipped Andon Cord states.<br>
             <div style="margin:7px 0 0 0;font-weight:600;">Method 1 - Generate from API:</div>
             <ol style="margin:7px 0 0 18px;padding:0 0 0 0;">
@@ -169,14 +164,14 @@ infoBox.innerHTML = `
                 <li>Check conversion statistics before downloading to catch any issues.</li>
             </ul>
         </div>
-        <button id="closeRedriveInfoBoxBtn" aria-label="Close information" style="background:transparent;border:none;color:#004E36;font-size:20px;font-weight:bold;cursor:pointer;line-height:1;padding:0 4px;margin-left:8px;border-radius:4px;transition:background 0.2s;">&times;</button>
+        <button id="closeRedriveInfoBoxBtn" aria-label="Close information" style="background:transparent;border:none;color:#aaaaaa;font-size:20px;font-weight:bold;cursor:pointer;line-height:1;padding:0 4px;margin-left:8px;border-radius:4px;transition:color 150ms ease;">&times;</button>
     </div>
 `;
 formContainer.style.position = 'relative';
 formContainer.appendChild(infoBox);
 
 // Add info icon to headerBar
-var infoIcon = document.createElement('span');
+const infoIcon = document.createElement('span');
 infoIcon.id = 'redriveOverlayInfoIcon';
 infoIcon.tabIndex = 0;
 infoIcon.setAttribute('aria-label', 'Show information');
@@ -186,17 +181,16 @@ infoIcon.style.justifyContent = 'center';
 infoIcon.style.width = '20px';
 infoIcon.style.height = '20px';
 infoIcon.style.borderRadius = '50%';
-infoIcon.style.background = '#e0e0e0';
-infoIcon.style.color = '#004E36';
+infoIcon.style.background = '#3f3f3f';
+infoIcon.style.color = '#f1f1f1';
 infoIcon.style.fontWeight = 'bold';
 infoIcon.style.fontSize = '15px';
 infoIcon.style.cursor = 'pointer';
 infoIcon.style.marginLeft = '8px';
 infoIcon.style.transition = 'background 0.2s';
 infoIcon.innerHTML = `
-    <svg width="16" height="16" viewBox="0 0 20 20" fill="none" style="display:block;">
-        <circle cx="10" cy="10" r="10" fill="#e0e0e0"/>
-        <text x="10" y="14" text-anchor="middle" font-size="12" font-family="Segoe UI, Arial, sans-serif" fill="#004E36" font-weight="bold">i</text>
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:block;">
+        <circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/>
     </svg>
 `;
 headerBar.querySelector('span').appendChild(infoIcon);
@@ -270,7 +264,7 @@ setTimeout(function() {
             formContainer.appendChild(headerBar);
 
             // Content area - Two column layout
-            var contentArea = document.createElement('div');
+            const contentArea = document.createElement('div');
             contentArea.style.padding = '12px 16px';
             contentArea.style.display = 'flex';
             contentArea.style.gap = '20px';
@@ -278,57 +272,57 @@ setTimeout(function() {
             contentArea.style.overflowY = 'auto';
 
             // Left column - Original functionality
-            var leftColumn = document.createElement('div');
+            const leftColumn = document.createElement('div');
             leftColumn.style.flex = '1';
             leftColumn.style.display = 'flex';
             leftColumn.style.flexDirection = 'column';
             leftColumn.style.gap = '6px';
             leftColumn.innerHTML = `
-                <h3 style="margin:0 0 8px 0;font-size:16px;color:#004E36;font-weight:600;">Generate from API</h3>
-                <label style="margin-bottom:2px;">PLU(s)</label>
-                <input type="text" id="pluInput" style="width:100%;padding:6px 8px;border:1px solid #ccc;border-radius:5px;font-size:14px;" placeholder="Enter PLU(s) separated by commas">
-                <label style="margin-bottom:2px;">By</label>
-                <select id="bySelect" style="width:100%;padding:6px 8px;border:1px solid #ccc;border-radius:5px;font-size:14px;">
+                <h3 style="margin:0 0 8px 0;font-size:14px;color:var(--tm-accent-primary, #3ea6ff);font-weight:600;">Generate from API</h3>
+                <label style="margin-bottom:2px;color:#aaaaaa;font-size:13px;">PLU(s)</label>
+                <input type="text" id="pluInput" style="width:100%;padding:8px;border:1px solid #3f3f3f;border-radius:4px;font-size:14px;background:#0f0f0f;color:#f1f1f1;font-family:inherit;box-sizing:border-box;" placeholder="Enter PLU(s) separated by commas">
+                <label style="margin-bottom:2px;color:#aaaaaa;font-size:13px;">By</label>
+                <select id="bySelect" style="width:100%;padding:8px;border:1px solid #3f3f3f;border-radius:4px;font-size:14px;background:#0f0f0f;color:#f1f1f1;font-family:inherit;">
                     <option value="Store">Store</option>
                     <option value="Region">Region</option>
                 </select>
                 <div style="display:flex;align-items:center;gap:18px;">
                     <div style="flex:1;">
-                        <label style="margin-bottom:2px;display:block;">Store/Region</label>
-                        <input type="text" id="storeRegionInput" style="width:100%;padding:6px 8px;border:1px solid #ccc;border-radius:5px;font-size:14px;" placeholder="Enter Store/Region codes separated by commas">
+                        <label style="margin-bottom:2px;display:block;color:#aaaaaa;font-size:13px;">Store/Region</label>
+                        <input type="text" id="storeRegionInput" style="width:100%;padding:8px;border:1px solid #3f3f3f;border-radius:4px;font-size:14px;background:#0f0f0f;color:#f1f1f1;font-family:inherit;box-sizing:border-box;" placeholder="Codes, comma-separated">
                     </div>
-                    <label style="font-weight:500;display:flex;align-items:center;gap:4px;margin-top:18px;">
-                        <input type="checkbox" id="allStoresCheckbox" style="margin-right:4px;"> All Stores
+                    <label style="font-weight:500;display:flex;align-items:center;gap:4px;margin-top:18px;color:#aaaaaa;font-size:13px;">
+                        <input type="checkbox" id="allStoresCheckbox" style="margin-right:4px;accent-color:var(--tm-accent-primary, #3ea6ff);"> All Stores
                     </label>
                 </div>
-                <button id="generateRedriveFileButton" style="width:100%;margin-top:10px;background:#004E36;color:#fff;border:none;border-radius:5px;padding:8px 0;font-size:15px;cursor:pointer;transition:background 0.2s;">Generate Redrive Files</button>
+                <button id="generateRedriveFileButton" style="width:100%;margin-top:10px;background:var(--tm-accent-primary, #3ea6ff);color:#0f0f0f;border:none;border-radius:4px;padding:8px 0;font-size:14px;font-weight:500;cursor:pointer;transition:background 150ms ease;">Generate Redrive Files</button>
             `;
 
             // Separator
-            var separator = document.createElement('div');
+            const separator = document.createElement('div');
             separator.style.width = '1px';
-            separator.style.background = 'linear-gradient(to bottom, transparent, #ccc 20%, #ccc 80%, transparent)';
+            separator.style.background = 'linear-gradient(to bottom, transparent, #3f3f3f 20%, #3f3f3f 80%, transparent)';
             separator.style.minHeight = '200px';
             separator.style.alignSelf = 'stretch';
 
             // Right column - File upload functionality
-            var rightColumn = document.createElement('div');
+            const rightColumn = document.createElement('div');
             rightColumn.style.flex = '1';
             rightColumn.style.display = 'flex';
             rightColumn.style.flexDirection = 'column';
             rightColumn.style.gap = '6px';
             rightColumn.innerHTML = `
-                <h3 style="margin:0 0 8px 0;font-size:16px;color:#004E36;font-weight:600;">Upload & Convert</h3>
-                <label style="margin-bottom:2px;">Upload CSV File</label>
+                <h3 style="margin:0 0 8px 0;font-size:14px;color:var(--tm-accent-primary, #3ea6ff);font-weight:600;">Upload & Convert</h3>
+                <label style="margin-bottom:2px;color:#aaaaaa;font-size:13px;">Upload CSV File</label>
                 <div style="position:relative;">
-                    <input type="file" id="csvFileInput" accept=".csv" style="width:100%;padding:6px 8px;border:1px solid #ccc;border-radius:5px;font-size:14px;cursor:pointer;">
+                    <input type="file" id="csvFileInput" accept=".csv" style="width:100%;padding:8px;border:1px solid #3f3f3f;border-radius:4px;font-size:14px;cursor:pointer;background:#0f0f0f;color:#f1f1f1;">
                 </div>
-                <div id="fileUploadStatus" style="margin-top:4px;font-size:13px;color:#666;min-height:18px;"></div>
-                <div id="conversionStats" style="margin-top:8px;padding:8px;background:#f8f9fa;border-radius:5px;font-size:13px;display:none;">
-                    <div style="font-weight:600;margin-bottom:4px;color:#004E36;">Conversion Summary:</div>
+                <div id="fileUploadStatus" style="margin-top:4px;font-size:12px;color:#717171;min-height:18px;"></div>
+                <div id="conversionStats" style="margin-top:8px;padding:8px;background:#242424;border:1px solid #303030;border-radius:4px;font-size:13px;display:none;color:#f1f1f1;">
+                    <div style="font-weight:600;margin-bottom:4px;color:var(--tm-accent-primary, #3ea6ff);">Conversion Summary:</div>
                     <div id="statsContent"></div>
                 </div>
-                <button id="makeRedriveFileButton" style="width:100%;margin-top:10px;background:#004E36;color:#fff;border:none;border-radius:5px;padding:8px 0;font-size:15px;cursor:pointer;transition:background 0.2s;opacity:0.5;" disabled>Make Redrive File</button>
+                <button id="makeRedriveFileButton" style="width:100%;margin-top:10px;background:var(--tm-accent-primary, #3ea6ff);color:#0f0f0f;border:none;border-radius:4px;padding:8px 0;font-size:14px;font-weight:500;cursor:pointer;transition:background 150ms ease;opacity:0.5;" disabled>Make Redrive File</button>
             `;
 
             contentArea.appendChild(leftColumn);
@@ -336,18 +330,18 @@ setTimeout(function() {
             contentArea.appendChild(rightColumn);
             formContainer.appendChild(contentArea);
 
-            var loadingIndicator = document.createElement('div');
+            const loadingIndicator = document.createElement('div');
             loadingIndicator.id = 'redriveLoadingIndicator';
             loadingIndicator.innerHTML = 'Processing...';
             loadingIndicator.style.textAlign = 'center';
             loadingIndicator.style.marginTop = '10px';
-            loadingIndicator.style.fontSize = '16px';
-            loadingIndicator.style.color = '#004E36';
+            loadingIndicator.style.fontSize = '14px';
+            loadingIndicator.style.color = 'var(--tm-accent-primary, #3ea6ff)';
             loadingIndicator.style.display = 'none';
             loadingIndicator.style.padding = '8px';
-            loadingIndicator.style.background = '#f8f9fa';
-            loadingIndicator.style.borderRadius = '5px';
-            loadingIndicator.style.border = '1px solid #e0e0e0';
+            loadingIndicator.style.background = '#242424';
+            loadingIndicator.style.borderRadius = '4px';
+            loadingIndicator.style.border = '1px solid #303030';
             formContainer.appendChild(loadingIndicator);
 
             overlay.appendChild(formContainer);
@@ -370,8 +364,8 @@ setTimeout(function() {
             });
 
             // File upload functionality
-            var uploadedCsvData = null;
-            var conversionStats = { enabled: 0, disabled: 0, total: 0 };
+            let uploadedCsvData = null;
+            let conversionStats = { enabled: 0, disabled: 0, total: 0 };
 
             // CSV parsing function
             function parseCSV(csvText) {
@@ -454,7 +448,7 @@ setTimeout(function() {
                 
                 if (!file.name.toLowerCase().endsWith('.csv')) {
                     statusDiv.textContent = 'Please select a CSV file';
-                    statusDiv.style.color = '#dc3545';
+                    statusDiv.style.color = '#d32f2f';
                     makeButton.disabled = true;
                     makeButton.style.opacity = '0.5';
                     statsDiv.style.display = 'none';
@@ -480,7 +474,7 @@ setTimeout(function() {
                         
                         // Update status
                         statusDiv.textContent = `File loaded: ${file.name} (${processed.data.length} rows)`;
-                        statusDiv.style.color = '#28a745';
+                        statusDiv.style.color = '#2e7d32';
                         
                         // Show conversion stats
                         const statsContent = document.getElementById('statsContent');
@@ -490,7 +484,7 @@ setTimeout(function() {
                             <div>• Total rows: <strong>${conversionStats.total}</strong></div>
                         `;
                         if (conversionStats.errors > 0) {
-                            statsHtml += `<div style="color:#dc3545;">• Unexpected values (defaulted to Enabled): <strong>${conversionStats.errors}</strong></div>`;
+                            statsHtml += `<div style="color:#d32f2f;">• Unexpected values (defaulted to Enabled): <strong>${conversionStats.errors}</strong></div>`;
                         }
                         statsContent.innerHTML = statsHtml;
                         statsDiv.style.display = 'block';
@@ -501,7 +495,7 @@ setTimeout(function() {
                         
                     } catch (error) {
                         statusDiv.textContent = `Error: ${error.message}`;
-                        statusDiv.style.color = '#dc3545';
+                        statusDiv.style.color = '#d32f2f';
                         makeButton.disabled = true;
                         makeButton.style.opacity = '0.5';
                         statsDiv.style.display = 'none';
@@ -758,4 +752,11 @@ setTimeout(function() {
 
     // Initial attempt to add the redrive button
     addRedriveButton();
+
+    // Module export for testing (at end of IIFE)
+    try {
+        module.exports = { addRedriveButton };
+    } catch (e) {
+        // Browser environment
+    }
 })();

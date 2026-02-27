@@ -16,7 +16,7 @@
      * Includes an information button with detailed instructions.
      */
     function addMassUploaderFunctionality() {
-        console.log('Enhanced Mass Uploader button clicked');
+        console.log('[MassUploader] Button clicked');
 
         // Inject helper script for file assignment (bypass userscript sandbox restrictions)
         if (!window.__MU_injected) {
@@ -45,196 +45,205 @@
         let fileStates = {};
 
         // === Inject modal styles if not already present ===
-        if (!document.getElementById('massUploaderModalStyles')) {
-            const style = document.createElement('style');
-            style.id = 'massUploaderModalStyles';
+        if (!document.getElementById('tm-mu-styles')) {
+           const style = document.createElement('style');
+           style.id = 'tm-mu-styles';
             style.textContent = `
                 #massUploaderOverlay {
                     position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
-                    background: rgba(0,0,0,0.5); z-index: 1001;
+                    background: rgba(0,0,0,0.6); z-index: 9995;
                     display: flex; justify-content: center; align-items: center;
                 }
-                .massUploader-card {
-                    background: #fff;
+                .tm-mu-card {
+                    background: #1a1a1a;
+                    border: 1px solid #303030;
                     border-radius: 12px;
                     width: 420px;
                     max-width: 98vw;
                     max-height: 90vh;
-                    box-shadow: 0 8px 32px rgba(0,0,0,0.18), 0 2px 6px rgba(0,78,54,0.10);
-                    font-family: 'Segoe UI', Arial, sans-serif;
+                    box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+                    font-family: 'Roboto', 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif;
+                    color: #f1f1f1;
                     position: relative;
                     padding: 0;
                     overflow: hidden;
                     display: flex;
                     flex-direction: column;
                 }
-                .massUploader-header {
-                    background: #004E36;
-                    color: #fff;
-                    padding: 16px 24px 12px 24px;
-                    font-size: 19px;
-                    font-weight: bold;
-                    letter-spacing: 0.5px;
+                .tm-mu-header {
+                    background: #242424;
+                    color: #f1f1f1;
+                    padding: 12px 16px;
+                    font-size: 16px;
+                    font-weight: 600;
+                    letter-spacing: 0.3px;
                     display: flex;
                     align-items: center;
                     justify-content: space-between;
                     flex-shrink: 0;
+                    border-bottom: 1px solid #303030;
                 }
-                .massUploader-close {
-                    font-size: 26px;
+                .tm-mu-close {
+                    font-size: 22px;
                     cursor: pointer;
-                    color: #fff;
+                    color: #aaaaaa;
                     background: transparent;
                     border: none;
                     padding: 0 4px;
                     border-radius: 4px;
-                    transition: background 0.2s;
+                    transition: color 150ms ease;
                 }
-                .massUploader-close:hover {
-                    background: rgba(0,0,0,0.12);
+                .tm-mu-close:hover {
+                    color: #f1f1f1;
                 }
-                .massUploader-body {
-                    padding: 18px 22px 18px 22px;
+                .tm-mu-body {
+                    padding: 16px;
                     display: flex;
                     flex-direction: column;
                     gap: 10px;
                     overflow-y: auto;
                     flex: 1;
                 }
-                .massUploader-instructions {
-                    font-size: 15px;
-                    color: #222;
+                .tm-mu-instructions {
+                    font-size: 14px;
+                    color: #aaaaaa;
                     margin-bottom: 6px;
                 }
-                .massUploader-label {
+                .tm-mu-label {
                     display: block;
                     margin-bottom: 10px;
                     cursor: pointer;
-                    background-color: #e0e0e0;
+                    background-color: #242424;
+                    border: 1px solid #3f3f3f;
                     padding: 8px;
                     text-align: center;
-                    border-radius: 5px;
+                    border-radius: 4px;
                     font-weight: 500;
-                    color: #004E36;
-                    transition: background 0.2s;
+                    color: var(--tm-accent-primary, #3ea6ff);
+                    transition: background 150ms ease;
                 }
-                .massUploader-label:hover, .massUploader-label:focus {
-                    background: #c8e6c9;
+                .tm-mu-label:hover, .tm-mu-label:focus {
+                    background: #2d2d2d;
                 }
-                .massUploader-section {
-                    border: 1px solid #e0e0e0;
+                .tm-mu-section {
+                    border: 1px solid #303030;
                     border-radius: 8px;
                     padding: 16px;
                     margin-bottom: 12px;
-                    background: #fafbfc;
+                    background: #242424;
                 }
-                .massUploader-section-title {
+                .tm-mu-section-title {
                     font-weight: 600;
-                    font-size: 16px;
-                    color: #004E36;
+                    font-size: 14px;
+                    color: var(--tm-accent-primary, #3ea6ff);
                     margin-bottom: 12px;
                     display: flex;
                     align-items: center;
                     gap: 8px;
                 }
-                .massUploader-radio-group {
+                .tm-mu-radio-group {
                     display: flex;
                     flex-direction: column;
                     gap: 8px;
                     margin-bottom: 12px;
                 }
-                .massUploader-radio-option {
+                .tm-mu-radio-option {
                     display: flex;
                     align-items: center;
                     gap: 8px;
                     cursor: pointer;
                     padding: 4px;
                 }
-                .massUploader-chunking-options {
+                .tm-mu-chunking-options {
                     display: none;
                     margin-top: 12px;
                     padding-top: 12px;
-                    border-top: 1px solid #e0e0e0;
+                    border-top: 1px solid #303030;
                 }
-                .massUploader-chunking-options.active {
+                .tm-mu-chunking-options.active {
                     display: block;
                 }
-                .massUploader-input-group {
+                .tm-mu-input-group {
                     display: flex;
                     flex-direction: column;
                     gap: 4px;
                     margin-bottom: 10px;
                 }
-                .massUploader-input-group label {
+                .tm-mu-input-group label {
                     font-weight: 500;
                     font-size: 14px;
-                    color: #333;
+                    color: #aaaaaa;
                 }
-                .massUploader-input-group input, .massUploader-input-group select {
+                .tm-mu-input-group input, .tm-mu-input-group select {
                     padding: 8px 10px;
-                    border: 1px solid #ccc;
-                    border-radius: 5px;
+                    border: 1px solid #3f3f3f;
+                    border-radius: 4px;
                     font-size: 14px;
+                    background: #0f0f0f;
+                    color: #f1f1f1;
+                    font-family: inherit;
                 }
                 #selectedFolderLabel, #selectedFileLabel {
                     text-align: center;
                     margin-bottom: 10px;
-                    color: #444;
+                    color: #717171;
                     font-size: 14px;
                 }
                 #massUploadButton {
                     width: 100%;
-                    background: #004E36;
-                    color: #fff;
+                    background: var(--tm-accent-primary, #3ea6ff);
+                    color: #0f0f0f;
                     border: none;
-                    border-radius: 5px;
+                    border-radius: 4px;
                     padding: 10px 0;
-                    font-size: 16px;
+                    font-size: 14px;
+                    font-weight: 500;
                     cursor: pointer;
-                    transition: background 0.2s;
+                    transition: background 150ms ease;
                     margin-bottom: 4px;
                 }
                 #massUploadButton:disabled {
-                    background: #bdbdbd;
+                    background: #3f3f3f;
+                    color: #717171;
                     cursor: not-allowed;
                 }
                 #statusContainer {
                     margin-top: 10px;
                     max-height: 220px;
                     overflow-y: auto;
-                    border: 1px solid #e0e0e0;
+                    border: 1px solid #303030;
                     padding: 0;
-                    background: #fafbfc;
-                    border-radius: 7px;
+                    background: #242424;
+                    border-radius: 4px;
                     font-size: 14px;
                     display: block;
                     visibility: visible;
                 }
-                .massUploader-statusHeader {
+                .tm-mu-statusHeader {
                     display: flex;
                     align-items: center;
                     font-weight: 600;
                     font-size: 13px;
-                    color: #004E36;
-                    background: #f2f7f4;
-                    border-bottom: 1px solid #e0e0e0;
+                    color: var(--tm-accent-primary, #3ea6ff);
+                    background: #2d2d2d;
+                    border-bottom: 1px solid #303030;
                     padding: 6px 10px 6px 10px;
                     gap: 8px;
                 }
-                .massUploader-statusRow {
+                .tm-mu-statusRow {
                     display: flex;
                     align-items: center;
                     gap: 10px;
                     padding: 7px 10px 7px 10px;
-                    border-bottom: 1px solid #e0e0e0;
+                    border-bottom: 1px solid #303030;
                     min-height: 32px;
-                    background: #fff;
-                    transition: background 0.2s;
+                    background: #1a1a1a;
+                    transition: background 150ms ease;
                 }
-                .massUploader-statusRow:last-child {
+                .tm-mu-statusRow:last-child {
                     border-bottom: none;
                 }
-                .massUploader-statusText {
+                .tm-mu-statusText {
                     flex: 1 1 auto;
                     font-size: 13px;
                     overflow: hidden;
@@ -245,28 +254,29 @@
                     align-items: center;
                     min-height: 18px;
                 }
-                .status-waiting { color: #888; }
-                .status-injecting { color: #e67e22; }
-                .status-success { color: #388e3c; }
-                .status-warning { color: #ff9800; font-weight: 500; }
-                .status-error { color: #c62828; }
-                .status-chunking { color: #2196f3; }
+                .status-waiting { color: #717171; }
+                .status-injecting { color: #f9a825; }
+                .status-success { color: #2e7d32; }
+                .status-warning { color: #f9a825; font-weight: 500; }
+                .status-error { color: #d32f2f; }
+                .status-chunking { color: var(--tm-accent-primary, #3ea6ff); }
                 
                 /* Info box styles */
-                .massUploader-infoBox {
+                .tm-mu-infoBox {
                     display: none;
                     position: absolute;
                     top: 54px;
                     left: 24px;
-                    background: #f5f7fa;
-                    color: #222;
-                    border-left: 4px solid #004E36;
+                    background: #242424;
+                    color: #f1f1f1;
+                    border-left: 4px solid var(--tm-accent-primary, #3ea6ff);
+                    border: 1px solid #303030;
                     padding: 16px 22px 16px 18px;
-                    border-radius: 7px;
-                    font-size: 15px;
+                    border-radius: 8px;
+                    font-size: 14px;
                     line-height: 1.7;
-                    box-shadow: 0 2px 12px rgba(0,0,0,0.10);
-                    z-index: 2002;
+                    box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+                    z-index: 9999;
                     min-width: 320px;
                     max-width: 380px;
                     max-height: 60vh;
@@ -275,7 +285,7 @@
                 }
                 
                 /* Fix for status container visibility */
-                .massUploader-body {
+                .tm-mu-body {
                     flex: 1 1 auto;
                     overflow-y: auto;
                 }
@@ -286,36 +296,36 @@
                 }
                 
                 /* Summary styling */
-                .massUploader-summary {
+                .tm-mu-summary {
                     margin-top: 15px;
                     padding: 12px;
-                    border: 2px solid #004E36;
-                    border-radius: 6px;
-                    background: #f8f9fa;
+                    border: 1px solid #303030;
+                    border-radius: 4px;
+                    background: #242424;
                 }
-                .massUploader-summary h4 {
+                .tm-mu-summary h4 {
                     margin: 0 0 8px 0;
-                    color: #004E36;
-                    font-size: 16px;
+                    color: var(--tm-accent-primary, #3ea6ff);
+                    font-size: 14px;
                 }
-                .massUploader-summary p {
+                .tm-mu-summary p {
                     margin: 4px 0;
                     font-size: 14px;
                 }
-                .massUploader-summary details {
+                .tm-mu-summary details {
                     margin-top: 8px;
                 }
-                .massUploader-summary summary {
+                .tm-mu-summary summary {
                     cursor: pointer;
                     font-weight: bold;
                     color: #c62828;
                     font-size: 14px;
                 }
-                .massUploader-summary ul {
+                .tm-mu-summary ul {
                     margin: 8px 0;
                     padding-left: 20px;
                 }
-                .massUploader-summary li {
+                .tm-mu-summary li {
                     margin: 4px 0;
                     font-size: 13px;
                 }
@@ -332,11 +342,11 @@
 
         // === Card container ===
         const card = document.createElement('div');
-        card.className = 'massUploader-card';
+        card.className = 'tm-mu-card';
 
         // === Header ===
         const header = document.createElement('div');
-        header.className = 'massUploader-header';
+        header.className = 'tm-mu-header';
         header.innerHTML = `
             <span style="display:flex;align-items:center;gap:8px;">
                 Mass Upload & Chunker
@@ -351,7 +361,7 @@
         
         // Close button
         const closeButton = document.createElement('button');
-        closeButton.className = 'massUploader-close';
+        closeButton.className = 'tm-mu-close';
         closeButton.setAttribute('aria-label', 'Close Mass Upload dialog');
         closeButton.innerHTML = '&times;';
         closeButton.onclick = () => {
@@ -364,7 +374,7 @@
         // === Info Box ===
         const infoBox = document.createElement('div');
         infoBox.id = 'massUploaderInfoBox';
-        infoBox.className = 'massUploader-infoBox';
+        infoBox.className = 'tm-mu-infoBox';
         infoBox.setAttribute('role', 'dialog');
         infoBox.setAttribute('aria-modal', 'false');
         infoBox.tabIndex = -1;
@@ -411,30 +421,30 @@
 
         // === Body ===
         const body = document.createElement('div');
-        body.className = 'massUploader-body';
+        body.className = 'tm-mu-body';
 
         // Instructions
         const instructions = document.createElement('div');
-        instructions.className = 'massUploader-instructions';
+        instructions.className = 'tm-mu-instructions';
         instructions.innerHTML = `Choose your upload method: upload multiple files/folders OR chunk a large CSV file and upload the pieces automatically.`;
         body.appendChild(instructions);
 
         // Upload method selection
         const methodSection = document.createElement('div');
-        methodSection.className = 'massUploader-section';
+        methodSection.className = 'tm-mu-section';
         methodSection.innerHTML = `
-            <div class="massUploader-section-title">
+            <div class="tm-mu-section-title">
                 <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
                     <path d="M8 4a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3A.5.5 0 0 1 8 4z"/>
                 </svg>
                 Upload Method
             </div>
-            <div class="massUploader-radio-group">
-                <label class="massUploader-radio-option">
+            <div class="tm-mu-radio-group">
+                <label class="tm-mu-radio-option">
                     <input type="radio" name="uploadMethod" value="files" checked>
                     <span>Upload Files/Folder</span>
                 </label>
-                <label class="massUploader-radio-option">
+                <label class="tm-mu-radio-option">
                     <input type="radio" name="uploadMethod" value="chunk">
                     <span>Chunk & Upload CSV</span>
                 </label>
@@ -445,15 +455,15 @@
         // Files upload section
         const filesSection = document.createElement('div');
         filesSection.id = 'filesUploadSection';
-        filesSection.className = 'massUploader-section';
+        filesSection.className = 'tm-mu-section';
         filesSection.innerHTML = `
-            <div class="massUploader-section-title">
+            <div class="tm-mu-section-title">
                 <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
                     <path d="M4 0h5.293A1 1 0 0 1 10 .293L13.707 4a1 1 0 0 1 .293.707V14a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V2a2 2 0 0 1 2-2zm5.5 1.5v2a1 1 0 0 0 1 1h2l-3-3z"/>
                 </svg>
                 Select Files/Folder
             </div>
-            <label class="massUploader-label" for="massFileInput" tabindex="0">Choose Folder</label>
+            <label class="tm-mu-label" for="massFileInput" tabindex="0">Choose Folder</label>
             <p id="selectedFolderLabel">No folder selected</p>
             <input type="file" id="massFileInput" style="display: none;" multiple webkitdirectory>
         `;
@@ -462,26 +472,26 @@
         // CSV chunking section
         const chunkingSection = document.createElement('div');
         chunkingSection.id = 'csvChunkingSection';
-        chunkingSection.className = 'massUploader-section';
+        chunkingSection.className = 'tm-mu-section';
         chunkingSection.style.display = 'none';
         chunkingSection.innerHTML = `
-            <div class="massUploader-section-title">
+            <div class="tm-mu-section-title">
                 <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
                     <path d="M14 4.5V14a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V2a2 2 0 0 1 2-2h5.5L14 4.5zm-3 0A1.5 1.5 0 0 1 9.5 3V1H4a1 1 0 0 0-1 1v12a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1V4.5h-2z"/>
                     <path d="M8.646 6.646a.5.5 0 0 1 .708 0l2 2a.5.5 0 0 1 0 .708l-2 2a.5.5 0 0 1-.708-.708L10.293 9 8.646 7.354a.5.5 0 0 1 0-.708zM5.354 7.354a.5.5 0 0 0-.708 0l-2 2a.5.5 0 0 0 0 .708l2 2a.5.5 0 0 0 .708-.708L3.707 9l1.647-1.646a.5.5 0 0 0 0-.708z"/>
                 </svg>
                 CSV File & Chunking Options
             </div>
-            <label class="massUploader-label" for="csvFileInput" tabindex="0">Choose CSV File</label>
+            <label class="tm-mu-label" for="csvFileInput" tabindex="0">Choose CSV File</label>
             <p id="selectedFileLabel">No file selected</p>
             <input type="file" id="csvFileInput" style="display: none;" accept=".csv">
             
-            <div class="massUploader-input-group">
+            <div class="tm-mu-input-group">
                 <label for="rowsPerChunk">Rows Per Chunk</label>
                 <input type="number" id="rowsPerChunk" value="1000" min="2" max="10000">
             </div>
             
-            <label class="massUploader-radio-option">
+            <label class="tm-mu-radio-option">
                 <input type="checkbox" id="uploadValidation" checked>
                 <span>Enable Upload Validation</span>
             </label>
@@ -618,27 +628,27 @@
 
             switch (state) {
                 case 'waiting':
-                    fileStatusDiv.className = 'massUploader-statusText status-waiting';
+                    fileStatusDiv.className = 'tm-mu-statusText status-waiting';
                     fileStatusDiv.innerText = `${file.name} - Waiting`;
                     break;
                 case 'injecting':
-                    fileStatusDiv.className = 'massUploader-statusText status-injecting';
+                    fileStatusDiv.className = 'tm-mu-statusText status-injecting';
                     fileStatusDiv.innerText = `${file.name} - Injecting...`;
                     break;
                 case 'success':
-                    fileStatusDiv.className = 'massUploader-statusText status-success';
+                    fileStatusDiv.className = 'tm-mu-statusText status-success';
                     fileStatusDiv.innerText = `${file.name} - Injected${errorMsg ? '. Status: ' + errorMsg : '.'}`;
                     break;
                 case 'warning':
-                    fileStatusDiv.className = 'massUploader-statusText status-warning';
+                    fileStatusDiv.className = 'tm-mu-statusText status-warning';
                     fileStatusDiv.innerText = `${file.name} - Partial Success: ${errorMsg}`;
                     break;
                 case 'error':
-                    fileStatusDiv.className = 'massUploader-statusText status-error';
+                    fileStatusDiv.className = 'tm-mu-statusText status-error';
                     fileStatusDiv.innerText = `${file.name} - Error: ${errorMsg}`;
                     break;
                 default:
-                    fileStatusDiv.className = 'massUploader-statusText';
+                    fileStatusDiv.className = 'tm-mu-statusText';
                     fileStatusDiv.innerText = `${file.name} - ${state.charAt(0).toUpperCase() + state.slice(1)}`;
             }
 
@@ -668,7 +678,7 @@
             
             // Container for each file status
             const fileStatusRow = document.createElement('div');
-            fileStatusRow.className = 'massUploader-statusRow';
+            fileStatusRow.className = 'tm-mu-statusRow';
             console.log('[MassUploader] Created fileStatusRow:', fileStatusRow);
 
             // Tri-state/quad-state indicator (custom button)
@@ -705,7 +715,7 @@
             // Status text
             const fileStatus = document.createElement('div');
             fileStatus.id = fileId;
-            fileStatus.className = 'massUploader-statusText status-waiting';
+            fileStatus.className = 'tm-mu-statusText status-waiting';
             fileStatus.innerText = `${file.name} - Waiting`;
 
             // TriBtn click cycles through states
@@ -773,7 +783,7 @@
             // Display file names and initial status
             // Add a header row for clarity
             statusContainer.innerHTML = `
-                <div class="massUploader-statusHeader">
+                <div class="tm-mu-statusHeader">
                     <span style="width:22px;flex-shrink:0;">Mark</span>
                     <span style="flex:1 1 auto;">File</span>
                 </div>
@@ -1477,7 +1487,7 @@
 
                 // Add status header for chunking
                 statusContainer.innerHTML = `
-                    <div class="massUploader-statusHeader">
+                    <div class="tm-mu-statusHeader">
                         <span style="width:22px;flex-shrink:0;">Mark</span>
                         <span style="flex:1 1 auto;">Processing</span>
                     </div>
@@ -1485,10 +1495,10 @@
 
                 // Add chunking status row
                 const chunkingStatusRow = document.createElement('div');
-                chunkingStatusRow.className = 'massUploader-statusRow';
+                chunkingStatusRow.className = 'tm-mu-statusRow';
                 chunkingStatusRow.innerHTML = `
                     <span style="width:22px;flex-shrink:0;"></span>
-                    <div class="massUploader-statusText status-chunking">Chunking CSV file...</div>
+                    <div class="tm-mu-statusText status-chunking">Chunking CSV file...</div>
                 `;
                 statusContainer.appendChild(chunkingStatusRow);
 
@@ -1497,12 +1507,12 @@
                     const chunks = await chunkCSVFile(csvFile, rowsPerFile, doValidation);
                     
                     // Update status
-                    chunkingStatusRow.querySelector('.massUploader-statusText').innerHTML = `Created ${chunks.length} chunks from ${csvFile.name}`;
-                    chunkingStatusRow.querySelector('.massUploader-statusText').className = 'massUploader-statusText status-success';
+                    chunkingStatusRow.querySelector('.tm-mu-statusText').innerHTML = `Created ${chunks.length} chunks from ${csvFile.name}`;
+                    chunkingStatusRow.querySelector('.tm-mu-statusText').className = 'tm-mu-statusText status-success';
                     
                     // Add file tracking header for chunk files
                     const fileTrackingHeader = document.createElement('div');
-                    fileTrackingHeader.className = 'massUploader-statusHeader';
+                    fileTrackingHeader.className = 'tm-mu-statusHeader';
                     fileTrackingHeader.innerHTML = `
                         <span style="width:22px;flex-shrink:0;">Mark</span>
                         <span style="flex:1 1 auto;">Chunk Files</span>
@@ -1519,8 +1529,8 @@
                     
                 } catch (error) {
                     console.error('Error chunking CSV:', error);
-                    chunkingStatusRow.querySelector('.massUploader-statusText').innerHTML = `Error: ${error.message}`;
-                    chunkingStatusRow.querySelector('.massUploader-statusText').className = 'massUploader-statusText status-error';
+                    chunkingStatusRow.querySelector('.tm-mu-statusText').innerHTML = `Error: ${error.message}`;
+                    chunkingStatusRow.querySelector('.tm-mu-statusText').className = 'tm-mu-statusText status-error';
                     uploadButton.disabled = false;
                     return;
                 }
@@ -1813,7 +1823,7 @@
                 
                 // Create summary in status container
                 const summaryDiv = document.createElement('div');
-                summaryDiv.className = 'massUploader-summary';
+                summaryDiv.className = 'tm-mu-summary';
                 summaryDiv.style.cssText = `
                     margin-top: 15px;
                     padding: 12px;

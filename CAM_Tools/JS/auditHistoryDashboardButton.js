@@ -50,8 +50,8 @@
               left: '0',
               width: '100%',
               height: '100%',
-              backgroundColor: 'rgba(0, 0, 0, 0.5)',
-              zIndex: '1001',
+              backgroundColor: 'rgba(0, 0, 0, 0.6)',
+              zIndex: '9995',
               display: 'flex',
               justifyContent: 'center',
               alignItems: 'center'
@@ -60,7 +60,8 @@
             'div',
             { className: 'dashboard', style: {
                 position: 'relative',
-                backgroundColor: '#fff',
+                backgroundColor: '#1a1a1a',
+                color: '#f1f1f1',
                 padding: '20px',
                 borderRadius: '5px',
                 width: '300px'

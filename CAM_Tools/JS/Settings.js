@@ -23,16 +23,15 @@
   // ------------------------------------------------------------------
   //  UPDATE SYSTEM CONFIGURATION
   // ------------------------------------------------------------------
-  const CAM_TOOLS_VERSION = '2.6.253' // Extracted from MainScript.js @version
+  const CAM_TOOLS_VERSION = '3.0.0'; // Extracted from MainScript.user.js @version
   const GITHUB_API_URL = 'https://api.github.com/repos/RynAgain/Work_Productivity_Experiments/releases/latest';
   const GITHUB_RAW_URL = 'https://raw.githubusercontent.com/RynAgain/Work_Productivity_Experiments/main/CAM_Tools/MainScript.user.js';
-  const UPDATE_CHECK_INTERVAL = 4 * 60 * 60 * 1000; // 8 hours in milliseconds
+  const UPDATE_CHECK_INTERVAL = 4 * 60 * 60 * 1000; // 4 hours in milliseconds
   const UPDATE_STORAGE_PREFIX = 'cam_tools_update_';
   
   const defaultSettings = {
     menuStyle: 'side',
-    themeColor: '#004E36',
-    cursorEmoji: 'normal',
+    accentTheme: 'blue',
     autoCheckUpdates: true,
     updateCheckInterval: UPDATE_CHECK_INTERVAL,
     __version: SETTINGS_VERSION
@@ -50,14 +49,21 @@
     ...defaultSettings,
     ...getSettings()
   };
-  // DO NOT use Proxy for state: all state changes must go through setState to avoid infinite render loops.
+
+  // ------------------------------------------------------------------
+  //  THEME HELPERS (reads from tm-theme.js CSS vars at runtime)
+  // ------------------------------------------------------------------
+  function cssVar(name) {
+    return getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+  }
+  function accent()    { return cssVar('--tm-accent-primary') || '#3ea6ff'; }
+  function accentHov() { return cssVar('--tm-accent-hover')   || '#65b8ff'; }
 
   // Only persist these keys
   function persistSettings() {
     setSettings({
       menuStyle: state.menuStyle,
-      themeColor: state.themeColor,
-      cursorEmoji: state.cursorEmoji,
+      accentTheme: state.accentTheme,
       autoCheckUpdates: state.autoCheckUpdates,
       updateCheckInterval: state.updateCheckInterval
     });
@@ -94,7 +100,7 @@
     try {
       localStorage.setItem(UPDATE_STORAGE_PREFIX + key, JSON.stringify(value));
     } catch (error) {
-      console.warn('Failed to store update data:', error);
+      console.warn('[Settings] Failed to store update data:', error);
     }
   }
 
@@ -103,7 +109,6 @@
   // ------------------------------------------------------------------
   let updateCheckInterval = null;
 
-  // Version comparison function - handles semantic versioning
   function isNewerVersion(latest, current) {
     const latestParts = latest.split('.').map(part => parseInt(part, 10));
     const currentParts = current.split('.').map(part => parseInt(part, 10));
@@ -120,13 +125,11 @@
     return false;
   }
 
-  // Extract version from MainScript.js content
   function extractVersionFromScript(scriptContent) {
     const versionMatch = scriptContent.match(/@version\s+([^\s]+)/);
     return versionMatch ? versionMatch[1].trim() : null;
   }
 
-  // Check for updates using GitHub API
   async function checkForUpdates(showNoUpdateMessage = false) {
     if (state.updateCheckInProgress) return;
     
@@ -136,13 +139,11 @@
       const lastCheck = getUpdateData('lastVersionCheck', 0);
       const now = Date.now();
       
-      // Rate limiting - don't check too frequently unless manual
       if (!showNoUpdateMessage && (now - lastCheck) < state.updateCheckInterval) {
         setState({ updateCheckInProgress: false });
         return;
       }
       
-      // Try GitHub API first for release info
       let latestVersion = null;
       try {
         const response = await fetch(GITHUB_API_URL, {
@@ -155,10 +156,9 @@
           latestVersion = releaseData.tag_name?.replace(/^v/, '') || null;
         }
       } catch (apiError) {
-        console.warn('GitHub API failed, trying raw file:', apiError);
+        console.warn('[Settings] GitHub API failed, trying raw file:', apiError);
       }
       
-      // Fallback to raw file if API fails
       if (!latestVersion) {
         const response = await fetch(GITHUB_RAW_URL, {
           cache: 'no-cache',
@@ -177,11 +177,9 @@
         }
       }
       
-      // Update check timestamp
       setUpdateData('lastVersionCheck', now);
       setState({ lastUpdateCheck: now });
       
-      // Check if update is available
       const skippedVersion = getUpdateData('skippedVersion');
       const hasUpdate = isNewerVersion(latestVersion, CAM_TOOLS_VERSION);
       const shouldNotify = hasUpdate && latestVersion !== skippedVersion;
@@ -196,7 +194,7 @@
       }
       
     } catch (error) {
-      console.error('Update check failed:', error);
+      console.error('[Settings] Update check failed:', error);
       if (showNoUpdateMessage) {
         showUpdateStatusMessage('error', null, error.message);
       }
@@ -205,32 +203,30 @@
     }
   }
 
-  // Show update status messages
+  // Show update status via toast (replaces alert())
   function showUpdateStatusMessage(status, version, errorMsg) {
-    let message = '';
-    let icon = '';
+    const toast = window.TmTheme ? window.TmTheme.showToast : null;
     
     switch (status) {
       case 'current':
-        icon = '✅';
-        message = `You're running the latest version!\n\nCurrent: ${CAM_TOOLS_VERSION}\nLatest: ${version}`;
+        if (toast) {
+          toast(`Running latest version (v${CAM_TOOLS_VERSION})`, 'success', 4000);
+        }
         break;
       case 'skipped':
-        icon = '⏭️';
-        message = `Update available but skipped.\n\nCurrent: ${CAM_TOOLS_VERSION}\nLatest: ${version}\n\nYou can check again or change settings to see this update.`;
+        if (toast) {
+          toast(`Update v${version} available but skipped`, 'info', 4000);
+        }
         break;
       case 'error':
-        icon = '❌';
-        message = `Failed to check for updates:\n${errorMsg}`;
+        if (toast) {
+          toast(`Update check failed: ${errorMsg}`, 'error', 5000);
+        }
         break;
     }
-    
-    alert(`${icon} CAM Tools Update Check\n\n${message}`);
   }
 
-  // Initialize update checking
   function initializeUpdateSystem() {
-    // Load stored data into state
     setState({
       lastUpdateCheck: getUpdateData('lastVersionCheck', 0),
       skippedVersion: getUpdateData('skippedVersion')
@@ -238,12 +234,10 @@
     
     if (!state.autoCheckUpdates) return;
     
-    // Initial check after startup delay
     setTimeout(() => {
       checkForUpdates(false);
     }, 5000);
     
-    // Set up periodic checking
     if (updateCheckInterval) clearInterval(updateCheckInterval);
     updateCheckInterval = setInterval(() => {
       if (state.autoCheckUpdates) {
@@ -266,7 +260,7 @@
   }
 
   // ------------------------------------------------------------------
-  //  CSS FOR VISUAL HIDING OF NAV BAR BUTTONS IN SIDE MENU MODE
+  //  CSS FOR VISUAL HIDING + DARK MODE OVERRIDES
   // ------------------------------------------------------------------
   const style = document.createElement('style');
   style.textContent = `
@@ -286,15 +280,14 @@
   document.head.appendChild(style);
 
   // ------------------------------------------------------------------
-  //  UI ELEMENTS
+  //  UI ELEMENTS  (dark mode)
   // ------------------------------------------------------------------
-  // Settings Button
   const settingsBtn = createButton({
     id: 'settings-btn',
     title: 'Settings',
     html: `
       <svg width="22" height="22" viewBox="0 0 24 24" fill="none"
-           stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+           stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
         <circle cx="12" cy="12" r="3"/>
         <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2
                  2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0
@@ -315,24 +308,24 @@
       </svg>`,
     style: {
       position: 'fixed', left: '0', top: 'calc(10vh + 192px)',
-      width: '36px', height: '36px', zIndex: '3100',
+      width: '36px', height: '36px', zIndex: '9999',
       display: 'flex', alignItems: 'center', justifyContent: 'center',
-      background: state.themeColor, color: '#fff',
-      border: 'none', borderRadius: '0 5px 5px 0',
-      boxShadow: '2px 2px 8px rgba(0,0,0,.2)',
+      background: '#1a1a1a', color: '#f1f1f1',
+      border: '1px solid #303030', borderLeft: 'none',
+      borderRadius: '0 8px 8px 0',
+      boxShadow: '2px 2px 8px rgba(0,0,0,.4)',
       cursor: 'pointer', fontSize: '16px', padding: '0',
-      transition: 'background .3s'
+      transition: 'background 150ms ease'
     }
   });
 
-  // Hamburger/Close Button
   const hamburgerSVG = `<svg width="22" height="22" viewBox="0 0 24 24" fill="none"
-    stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+    stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
     <line x1="4" y1="7"  x2="20" y2="7"/>
     <line x1="4" y1="12" x2="20" y2="12"/>
     <line x1="4" y1="17" x2="20" y2="17"/></svg>`;
   const closeSVG = `<svg width="22" height="22" viewBox="0 0 24 24" fill="none"
-    stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+    stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
     <line x1="5"  y1="5"  x2="19" y2="19"/>
     <line x1="19" y1="5"  x2="5"  y2="19"/></svg>`;
 
@@ -341,35 +334,42 @@
     html: hamburgerSVG,
     style: {
       position: 'fixed', left: '0', top: 'calc(10vh + 150px)',
-      width: '36px', height: '36px', zIndex: '3100',
+      width: '36px', height: '36px', zIndex: '9999',
       display: 'flex', alignItems: 'center', justifyContent: 'center',
-      background: '#004E36', color: '#fff', border: 'none',
-      borderRadius: '0 5px 5px 0', boxShadow: '2px 2px 8px rgba(0,0,0,.2)',
-      cursor: 'pointer', fontSize: '16px', padding: '0', transition: 'background .3s'
+      background: '#1a1a1a', color: '#f1f1f1',
+      border: '1px solid #303030', borderLeft: 'none',
+      borderRadius: '0 8px 8px 0',
+      boxShadow: '2px 2px 8px rgba(0,0,0,.4)',
+      cursor: 'pointer', fontSize: '16px', padding: '0',
+      transition: 'background 150ms ease'
     }
   });
 
-  // Settings Menu Panel
+  // Settings Menu Panel (dark)
   const settingsMenu = document.createElement('div');
   Object.assign(settingsMenu.style, {
     position: 'fixed',
-    left: '36px', // settings button width
+    left: '36px',
     top: 'calc(10vh + 192px)',
-    width: '260px',
+    width: '280px',
+    maxWidth: '90vw',
     height: 'calc(100vh - (10vh + 192px))',
-    background: '#fff',
+    background: '#1a1a1a',
+    color: '#f1f1f1',
     display: 'flex',
     flexDirection: 'column',
     gap: '18px',
     padding: '22px 18px 18px',
-    fontFamily: 'Segoe UI, Arial, sans-serif',
+    fontFamily: "'Roboto', 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif",
     borderTopRightRadius: '12px',
     borderBottomRightRadius: '12px',
-    transform: 'translateX(-10000px)', // 260px menu + 36px button + 8px margin
+    border: '1px solid #303030',
+    borderLeft: 'none',
+    transform: 'translateX(-10000px)',
     transition: 'transform .25s cubic-bezier(.4,0,.2,1)',
     boxShadow: 'none',
     pointerEvents: 'none',
-    zIndex: '3001',
+    zIndex: '9999',
     overflowY: 'auto'
   });
 
@@ -381,22 +381,22 @@
     top: 'calc(10vh + 192px)',
     width: 'calc(100vw - 36px)',
     height: 'calc(100vh - (10vh + 192px))',
-    background: 'rgba(0,0,0,.15)',
-    zIndex: '2999',
+    background: 'rgba(0,0,0,.4)',
+    zIndex: '9990',
     display: 'none'
   });
 
-  /** Icon Bar for Side Menu **/
+  /** Icon Bar for Side Menu (dark) **/
   const iconBar = document.createElement('div');
   Object.assign(iconBar.style, {
     position: 'fixed',
     left: '0',
-    top: 'calc(10vh + 192px + 36px)', // settings button + margin
+    top: 'calc(10vh + 192px + 36px)',
     display: 'flex',
     flexDirection: 'column',
     alignItems: 'center',
-    gap: '10px',
-    zIndex: '3100',
+    gap: '8px',
+    zIndex: '9999',
     background: 'transparent',
     padding: '8px 0',
     width: '36px',
@@ -406,7 +406,7 @@
   iconBar.setAttribute('role', 'menu');
 
   // ------------------------------------------------------------------
-  //  UPDATE NOTIFICATION MODAL
+  //  UPDATE NOTIFICATION MODAL (dark)
   // ------------------------------------------------------------------
   function createUpdateModal(latestVersion) {
     const modal = document.createElement('div');
@@ -420,80 +420,71 @@
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
-      zIndex: '9999',
-      fontFamily: 'Segoe UI, Arial, sans-serif'
+      zIndex: '9995',
+      fontFamily: "'Roboto', 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif"
     });
 
     const modalContent = document.createElement('div');
     Object.assign(modalContent.style, {
-      background: '#fff',
+      background: '#1a1a1a',
+      border: '1px solid #303030',
       borderRadius: '12px',
       padding: '24px',
       maxWidth: '480px',
       width: '90%',
-      boxShadow: '0 20px 60px rgba(0, 0, 0, 0.3)',
+      boxShadow: '0 20px 60px rgba(0, 0, 0, 0.5)',
       position: 'relative',
-      animation: 'fadeInScale 0.3s ease-out'
+      animation: 'tm-fade-in 150ms ease-out'
     });
 
-    // Add animation keyframes
-    if (!document.getElementById('update-modal-animations')) {
-      const animationStyle = document.createElement('style');
-      animationStyle.id = 'update-modal-animations';
-      animationStyle.textContent = `
-        @keyframes fadeInScale {
-          from { opacity: 0; transform: scale(0.9); }
-          to { opacity: 1; transform: scale(1); }
-        }
-      `;
-      document.head.appendChild(animationStyle);
-    }
-
+    const a = accent();
     modalContent.innerHTML = `
       <div style="display: flex; align-items: center; margin-bottom: 20px;">
-        <div style="width: 48px; height: 48px; background: ${state.themeColor}; border-radius: 50%;
-                    display: flex; align-items: center; justify-content: center; margin-right: 16px;">
-          <svg width="24" height="24" fill="white" viewBox="0 0 24 24">
+        <div style="width: 48px; height: 48px; background: ${a}; border-radius: 50%;
+                    display: flex; align-items: center; justify-content: center; margin-right: 16px; flex-shrink: 0;">
+          <svg width="24" height="24" fill="#0f0f0f" viewBox="0 0 24 24">
             <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
           </svg>
         </div>
         <div>
-          <h2 style="margin: 0; font-size: 20px; font-weight: 600; color: #333;">
+          <h2 style="margin: 0; font-size: 18px; font-weight: 600; color: #f1f1f1;">
             CAM Tools Update Available
           </h2>
-          <p style="margin: 4px 0 0; color: #666; font-size: 14px;">
+          <p style="margin: 4px 0 0; color: #aaaaaa; font-size: 14px;">
             A new version is ready to install
           </p>
         </div>
       </div>
       
-      <div style="background: #f8f9fa; border-radius: 8px; padding: 16px; margin-bottom: 20px;">
+      <div style="background: #242424; border: 1px solid #303030; border-radius: 8px; padding: 16px; margin-bottom: 20px;">
         <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
-          <span style="font-weight: 500; color: #333;">Current Version:</span>
-          <span style="font-family: monospace; color: #666;">${CAM_TOOLS_VERSION}</span>
+          <span style="font-weight: 500; color: #f1f1f1;">Current Version:</span>
+          <span style="font-family: monospace; color: #aaaaaa;">${CAM_TOOLS_VERSION}</span>
         </div>
         <div style="display: flex; justify-content: space-between;">
-          <span style="font-weight: 500; color: #333;">Latest Version:</span>
-          <span style="font-family: monospace; color: ${state.themeColor}; font-weight: 600;">${latestVersion}</span>
+          <span style="font-weight: 500; color: #f1f1f1;">Latest Version:</span>
+          <span style="font-family: monospace; color: ${a}; font-weight: 600;">${latestVersion}</span>
         </div>
       </div>
       
-      <p style="color: #555; line-height: 1.5; margin-bottom: 24px;">
-        Click "Update Now" to open the latest version in a new tab. You'll need to install it manually through Tampermonkey.
+      <p style="color: #aaaaaa; line-height: 1.5; margin-bottom: 24px; font-size: 14px;">
+        Click "Update Now" to open the latest version in a new tab. Install it through Tampermonkey.
       </p>
       
       <div style="display: flex; gap: 12px; justify-content: flex-end;">
-        <button id="update-skip-btn" style="padding: 10px 20px; border: 1px solid #ddd; background: #fff;
-                color: #666; border-radius: 6px; cursor: pointer; font-size: 14px; font-weight: 500;">
-          Skip This Version
+        <button id="update-skip-btn" style="padding: 8px 16px; border: 1px solid #3f3f3f; background: transparent;
+                color: #aaaaaa; border-radius: 4px; cursor: pointer; font-size: 14px; font-weight: 500;
+                transition: background 150ms ease;">
+          Skip Version
         </button>
-        <button id="update-remind-btn" style="padding: 10px 20px; border: 1px solid ${state.themeColor};
-                background: #fff; color: ${state.themeColor}; border-radius: 6px; cursor: pointer;
-                font-size: 14px; font-weight: 500;">
-          Remind Me Later
+        <button id="update-remind-btn" style="padding: 8px 16px; border: 1px solid ${a};
+                background: transparent; color: ${a}; border-radius: 4px; cursor: pointer;
+                font-size: 14px; font-weight: 500; transition: all 150ms ease;">
+          Remind Later
         </button>
-        <button id="update-now-btn" style="padding: 10px 24px; border: none; background: ${state.themeColor};
-                color: #fff; border-radius: 6px; cursor: pointer; font-size: 14px; font-weight: 600;">
+        <button id="update-now-btn" style="padding: 8px 20px; border: none; background: ${a};
+                color: #0f0f0f; border-radius: 4px; cursor: pointer; font-size: 14px; font-weight: 600;
+                transition: background 150ms ease;">
           Update Now
         </button>
       </div>
@@ -510,7 +501,7 @@
     };
 
     remindBtn.onclick = () => {
-      setUpdateData('lastVersionCheck', 0); // Reset check timer
+      setUpdateData('lastVersionCheck', 0);
       setState({ lastUpdateCheck: 0 });
       closeUpdateModal();
     };
@@ -528,16 +519,12 @@
       }
     }
 
-    // Close on overlay click
     modal.onclick = (e) => {
       if (e.target === modal) closeUpdateModal();
     };
 
-    // Keyboard support
     modal.onkeydown = (e) => {
-      if (e.key === 'Escape') {
-        closeUpdateModal();
-      }
+      if (e.key === 'Escape') closeUpdateModal();
     };
 
     modal.appendChild(modalContent);
@@ -551,66 +538,64 @@
     {
       label: 'Download',
       tooltip: 'Download Data',
-      icon: `<svg width="22" height="22" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M12 3v14m0 0l-5-5m5 5l5-5"/><rect x="4" y="19" width="16" height="2" rx="1" fill="#fff" stroke="none"/></svg>`,
+      icon: `<svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M12 3v14m0 0l-5-5m5 5l5-5"/><rect x="4" y="19" width="16" height="2" rx="1" fill="currentColor" stroke="none"/></svg>`,
       action: () => document.getElementById('downloadDataButton')?.click()
     },
     {
       label: 'Add',
       tooltip: 'Add Item',
-      icon: `<svg width="22" height="22" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>`,
+      icon: `<svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>`,
       action: () => document.getElementById('addItemButton')?.click()
     },
     {
       label: 'Activate',
       tooltip: 'Activate/Deactivate',
-      icon: `<svg width="22" height="22" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="7" rx="2"/><circle cx="12" cy="8" r="3"/></svg>`,
+      icon: `<svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="7" rx="2"/><circle cx="12" cy="8" r="3"/></svg>`,
       action: () => document.getElementById('activateButton')?.click()
     },
     {
       label: 'Redrive',
       tooltip: 'Redrive',
-      icon: `<svg width="22" height="22" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="6" rx="2"/><circle cx="7" cy="17" r="2"/><circle cx="17" cy="17" r="2"/><path d="M5 11V7a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v4"/></svg>`,
+      icon: `<svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="6" rx="2"/><circle cx="7" cy="17" r="2"/><circle cx="17" cy="17" r="2"/><path d="M5 11V7a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v4"/></svg>`,
       action: () => document.getElementById('redriveButton')?.click()
     },
     {
       label: 'Help',
       tooltip: 'General Help Tools',
-      icon: `<svg width="22" height="22" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 1 1 5.82 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12" y2="17"/></svg>`,
+      icon: `<svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 1 1 5.82 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12" y2="17"/></svg>`,
       action: () => document.getElementById('generalHelpToolsButton')?.click()
     },
     {
-      label: 'Existing Item Editor',
+      label: 'Editor',
       tooltip: 'Edit Existing Items',
-      icon: `<svg width="22" height="22" viewBox="0 0 16 16" fill="none" stroke="#fff" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" xmlns="http://www.w3.org/2000/svg">
-        <rect x="1.5" y="1.5" width="13" height="13" rx="2" fill="none" stroke="#fff"/>
-        <path d="M12.146 3.354a.5.5 0 0 1 0 .708l-7.793 7.793a.5.5 0 0 1-.168.11l-2.5.833a.25.25 0 0 1-.316-.316l.833-2.5a.5.5 0 0 1 .11-.168l7.793-7.793a.5.5 0 0 1 .708 0l1.333 1.333zm-1.293-.647l1.333 1.333" stroke="#fff" fill="none"/>
-        <path d="M11.207 2.293l2.5 2.5" stroke="#fff" fill="none"/>
+      icon: `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+        <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
       </svg>`,
-      action: () => document.getElementById('ei-openEditor')?.click()
+      action: () => document.getElementById('tm-ei-openEditor')?.click()
     }
-  ]; // ← array ends here (stray token removed)
+  ];
 
   // ------------------------------------------------------------------
-  //  EXTRA OBSERVER FOR EDITOR ICON (stub so script doesn't break)
+  //  EXTRA OBSERVER FOR EDITOR ICON (stub)
   // ------------------------------------------------------------------
   const editorObserver = new MutationObserver(() => {});
   editorObserver.observe(document.body, { childList: true, subtree: true });
 
-  // IDs for bottom bar buttons
-  const bottomButtonIds = ['redriveButton', 'addItemButton', 'downloadDataButton', 'activateButton', 'generalHelpToolsButton', 'ei-openEditor'];
+  const bottomButtonIds = ['redriveButton', 'addItemButton', 'downloadDataButton', 'activateButton', 'generalHelpToolsButton', 'tm-ei-openEditor'];
 
   // ------------------------------------------------------------------
   //  RENDER FUNCTION
   // ------------------------------------------------------------------
   function render() {
-    // Settings Button
-    settingsBtn.style.background = state.themeColor;
+    // Settings Button -- accent tint on hover handled via events
+    settingsBtn.style.background = '#1a1a1a';
 
     // Settings Menu
     if (state.settingsMenuOpen) {
       renderSettingsMenu();
       settingsMenu.style.transform = 'translateX(0)';
-      settingsMenu.style.boxShadow = '2px 0 12px rgba(0,0,0,.18)';
+      settingsMenu.style.boxShadow = '4px 0 20px rgba(0,0,0,.5)';
       settingsMenu.style.pointerEvents = 'auto';
       settingsMenu.setAttribute('aria-hidden', 'false');
       setTimeout(() => {
@@ -618,7 +603,7 @@
         if (firstInput) firstInput.focus();
       }, 100);
     } else {
-      settingsMenu.style.transform = 'translateX(-4000px)'; // 260px menu + 36px button = 296px
+      settingsMenu.style.transform = 'translateX(-4000px)';
       settingsMenu.style.boxShadow = 'none';
       settingsMenu.style.pointerEvents = 'none';
       settingsMenu.setAttribute('aria-hidden', 'true');
@@ -642,16 +627,14 @@
 
     // Icon Bar (side menu mode)
     if (state.menuStyle === 'side') {
-      // Always hide bottom bar in side menu mode
       if (state.bottomBarVisible) {
         state.bottomBarVisible = false;
       }
-      // Visually hide nav bar buttons using CSS class
       bottomButtonIds.forEach(id => {
         const el = document.getElementById(id);
         if (el) el.classList.add('nav-bar-hidden');
       });
-      // Render icon bar
+      // Render icon bar (dark themed)
       iconBar.innerHTML = '';
       sideMenuItems.forEach(item => {
         const btn = document.createElement('button');
@@ -667,24 +650,24 @@
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          background: '#004E36',
-          color: '#fff',
-          border: 'none',
-          borderRadius: '6px',
+          background: '#1a1a1a',
+          color: '#f1f1f1',
+          border: '1px solid #303030',
+          borderLeft: 'none',
+          borderRadius: '0 8px 8px 0',
           cursor: 'pointer',
           margin: '0',
           padding: '0',
-          boxShadow: '0 2px 8px rgba(0,0,0,0.10)',
-          transition: 'background .2s'
+          boxShadow: '2px 2px 8px rgba(0,0,0,0.3)',
+          transition: 'background 150ms ease'
         });
-        btn.onmouseenter = () => btn.style.background = '#218838';
-        btn.onmouseleave = () => btn.style.background = '#004E36';
+        btn.onmouseenter = () => { btn.style.background = '#242424'; };
+        btn.onmouseleave = () => { btn.style.background = '#1a1a1a'; };
         btn.onclick = item.action;
         iconBar.appendChild(btn);
       });
       iconBar.style.display = '';
     } else {
-      // Show nav bar buttons in bottom mode
       bottomButtonIds.forEach(id => {
         const el = document.getElementById(id);
         if (el) el.classList.remove('nav-bar-hidden');
@@ -695,86 +678,144 @@
   }
 
   // ------------------------------------------------------------------
-  //  SETTINGS MENU CONTENT
+  //  SETTINGS MENU CONTENT (dark)
   // ------------------------------------------------------------------
   function renderSettingsMenu() {
+    const a = accent();
+    const currentAccent = (window.TmTheme && window.TmTheme.getAccent) ? window.TmTheme.getAccent() : 'blue';
+
     settingsMenu.innerHTML = `
-      <div style="font-size:18px;font-weight:bold;color:#004E36;
-                  display:flex;align-items:center;gap:8px;margin-bottom:8px">
+      <div style="font-size:18px;font-weight:600;color:#f1f1f1;
+                  display:flex;align-items:center;gap:8px;margin-bottom:8px;
+                  font-family:'Roboto','Segoe UI',sans-serif">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#aaaaaa" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 8 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.6 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 8a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 8 4.6a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09A1.65 1.65 0 0 0 16 4.6a1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06-.06A1.65 1.65 0 0 0 19.4 8c.14.31.22.65.22 1z"/>
+        </svg>
         <span>Settings</span><span style="flex:1"></span>
         <button id="settings-close" style="background:none;border:none;
-                font-size:22px;color:#888;cursor:pointer">&times;</button>
+                font-size:22px;color:#717171;cursor:pointer;padding:4px;
+                transition:color 150ms ease">&times;</button>
       </div>
-      <label style="margin-bottom:10px;display:block">
-        <span style="font-weight:500;display:block;margin-bottom:4px">Bottom Button Layout</span>
-        <select id="menuStyle" style="width:100%;padding:7px 10px;border:1px solid #ccc;border-radius:5px">
-          <option value="side"   ${state.menuStyle === 'side' ? 'selected' : ''}>Side Pop‑out Menu</option>
-          <option value="bottom" ${state.menuStyle === 'bottom' ? 'selected' : ''}>Bottom Nav Bar</option>
-        </select>
-      </label>
-      <label style="display:block">
-        <span style="font-weight:500;display:block;margin-bottom:4px">Theme Color</span>
-        <input type="color" id="themeColor" value="${state.themeColor}"
-               style="width:40px;height:32px;border:none;vertical-align:middle">
-        <span style="margin-left:10px;font-size:14px">${state.themeColor}</span>
-      </label>
-    ` +
-    `<label style="display:block;margin-top:10px">
-       <span style="font-weight:500;display:block;margin-bottom:4px">Cursor Emoji</span>
-       <div id="cursorEmojiPicker" style="position:relative;">
-         <input id="cursorEmojiSearch" type="text" placeholder="Search emoji..." style="width:100%;padding:7px 10px 7px 32px;border:1px solid #ccc;border-radius:5px 5px 0 0;font-size:15px;box-sizing:border-box;margin-bottom:0;">
-         <span style="position:absolute;left:8px;top:10px;font-size:16px;pointer-events:none;opacity:0.6;">🔍</span>
-         <div id="cursorEmojiList" style="max-height:120px;overflow-y:auto;border:1px solid #ccc;border-top:none;border-radius:0 0 5px 5px;background:#fff;box-shadow:0 2px 8px rgba(0,0,0,0.04);">
-         </div>
-       </div>
-     </label>
-     
-     <div style="border-top: 1px solid #eee; margin: 20px 0; padding-top: 20px;">
-       <div style="font-size: 16px; font-weight: 600; color: #333; margin-bottom: 12px; display: flex; align-items: center; gap: 8px;">
-         <svg width="18" height="18" fill="${state.themeColor}" viewBox="0 0 24 24">
-           <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
-         </svg>
-         Update Settings
-       </div>
-       
-       <label style="display: flex; align-items: center; margin-bottom: 12px; cursor: pointer;">
-         <input type="checkbox" id="autoCheckUpdates" ${state.autoCheckUpdates ? 'checked' : ''}
-                style="margin-right: 8px; transform: scale(1.1);">
-         <span style="font-size: 14px; color: #555;">Automatically check for updates</span>
-       </label>
-       
-       <div style="display: flex; gap: 8px; margin-bottom: 12px;">
-         <button id="manual-update-check" style="flex: 1; padding: 8px 12px; border: 1px solid ${state.themeColor};
-                 background: #fff; color: ${state.themeColor}; border-radius: 5px; cursor: pointer;
-                 font-size: 13px; font-weight: 500; ${state.updateCheckInProgress ? 'opacity: 0.6; cursor: not-allowed;' : ''}">
-           ${state.updateCheckInProgress ? 'Checking...' : 'Check for Updates'}
-         </button>
-         <button id="reset-skipped-version" style="padding: 8px 12px; border: 1px solid #ddd;
-                 background: #fff; color: #666; border-radius: 5px; cursor: pointer;
-                 font-size: 13px; font-weight: 500;" title="Reset skipped version to see all updates">
-           Reset Skipped
-         </button>
-       </div>
-       
-       <div style="font-size: 12px; color: #888; line-height: 1.4;">
-         <div>Current Version: <span style="font-family: monospace; color: #333;">${CAM_TOOLS_VERSION}</span></div>
-         ${state.lastUpdateCheck ? `<div>Last Check: ${new Date(state.lastUpdateCheck).toLocaleString()}</div>` : ''}
-         ${state.skippedVersion ? `<div>Skipped Version: <span style="font-family: monospace;">${state.skippedVersion}</span></div>` : ''}
-       </div>
-     </div>
+
+      <!-- Appearance Section (collapsible) -->
+      <details open style="margin-bottom:4px;">
+        <summary style="font-size:14px;font-weight:600;color:#f1f1f1;cursor:pointer;padding:8px 0;
+                        display:flex;align-items:center;gap:8px;list-style:none;user-select:none;">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="${a}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 8 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.6 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 8a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 8 4.6a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09A1.65 1.65 0 0 0 16 4.6a1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06-.06A1.65 1.65 0 0 0 19.4 8c.14.31.22.65.22 1z"/>
+          </svg>
+          Appearance
+        </summary>
+        <div style="padding:4px 0 8px;">
+          <span style="font-weight:500;display:block;margin-bottom:6px;color:#aaaaaa;font-size:13px">Accent Color</span>
+          <div style="display:flex;gap:8px;margin-bottom:12px">
+            <button id="accent-blue" style="flex:1;padding:8px;border-radius:4px;cursor:pointer;font-size:13px;font-weight:500;
+                    border:1px solid ${currentAccent === 'blue' ? '#3ea6ff' : '#3f3f3f'};
+                    background:${currentAccent === 'blue' ? 'rgba(62,166,255,0.15)' : 'transparent'};
+                    color:#3ea6ff;transition:all 150ms ease">
+              Blue
+            </button>
+            <button id="accent-red" style="flex:1;padding:8px;border-radius:4px;cursor:pointer;font-size:13px;font-weight:500;
+                    border:1px solid ${currentAccent === 'red' ? '#ff0000' : '#3f3f3f'};
+                    background:${currentAccent === 'red' ? 'rgba(255,0,0,0.15)' : 'transparent'};
+                    color:#ff0000;transition:all 150ms ease">
+              Red
+            </button>
+            <button id="accent-green" style="flex:1;padding:8px;border-radius:4px;cursor:pointer;font-size:13px;font-weight:500;
+                    border:1px solid ${currentAccent === 'green' ? '#00a650' : '#3f3f3f'};
+                    background:${currentAccent === 'green' ? 'rgba(0,166,80,0.15)' : 'transparent'};
+                    color:#00a650;transition:all 150ms ease">
+              WFM
+            </button>
+          </div>
+          <span style="font-weight:500;display:block;margin-bottom:6px;color:#aaaaaa;font-size:13px">Button Layout</span>
+          <select id="menuStyle" style="width:100%;padding:8px 10px;border:1px solid #3f3f3f;border-radius:4px;
+                  background:#0f0f0f;color:#f1f1f1;font-size:14px;font-family:inherit">
+            <option value="side"   ${state.menuStyle === 'side' ? 'selected' : ''}>Side Menu</option>
+            <option value="bottom" ${state.menuStyle === 'bottom' ? 'selected' : ''}>Bottom Bar</option>
+          </select>
+        </div>
+      </details>
+
+      <!-- Updates Section (collapsible) -->
+      <details style="border-top: 1px solid #303030; padding-top: 8px;">
+        <summary style="font-size:14px;font-weight:600;color:#f1f1f1;cursor:pointer;padding:8px 0;
+                        display:flex;align-items:center;gap:8px;list-style:none;user-select:none;">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="${a}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/>
+            <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
+          </svg>
+          Updates
+        </summary>
+        <div style="padding:4px 0 8px;">
+          <label style="display: flex; align-items: center; margin-bottom: 12px; cursor: pointer;">
+            <input type="checkbox" id="autoCheckUpdates" ${state.autoCheckUpdates ? 'checked' : ''}
+                   style="margin-right: 8px; accent-color: ${a};">
+            <span style="font-size: 13px; color: #aaaaaa;">Auto-check for updates</span>
+          </label>
+          
+          <div style="display: flex; gap: 8px; margin-bottom: 12px;">
+            <button id="manual-update-check" style="flex: 1; padding: 8px 12px; border: 1px solid ${a};
+                    background: transparent; color: ${a}; border-radius: 4px; cursor: pointer;
+                    font-size: 13px; font-weight: 500; transition: all 150ms ease;
+                    ${state.updateCheckInProgress ? 'opacity: 0.5; cursor: not-allowed;' : ''}">
+              ${state.updateCheckInProgress ? 'Checking...' : 'Check Now'}
+            </button>
+            <button id="reset-skipped-version" style="padding: 8px 12px; border: 1px solid #3f3f3f;
+                    background: transparent; color: #aaaaaa; border-radius: 4px; cursor: pointer;
+                    font-size: 13px; font-weight: 500; transition: all 150ms ease;"
+                    title="Reset skipped version">
+              Reset Skip
+            </button>
+          </div>
+          
+          <div style="font-size: 11px; color: #717171; line-height: 1.5;">
+            <div>v${CAM_TOOLS_VERSION}</div>
+            ${state.lastUpdateCheck ? `<div>Last check: ${new Date(state.lastUpdateCheck).toLocaleString()}</div>` : ''}
+            ${state.skippedVersion ? `<div>Skipped: <span style="font-family: monospace;">${state.skippedVersion}</span></div>` : ''}
+          </div>
+        </div>
+      </details>
+
+      <!-- Reset to Defaults -->
+      <button id="reset-defaults" style="width:100%;margin-top:12px;padding:8px;border:1px solid #3f3f3f;
+              background:transparent;color:#aaaaaa;border-radius:4px;cursor:pointer;
+              font-size:13px;font-weight:500;transition:all 150ms ease;">
+        Reset to Defaults
+      </button>
+
+      <!-- Dev Mark -->
+      <div style="text-align: center; padding: 12px 0 4px; font-size: 11px; color: #717171; border-top: 1px solid #303030; margin-top: auto;">
+        Developed by <a href="https://github.com/RynAgain" target="_blank" rel="noopener noreferrer"
+                        style="color: ${a}; text-decoration: none;">Ryan Satterfield</a>
+      </div>
     `;
-    // Wiring
+
+    // --- Wiring ---
     settingsMenu.querySelector('#settings-close').onclick = () => setState({ settingsMenuOpen: false });
+
+    // Accent theme toggle
+    settingsMenu.querySelector('#accent-blue').onclick = () => {
+      if (window.TmTheme) window.TmTheme.setAccent('blue');
+      setState({ accentTheme: 'blue' });
+    };
+    settingsMenu.querySelector('#accent-red').onclick = () => {
+      if (window.TmTheme) window.TmTheme.setAccent('red');
+      setState({ accentTheme: 'red' });
+    };
+    settingsMenu.querySelector('#accent-green').onclick = () => {
+      if (window.TmTheme) window.TmTheme.setAccent('green');
+      setState({ accentTheme: 'green' });
+    };
+
     settingsMenu.querySelector('#menuStyle').onchange = e => {
-      // Always reset both menu states when switching menuStyle
       setState({
         menuStyle: e.target.value,
         sideMenuOpen: false,
         bottomBarVisible: false,
-        settingsMenuOpen: false // Optionally close settings menu on switch
+        settingsMenuOpen: false
       });
     };
-    settingsMenu.querySelector('#themeColor').oninput = e => setState({ themeColor: e.target.value });
     
     // Update system event handlers
     settingsMenu.querySelector('#autoCheckUpdates').onchange = e => {
@@ -796,131 +837,25 @@
     settingsMenu.querySelector('#reset-skipped-version').onclick = () => {
       setUpdateData('skippedVersion', null);
       setState({ skippedVersion: null });
-      alert('✅ Skipped version reset! You\'ll now see all available updates.');
+      if (window.TmTheme && window.TmTheme.showToast) {
+        window.TmTheme.showToast('Skipped version reset', 'success', 3000);
+      }
     };
 
-    // Emoji options (food and fun)
-    const emojiOptions = [
-      { value: 'normal', label: 'Normal' },
-      { value: '🖊️', label: '🖊️ Pen' },
-      { value: '🦄', label: '🦄 Unicorn' },
-      { value: '🔥', label: '🔥 Fire' },
-      { value: '👾', label: '👾 Alien' },
-      { value: '💡', label: '💡 Lightbulb' },
-      { value: '⭐', label: '⭐ Star' },
-      { value: '🍕', label: '🍕 Pizza' },
-      { value: '🍔', label: '🍔 Burger' },
-      { value: '🍟', label: '🍟 Fries' },
-      { value: '🌭', label: '🌭 Hot Dog' },
-      { value: '🍿', label: '🍿 Popcorn' },
-      { value: '🥓', label: '🥓 Bacon' },
-      { value: '🍳', label: '🍳 Fried Egg' },
-      { value: '🥞', label: '🥞 Pancakes' },
-      { value: '🧇', label: '🧇 Waffle' },
-      { value: '🥨', label: '🥨 Pretzel' },
-      { value: '🥐', label: '🥐 Croissant' },
-      { value: '🥯', label: '🥯 Bagel' },
-      { value: '🍞', label: '🍞 Bread' },
-      { value: '🧀', label: '🧀 Cheese' },
-      { value: '🍖', label: '🍖 Meat' },
-      { value: '🍗', label: '🍗 Drumstick' },
-      { value: '🥩', label: '🥩 Steak' },
-      { value: '🍤', label: '🍤 Shrimp' },
-      { value: '🍣', label: '🍣 Sushi' },
-      { value: '🍱', label: '🍱 Bento' },
-      { value: '🍛', label: '🍛 Curry' },
-      { value: '🍜', label: '🍜 Ramen' },
-      { value: '🍝', label: '🍝 Spaghetti' },
-      { value: '🍠', label: '🍠 Sweet Potato' },
-      { value: '🍢', label: '🍢 Oden' },
-      { value: '🍡', label: '🍡 Dango' },
-      { value: '🍧', label: '🍧 Shaved Ice' },
-      { value: '🍨', label: '🍨 Ice Cream' },
-      { value: '🍦', label: '🍦 Soft Serve' },
-      { value: '🍰', label: '🍰 Cake' },
-      { value: '🎂', label: '🎂 Birthday Cake' },
-      { value: '🧁', label: '🧁 Cupcake' },
-      { value: '🍮', label: '🍮 Flan' },
-      { value: '🍭', label: '🍭 Lollipop' },
-      { value: '🍬', label: '🍬 Candy' },
-      { value: '🍫', label: '🍫 Chocolate' },
-      { value: '🍩', label: '🍩 Donut' },
-      { value: '🍪', label: '🍪 Cookie' },
-      { value: '🥧', label: '🥧 Pie' },
-      { value: '🥤', label: '🥤 Soda' },
-      { value: '🧃', label: '🧃 Juice' },
-      { value: '🧉', label: '🧉 Mate' },
-      { value: '🍺', label: '🍺 Beer' },
-      { value: '🍻', label: '🍻 Cheers' },
-      { value: '🥂', label: '🥂 Champagne' },
-      { value: '🍷', label: '🍷 Wine' },
-      { value: '🥛', label: '🥛 Milk' },
-      { value: '☕', label: '☕ Coffee' },
-      { value: '🧊', label: '🧊 Ice' }
-    ];
-
-    // Render emoji list
-    function renderEmojiList(filter) {
-      const list = settingsMenu.querySelector('#cursorEmojiList');
-      list.innerHTML = '';
-      const filtered = emojiOptions.filter(opt =>
-        opt.label.toLowerCase().includes(filter.toLowerCase()) ||
-        opt.value.toLowerCase().includes(filter.toLowerCase())
-      );
-      filtered.forEach(opt => {
-        const btn = document.createElement('button');
-        btn.type = 'button';
-        btn.style.display = 'flex';
-        btn.style.alignItems = 'center';
-        btn.style.width = '100%';
-        btn.style.padding = '6px 10px';
-        btn.style.fontSize = '18px';
-        btn.style.background = opt.value === state.cursorEmoji ? '#e0e0e0' : '#fff';
-        btn.style.border = 'none';
-        btn.style.cursor = 'pointer';
-        btn.style.borderBottom = '1px solid #f0f0f0';
-        btn.style.justifyContent = 'flex-start';
-        btn.style.gap = '10px';
-        btn.innerHTML = `<span style="font-size:20px">${opt.value !== 'normal' ? opt.value : '🖱️'}</span> <span style="font-size:15px">${opt.label}</span>`;
-        btn.onclick = () => {
-          setState({ cursorEmoji: opt.value });
-          // Close dropdown (blur input)
-          settingsMenu.querySelector('#cursorEmojiSearch').blur();
-        };
-        list.appendChild(btn);
+    // Reset to Defaults
+    settingsMenu.querySelector('#reset-defaults').onclick = () => {
+      if (window.TmTheme) window.TmTheme.setAccent('blue');
+      setState({
+        menuStyle: defaultSettings.menuStyle,
+        accentTheme: 'blue',
+        autoCheckUpdates: defaultSettings.autoCheckUpdates,
+        updateCheckInterval: defaultSettings.updateCheckInterval,
+        settingsMenuOpen: true
       });
-      if (filtered.length === 0) {
-        const noRes = document.createElement('div');
-        noRes.style.padding = '10px';
-        noRes.style.color = '#888';
-        noRes.style.textAlign = 'center';
-        noRes.textContent = 'No results';
-        list.appendChild(noRes);
-      }
-    }
-
-    // Initial render
-    renderEmojiList('');
-
-    // Search filter logic
-    const searchInput = settingsMenu.querySelector('#cursorEmojiSearch');
-    searchInput.value = '';
-    searchInput.oninput = e => renderEmojiList(e.target.value);
-
-    // Keyboard navigation for emoji list
-    searchInput.onkeydown = function(e) {
-      const list = settingsMenu.querySelector('#cursorEmojiList');
-      const btns = Array.from(list.querySelectorAll('button'));
-      if (!btns.length) return;
-      let idx = btns.findIndex(b => b === document.activeElement);
-      if (e.key === 'ArrowDown') {
-        e.preventDefault();
-        if (idx === -1 || idx === btns.length - 1) btns[0].focus();
-        else btns[idx + 1].focus();
-      } else if (e.key === 'ArrowUp') {
-        e.preventDefault();
-        if (idx <= 0) btns[btns.length - 1].focus();
-        else btns[idx - 1].focus();
+      setUpdateData('skippedVersion', null);
+      setUpdateData('lastVersionCheck', 0);
+      if (window.TmTheme && window.TmTheme.showToast) {
+        window.TmTheme.showToast('Settings reset to defaults', 'success', 3000);
       }
     };
   }
@@ -928,12 +863,12 @@
   // ------------------------------------------------------------------
   //  EVENT HANDLERS
   // ------------------------------------------------------------------
-  settingsBtn.onmouseenter = () => settingsBtn.style.background = '#218838';
-  settingsBtn.onmouseleave = () => settingsBtn.style.background = state.themeColor;
+  settingsBtn.onmouseenter = () => { settingsBtn.style.background = '#242424'; };
+  settingsBtn.onmouseleave = () => { settingsBtn.style.background = '#1a1a1a'; };
   settingsBtn.onclick = () => setState({ settingsMenuOpen: !state.settingsMenuOpen });
 
-  toggleBtn.onmouseenter = () => toggleBtn.style.background = '#218838';
-  toggleBtn.onmouseleave = () => toggleBtn.style.background = '#004E36';
+  toggleBtn.onmouseenter = () => { toggleBtn.style.background = '#242424'; };
+  toggleBtn.onmouseleave = () => { toggleBtn.style.background = '#1a1a1a'; };
   toggleBtn.onclick = () => {
     if (state.menuStyle === 'side') {
       setState({ sideMenuOpen: !state.sideMenuOpen, bottomBarVisible: false });
@@ -942,7 +877,7 @@
     }
   };
 
-  // Keyboard accessibility: ESC closes menus, trap focus
+  // Keyboard accessibility
   document.addEventListener('keydown', function (e) {
     if (e.key === 'Escape') {
       if (state.updateModalOpen) setState({ updateModalOpen: false, availableUpdate: null });
@@ -950,7 +885,6 @@
       if (state.sideMenuOpen) setState({ sideMenuOpen: false });
       if (state.bottomBarVisible) setState({ bottomBarVisible: false });
     }
-    // Trap focus in open menus and modals
     if (state.settingsMenuOpen || state.sideMenuOpen || state.updateModalOpen) {
       const focusable = Array.from(document.querySelectorAll('button, [tabindex="0"], select, input'));
       const visible = focusable.filter(el => el.offsetParent !== null);
@@ -968,12 +902,11 @@
     }
   });
 
-  // Listen for settings changes from other tabs/windows
+  // Cross-tab settings sync
   window.addEventListener('camToolsSettingsChanged', () => {
-    // Only update persisted keys to avoid triggering render loops
     const newSettings = getSettings();
     let changed = false;
-    ['menuStyle', 'themeColor'].forEach(k => {
+    ['menuStyle', 'accentTheme'].forEach(k => {
       if (state[k] !== newSettings[k]) {
         state[k] = newSettings[k];
         changed = true;
@@ -990,30 +923,30 @@
   if (!document.body.contains(toggleBtn)) document.body.appendChild(toggleBtn);
   if (!document.body.contains(iconBar)) document.body.appendChild(iconBar);
 
-  // Add smooth transitions for menus/drawer
+  // Transition styles
   const transitionStyle = document.createElement('style');
   transitionStyle.textContent = `
     #settings-btn, #settings-btn:focus { outline: none; }
     .drawer, #settings-btn, #settingsMenu {
-      transition: box-shadow .25s, background .3s, left .25s, transform .25s;
+      transition: box-shadow .25s, background 150ms ease, left .25s, transform .25s;
     }
     .drawer[aria-hidden="false"] { transition: left .25s cubic-bezier(.4,0,.2,1); }
     .drawer[aria-hidden="true"] { transition: left .25s cubic-bezier(.4,0,.2,1); }
     #settingsMenu[aria-hidden="false"] { transition: transform .25s cubic-bezier(.4,0,.2,1); }
     #settingsMenu[aria-hidden="true"] { transition: transform .25s cubic-bezier(.4,0,.2,1); }
-    #scratchpad-toggle-btn { z-index: 3200 !important; }
-    [id^="scratchpad-toggle-btn"] { z-index: 3200 !important; }
+    #scratchpad-toggle-btn { z-index: 10000 !important; }
+    [id^="scratchpad-toggle-btn"] { z-index: 10000 !important; }
     .iconbar-item { outline: none; }
+    .iconbar-item:focus-visible { outline: 2px solid var(--tm-accent-primary); outline-offset: 2px; }
   `;
   document.head.appendChild(transitionStyle);
 
   // ------------------------------------------------------------------
-  //  DYNAMIC BUTTON OBSERVER FOR DRAWER POPULATION
+  //  DYNAMIC BUTTON OBSERVER
   // ------------------------------------------------------------------
   (function observeNavButtons() {
     if (!Array.isArray(bottomButtonIds) || bottomButtonIds.length === 0) return;
 
-    // Helper to hide any bar-type button if in side menu mode
     function hideBarButtonsIfNeeded() {
       if (state.menuStyle === 'side') {
         bottomButtonIds.forEach(id => {
@@ -1023,10 +956,8 @@
       }
     }
 
-    // Initial hide if needed
     hideBarButtonsIfNeeded();
 
-    // Observe for new buttons and hide as needed
     const observer = new MutationObserver((mutationsList) => {
       let shouldRender = false;
       for (const mutation of mutationsList) {
@@ -1037,7 +968,6 @@
                 if (state.menuStyle === 'side') node.classList.add('nav-bar-hidden');
                 shouldRender = true;
               }
-              // Also check descendants
               const descendant = node.querySelector && node.querySelector(`#${id}`);
               if (descendant && state.menuStyle === 'side') {
                 descendant.classList.add('nav-bar-hidden');
@@ -1058,78 +988,8 @@
   // ------------------------------------------------------------------
   //  INITIALIZE UPDATE SYSTEM
   // ------------------------------------------------------------------
-  // Initialize the update system after everything is mounted
   initializeUpdateSystem();
 
-  // Apply cursor emoji on load and when settings change
-  function applyCursorEmoji(emoji) {
-    // Remove any previous custom cursor style
-    let styleTag = document.getElementById('cam-tools-cursor-emoji');
-    if (styleTag) styleTag.remove();
+  // Cursor emoji feature removed
 
-    if (!emoji || emoji === 'normal') {
-      document.body.style.cursor = '';
-      return;
-    }
-
-    // Create a canvas to draw the emoji and use as a cursor
-    const canvas = document.createElement('canvas');
-    canvas.width = 64;
-    canvas.height = 64;
-    const ctx = canvas.getContext('2d');
-    ctx.font = '48px serif';
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.clearRect(0, 0, 64, 64);
-    ctx.fillText(emoji, 32, 36);
-
-    // Draw a marker at the hotspot (16,16)
-    ctx.save();
-    ctx.beginPath();
-    ctx.arc(16, 16, 4, 0, 2 * Math.PI, false);
-    ctx.fillStyle = '#fff';
-    ctx.globalAlpha = 0.85;
-    ctx.fill();
-    ctx.globalAlpha = 1.0;
-    ctx.lineWidth = 2;
-    ctx.strokeStyle = '#000';
-    ctx.stroke();
-    ctx.beginPath();
-    ctx.arc(16, 16, 1.5, 0, 2 * Math.PI, false);
-    ctx.fillStyle = '#000';
-    ctx.fill();
-    ctx.restore();
-
-    const dataUrl = canvas.toDataURL('image/png');
-
-    styleTag = document.createElement('style');
-    styleTag.id = 'cam-tools-cursor-emoji';
-    styleTag.textContent = `
-      body, *:not(input):not(textarea):not([contenteditable="true"]) {
-        cursor: url('${dataUrl}') 16 16, auto !important;
-      }
-    `;
-    document.head.appendChild(styleTag);
-  }
-
-  // Initial application
-  applyCursorEmoji(state.cursorEmoji);
-
-  // Listen for settings changes to update cursor
-  window.addEventListener('camToolsSettingsChanged', () => {
-    const newSettings = getSettings();
-    if (typeof newSettings.cursorEmoji !== 'undefined') {
-      applyCursorEmoji(newSettings.cursorEmoji);
-    }
-  });
-
-  // Also update cursor when setState is called
-  const origSetState = setState;
-  setState = function(partial) {
-    origSetState(partial);
-    if (typeof partial.cursorEmoji !== 'undefined') {
-      applyCursorEmoji(partial.cursorEmoji);
-    }
-  };
-
-  })();
+})();

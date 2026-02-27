@@ -1,126 +1,86 @@
-function generateCSV(storeCodes, plu, currentInventory, availability, andonCord, trackingStartDate, trackingEndDate) {
-    // Create CSV content
-    let csvContent = 'Store - 3 Letter Code,Item Name,Item PLU/UPC,Availability,Current Inventory,Sales Floor Capacity,Andon Cord,Tracking Start Date,Tracking End Date\n';
-    
-    // Generate a row for each combination of store code and PLU
-    storeCodes.forEach(store => {
-        plu.forEach(pluCode => {
-            csvContent += `${store},Name_Does_Not_Matter,${pluCode},${availability},${currentInventory},,${andonCord},${trackingStartDate},${trackingEndDate}\n`;
-        });
-    });
-
-    // Create a Blob from the CSV string
-    const blob = new Blob([csvContent], { type: 'text/csv' });
-
-    // Create a link element
-    const link = document.createElement('a');
-    link.href = URL.createObjectURL(blob);
-    link.download = 'add_item_data.csv';
-
-    // Append the link to the body
-    document.body.appendChild(link);
-
-    // Trigger the download
-    link.click();
-
-    // Remove the link from the document
-    document.body.removeChild(link);
-}
-function fetchAllStoreCodes() {
-    return new Promise((resolve, reject) => {
-        const environment = window.location.hostname.includes('gamma') ? 'gamma' : 'prod';
-        const apiUrlBase = `https://${environment}.cam.wfm.amazon.dev/api/`;
-
-        const headersStores = {
-            'accept': '*/*',
-            'accept-encoding': 'gzip, deflate, br',
-            'accept-language': 'en-US,en;q=0.9',
-            'content-type': 'application/x-amz-json-1.0',
-            'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36 Edg/130.0.0.0',
-            'x-amz-target': 'WfmCamBackendService.GetStoresInformation'
-        };
-
-        fetch(apiUrlBase, {
-            method: 'POST',
-            headers: headersStores,
-            body: JSON.stringify({}),
-            credentials: 'include'
-        })
-        .then(response => response.json())
-        .then(storeData => {
-            if (!storeData || !storeData.storesInformation) {
-                throw new Error('Invalid store data received');
-            }
-
-            const storeCodes = [];
-            for (const region in storeData.storesInformation) {
-                const states = storeData.storesInformation[region];
-                for (const state in states) {
-                    const stores = states[state];
-                    stores.forEach(store => {
-                        storeCodes.push(store.storeTLC);
-                    });
-                }
-            }
-            resolve(storeCodes);
-        })
-        .catch(error => {
-            console.error('Error fetching store codes:', error);
-            reject(error);
-        });
-    });
-}
 (function() {
     'use strict';
 
-    // Expose the function to the global scope for testing
-    try {
-        module.exports = {
-            addAddItemButton
-        };
-    } catch (e) {
-        // Handle the error if needed
+    // ------------------------------------------------------------------
+    //  HELPER: Generate CSV for add-item data
+    // ------------------------------------------------------------------
+    function generateCSV(storeCodes, plu, currentInventory, availability, andonCord, trackingStartDate, trackingEndDate) {
+        let csvContent = 'Store - 3 Letter Code,Item Name,Item PLU/UPC,Availability,Current Inventory,Sales Floor Capacity,Andon Cord,Tracking Start Date,Tracking End Date\n';
+
+        storeCodes.forEach(store => {
+            plu.forEach(pluCode => {
+                csvContent += `${store},Name_Does_Not_Matter,${pluCode},${availability},${currentInventory},,${andonCord},${trackingStartDate},${trackingEndDate}\n`;
+            });
+        });
+
+        const blob = new Blob([csvContent], { type: 'text/csv' });
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        link.download = 'add_item_data.csv';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
     }
 
-    const style = document.createElement('style');
-    style.innerHTML = `
-        .input-field {
-            font-family: inherit;
-            font-size: 16px;
-            padding: 8px;
-            border: 1px solid #ccc;
-            border-radius: 4px;
-            width: 100%;
-            box-sizing: border-box;
-            transition: border-color 0.3s, box-shadow 0.3s;
-        }
-        .input-field:focus {
-            border-color: #007bff;
-            box-shadow: 0 0 5px rgba(0, 123, 255, 0.5);
-        }
-        .button {
-            font-family: inherit;
-            font-size: 14px;
-            padding: 10px 20px;
-            border: none;
-            border-radius: 4px;
-            background-color: #004E36;
-            color: #fff;
-            cursor: pointer;
-            transition: background-color 0.3s;
-        }
-        .button:hover {
-            background-color: #218838;
-        }
-    `;
-    document.head.appendChild(style);
+    // ------------------------------------------------------------------
+    //  HELPER: Fetch all store TLCs from the CAM API
+    // ------------------------------------------------------------------
+    function fetchAllStoreCodes() {
+        return new Promise((resolve, reject) => {
+            const environment = window.location.hostname.includes('gamma') ? 'gamma' : 'prod';
+            const apiUrlBase = `https://${environment}.cam.wfm.amazon.dev/api/`;
+
+            const headersStores = {
+                'accept': '*/*',
+                'accept-encoding': 'gzip, deflate, br',
+                'accept-language': 'en-US,en;q=0.9',
+                'content-type': 'application/x-amz-json-1.0',
+                'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+                'x-amz-target': 'WfmCamBackendService.GetStoresInformation'
+            };
+
+            fetch(apiUrlBase, {
+                method: 'POST',
+                headers: headersStores,
+                body: JSON.stringify({}),
+                credentials: 'include'
+            })
+            .then(response => response.json())
+            .then(storeData => {
+                if (!storeData || !storeData.storesInformation) {
+                    throw new Error('Invalid store data received');
+                }
+
+                const storeCodes = [];
+                for (const region in storeData.storesInformation) {
+                    const states = storeData.storesInformation[region];
+                    for (const st in states) {
+                        const stores = states[st];
+                        stores.forEach(store => {
+                            storeCodes.push(store.storeTLC);
+                        });
+                    }
+                }
+                resolve(storeCodes);
+            })
+            .catch(error => {
+                console.error('[AddItem] Error fetching store codes:', error);
+                reject(error);
+            });
+        });
+    }
+
+    // ------------------------------------------------------------------
+    //  STYLES  (styles are now provided by globalPieces.js / tm-theme.js;
+    //           only module-specific overrides go here)
+    // ------------------------------------------------------------------
 
     function addAddItemButton() {
-        console.log('Attempting to add add new item(s) button');
+        console.log('[AddItem] Attempting to add button');
 
         // Check if the button already exists
         if (document.getElementById('addItemButton')) {
-            console.log('Add new item(s) button already exists');
+            console.log('[AddItem] Button already exists');
             return;
         }
 
@@ -136,20 +96,22 @@ function fetchAllStoreCodes() {
         addItemButton.style.height = '40px';
         addItemButton.style.zIndex = '1000';
         addItemButton.style.fontSize = '14px';
-        addItemButton.style.backgroundColor = '#004E36';
-        addItemButton.style.color = '#fff';
-        addItemButton.style.border = 'none';
-        addItemButton.style.borderRadius = '5px';
+        addItemButton.style.backgroundColor = '#1a1a1a';
+        addItemButton.style.color = '#f1f1f1';
+        addItemButton.style.border = '1px solid #303030';
+        addItemButton.style.borderRadius = '4px';
         addItemButton.style.cursor = 'pointer';
+        addItemButton.style.transition = 'background 150ms ease';
+        addItemButton.style.fontFamily = "'Roboto', 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif";
 
         // Append the button to the body
         document.body.appendChild(addItemButton);
-        console.log('Add new item(s) button added to the page');
+        console.log('[AddItem] Button added');
         addItemButton.addEventListener('mouseover', function(){
-            addItemButton.style.backgroundColor = '#218838';
+            addItemButton.style.backgroundColor = '#242424';
         });
         addItemButton.addEventListener('mouseout', function(){
-            addItemButton.style.backgroundColor = '#004E36';
+            addItemButton.style.backgroundColor = '#1a1a1a';
         });
 
         // Add click event to the add new item(s) button
@@ -160,7 +122,7 @@ function fetchAllStoreCodes() {
                 alert('Incorrect password. Access denied.');
                 return;
             }
-            console.log('Add New Item(s) button clicked');
+            console.log('[AddItem] Button clicked');
             // Create overlay
             const overlay = document.createElement('div');
             overlay.id = 'addItemOverlay';
@@ -169,8 +131,8 @@ function fetchAllStoreCodes() {
             overlay.style.left = '0';
             overlay.style.width = '100vw';
             overlay.style.height = '100vh';
-            overlay.style.background = 'rgba(0,0,0,0.5)';
-            overlay.style.zIndex = '1001';
+            overlay.style.background = 'rgba(0,0,0,0.6)';
+            overlay.style.zIndex = '9995';
             overlay.style.display = 'flex';
             overlay.style.justifyContent = 'center';
             overlay.style.alignItems = 'center';
@@ -178,19 +140,21 @@ function fetchAllStoreCodes() {
             // Card container
             var formContainer = document.createElement('div');
             formContainer.style.position = 'relative';
-            formContainer.style.background = '#fff';
+            formContainer.style.background = '#1a1a1a';
             formContainer.style.padding = '0';
             formContainer.style.borderRadius = '12px';
             formContainer.style.width = '360px';
-            formContainer.style.boxShadow = '0 8px 32px rgba(0,0,0,0.18), 0 1.5px 6px rgba(0,78,54,0.10)';
-            formContainer.style.border = '1.5px solid #e0e0e0';
-            formContainer.style.fontFamily = 'Segoe UI, Arial, sans-serif';
+            formContainer.style.maxWidth = '95vw';
+            formContainer.style.boxShadow = '0 20px 60px rgba(0,0,0,0.5)';
+            formContainer.style.border = '1px solid #303030';
+            formContainer.style.fontFamily = "'Roboto', 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif";
             formContainer.style.overflow = 'hidden';
+            formContainer.style.color = '#f1f1f1';
 
             // Header bar
             var headerBar = document.createElement('div');
-            headerBar.style.background = '#004E36';
-            headerBar.style.color = '#fff';
+            headerBar.style.background = '#242424';
+            headerBar.style.color = '#f1f1f1';
             headerBar.style.padding = '10px 16px 8px 16px';
             headerBar.style.fontSize = '17px';
             headerBar.style.fontWeight = 'bold';
@@ -231,8 +195,8 @@ infoBox.style.display = 'none';
 infoBox.style.position = 'absolute';
 infoBox.style.top = '48px';
 infoBox.style.left = '16px';
-infoBox.style.background = '#f5f7fa';
-infoBox.style.color = '#222';
+infoBox.style.background = '#242424';
+infoBox.style.color = '#f1f1f1';
 infoBox.style.borderLeft = '4px solid #004E36';
 infoBox.style.padding = '14px 18px 14px 16px';
 infoBox.style.borderRadius = '7px';
@@ -274,7 +238,7 @@ infoBox.innerHTML = `
             <div style="margin:7px 0 0 0;font-weight:600;">Disclaimer:</div>
             The downloaded file <b>can cause extreme damage to the data integrity of CAM's catalog use with caution.</b>
         </div>
-        <button id="closeAddItemInfoBoxBtn" aria-label="Close information" style="background:transparent;border:none;color:#004E36;font-size:20px;font-weight:bold;cursor:pointer;line-height:1;padding:0 4px;margin-left:8px;border-radius:4px;transition:background 0.2s;">&times;</button>
+        <button id="closeAddItemInfoBoxBtn" aria-label="Close information" style="background:transparent;border:none;color:#aaaaaa;font-size:20px;font-weight:bold;cursor:pointer;line-height:1;padding:0 4px;margin-left:8px;border-radius:4px;transition:color 150ms ease;">&times;</button>
     </div>
 `;
 formContainer.style.position = 'relative';
@@ -411,7 +375,7 @@ setTimeout(function() {
                 <input type="date" id="trackingStartDate" style="width:100%;padding:6px 8px;border:1px solid #ccc;border-radius:5px;font-size:14px;">
                 <label style="margin-bottom:2px;">Tracking End Date</label>
                 <input type="date" id="trackingEndDate" style="width:100%;padding:6px 8px;border:1px solid #ccc;border-radius:5px;font-size:14px;">
-                <button id="generateFileButton" style="width:100%;margin-top:10px;background:#004E36;color:#fff;border:none;border-radius:5px;padding:8px 0;font-size:15px;cursor:pointer;transition:background 0.2s;">Generate File</button>
+                <button id="generateFileButton" style="width:100%;margin-top:10px;background:var(--tm-accent-primary, #3ea6ff);color:#0f0f0f;border:none;border-radius:4px;padding:8px 0;font-size:14px;font-weight:500;cursor:pointer;transition:background 150ms ease;">Generate File</button>
             `;
             formContainer.appendChild(contentArea);
             overlay.appendChild(formContainer);
@@ -498,57 +462,39 @@ setTimeout(function() {
                     }
 
                     // Check if both tracking dates are filled if one is provided
-                    var trackingStartDate = document.getElementById('trackingStartDate').value;
-                    var trackingEndDate = document.getElementById('trackingEndDate').value;
+                    const trackingStartDate = document.getElementById('trackingStartDate').value;
+                    const trackingEndDate = document.getElementById('trackingEndDate').value;
 
                     if ((trackingStartDate && !trackingEndDate) || (!trackingStartDate && trackingEndDate)) {
-                        alert('Please provide both Tracking Start Date and Tracking End Date.');
+                        if (window.TmTheme && window.TmTheme.showToast) {
+                            window.TmTheme.showToast('Please provide both Tracking Start Date and Tracking End Date.', 'warning', 4000);
+                        } else {
+                            alert('Please provide both Tracking Start Date and Tracking End Date.');
+                        }
                         return;
                     }
 
                     // Split store codes and PLUs by commas
-                    var storeCodes = Array.from(new Set(storeCode.split(',').map(code => code.trim())));
-                    var plus = Array.from(new Set(plu.split(',').map(p => p.trim())));
+                    const storeCodes = Array.from(new Set(storeCode.split(',').map(code => code.trim())));
+                    const plus = Array.from(new Set(plu.split(',').map(p => p.trim())));
 
-                    // Create CSV content
-                    var csvContent = 'Store - 3 Letter Code,Item Name,Item PLU/UPC,Availability,Current Inventory,Sales Floor Capacity,Andon Cord,Tracking Start Date,Tracking End Date\n';
-                    
-                    // Generate a row for each combination of store code and PLU
-                    storeCodes.forEach(store => {
-                        plus.forEach(plu => {
-                            csvContent += `${store},Name_Does_Not_Matter,${plu},${availability},${currentInventory},,${andonCord},${trackingStartDate},${trackingEndDate}\n`;
-                        });
-                    });
-
-                    // Create a Blob from the CSV string
-                    var blob = new Blob([csvContent], { type: 'text/csv' });
-
-                    // Create a link element
-                    var link = document.createElement('a');
-                    link.href = URL.createObjectURL(blob);
-                    link.download = 'add_item_data.csv';
-
-                    // Append the link to the body
-                    document.body.appendChild(link);
-
-                    // Trigger the download
-                    link.click();
-
-                    // Remove the link from the document
-                    document.body.removeChild(link);
+                    generateCSV(storeCodes, plus, currentInventory, availability, andonCord, trackingStartDate, trackingEndDate);
                 });
             }
         });
     }
 
-    // Expose the function to the global scope for testing
-    try {
-        module.exports = {
-            addAddItemButton
-        };
-    } catch (e) {
-        // Handle the error if needed
-    }
     // Initialize the add item button
     addAddItemButton();
+
+    // Module export for testing (at end of IIFE)
+    try {
+        module.exports = {
+            addAddItemButton,
+            generateCSV,
+            fetchAllStoreCodes
+        };
+    } catch (e) {
+        // Browser environment
+    }
 })();

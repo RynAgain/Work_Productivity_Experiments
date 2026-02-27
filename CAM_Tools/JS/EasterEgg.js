@@ -11,7 +11,7 @@
         // Handle the error if needed
     }
 
-        console.log('EasterEgg functionality initialized.');
+        console.log('[EasterEgg] Initialized');
 
         const keySequence = ['ArrowUp', 'ArrowUp', 'ArrowDown', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'ArrowLeft', 'ArrowRight', 'b', 'a'];
         let keyLog = [];
@@ -28,7 +28,7 @@
             }
 
             if (keyLog.join(',') === keySequence.join(',')) {
-                console.log('Easter Egg Activated!');
+                console.log('[EasterEgg] Activated');
                 // Trigger the Easter Egg event here
                 // Create a black overlay
                 const overlay = document.createElement('div');

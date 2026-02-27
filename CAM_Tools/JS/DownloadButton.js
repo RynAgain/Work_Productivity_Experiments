@@ -1,17 +1,8 @@
 (function() {
     'use strict';
 
-    // Expose the function to the global scope for testing
-    try {
-        module.exports = {
-            addDownloadButton
-        };
-    } catch (e) {
-        // Handle the error if needed
-    }
-
     function addDownloadButton() {
-        console.log('Attempting to add download data button');
+        console.log('[Download] Attempting to add download data button');
 
         // Check if the button already exists
         if (document.getElementById('downloadDataButton')) {
@@ -19,14 +10,12 @@
             return;
         }
 
-        // Create the download data button using shared button styling
-        var downloadButton = document.createElement('button');
+        // Create the download data button
+        const downloadButton = document.createElement('button');
         downloadButton.id = 'downloadDataButton';
-        downloadButton.innerHTML = `
-        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-download" viewBox="0 0 16 16"><path d="M.5 9.9a.5.5 0 0 1 .5-.5h4.5V1.5a.5.5 0 0 1 1 0v7.9h4.5a.5.5 0 0 1 .5.5v.5a.5.5 0 0 1-.5.5H6.5v4.5a.5.5 0 0 1-1 0V10.9H1a.5.5 0 0 1-.5-.5v-.5z"></path><path d="M5.5 10.9V1.5a.5.5 0 0 1 1 0v9.4h4.5a.5.5 0 0 1 .5.5v.5a.5.5 0 0 1-.5.5H6.5v4.5a.5.5 0 0 1-1 0V11.9H1a.5.5 0 0 1-.5-.5v-.5a.5.5 0 0 1 .5-.5h4.5z"></path></svg> Download Data`;
-        downloadButton.className = 'button'; // Use common button class for consistent styling
+        downloadButton.innerHTML = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> Download Data`;
+        downloadButton.className = 'button';
 
-        // Set positioning to align with other UI elements (e.g., AddItemButton)
         downloadButton.style.position = 'fixed';
         downloadButton.style.bottom = '0';
         downloadButton.style.left = '0';
@@ -35,102 +24,105 @@
         downloadButton.style.zIndex = '1000';
 
         document.body.appendChild(downloadButton);
-        console.log('Download data button added to the page');
+        console.log('[Download] Button added to the page');
 
         // Add click event to the download data button to show options overlay
         downloadButton.addEventListener('click', function() {
-            console.log('Download Data button clicked');
+            console.log('[Download] Button clicked');
 
-            // Create overlay for download options
-            var overlay = document.createElement('div');
+            // Create overlay (dark)
+            const overlay = document.createElement('div');
             overlay.id = 'downloadOverlay';
             overlay.style.position = 'fixed';
             overlay.style.top = '0';
             overlay.style.left = '0';
             overlay.style.width = '100vw';
             overlay.style.height = '100vh';
-            overlay.style.background = 'rgba(0, 0, 0, 0.5)';
-            overlay.style.zIndex = '1001';
+            overlay.style.background = 'rgba(0, 0, 0, 0.6)';
+            overlay.style.zIndex = '9995';
             overlay.style.display = 'flex';
             overlay.style.justifyContent = 'center';
             overlay.style.alignItems = 'center';
 
-            // Create form container for options
-            var formContainer = document.createElement('div');
+            // Card container (dark)
+            const formContainer = document.createElement('div');
             formContainer.style.position = 'relative';
-            formContainer.style.background = '#fff';
+            formContainer.style.background = '#1a1a1a';
             formContainer.style.padding = '0';
             formContainer.style.borderRadius = '12px';
-            formContainer.style.width = '360px';
-            formContainer.style.boxShadow = '0 8px 32px rgba(0,0,0,0.18), 0 1.5px 6px rgba(0,78,54,0.10)';
-            formContainer.style.border = '1.5px solid #e0e0e0';
-            formContainer.style.fontFamily = 'Segoe UI, Arial, sans-serif';
+            formContainer.style.width = '400px';
+            formContainer.style.maxWidth = '95vw';
+            formContainer.style.maxHeight = '90vh';
+            formContainer.style.boxShadow = '0 20px 60px rgba(0,0,0,0.5)';
+            formContainer.style.border = '1px solid #303030';
+            formContainer.style.fontFamily = "'Roboto', 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif";
             formContainer.style.overflow = 'hidden';
+            formContainer.style.color = '#f1f1f1';
 
-            // Header bar
-            var headerBar = document.createElement('div');
-            headerBar.style.background = '#004E36';
-            headerBar.style.color = '#fff';
-            headerBar.style.padding = '16px 24px 12px 24px';
-            headerBar.style.fontSize = '20px';
-            headerBar.style.fontWeight = 'bold';
-            headerBar.style.letterSpacing = '0.5px';
+            // Header bar (dark)
+            const headerBar = document.createElement('div');
+            headerBar.style.background = '#242424';
+            headerBar.style.color = '#f1f1f1';
+            headerBar.style.padding = '12px 16px';
+            headerBar.style.fontSize = '16px';
+            headerBar.style.fontWeight = '600';
             headerBar.style.display = 'flex';
             headerBar.style.alignItems = 'center';
             headerBar.style.justifyContent = 'space-between';
+            headerBar.style.borderBottom = '1px solid #303030';
 
             headerBar.innerHTML = `
                 <span style="display:flex;align-items:center;gap:8px;">
-                    Download Data Options
-                    <span id="overlayInfoIcon" tabindex="0" aria-label="Show information" style="display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;border-radius:50%;background:#e0e0e0;color:#004E36;font-weight:bold;font-size:15px;cursor:pointer;outline:none;transition:background 0.2s;">
-                        <svg width="16" height="16" viewBox="0 0 20 20" fill="none" style="display:block;">
-                            <circle cx="10" cy="10" r="10" fill="#e0e0e0"/>
-                            <text x="10" y="14" text-anchor="middle" font-size="12" font-family="Segoe UI, Arial, sans-serif" fill="#004E36" font-weight="bold">i</text>
+                    Download Data
+                    <span id="overlayInfoIcon" tabindex="0" aria-label="Show information" style="display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;border-radius:50%;background:#3f3f3f;color:#f1f1f1;cursor:pointer;outline:none;transition:background 150ms ease;">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:block;">
+                            <circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/>
                         </svg>
                     </span>
                 </span>
             `;
 
             // Close button
-            var closeButton = document.createElement('span');
+            const closeButton = document.createElement('span');
             closeButton.innerHTML = '&times;';
             closeButton.id = 'downloadOverlayCloseButton';
-            closeButton.style.fontSize = '28px';
+            closeButton.style.fontSize = '22px';
             closeButton.style.cursor = 'pointer';
             closeButton.style.marginLeft = '16px';
-            closeButton.style.color = '#fff';
+            closeButton.style.color = '#aaaaaa';
             closeButton.style.background = 'transparent';
             closeButton.style.border = 'none';
             closeButton.style.padding = '0 4px';
             closeButton.style.borderRadius = '4px';
-            closeButton.style.transition = 'background 0.2s';
+            closeButton.style.transition = 'color 150ms ease';
             closeButton.addEventListener('mouseenter', function() {
-                closeButton.style.background = 'rgba(0,0,0,0.12)';
+                closeButton.style.color = '#f1f1f1';
             });
             closeButton.addEventListener('mouseleave', function() {
-                closeButton.style.background = 'transparent';
+                closeButton.style.color = '#aaaaaa';
             });
             closeButton.addEventListener('click', function() {
                 document.body.removeChild(overlay);
             });
             headerBar.appendChild(closeButton);
             formContainer.appendChild(headerBar);
-// Info/disclaimer box (hidden by default, shown when info icon is clicked)
-var infoBox = document.createElement('div');
+// Info/disclaimer box (dark)
+const infoBox = document.createElement('div');
 infoBox.id = 'downloadOverlayInfoBox';
 infoBox.style.display = 'none';
 infoBox.style.position = 'absolute';
 infoBox.style.top = '54px';
 infoBox.style.left = '24px';
-infoBox.style.background = '#f5f7fa';
-infoBox.style.color = '#222';
-infoBox.style.borderLeft = '4px solid #004E36';
+infoBox.style.background = '#242424';
+infoBox.style.color = '#f1f1f1';
+infoBox.style.borderLeft = '4px solid var(--tm-accent-primary, #3ea6ff)';
 infoBox.style.padding = '16px 22px 16px 18px';
-infoBox.style.borderRadius = '7px';
-infoBox.style.fontSize = '15px';
+infoBox.style.borderRadius = '8px';
+infoBox.style.fontSize = '14px';
 infoBox.style.lineHeight = '1.7';
-infoBox.style.boxShadow = '0 2px 12px rgba(0,0,0,0.10)';
-infoBox.style.zIndex = '2002';
+infoBox.style.boxShadow = '0 4px 20px rgba(0,0,0,0.5)';
+infoBox.style.zIndex = '9999';
+infoBox.style.border = '1px solid #303030';
 infoBox.style.minWidth = '270px';
 infoBox.style.maxWidth = '340px';
 infoBox.style.maxHeight = '60vh';
@@ -141,12 +133,11 @@ infoBox.setAttribute('aria-modal', 'false');
 infoBox.tabIndex = -1;
 infoBox.innerHTML = `
     <div style="display:flex;align-items:flex-start;gap:12px;">
-        <svg width="22" height="22" fill="#004E36" viewBox="0 0 20 20" style="flex-shrink:0;margin-top:2px;">
-            <circle cx="10" cy="10" r="10" fill="#e0e0e0"/>
-            <text x="10" y="15" text-anchor="middle" font-size="13" font-family="Segoe UI, Arial, sans-serif" fill="#004E36" font-weight="bold">i</text>
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--tm-accent-primary, #3ea6ff)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;margin-top:2px;">
+            <circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/>
         </svg>
         <div style="flex:1;">
-            <div style="font-weight:600;margin-bottom:2px;">Download Data</div>
+            <div style="font-weight:600;margin-bottom:2px;color:#f1f1f1;">Download Data</div>
             Download item data as a CSV file based on your selected filters.<br>
             <div style="margin:7px 0 0 0;font-weight:600;">How to use:</div>
             <ol style="margin:7px 0 0 18px;padding:0 0 0 0;">
@@ -167,7 +158,7 @@ infoBox.innerHTML = `
             <div style="margin:7px 0 0 0;font-weight:600;">Disclaimer:</div>
             The downloaded file <b>cannot be directly uploaded</b> elsewhere. You must convert or format it as required for uploads.
         </div>
-        <button id="closeInfoBoxBtn" aria-label="Close information" style="background:transparent;border:none;color:#004E36;font-size:20px;font-weight:bold;cursor:pointer;line-height:1;padding:0 4px;margin-left:8px;border-radius:4px;transition:background 0.2s;">&times;</button>
+        <button id="closeInfoBoxBtn" aria-label="Close information" style="background:transparent;border:none;color:#aaaaaa;font-size:20px;font-weight:bold;cursor:pointer;line-height:1;padding:0 4px;margin-left:8px;border-radius:4px;transition:color 150ms ease;">&times;</button>
     </div>
 `;
 formContainer.style.position = 'relative';
@@ -241,45 +232,50 @@ setTimeout(function() {
 }, 0);
 
 
-            // Content area
-            var contentArea = document.createElement('div');
-            contentArea.style.padding = '20px 24px 18px 24px';
+            // Content area (dark)
+            const contentArea = document.createElement('div');
+            contentArea.style.padding = '16px';
             contentArea.style.display = 'flex';
             contentArea.style.flexDirection = 'column';
             contentArea.style.gap = '10px';
+            contentArea.style.maxHeight = '80vh';
+            contentArea.style.overflowY = 'auto';
 
-            // Main content HTML
+            const inputStyle = 'width:100%;padding:8px;border:1px solid #3f3f3f;border-radius:4px;font-size:14px;background:#0f0f0f;color:#f1f1f1;font-family:inherit;box-sizing:border-box;';
+            const labelStyle = 'color:#aaaaaa;font-size:13px;margin-top:2px;';
+            const checkStyle = 'font-weight:500;display:flex;align-items:center;gap:8px;color:#f1f1f1;font-size:13px;';
+
             contentArea.innerHTML = `
-                <label style="font-weight:500;display:flex;align-items:center;gap:8px;">
-                    <input type="checkbox" id="everythingCheckbox" style="margin-right:8px;"> Everything, Everywhere
+                <label style="${checkStyle}">
+                    <input type="checkbox" id="everythingCheckbox" style="accent-color:var(--tm-accent-primary, #3ea6ff);"> Everything, Everywhere
                 </label>
-                <label style="margin-top:2px;">Specific PLUs</label>
-                <input type="text" id="pluInput" style="width:100%;margin-bottom:2px;padding:8px 10px;border:1px solid #ccc;border-radius:5px;font-size:15px;" placeholder="Enter specific PLUs separated by commas">
-                <label style="font-weight:500;display:flex;align-items:center;gap:8px;">
-                    <input type="checkbox" id="allPlusCheckbox" style="margin-right:8px;"> All PLUs
+                <label style="${labelStyle}">Specific PLUs</label>
+                <input type="text" id="pluInput" style="${inputStyle}" placeholder="PLUs, comma-separated">
+                <label style="${checkStyle}">
+                    <input type="checkbox" id="allPlusCheckbox" style="accent-color:var(--tm-accent-primary, #3ea6ff);"> All PLUs
                 </label>
-                <label style="margin-top:2px;">By</label>
-                <select id="bySelect" style="width:100%;margin-bottom:2px;padding:8px 10px;border:1px solid #ccc;border-radius:5px;font-size:15px;">
+                <label style="${labelStyle}">By</label>
+                <select id="bySelect" style="${inputStyle}">
                     <option value="Store">Store</option>
                     <option value="Region">Region</option>
                 </select>
-                <label style="margin-top:2px;">Store/Region</label>
-                <input type="text" id="storeRegionInput" style="width:100%;margin-bottom:2px;padding:8px 10px;border:1px solid #ccc;border-radius:5px;font-size:15px;" placeholder="Enter Store/Region codes separated by commas">
-                <label style="font-weight:500;display:flex;align-items:center;gap:8px;">
-                    <input type="checkbox" id="allStoresCheckbox" style="margin-right:8px;"> All Stores/Regions
+                <label style="${labelStyle}">Store/Region</label>
+                <input type="text" id="storeRegionInput" style="${inputStyle}" placeholder="Codes, comma-separated">
+                <label style="${checkStyle}">
+                    <input type="checkbox" id="allStoresCheckbox" style="accent-color:var(--tm-accent-primary, #3ea6ff);"> All Stores/Regions
                 </label>
-                <button id="executeDownloadButton" class="button" style="width:100%;margin-top:12px;background:#004E36;color:#fff;border:none;border-radius:5px;padding:10px 0;font-size:16px;cursor:pointer;transition:background 0.2s;">Download</button>
-                <div id="downloadProgress" style="display:none;margin-top:10px;text-align:center;font-size:16px;color:#004E36;">Wait for Parameters</div>
-                <button id="cancelDownloadButton" class="button" style="width:100%;margin-top:10px;background:#e74c3c;color:#fff;border:none;border-radius:5px;padding:10px 0;font-size:16px;cursor:pointer;transition:background 0.2s;">Cancel</button>
+                <button id="executeDownloadButton" style="width:100%;margin-top:12px;background:var(--tm-accent-primary, #3ea6ff);color:#0f0f0f;border:none;border-radius:4px;padding:8px 0;font-size:14px;font-weight:500;cursor:pointer;transition:background 150ms ease;">Download</button>
+                <div id="downloadProgress" style="display:none;margin-top:10px;text-align:center;font-size:13px;color:var(--tm-accent-primary, #3ea6ff);">Wait for Parameters</div>
+                <button id="cancelDownloadButton" style="width:100%;margin-top:8px;background:transparent;color:#d32f2f;border:1px solid #d32f2f;border-radius:4px;padding:8px 0;font-size:14px;font-weight:500;cursor:pointer;transition:all 150ms ease;">Cancel</button>
             `;
             formContainer.appendChild(contentArea);
 
             // "Everything" checkbox disables all other options if checked
             formContainer.querySelector('#everythingCheckbox').addEventListener('change', function() {
-                var allPlus = document.getElementById('allPlusCheckbox');
-                var bySelect = document.getElementById('bySelect');
-                var storeRegionInput = document.getElementById('storeRegionInput');
-                var allStores = document.getElementById('allStoresCheckbox');
+                const allPlus = document.getElementById('allPlusCheckbox');
+                const bySelect = document.getElementById('bySelect');
+                const storeRegionInput = document.getElementById('storeRegionInput');
+                const allStores = document.getElementById('allStoresCheckbox');
                 if(this.checked) {
                     allPlus.disabled = true;
                     bySelect.disabled = true;
@@ -295,7 +291,7 @@ setTimeout(function() {
 
             // If "All Stores/Regions" is checked, disable storeRegionInput
             formContainer.querySelector('#allStoresCheckbox').addEventListener('change', function() {
-                var storeRegionInput = document.getElementById('storeRegionInput');
+                const storeRegionInput = document.getElementById('storeRegionInput');
                 storeRegionInput.disabled = this.checked;
                 if(this.checked) {
                     storeRegionInput.value = '';
@@ -312,13 +308,12 @@ setTimeout(function() {
 
             // Execute download button event
             formContainer.querySelector('#executeDownloadButton').addEventListener('click', function() {
-                var progress = document.getElementById('downloadProgress');
+                const progress = document.getElementById('downloadProgress');
                 progress.style.display = 'block';
                 progress.innerHTML = 'Wait for Parameters';
 
-                // Check if "Everything" is checked; if so, ignore all other filters
-                var everythingChecked = document.getElementById('everythingCheckbox').checked;
-                var allPlusChecked = document.getElementById('allPlusCheckbox').checked;
+                const everythingChecked = document.getElementById('everythingCheckbox').checked;
+                const allPlusChecked = document.getElementById('allPlusCheckbox').checked;
                 
                 // For PLUs, if allPlus or everything is checked, use all PLUs (empty array means no filtering)
                 const pluInput = allPlusChecked || everythingChecked ? [] : Array.from(new Set(document.getElementById('pluInput').value.split(',').map(plu => plu.trim()))).filter(Boolean);
@@ -518,14 +513,13 @@ setTimeout(function() {
     const observer = new MutationObserver(addDownloadButton);
     observer.observe(document.body, { childList: true, subtree: true });
 
-    //expose
-    try {
-        module.exports = {
-            addDownloadButton
-        };
-    } catch (e) {
-        // Handle the error if needed
-    }
     // Initial attempt to add the download data button
     addDownloadButton();
+
+    // Module export for testing (at end of IIFE)
+    try {
+        module.exports = { addDownloadButton };
+    } catch (e) {
+        // Browser environment
+    }
 })();

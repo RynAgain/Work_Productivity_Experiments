@@ -381,7 +381,9 @@ Use consistent spacing based on 4px increments:
 ## Code Standards
 
 ### CSS Class Naming
-Use `tm-` prefix for all Tampermonkey script styles to avoid conflicts:
+Use `tm-` prefix for all Tampermonkey script styles to avoid conflicts with the host page.
+
+**Shared/reusable classes** use bare `tm-`:
 ```css
 .tm-panel { }
 .tm-panel-header { }
@@ -390,13 +392,27 @@ Use `tm-` prefix for all Tampermonkey script styles to avoid conflicts:
 .tm-btn-primary { }
 ```
 
+**Module-specific classes** use `tm-{module}-`:
+
+| Module | Prefix | Example |
+|--------|--------|---------|
+| Existing Item Editor | `tm-ei-` | `.tm-ei-card`, `.tm-ei-table`, `.tm-ei-toolbar` |
+| Mass Uploader | `tm-mu-` | `.tm-mu-card`, `.tm-mu-header`, `.tm-mu-statusRow` |
+| Theme Engine | `tm-` (shared) | `.tm-overlay`, `.tm-modal`, `.tm-toast` |
+
+This prevents collisions between modules and the host site while keeping names scannable in DevTools.
+
 ### Z-Index Scale
-| Layer | Value |
-|-------|-------|
-| Dropdown | `9990` |
-| Modal | `9995` |
-| Floating Panel | `9999` |
-| Toast/Notification | `10000` |
+
+All CAM Tools UI uses this consolidated scale. Do not invent new z-index values outside this table.
+
+| Layer | Value | Used By |
+|-------|-------|---------|
+| Bottom nav buttons | `1000` | Download, Add, Activate, Redrive, Help |
+| Dropdown | `9990` | Drawer overlay |
+| Modal / Overlay | `9995` | All `*Overlay` elements, ExistingItemEditor |
+| Floating Panel | `9999` | Settings panel, icon bar, toggle buttons, info popover boxes |
+| Toast/Notification | `10000` | `TmTheme.showToast()`, scratchpad toggle |
 
 ### CSS Variables Template
 ```css

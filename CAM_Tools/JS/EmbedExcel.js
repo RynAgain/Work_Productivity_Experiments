@@ -11,10 +11,11 @@
             left: 0;
             top: 0;
             z-index: 3201;
-            background: #004E36;
-            color: #fff;
-            border: none;
-            border-radius: 0 5px 5px 0;
+            background: #1a1a1a;
+            color: #f1f1f1;
+            border: 1px solid #303030;
+            border-left: none;
+            border-radius: 0 8px 8px 0;
             padding: 0;
             width: 36px;
             height: 36px;
@@ -27,7 +28,7 @@
             transition: background 0.2s;
         }
         #${BUTTON_ID}:hover {
-            background: #218838;
+            background: #242424;
         }
     `;
     document.head.appendChild(style);

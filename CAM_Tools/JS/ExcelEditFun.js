@@ -21,8 +21,9 @@
       position: fixed;
       top: 60px;
       right: 40px;
-      background: #fff;
-      border: 2px solid #004E36;
+      background: #1a1a1a;
+      border: 1px solid #303030;
+      color: #f1f1f1;
       border-radius: 10px;
       box-shadow: 0 4px 24px rgba(0,0,0,0.13);
       padding: 24px 28px 20px 28px;
@@ -44,8 +45,8 @@
       font-size: 15px;
     }
     #excel-edit-fun-container button {
-      background: #004E36;
-      color: #fff;
+      background: var(--tm-accent-primary, #3ea6ff);
+      color: #0f0f0f;
       border: none;
       border-radius: 5px;
       padding: 10px 0;

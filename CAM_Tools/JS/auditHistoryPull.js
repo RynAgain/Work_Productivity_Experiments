@@ -19,7 +19,7 @@
         return;
       }
 
-        console.log('Audit History Pull initiated for items with Andon Cord enabled');
+        console.log('[AuditHistory] Pull initiated');
 
         const environment = window.location.hostname.includes('gamma') ? 'gamma' : 'prod';
         const apiUrlBase = `https://${environment}.cam.wfm.amazon.dev/api/`;
@@ -41,8 +41,8 @@
         overlay.style.left = '0';
         overlay.style.width = '100%';
         overlay.style.height = '100%';
-        overlay.style.backgroundColor = 'rgba(0, 0, 0, 0.5)';
-        overlay.style.zIndex = '1001';
+        overlay.style.backgroundColor = 'rgba(0, 0, 0, 0.6)';
+        overlay.style.zIndex = '9995';
         overlay.style.display = 'flex';
         overlay.style.justifyContent = 'center';
         overlay.style.alignItems = 'center';
@@ -50,7 +50,8 @@
         let isCancelled = false;
         const statusContainer = document.createElement('div');
         statusContainer.style.position = 'relative';
-        statusContainer.style.backgroundColor = '#fff';
+        statusContainer.style.backgroundColor = '#1a1a1a';
+        statusContainer.style.color = '#f1f1f1';
         statusContainer.style.padding = '20px';
         statusContainer.style.borderRadius = '5px';
         statusContainer.style.width = '300px';
