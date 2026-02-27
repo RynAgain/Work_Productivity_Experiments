@@ -93,7 +93,7 @@ Bring every module into compliance with [`Anti-AI_Style-Guide.md`](Anti-AI_Style
 ### 2.7 Developer Attribution
 
 - [x] Implement the dev mark from [`MyDevMark.md`](MyDevMark.md) in the Settings panel footer -- **done**
-- [x] Include version display (`CAM_TOOLS_VERSION`) in the dev mark -- **done (v3.0.0 shown)**
+- [x] Include version display (`CAM_TOOLS_VERSION`) in the dev mark -- **done (v3.1.0 shown)**
 
 ---
 
@@ -103,7 +103,7 @@ Bring every module into compliance with [`Anti-AI_Style-Guide.md`](Anti-AI_Style
 
 All `@require` URLs in [`MainScript.user.js`](../MainScript.user.js) point to `/raw/main/` (branch HEAD). Tampermonkey caches these aggressively.
 
-- [x] Add cache-busting query parameter to every GitHub raw `@require` URL (e.g., `?v=3.0.0`) and bump on each release -- **done in v3.0.0**
+- [x] Add cache-busting query parameter to every GitHub raw `@require` URL (e.g., `?v=3.1.0`) and bump on each release -- **done in v3.1.0**
 
 - [x] Document the chosen cache-busting strategy in the multi-tampermonkey guide or a new `RELEASE.md` -- **documented below**
 
@@ -214,7 +214,19 @@ The style guide defines a standard floating panel pattern (`tm-floating-panel`) 
 - [x] remove "CAM excel editor" button -- **EmbedExcel.js removed from @require in MainScript; ExcelEditFun.js also deprecated**
 - [x] remove custom emoji mouse clickers -- **cursorEmoji state, UI picker, applyCursorEmoji function all removed from Settings.js**
 - [x] bump version to 3.0.0 -- **@version header + all 22 ?v= cache-bust params in MainScript.user.js; CAM_TOOLS_VERSION in Settings.js**
+- [x] upgrade toggle switches to something modern -- **tm-toggle CSS component in tm-theme.js; Settings auto-check uses pill toggle**
+- [x] reorganize general help tools, text tools, inventory converter -- **4 categorized sections: Text/Code, Store/Item Lookup, File Processing, Inventory Converters**
+- [x] code review of mass upload -- **duplicate overlay guard, alert()->toast, info icon dark mode, verbose logging noted**
+- [x] bottom bar is broken af -- **auto-show on load/switch, EI removed from bottomButtonIds, observer parity fix**
+- [x] scratch pad upgrades, fix spawning in corner -- **center on screen via transform, re-center on open unless dragged**
+- [x] integrate Grocery Central Connect -- **GroceryCentralConnect.js created, GM_xmlhttpRequest->fetch, added to @require**
+- [ ] UI/UX audit
+- [ ] Settings icon upgrade
+- [ ] Mass upload: extract magic numbers to named constants (45s timeout, 5s min delay, 30s base wait)
+- [ ] Mass upload: replace confirm() with non-blocking modal for error flow control
+- [ ] Mass upload: reduce verbose PollingManager console.log output behind log-level gate
+- [ ] Update test suites for IIFE/dark-mode changes (11 suites failing)
 
 ---
 
-*Last updated: 2026-02-27 -- v3.0.0 release*
+*Last updated: 2026-02-27 -- v3.1.0*

@@ -12,6 +12,15 @@
 
     function addFileChunkerFunctionality() {
         console.log('[FileChunker] Button clicked');
+
+        // Prevent duplicate overlays
+        const existingOverlay = document.getElementById('fileChunkerOverlay');
+        if (existingOverlay) {
+            console.log('[FileChunker] Overlay already open, skipping duplicate');
+            existingOverlay.focus();
+            return;
+        }
+
         try {
             // Create overlay
             var overlay = document.createElement('div');

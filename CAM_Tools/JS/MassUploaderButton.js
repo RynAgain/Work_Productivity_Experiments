@@ -18,6 +18,14 @@
     function addMassUploaderFunctionality() {
         console.log('[MassUploader] Button clicked');
 
+        // Prevent duplicate overlays -- if already open, just bring it to focus
+        const existingOverlay = document.getElementById('massUploaderOverlay');
+        if (existingOverlay) {
+            console.log('[MassUploader] Overlay already open, skipping duplicate');
+            existingOverlay.focus();
+            return;
+        }
+
         // Inject helper script for file assignment (bypass userscript sandbox restrictions)
         if (!window.__MU_injected) {
             window.__MU_injected = true;
@@ -350,10 +358,10 @@
         header.innerHTML = `
             <span style="display:flex;align-items:center;gap:8px;">
                 Mass Upload & Chunker
-                <span id="massUploaderInfoIcon" tabindex="0" aria-label="Show information" style="display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;border-radius:50%;background:#e0e0e0;color:#004E36;font-weight:bold;font-size:15px;cursor:pointer;outline:none;transition:background 0.2s;">
+                <span id="massUploaderInfoIcon" tabindex="0" aria-label="Show information" style="display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;border-radius:50%;background:#3f3f3f;color:#aaaaaa;font-weight:bold;font-size:15px;cursor:pointer;outline:none;transition:background 0.2s;">
                     <svg width="16" height="16" viewBox="0 0 20 20" fill="none" style="display:block;">
-                        <circle cx="10" cy="10" r="10" fill="#e0e0e0"/>
-                        <text x="10" y="14" text-anchor="middle" font-size="12" font-family="Arial" fill="#004E36" font-weight="bold">i</text>
+                        <circle cx="10" cy="10" r="10" fill="#3f3f3f"/>
+                        <text x="10" y="14" text-anchor="middle" font-size="12" font-family="Arial" fill="#f1f1f1" font-weight="bold">i</text>
                     </svg>
                 </span>
             </span>
@@ -1469,7 +1477,11 @@
                 // CSV chunking and upload
                 const csvFile = csvFileInput.files[0];
                 if (!csvFile) {
-                    alert('Please select a CSV file to chunk and upload.');
+                    if (window.TmTheme && window.TmTheme.showToast) {
+                        window.TmTheme.showToast('Please select a CSV file to chunk and upload.', 'warning', 4000);
+                    } else {
+                        alert('Please select a CSV file to chunk and upload.');
+                    }
                     return;
                 }
 

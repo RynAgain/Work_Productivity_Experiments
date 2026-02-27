@@ -35,7 +35,7 @@
         // Button
         const scratchpadButton = document.createElement('button');
         scratchpadButton.id = 'scratchpad-toggle-btn';
-        scratchpadButton.innerText = 'Scratchpad';
+        scratchpadButton.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:block;margin:0 auto 4px"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>Pad';
         scratchpadButton.style.position = 'fixed';
         scratchpadButton.style.left = '0';
         scratchpadButton.style.top = '10vh';
@@ -61,8 +61,6 @@
         const scratchpadContainer = document.createElement('div');
         scratchpadContainer.id = 'scratchpad-container';
         scratchpadContainer.style.position = 'fixed';
-        scratchpadContainer.style.bottom = '60px';
-        scratchpadContainer.style.right = '20px';
         scratchpadContainer.style.width = '340px';
         scratchpadContainer.style.maxWidth = '95vw';
         scratchpadContainer.style.background = '#1a1a1a';
@@ -72,6 +70,16 @@
         scratchpadContainer.style.boxShadow = '0 2px 12px rgba(0,0,0,0.25)';
         scratchpadContainer.style.display = 'none';
         scratchpadContainer.style.zIndex = '2000';
+
+        // Helper: center the scratchpad on screen
+        function centerScratchpad() {
+            scratchpadContainer.style.top = '50%';
+            scratchpadContainer.style.left = '50%';
+            scratchpadContainer.style.transform = 'translate(-50%, -50%)';
+            scratchpadContainer.style.right = 'auto';
+            scratchpadContainer.style.bottom = 'auto';
+        }
+        centerScratchpad();
 
         // Header
         const header = document.createElement('div');
@@ -378,20 +386,34 @@ setTimeout(function() {
         });
 
         // --- UI Logic ---
-        scratchpadButton.addEventListener('click', function() {
-            scratchpadContainer.style.display = scratchpadContainer.style.display === 'none' ? 'block' : 'none';
-        });
-        closeBtn.addEventListener('click', function() {
+        let hasBeenDragged = false;
+
+        function showScratchpad() {
+            if (!hasBeenDragged) centerScratchpad();
+            scratchpadContainer.style.display = 'block';
+            textarea.focus();
+        }
+        function hideScratchpad() {
             saveCurrentTabContent();
             scratchpadContainer.style.display = 'none';
+        }
+
+        scratchpadButton.addEventListener('click', function() {
+            if (scratchpadContainer.style.display === 'none') {
+                showScratchpad();
+            } else {
+                hideScratchpad();
+            }
         });
+        closeBtn.addEventListener('click', hideScratchpad);
 
         // Keyboard shortcut: Ctrl+Shift+S to toggle
         document.addEventListener('keydown', function(e) {
             if (e.ctrlKey && e.shiftKey && e.key.toLowerCase() === 's') {
-                scratchpadContainer.style.display = scratchpadContainer.style.display === 'none' ? 'block' : 'none';
-                if (scratchpadContainer.style.display === 'block') {
-                    textarea.focus();
+                if (scratchpadContainer.style.display === 'none') {
+                    showScratchpad();
+                } else {
+                    hideScratchpad();
                 }
                 e.preventDefault();
             }
@@ -407,12 +429,15 @@ setTimeout(function() {
             const rect = scratchpadContainer.getBoundingClientRect();
             dragOffsetX = e.clientX - rect.left;
             dragOffsetY = e.clientY - rect.top;
+            // Clear centering transform on drag start
+            scratchpadContainer.style.transform = 'none';
             scratchpadContainer.style.zIndex = '3000';
             document.body.style.userSelect = 'none';
         });
 
         document.addEventListener('mousemove', function(e) {
             if (isDragging) {
+                hasBeenDragged = true;
                 let left = e.clientX - dragOffsetX;
                 let top = e.clientY - dragOffsetY;
                 left = Math.max(0, Math.min(window.innerWidth - scratchpadContainer.offsetWidth, left));

@@ -141,7 +141,7 @@
     function createMainButton() {
         const button = document.createElement('button');
         button.id = 'generalHelpToolsButton';
-        button.innerHTML = 'General Help Tools';
+        button.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:4px"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 1 1 5.82 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg> Help Tools';
         button.className = 'button';
         
         applyStyles(button, STYLES.button);
@@ -201,43 +201,71 @@
         return headerBar;
     }
 
-    // Create main tool buttons
+    // Create main tool buttons -- organized by category
     function createToolButtons() {
-        const toolButtons = [
-            { id: 'pluDedupeListButton', text: 'PLU Dedupe & List' },
-            { id: 'scanCodeTo13PLUButton', text: 'Scan Code to 13-PLU' },
-            { id: 'pluToAsinButton', text: 'PLU to ASIN' },
-            { id: 'getMerchantIdButton', text: 'Get eMerchant IDs' },
-            { id: 'getAllStoreInfoButton', text: 'Get All Store Info' },
-            { id: 'meatInventoryToUploadConverterButton', text: 'Meat Inventory Converter' },
-            { id: 'filechunker', text: 'File Chunker' },
-            { id: 'massUploaderButton', text: 'Mass File Upload' },
-            { id: 'auditHistoryPullButton', text: 'Audit History Pull' },
-            { id: 'desyncFinderButton', text: 'Desync Finder' },
-            { id: 'componentUploadBuilderButton', text: 'Component Upload Builder' },
-            { id: 'prepFoodsInventoryButton', text: 'PFDS Inventory Converter' }
+        const svgAttr = 'width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:4px"';
+        const toolCategories = [
+            {
+                label: `<svg ${svgAttr}><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/><path d="m15 5 4 4"/></svg> Text / Code Tools`,
+                buttons: [
+                    { id: 'pluDedupeListButton', text: 'PLU Dedupe & List' },
+                    { id: 'scanCodeTo13PLUButton', text: 'Scan Code to 13-PLU' },
+                    { id: 'pluToAsinButton', text: 'PLU to ASIN' }
+                ]
+            },
+            {
+                label: `<svg ${svgAttr}><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg> Store / Item Lookup`,
+                buttons: [
+                    { id: 'getMerchantIdButton', text: 'Get eMerchant IDs' },
+                    { id: 'getAllStoreInfoButton', text: 'Get All Store Info' },
+                    { id: 'auditHistoryPullButton', text: 'Audit History Pull' },
+                    { id: 'desyncFinderButton', text: 'Desync Finder' }
+                ]
+            },
+            {
+                label: `<svg ${svgAttr}><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg> File Processing`,
+                buttons: [
+                    { id: 'filechunker', text: 'File Chunker' },
+                    { id: 'massUploaderButton', text: 'Mass File Upload' },
+                    { id: 'componentUploadBuilderButton', text: 'Component Upload Builder' }
+                ]
+            },
+            {
+                label: `<svg ${svgAttr}><path d="M16 16v1a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="12" height="12" rx="2"/></svg> Inventory Converters`,
+                buttons: [
+                    { id: 'meatInventoryToUploadConverterButton', text: 'Meat Inventory Converter' },
+                    { id: 'prepFoodsInventoryButton', text: 'PFDS Inventory Converter' }
+                ]
+            }
         ];
 
         const buttonGrid = document.createElement('div');
         applyStyles(buttonGrid, STYLES.buttonGrid);
 
-        toolButtons.forEach(({ id, text }) => {
-            const button = document.createElement('button');
-            button.id = id;
-            button.textContent = text;
-            applyStyles(button, STYLES.toolButton);
-            
-            // Hover effects
-            button.addEventListener('mouseenter', () => {
-                button.style.backgroundColor = '#2d2d2d';
-                button.style.borderColor = 'var(--tm-accent-primary, #3ea6ff)';
+        toolCategories.forEach(({ label, buttons }) => {
+            const sectionHeader = document.createElement('div');
+            applyStyles(sectionHeader, STYLES.sectionHeader);
+            sectionHeader.innerHTML = label;
+            buttonGrid.appendChild(sectionHeader);
+
+            buttons.forEach(({ id, text }) => {
+                const button = document.createElement('button');
+                button.id = id;
+                button.textContent = text;
+                applyStyles(button, STYLES.toolButton);
+                
+                // Hover effects
+                button.addEventListener('mouseenter', () => {
+                    button.style.backgroundColor = '#2d2d2d';
+                    button.style.borderColor = 'var(--tm-accent-primary, #3ea6ff)';
+                });
+                button.addEventListener('mouseleave', () => {
+                    button.style.backgroundColor = '#242424';
+                    button.style.borderColor = '#3f3f3f';
+                });
+                
+                buttonGrid.appendChild(button);
             });
-            button.addEventListener('mouseleave', () => {
-                button.style.backgroundColor = '#242424';
-                button.style.borderColor = '#3f3f3f';
-            });
-            
-            buttonGrid.appendChild(button);
         });
 
         return buttonGrid;
@@ -297,7 +325,7 @@
         creditsLink.addEventListener('click', (event) => {
             event.preventDefault();
             if (window.TmTheme && window.TmTheme.showToast) {
-                window.TmTheme.showToast('v3.0.0 -- Ryan Satterfield -- Unofficial tool', 'info', 4000);
+                window.TmTheme.showToast('v3.1.0 -- Ryan Satterfield -- Unofficial tool', 'info', 4000);
             }
         });
         

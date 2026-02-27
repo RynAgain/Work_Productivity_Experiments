@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         CAM_Admin_Tools
 // @namespace    http://tampermonkey.net/
-// @version      3.0.0
+// @version      3.1.0
 // @description  Main script to include button functionalities
 // @author       Ryan Satterfield
 // @match        https://*.cam.wfm.amazon.dev/*
@@ -18,31 +18,32 @@
 // @require      https://unpkg.com/x-data-spreadsheet@1.1.5/dist/xspreadsheet.js
 
 // --- Theme Engine (must load before all other CAM modules) ---
-// @require      https://github.com/RynAgain/Work_Productivity_Experiments/raw/main/CAM_Tools/JS/tm-theme.js?v=3.0.0
+// @require      https://github.com/RynAgain/Work_Productivity_Experiments/raw/main/CAM_Tools/JS/tm-theme.js?v=3.1.0
 
 // --- CAM Tool Modules ---
-// @require      https://github.com/RynAgain/Work_Productivity_Experiments/raw/main/CAM_Tools/JS/AddItemButton.js?v=3.0.0
-// @require      https://github.com/RynAgain/Work_Productivity_Experiments/raw/main/CAM_Tools/JS/activateButton.js?v=3.0.0
-// @require      https://github.com/RynAgain/Work_Productivity_Experiments/raw/main/CAM_Tools/JS/RedriveButton.js?v=3.0.0
-// @require      https://github.com/RynAgain/Work_Productivity_Experiments/raw/main/CAM_Tools/JS/GeneralHelpToolsButton.js?v=3.0.0
-// @require      https://github.com/RynAgain/Work_Productivity_Experiments/raw/main/CAM_Tools/JS/PLUDedupeListButton.js?v=3.0.0
-// @require      https://github.com/RynAgain/Work_Productivity_Experiments/raw/main/CAM_Tools/JS/NISFileToCAMUploadButton.js?v=3.0.0
-// @require      https://github.com/RynAgain/Work_Productivity_Experiments/raw/main/CAM_Tools/JS/ScanCodeTo13PLUButton.js?v=3.0.0
-// @require      https://github.com/RynAgain/Work_Productivity_Experiments/raw/main/CAM_Tools/JS/PLUToASINButton.js?v=3.0.0
-// @require      https://github.com/RynAgain/Work_Productivity_Experiments/raw/main/CAM_Tools/JS/DownloadButton.js?v=3.0.0
-// @require      https://github.com/RynAgain/Work_Productivity_Experiments/raw/main/CAM_Tools/JS/GetMerchantIDFromStoreCode.js?v=3.0.0
-// @require      https://github.com/RynAgain/Work_Productivity_Experiments/raw/main/CAM_Tools/JS/GetAllStoreInfo.js?v=3.0.0
-// @require      https://github.com/RynAgain/Work_Productivity_Experiments/raw/main/CAM_Tools/JS/MeatInventoryToUploadConverter.js?v=3.0.0
-// @require      https://github.com/RynAgain/Work_Productivity_Experiments/raw/main/CAM_Tools/JS/inventoryPFDS.js?v=3.0.0
-// @require      https://github.com/RynAgain/Work_Productivity_Experiments/raw/main/CAM_Tools/JS/MassUploaderButton.js?v=3.0.0
-// @require      https://github.com/RynAgain/Work_Productivity_Experiments/raw/main/CAM_Tools/JS/FileChunker.js?v=3.0.0
-// @require      https://github.com/RynAgain/Work_Productivity_Experiments/raw/main/CAM_Tools/JS/componentUploadBuilder.js?v=3.0.0
-// @require      https://github.com/RynAgain/Work_Productivity_Experiments/raw/main/CAM_Tools/JS/ExistingItemEditor.js?v=3.0.0
-// @require      https://github.com/RynAgain/Work_Productivity_Experiments/raw/main/CAM_Tools/JS/Settings.js?v=3.0.0
+// @require      https://github.com/RynAgain/Work_Productivity_Experiments/raw/main/CAM_Tools/JS/AddItemButton.js?v=3.1.0
+// @require      https://github.com/RynAgain/Work_Productivity_Experiments/raw/main/CAM_Tools/JS/activateButton.js?v=3.1.0
+// @require      https://github.com/RynAgain/Work_Productivity_Experiments/raw/main/CAM_Tools/JS/RedriveButton.js?v=3.1.0
+// @require      https://github.com/RynAgain/Work_Productivity_Experiments/raw/main/CAM_Tools/JS/GeneralHelpToolsButton.js?v=3.1.0
+// @require      https://github.com/RynAgain/Work_Productivity_Experiments/raw/main/CAM_Tools/JS/PLUDedupeListButton.js?v=3.1.0
+// @require      https://github.com/RynAgain/Work_Productivity_Experiments/raw/main/CAM_Tools/JS/NISFileToCAMUploadButton.js?v=3.1.0
+// @require      https://github.com/RynAgain/Work_Productivity_Experiments/raw/main/CAM_Tools/JS/ScanCodeTo13PLUButton.js?v=3.1.0
+// @require      https://github.com/RynAgain/Work_Productivity_Experiments/raw/main/CAM_Tools/JS/PLUToASINButton.js?v=3.1.0
+// @require      https://github.com/RynAgain/Work_Productivity_Experiments/raw/main/CAM_Tools/JS/DownloadButton.js?v=3.1.0
+// @require      https://github.com/RynAgain/Work_Productivity_Experiments/raw/main/CAM_Tools/JS/GetMerchantIDFromStoreCode.js?v=3.1.0
+// @require      https://github.com/RynAgain/Work_Productivity_Experiments/raw/main/CAM_Tools/JS/GetAllStoreInfo.js?v=3.1.0
+// @require      https://github.com/RynAgain/Work_Productivity_Experiments/raw/main/CAM_Tools/JS/MeatInventoryToUploadConverter.js?v=3.1.0
+// @require      https://github.com/RynAgain/Work_Productivity_Experiments/raw/main/CAM_Tools/JS/inventoryPFDS.js?v=3.1.0
+// @require      https://github.com/RynAgain/Work_Productivity_Experiments/raw/main/CAM_Tools/JS/MassUploaderButton.js?v=3.1.0
+// @require      https://github.com/RynAgain/Work_Productivity_Experiments/raw/main/CAM_Tools/JS/FileChunker.js?v=3.1.0
+// @require      https://github.com/RynAgain/Work_Productivity_Experiments/raw/main/CAM_Tools/JS/componentUploadBuilder.js?v=3.1.0
+// @require      https://github.com/RynAgain/Work_Productivity_Experiments/raw/main/CAM_Tools/JS/ExistingItemEditor.js?v=3.1.0
+// @require      https://github.com/RynAgain/Work_Productivity_Experiments/raw/main/CAM_Tools/JS/Settings.js?v=3.1.0
 // --- Removed: EmbedExcel.js (CAM Excel editor button -- deprecated) ---
-// @require      https://github.com/RynAgain/Work_Productivity_Experiments/raw/main/CAM_Tools/JS/auditHistoryPull.js?v=3.0.0
-// @require      https://github.com/RynAgain/Work_Productivity_Experiments/raw/main/CAM_Tools/JS/DesyncFinder.js?v=3.0.0
-// @require      https://github.com/RynAgain/Work_Productivity_Experiments/raw/main/CAM_Tools/JS/scratchpaper.js?v=3.0.0
+// @require      https://github.com/RynAgain/Work_Productivity_Experiments/raw/main/CAM_Tools/JS/auditHistoryPull.js?v=3.1.0
+// @require      https://github.com/RynAgain/Work_Productivity_Experiments/raw/main/CAM_Tools/JS/DesyncFinder.js?v=3.1.0
+// @require      https://github.com/RynAgain/Work_Productivity_Experiments/raw/main/CAM_Tools/JS/scratchpaper.js?v=3.1.0
+// @require      https://github.com/RynAgain/Work_Productivity_Experiments/raw/main/CAM_Tools/JS/GroceryCentralConnect.js?v=3.1.0
 
 // @run-at       document-end
 // @updateURL    https://github.com/RynAgain/Work_Productivity_Experiments/raw/main/CAM_Tools/MainScript.user.js

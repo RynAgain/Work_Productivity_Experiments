@@ -23,8 +23,8 @@
   // ------------------------------------------------------------------
   //  UPDATE SYSTEM CONFIGURATION
   // ------------------------------------------------------------------
-  const CAM_TOOLS_VERSION = '3.0.0'; // Extracted from MainScript.user.js @version
-  const GITHUB_API_URL = 'https://api.github.com/repos/RynAgain/Work_Productivity_Experiments/releases/latest';
+  const CAM_TOOLS_VERSION = '3.1.0'; // Extracted from MainScript.user.js @version
+  const GITHUB_API_URL = 'https://api.github.com/repos/RynAgain/Work_Productivity_Experiments/releases/latest'; //we don't really use releases for tm scripts
   const GITHUB_RAW_URL = 'https://raw.githubusercontent.com/RynAgain/Work_Productivity_Experiments/main/CAM_Tools/MainScript.user.js';
   const UPDATE_CHECK_INTERVAL = 4 * 60 * 60 * 1000; // 4 hours in milliseconds
   const UPDATE_STORAGE_PREFIX = 'cam_tools_update_';
@@ -49,6 +49,10 @@
     ...defaultSettings,
     ...getSettings()
   };
+  // Bottom bar should be visible by default when using bottom layout
+  if (state.menuStyle === 'bottom') {
+    state.bottomBarVisible = true;
+  }
 
   // ------------------------------------------------------------------
   //  THEME HELPERS (reads from tm-theme.js CSS vars at runtime)
@@ -582,7 +586,7 @@
   const editorObserver = new MutationObserver(() => {});
   editorObserver.observe(document.body, { childList: true, subtree: true });
 
-  const bottomButtonIds = ['redriveButton', 'addItemButton', 'downloadDataButton', 'activateButton', 'generalHelpToolsButton', 'tm-ei-openEditor'];
+  const bottomButtonIds = ['redriveButton', 'addItemButton', 'downloadDataButton', 'activateButton', 'generalHelpToolsButton'];
 
   // ------------------------------------------------------------------
   //  RENDER FUNCTION
@@ -748,9 +752,11 @@
           Updates
         </summary>
         <div style="padding:4px 0 8px;">
-          <label style="display: flex; align-items: center; margin-bottom: 12px; cursor: pointer;">
-            <input type="checkbox" id="autoCheckUpdates" ${state.autoCheckUpdates ? 'checked' : ''}
-                   style="margin-right: 8px; accent-color: ${a};">
+          <label style="display: flex; align-items: center; gap: 10px; margin-bottom: 12px; cursor: pointer;">
+            <span class="tm-toggle">
+              <input type="checkbox" id="autoCheckUpdates" ${state.autoCheckUpdates ? 'checked' : ''}>
+              <span class="tm-toggle-slider"></span>
+            </span>
             <span style="font-size: 13px; color: #aaaaaa;">Auto-check for updates</span>
           </label>
           
@@ -809,10 +815,11 @@
     };
 
     settingsMenu.querySelector('#menuStyle').onchange = e => {
+      const newStyle = e.target.value;
       setState({
-        menuStyle: e.target.value,
+        menuStyle: newStyle,
         sideMenuOpen: false,
-        bottomBarVisible: false,
+        bottomBarVisible: newStyle === 'bottom',
         settingsMenuOpen: false
       });
     };
@@ -947,16 +954,19 @@
   (function observeNavButtons() {
     if (!Array.isArray(bottomButtonIds) || bottomButtonIds.length === 0) return;
 
-    function hideBarButtonsIfNeeded() {
+    function applyButtonVisibility(el) {
+      if (!el) return;
       if (state.menuStyle === 'side') {
-        bottomButtonIds.forEach(id => {
-          const el = document.getElementById(id);
-          if (el) el.classList.add('nav-bar-hidden');
-        });
+        el.classList.add('nav-bar-hidden');
+        el.style.display = '';
+      } else {
+        el.classList.remove('nav-bar-hidden');
+        el.style.display = state.bottomBarVisible ? '' : 'none';
       }
     }
 
-    hideBarButtonsIfNeeded();
+    // Apply initial visibility to any buttons already in the DOM
+    bottomButtonIds.forEach(id => applyButtonVisibility(document.getElementById(id)));
 
     const observer = new MutationObserver((mutationsList) => {
       let shouldRender = false;
@@ -965,12 +975,12 @@
           if (node instanceof HTMLElement) {
             bottomButtonIds.forEach(id => {
               if (node.id === id) {
-                if (state.menuStyle === 'side') node.classList.add('nav-bar-hidden');
+                applyButtonVisibility(node);
                 shouldRender = true;
               }
               const descendant = node.querySelector && node.querySelector(`#${id}`);
-              if (descendant && state.menuStyle === 'side') {
-                descendant.classList.add('nav-bar-hidden');
+              if (descendant) {
+                applyButtonVisibility(descendant);
                 shouldRender = true;
               }
             });
