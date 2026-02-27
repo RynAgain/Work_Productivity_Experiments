@@ -2,7 +2,7 @@
 
 ## Version Scheme
 
-CAM Tools uses three-segment semantic versioning: `MAJOR.MINOR.PATCH` (e.g., `3.0.0`).
+CAM Tools uses three-segment semantic versioning: `MAJOR.MINOR.PATCH` (e.g., `3.1.0`).
 
 - **MAJOR**: Breaking architecture changes
 - **MINOR**: New features, new modules
@@ -25,7 +25,7 @@ Tampermonkey aggressively caches `@require` files. Pushing code to GitHub `main`
 Every internal `@require` URL in `MainScript.user.js` includes a `?v=` query parameter matching the current version:
 
 ```
-// @require https://github.com/.../raw/main/CAM_Tools/JS/Settings.js?v=3.0.0
+// @require https://github.com/.../raw/main/CAM_Tools/JS/Settings.js?v=3.1.0
 ```
 
 When the version bumps, all `?v=` values bump too, which forces Tampermonkey to re-fetch every module.
@@ -40,7 +40,7 @@ When the version bumps, all `?v=` values bump too, which forces Tampermonkey to 
 
 ### Why Not Tagged Releases?
 
-Tagged release URLs (`/raw/v3.0.0/...`) would pin specific snapshots, but:
+Tagged release URLs (`/raw/v3.1.0/...`) would pin specific snapshots, but:
 
 - The `@require` URLs would need to change on every release anyway
 - GitHub raw serving from tags can have propagation delays
