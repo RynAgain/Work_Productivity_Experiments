@@ -926,6 +926,34 @@
   }
 
   // ------------------------------------------------------------------
+  //  WIRE MENU BUTTON (from GeneralHelpTools)
+  // ------------------------------------------------------------------
+  function wireMenuButton() {
+    const menuBtn = document.getElementById('groceryCentralConnectButton');
+    if (menuBtn) {
+      menuBtn.addEventListener('click', () => {
+        // Close the help tools overlay first
+        const helpOverlay = document.getElementById('generalHelpOverlay');
+        if (helpOverlay) helpOverlay.style.display = 'none';
+        // Toggle GCC panel
+        const panel = document.querySelector('.tm-gcc-panel');
+        if (panel) {
+          panel.classList.add('tm-active');
+          const input = document.querySelector('.tm-gcc-input');
+          if (input) input.focus();
+        }
+      });
+      return true;
+    }
+    return false;
+  }
+  // Try immediately, or watch for DOM changes
+  if (!wireMenuButton()) {
+    const obs = new MutationObserver(() => { if (wireMenuButton()) obs.disconnect(); });
+    obs.observe(document.body, { childList: true, subtree: true });
+  }
+
+  // ------------------------------------------------------------------
   //  MODULE EXPORT (for testing)
   // ------------------------------------------------------------------
   try {

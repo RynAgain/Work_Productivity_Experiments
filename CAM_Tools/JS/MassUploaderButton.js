@@ -26,6 +26,54 @@
             return;
         }
 
+        // ------------------------------------------------------------------
+        //  TIMING CONSTANTS
+        // ------------------------------------------------------------------
+        // MU_DEBUG removed -- now uses TmLog.debug() gated by Settings.debugMode
+        const log = window.TmLog || { debug: function(){}, info: console.log, warn: console.warn, error: console.error };
+        const POLLING_MAX_TIME_MS   = 45000; // Max time to poll for alerts per file
+        const POLLING_FREQUENCY_MS  = 100;   // How often to check for alerts
+        const ALERT_CLEANUP_DELAY   = 100;   // Small delay before clearing old alerts
+        const ALERT_STALE_MS        = 10000; // Alerts older than this are considered stale
+        const ALERT_SETTLE_MS       = 3000;  // Wait for alert to settle before classifying
+        const MIN_UPLOAD_DELAY_MS   = 5000;  // Minimum gap between consecutive uploads
+        const BASE_WAIT_SUCCESS_MS  = 30000; // Default wait after successful upload
+        const BASE_WAIT_ERROR_MS    = 10000; // Shorter wait after failed upload
+
+        // ------------------------------------------------------------------
+        //  NON-BLOCKING CONFIRM MODAL (replaces window.confirm)
+        // ------------------------------------------------------------------
+        function showConfirmModal(title, message, confirmText = 'Continue', cancelText = 'Cancel') {
+            return new Promise(resolve => {
+                const overlay = document.createElement('div');
+                Object.assign(overlay.style, {
+                    position: 'fixed', top: '0', left: '0', width: '100vw', height: '100vh',
+                    background: 'rgba(0,0,0,0.6)', zIndex: '9996',
+                    display: 'flex', justifyContent: 'center', alignItems: 'center'
+                });
+                const card = document.createElement('div');
+                Object.assign(card.style, {
+                    background: '#1a1a1a', border: '1px solid #303030', borderRadius: '8px',
+                    width: '380px', maxWidth: '90vw', padding: '0', boxShadow: '0 12px 40px rgba(0,0,0,0.5)',
+                    fontFamily: "'Roboto','Segoe UI',sans-serif", color: '#f1f1f1', overflow: 'hidden'
+                });
+                card.innerHTML = `
+                    <div style="padding:14px 18px;background:#242424;border-bottom:1px solid #303030;font-size:16px;font-weight:600;">${title}</div>
+                    <div style="padding:16px 18px;font-size:14px;line-height:1.6;color:#aaaaaa;white-space:pre-wrap;">${message}</div>
+                    <div style="display:flex;gap:8px;padding:12px 18px;border-top:1px solid #303030;justify-content:flex-end;">
+                        <button id="mu-confirm-cancel" style="padding:8px 16px;border:1px solid #3f3f3f;border-radius:4px;background:transparent;color:#aaaaaa;cursor:pointer;font-size:13px;font-family:inherit;">${cancelText}</button>
+                        <button id="mu-confirm-ok" style="padding:8px 16px;border:none;border-radius:4px;background:var(--tm-accent-primary,#3ea6ff);color:#0f0f0f;cursor:pointer;font-size:13px;font-weight:500;font-family:inherit;">${confirmText}</button>
+                    </div>
+                `;
+                overlay.appendChild(card);
+                document.body.appendChild(overlay);
+                card.querySelector('#mu-confirm-ok').focus();
+                card.querySelector('#mu-confirm-ok').onclick = () => { document.body.removeChild(overlay); resolve(true); };
+                card.querySelector('#mu-confirm-cancel').onclick = () => { document.body.removeChild(overlay); resolve(false); };
+                overlay.addEventListener('click', (e) => { if (e.target === overlay) { document.body.removeChild(overlay); resolve(false); } });
+            });
+        }
+
         // Inject helper script for file assignment (bypass userscript sandbox restrictions)
         if (!window.__MU_injected) {
             window.__MU_injected = true;
@@ -947,9 +995,9 @@
                 this.activePolling = null;
                 this.processedAlerts = new Map(); // fileId -> Set of alert IDs
                 this.pollingInterval = null;
-                this.maxPollingTime = 45000; // 45 seconds
-                this.pollingFrequency = 100; // Poll every 100ms
-                this.alertCleanupDelay = 100; // Small delay for cleanup
+                this.maxPollingTime = POLLING_MAX_TIME_MS;
+                this.pollingFrequency = POLLING_FREQUENCY_MS;
+                this.alertCleanupDelay = ALERT_CLEANUP_DELAY;
                 this.errorFileData = []; // Store error file data
             }
             
@@ -964,7 +1012,7 @@
                 
                 // Ensure no active polling
                 if (this.activePolling) {
-                    console.log('[PollingManager] Waiting for existing polling to complete...');
+                    log.debug('[PollingManager] Waiting for existing polling to complete...');
                     await this.waitForCompletion();
                 }
                 
@@ -986,7 +1034,7 @@
                         finalOutcome: null
                     };
                     
-                    console.log(`[PollingManager] Created polling session: ${fileId}`);
+                    log.debug(`[PollingManager] Created polling session: ${fileId}`);
                     this.startPollingLoop();
                 });
             }
@@ -1050,7 +1098,7 @@
                 // Check if alert appeared before this polling session started (stale alert)
                 const alertTimestamp = alertElement.dataset.muAlertTimestamp;
                 if (alertTimestamp && parseInt(alertTimestamp) < this.activePolling.startTime) {
-                    console.log(`[PollingManager] Skipping stale alert from before polling started. Alert time: ${alertTimestamp}, Session start: ${this.activePolling.startTime}`);
+                    log.debug(`[PollingManager] Skipping stale alert from before polling started. Alert time: ${alertTimestamp}, Session start: ${this.activePolling.startTime}`);
                     return false;
                 }
                 
@@ -1074,12 +1122,12 @@
                                 const currentChunkNum = currentChunkMatch[0].toLowerCase();
                                 
                                 if (alertChunkNum !== currentChunkNum) {
-                                    console.log(`[PollingManager] Skipping alert - chunk mismatch. Expected: ${currentChunkNum}, Alert contains: ${alertChunkNum}`);
-                                    console.log(`[PollingManager] Full alert text: ${alertText}`);
+                                    log.debug(`[PollingManager] Skipping alert - chunk mismatch. Expected: ${currentChunkNum}, Alert contains: ${alertChunkNum}`);
+                                    log.debug(`[PollingManager] Full alert text: ${alertText}`);
                                     return false; // This alert is for a different chunk
                                 }
                             } else {
-                                console.log(`[PollingManager] Skipping alert - filename mismatch. Expected: ${baseFileName}, Alert: ${alertText.substring(0, 100)}`);
+                                log.debug(`[PollingManager] Skipping alert - filename mismatch. Expected: ${baseFileName}, Alert: ${alertText.substring(0, 100)}`);
                                 return false; // This alert is likely for a different file
                             }
                         }
@@ -1108,7 +1156,7 @@
                 alertElement.dataset.muFileIndex = this.activePolling.fileIndex;
                 
                 const alertText = alertElement.innerText.trim();
-                console.log(`[PollingManager] Processing alert for ${file.name}: ${alertText.substring(0, 100)}...`);
+                log.debug(`[PollingManager] Processing alert for ${file.name}: ${alertText.substring(0, 100)}...`);
                 
                 try {
                     const classification = await classifyAlert(alertElement, alertText, file.name, this);
@@ -1119,7 +1167,7 @@
                     
                     // Check if this alert indicates completion
                     if (this.shouldCompletePolling(classification)) {
-                        console.log(`[PollingManager] Completing polling with outcome: ${classification.type}`);
+                        log.debug(`[PollingManager] Completing polling with outcome: ${classification.type}`);
                         this.completePolling(classification.type);
                     }
                 } catch (error) {
@@ -1151,7 +1199,7 @@
                     case 'partial_success':
                         // Partial success usually comes with partial failure, don't override outcome
                         if (!this.activePolling.finalOutcome) {
-                            console.log('[PollingManager] Partial success detected, waiting for more alerts...');
+                            log.debug('[PollingManager] Partial success detected, waiting for more alerts...');
                         }
                         break;
                     default:
@@ -1184,7 +1232,7 @@
                 // Wait for potential partial_success after partial_failure
                 if (hasPartialFailure && !hasPartialSuccess) {
                     const elapsed = Date.now() - this.activePolling.startTime;
-                    return elapsed >= 3000; // 3 second wait
+                    return elapsed >= ALERT_SETTLE_MS;
                 }
                 
                 return false;
@@ -1234,7 +1282,7 @@
              * Clean up alerts from previous polling sessions
              */
             cleanupPreviousAlerts() {
-                console.log('[PollingManager] Cleaning up previous alerts');
+                log.debug('[PollingManager] Cleaning up previous alerts');
                 
                 // Remove old processed markers to prevent buildup
                 const oldAlerts = document.querySelectorAll('div[mdn-alert-message]');
@@ -1250,12 +1298,12 @@
                     // Check if alert is stale (older than 10 seconds)
                     const alertTimestamp = alert.dataset.muAlertTimestamp;
                     const currentTime = Date.now();
-                    const isStale = alertTimestamp && (currentTime - parseInt(alertTimestamp)) > 10000; // 10 seconds
+                    const isStale = alertTimestamp && (currentTime - parseInt(alertTimestamp)) > ALERT_STALE_MS;
                     
                     if (isStale || alert.dataset.muProcessed === 'true') {
                         // For stale alerts, remove them completely to prevent confusion
                         if (isStale) {
-                            console.log(`[PollingManager] Removing stale alert: ${alert.innerText.substring(0, 50)}...`);
+                            log.debug(`[PollingManager] Removing stale alert: ${alert.innerText.substring(0, 50)}...`);
                             alert.remove();
                             removedCount++;
                         } else {
@@ -1269,7 +1317,7 @@
                     }
                 });
                 
-                console.log(`[PollingManager] Cleaned up ${cleanedCount} old alert markers, removed ${removedCount} stale alerts`);
+                log.debug(`[PollingManager] Cleaned up ${cleanedCount} old alert markers, removed ${removedCount} stale alerts`);
             }
             
             /**
@@ -1344,7 +1392,7 @@
             // Normalize text for pattern matching
             const normalizedText = alertText.toLowerCase().trim();
             
-            console.log('[MassUploader] Classifying alert:', {
+            log.debug('[MassUploader] Classifying alert:', {
                 text: alertText,
                 backgroundColor,
                 color,
@@ -1352,7 +1400,7 @@
                 normalizedText
             });
             
-            console.log('[MassUploader] Alert text analysis:', {
+            log.debug('[MassUploader] Alert text analysis:', {
                 includesRecordsFailed: normalizedText.includes('records failed to upload'),
                 includesFailed: normalizedText.includes('failed'),
                 includesUpload: normalizedText.includes('upload'),
@@ -1369,7 +1417,7 @@
                     message: alertText,
                     shouldProceed: true
                 };
-                console.log('[MassUploader] Classification: success_file', result);
+                log.debug('[MassUploader] Classification: success_file', result);
                 return result;
             }
             
@@ -1395,7 +1443,7 @@
                     hasErrorFile: hasDownloadLink,
                     errorFileData: errorFileDownloaded
                 };
-                console.log('[MassUploader] Classification: partial_failure', result);
+                log.debug('[MassUploader] Classification: partial_failure', result);
                 return result;
             }
             
@@ -1407,7 +1455,7 @@
                     message: alertText,
                     shouldProceed: true
                 };
-                console.log('[MassUploader] Classification: partial_success', result);
+                log.debug('[MassUploader] Classification: partial_success', result);
                 return result;
             }
             
@@ -1419,7 +1467,7 @@
                     message: alertText,
                     shouldProceed: false // Stop processing
                 };
-                console.log('[MassUploader] Classification: validation_error', result);
+                log.debug('[MassUploader] Classification: validation_error', result);
                 return result;
             }
             
@@ -1431,7 +1479,7 @@
                     message: alertText,
                     shouldProceed: false // Stop processing
                 };
-                console.log('[MassUploader] Classification: server_error', result);
+                log.debug('[MassUploader] Classification: server_error', result);
                 return result;
             }
             
@@ -1443,7 +1491,7 @@
                     message: alertText,
                     shouldProceed: true
                 };
-                console.log('[MassUploader] Classification: generic_success', result);
+                log.debug('[MassUploader] Classification: generic_success', result);
                 return result;
             }
             
@@ -1671,14 +1719,15 @@
                 
                 // Handle different outcomes
                 if (outcome === 'error') {
-                    // For critical errors, ask user if they want to continue
+                    // For critical errors, ask user if they want to continue (non-blocking)
                     const alertMessage = alerts[alerts.length - 1]?.message || 'Unknown error';
-                    const shouldContinue = confirm(
-                        `Critical error occurred with file "${file.name}":\n\n${alertMessage}\n\nDo you want to continue with the remaining files?`
+                    const shouldContinue = await showConfirmModal(
+                        'Upload Error',
+                        `Critical error with "${file.name}":\n${alertMessage}`,
+                        'Continue', 'Stop'
                     );
                     
                     if (!shouldContinue) {
-                        // Stop processing
                         console.log('[MassUploader] User chose to stop processing after error');
                         showUploadSummary();
                         uploadButton.disabled = false;
@@ -1706,14 +1755,14 @@
                 // Schedule next file (if not the last one)
                 if (currentUploadIndex < filesToUpload.length) {
                     // Enforce minimum 5-second delay between uploads to prevent race conditions
-                    const minimumDelay = 5000; // 5 seconds minimum
+                    const minimumDelay = MIN_UPLOAD_DELAY_MS;
                     const timeSinceCompletion = Date.now() - (completionTime || Date.now());
                     const additionalDelayNeeded = Math.max(0, minimumDelay - timeSinceCompletion);
                     
                     // Determine wait time based on outcome
-                    let baseWaitTime = 30000; // Default 30 seconds
+                    let baseWaitTime = BASE_WAIT_SUCCESS_MS;
                     if (outcome === 'error' || outcome === 'partial_failure') {
-                        baseWaitTime = 10000; // Shorter wait for failed files
+                        baseWaitTime = BASE_WAIT_ERROR_MS;
                     }
                     
                     // Ensure minimum delay is always enforced
@@ -1929,7 +1978,7 @@
                 }
                 
                 // Enforce minimum 5-second delay even when skipping
-                const minimumDelay = 5000; // 5 seconds minimum
+                const minimumDelay = MIN_UPLOAD_DELAY_MS;
                 const timeSinceCompletion = Date.now() - lastFileCompletionTime;
                 const remainingDelay = Math.max(0, minimumDelay - timeSinceCompletion);
                 

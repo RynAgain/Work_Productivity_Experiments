@@ -23,7 +23,7 @@
   // ------------------------------------------------------------------
   //  UPDATE SYSTEM CONFIGURATION
   // ------------------------------------------------------------------
-  const CAM_TOOLS_VERSION = '3.1.0'; // Extracted from MainScript.user.js @version
+  const CAM_TOOLS_VERSION = '3.1.10'; // Extracted from MainScript.user.js @version
   const GITHUB_API_URL = 'https://api.github.com/repos/RynAgain/Work_Productivity_Experiments/releases/latest'; //we don't really use releases for tm scripts
   const GITHUB_RAW_URL = 'https://raw.githubusercontent.com/RynAgain/Work_Productivity_Experiments/main/CAM_Tools/MainScript.user.js';
   const UPDATE_CHECK_INTERVAL = 4 * 60 * 60 * 1000; // 4 hours in milliseconds
@@ -33,6 +33,7 @@
     menuStyle: 'side',
     accentTheme: 'blue',
     autoCheckUpdates: true,
+    debugMode: false,
     updateCheckInterval: UPDATE_CHECK_INTERVAL,
     __version: SETTINGS_VERSION
   };
@@ -69,6 +70,7 @@
       menuStyle: state.menuStyle,
       accentTheme: state.accentTheme,
       autoCheckUpdates: state.autoCheckUpdates,
+      debugMode: state.debugMode,
       updateCheckInterval: state.updateCheckInterval
     });
   }
@@ -349,46 +351,46 @@
     }
   });
 
-  // Settings Menu Panel (dark)
+  // Settings Menu Panel (dark, centered modal)
   const settingsMenu = document.createElement('div');
   Object.assign(settingsMenu.style, {
     position: 'fixed',
-    left: '36px',
-    top: 'calc(10vh + 192px)',
-    width: '280px',
-    maxWidth: '90vw',
-    height: 'calc(100vh - (10vh + 192px))',
+    top: '50%',
+    left: '50%',
+    transform: 'translate(-50%, -50%) scale(0.95)',
+    width: '340px',
+    maxWidth: '95vw',
+    maxHeight: '85vh',
     background: '#1a1a1a',
     color: '#f1f1f1',
-    display: 'flex',
+    display: 'none',
     flexDirection: 'column',
     gap: '18px',
-    padding: '22px 18px 18px',
+    padding: '0',
     fontFamily: "'Roboto', 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif",
-    borderTopRightRadius: '12px',
-    borderBottomRightRadius: '12px',
+    borderRadius: '12px',
     border: '1px solid #303030',
-    borderLeft: 'none',
-    transform: 'translateX(-10000px)',
-    transition: 'transform .25s cubic-bezier(.4,0,.2,1)',
-    boxShadow: 'none',
+    boxShadow: '0 20px 60px rgba(0,0,0,0.5)',
     pointerEvents: 'none',
-    zIndex: '9999',
-    overflowY: 'auto'
+    zIndex: '9995',
+    overflowY: 'auto',
+    opacity: '0',
+    transition: 'opacity .2s ease, transform .2s ease'
   });
 
-  // Drawer Overlay
+  // Settings Modal Overlay (full-screen backdrop)
   const drawerOverlay = document.createElement('div');
   Object.assign(drawerOverlay.style, {
     position: 'fixed',
-    left: '36px',
-    top: 'calc(10vh + 192px)',
-    width: 'calc(100vw - 36px)',
-    height: 'calc(100vh - (10vh + 192px))',
-    background: 'rgba(0,0,0,.4)',
+    top: '0',
+    left: '0',
+    width: '100vw',
+    height: '100vh',
+    background: 'rgba(0,0,0,0.6)',
     zIndex: '9990',
     display: 'none'
   });
+  drawerOverlay.addEventListener('click', () => setState({ settingsMenuOpen: false }));
 
   /** Icon Bar for Side Menu (dark) **/
   const iconBar = document.createElement('div');
@@ -577,6 +579,23 @@
         <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
       </svg>`,
       action: () => document.getElementById('tm-ei-openEditor')?.click()
+    },
+    {
+      label: 'GCC',
+      tooltip: 'Grocery Central Connect',
+      icon: `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+        <ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M3 5V19A9 3 0 0 0 21 19V5"/><path d="M3 12A9 3 0 0 0 21 12"/>
+      </svg>`,
+      action: () => {
+        const panel = document.querySelector('.tm-gcc-panel');
+        if (panel) {
+          panel.classList.toggle('tm-active');
+          if (panel.classList.contains('tm-active')) {
+            const input = document.querySelector('.tm-gcc-input');
+            if (input) input.focus();
+          }
+        }
+      }
     }
   ];
 
@@ -595,11 +614,15 @@
     // Settings Button -- accent tint on hover handled via events
     settingsBtn.style.background = '#1a1a1a';
 
-    // Settings Menu
+    // Settings Menu (centered modal)
     if (state.settingsMenuOpen) {
       renderSettingsMenu();
-      settingsMenu.style.transform = 'translateX(0)';
-      settingsMenu.style.boxShadow = '4px 0 20px rgba(0,0,0,.5)';
+      settingsMenu.style.display = 'flex';
+      drawerOverlay.style.display = 'block';
+      // Trigger reflow for animation
+      void settingsMenu.offsetWidth;
+      settingsMenu.style.opacity = '1';
+      settingsMenu.style.transform = 'translate(-50%, -50%) scale(1)';
       settingsMenu.style.pointerEvents = 'auto';
       settingsMenu.setAttribute('aria-hidden', 'false');
       setTimeout(() => {
@@ -607,10 +630,15 @@
         if (firstInput) firstInput.focus();
       }, 100);
     } else {
-      settingsMenu.style.transform = 'translateX(-4000px)';
-      settingsMenu.style.boxShadow = 'none';
+      settingsMenu.style.opacity = '0';
+      settingsMenu.style.transform = 'translate(-50%, -50%) scale(0.95)';
       settingsMenu.style.pointerEvents = 'none';
       settingsMenu.setAttribute('aria-hidden', 'true');
+      drawerOverlay.style.display = 'none';
+      // Hide after transition completes
+      setTimeout(() => {
+        if (!state.settingsMenuOpen) settingsMenu.style.display = 'none';
+      }, 200);
     }
 
     // Hamburger/Close Button
@@ -689,9 +717,10 @@
     const currentAccent = (window.TmTheme && window.TmTheme.getAccent) ? window.TmTheme.getAccent() : 'blue';
 
     settingsMenu.innerHTML = `
-      <div style="font-size:18px;font-weight:600;color:#f1f1f1;
-                  display:flex;align-items:center;gap:8px;margin-bottom:8px;
-                  font-family:'Roboto','Segoe UI',sans-serif">
+      <div style="font-size:16px;font-weight:600;color:#f1f1f1;
+                  display:flex;align-items:center;gap:8px;padding:14px 18px;
+                  background:#242424;border-bottom:1px solid #303030;border-radius:12px 12px 0 0;
+                  font-family:'Roboto','Segoe UI',sans-serif;flex-shrink:0;">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#aaaaaa" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 8 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.6 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 8a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 8 4.6a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09A1.65 1.65 0 0 0 16 4.6a1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06-.06A1.65 1.65 0 0 0 19.4 8c.14.31.22.65.22 1z"/>
         </svg>
@@ -701,6 +730,7 @@
                 transition:color 150ms ease">&times;</button>
       </div>
 
+      <div style="padding:18px;overflow-y:auto;flex:1;">
       <!-- Appearance Section (collapsible) -->
       <details open style="margin-bottom:4px;">
         <summary style="font-size:14px;font-weight:600;color:#f1f1f1;cursor:pointer;padding:8px 0;
@@ -738,6 +768,29 @@
             <option value="side"   ${state.menuStyle === 'side' ? 'selected' : ''}>Side Menu</option>
             <option value="bottom" ${state.menuStyle === 'bottom' ? 'selected' : ''}>Bottom Bar</option>
           </select>
+        </div>
+      </details>
+
+      <!-- Developer Section (collapsible) -->
+      <details style="border-top: 1px solid #303030; padding-top: 8px;">
+        <summary style="font-size:14px;font-weight:600;color:#f1f1f1;cursor:pointer;padding:8px 0;
+                        display:flex;align-items:center;gap:8px;list-style:none;user-select:none;">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="${a}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/>
+          </svg>
+          Developer
+        </summary>
+        <div style="padding:4px 0 8px;">
+          <label style="display: flex; align-items: center; gap: 10px; margin-bottom: 12px; cursor: pointer;">
+            <span class="tm-toggle">
+              <input type="checkbox" id="debugMode" ${state.debugMode ? 'checked' : ''}>
+              <span class="tm-toggle-slider"></span>
+            </span>
+            <span style="font-size: 13px; color: #aaaaaa;">Debug logging</span>
+          </label>
+          <div style="font-size: 11px; color: #717171; line-height: 1.5; margin-bottom: 4px;">
+            When enabled, verbose debug messages from all modules are written to the browser console.
+          </div>
         </div>
       </details>
 
@@ -795,6 +848,7 @@
         Developed by <a href="https://github.com/RynAgain" target="_blank" rel="noopener noreferrer"
                         style="color: ${a}; text-decoration: none;">Ryan Satterfield</a>
       </div>
+      </div>
     `;
 
     // --- Wiring ---
@@ -849,6 +903,17 @@
       }
     };
 
+    // Debug mode toggle
+    settingsMenu.querySelector('#debugMode').onchange = e => {
+      setState({ debugMode: e.target.checked });
+      if (window.TmTheme && window.TmTheme.showToast) {
+        window.TmTheme.showToast(
+          e.target.checked ? 'Debug logging enabled' : 'Debug logging disabled',
+          'info', 3000
+        );
+      }
+    };
+
     // Reset to Defaults
     settingsMenu.querySelector('#reset-defaults').onclick = () => {
       if (window.TmTheme) window.TmTheme.setAccent('blue');
@@ -856,6 +921,7 @@
         menuStyle: defaultSettings.menuStyle,
         accentTheme: 'blue',
         autoCheckUpdates: defaultSettings.autoCheckUpdates,
+        debugMode: defaultSettings.debugMode,
         updateCheckInterval: defaultSettings.updateCheckInterval,
         settingsMenuOpen: true
       });
@@ -925,6 +991,7 @@
   // ------------------------------------------------------------------
   //  MOUNT EVERYTHING
   // ------------------------------------------------------------------
+  if (!document.body.contains(drawerOverlay)) document.body.appendChild(drawerOverlay);
   if (!document.body.contains(settingsBtn)) document.body.appendChild(settingsBtn);
   if (!document.body.contains(settingsMenu)) document.body.appendChild(settingsMenu);
   if (!document.body.contains(toggleBtn)) document.body.appendChild(toggleBtn);

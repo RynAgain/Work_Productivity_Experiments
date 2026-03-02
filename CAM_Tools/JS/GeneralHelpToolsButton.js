@@ -92,30 +92,14 @@
             textAlign: 'center',
             fontFamily: 'inherit'
         },
-        restrictedButton: {
-            width: '100%',
-            padding: '10px 12px',
-            border: '1px solid #d32f2f',
-            borderRadius: '4px',
-            backgroundColor: 'rgba(211, 47, 47, 0.1)',
-            color: '#ff6659',
-            fontSize: '13px',
-            cursor: 'pointer',
-            transition: 'all 150ms ease',
-            textAlign: 'center',
-            fontFamily: 'inherit'
-        },
         sectionHeader: {
-            margin: '0 0 12px 0',
-            fontSize: '14px',
-            color: 'var(--tm-accent-primary, #3ea6ff)',
-            fontWeight: '600'
-        },
-        restrictedHeader: {
-            margin: '16px 0 8px 0',
+            margin: '8px 0 4px 0',
             fontSize: '13px',
-            color: '#d32f2f',
-            fontWeight: '600'
+            color: 'var(--tm-accent-primary, #3ea6ff)',
+            fontWeight: '600',
+            gridColumn: '1 / -1',
+            padding: '6px 0 2px',
+            borderBottom: '1px solid #303030'
         },
         linkSection: {
             textAlign: 'center',
@@ -271,46 +255,6 @@
         return buttonGrid;
     }
 
-    // Create restricted section for password-protected buttons
-    function createRestrictedSection() {
-        const restrictedSection = document.createElement('div');
-        
-        const restrictedHeader = document.createElement('h4');
-        restrictedHeader.textContent = 'Restricted';
-        applyStyles(restrictedHeader, STYLES.restrictedHeader);
-        
-        const restrictedButtons = [
-            { id: 'auditHistoryDashboardButton', text: 'Audit History Dashboard' }
-        ];
-
-        const restrictedGrid = document.createElement('div');
-        applyStyles(restrictedGrid, STYLES.buttonGrid);
-
-        restrictedButtons.forEach(({ id, text }) => {
-            const button = document.createElement('button');
-            button.id = id;
-            button.textContent = text;
-            applyStyles(button, STYLES.restrictedButton);
-            
-            // Hover effects for restricted buttons
-            button.addEventListener('mouseenter', () => {
-                button.style.backgroundColor = 'rgba(211, 47, 47, 0.2)';
-                button.style.borderColor = '#ff6659';
-            });
-            button.addEventListener('mouseleave', () => {
-                button.style.backgroundColor = 'rgba(211, 47, 47, 0.1)';
-                button.style.borderColor = '#d32f2f';
-            });
-            
-            restrictedGrid.appendChild(button);
-        });
-
-        restrictedSection.appendChild(restrictedHeader);
-        restrictedSection.appendChild(restrictedGrid);
-        
-        return restrictedSection;
-    }
-
     // Create links section
     function createLinksSection() {
         const linksSection = document.createElement('div');
@@ -325,7 +269,7 @@
         creditsLink.addEventListener('click', (event) => {
             event.preventDefault();
             if (window.TmTheme && window.TmTheme.showToast) {
-                window.TmTheme.showToast('v3.1.0 -- Ryan Satterfield -- Unofficial tool', 'info', 4000);
+                window.TmTheme.showToast('v3.1.10 -- Ryan Satterfield -- Unofficial tool', 'info', 4000);
             }
         });
         
@@ -350,15 +294,9 @@
         const contentArea = document.createElement('div');
         applyStyles(contentArea, STYLES.contentArea);
         
-        const mainHeader = document.createElement('h3');
-        mainHeader.textContent = 'Tools';
-        applyStyles(mainHeader, STYLES.sectionHeader);
-        
         // Assemble the modal
         formContainer.appendChild(createHeader());
-        contentArea.appendChild(mainHeader);
         contentArea.appendChild(createToolButtons());
-        // Restricted section removed -- audit history dashboard was never implemented
         contentArea.appendChild(createLinksSection());
         formContainer.appendChild(contentArea);
         

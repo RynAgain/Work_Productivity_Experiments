@@ -308,9 +308,11 @@ setTimeout(function() {
 
             // Execute download button event
             formContainer.querySelector('#executeDownloadButton').addEventListener('click', function() {
+                const dlBtn = document.getElementById('executeDownloadButton');
                 const progress = document.getElementById('downloadProgress');
                 progress.style.display = 'block';
                 progress.innerHTML = 'Wait for Parameters';
+                if (window.TmTheme) window.TmTheme.setButtonLoading(dlBtn, 'Downloading...');
 
                 const everythingChecked = document.getElementById('everythingCheckbox').checked;
                 const allPlusChecked = document.getElementById('allPlusCheckbox').checked;
@@ -492,18 +494,22 @@ setTimeout(function() {
                             URL.revokeObjectURL(url);
                             
                             progress.innerHTML = 'Done';
+                            if (window.TmTheme) window.TmTheme.clearButtonLoading(dlBtn, 'Download');
                         } else {
                             progress.innerHTML = 'No data available.';
+                            if (window.TmTheme) window.TmTheme.clearButtonLoading(dlBtn, 'Download');
                         }
                     })
                     .catch(error => {
                         console.error('Error during download process:', error);
                         progress.innerHTML = 'An error occurred.';
+                        if (window.TmTheme) window.TmTheme.clearButtonLoading(dlBtn, 'Download');
                     });
                 })
                 .catch(error => {
                     console.error('Error fetching stores:', error);
                     progress.innerHTML = 'Error fetching store data.';
+                    if (window.TmTheme) window.TmTheme.clearButtonLoading(dlBtn, 'Download');
                 });
             });
         });

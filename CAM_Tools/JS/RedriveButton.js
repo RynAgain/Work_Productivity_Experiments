@@ -536,6 +536,8 @@ setTimeout(function() {
             });
 
             document.getElementById('generateRedriveFileButton').addEventListener('click', function () {
+                const genRedriveBtn = document.getElementById('generateRedriveFileButton');
+                if (window.TmTheme) window.TmTheme.setButtonLoading(genRedriveBtn, 'Generating...');
                 document.getElementById('redriveLoadingIndicator').style.display = 'block';
                 // Logic to generate the redrive files
                 const pluInput = Array.from(new Set(document.getElementById('pluInput').value.split(',').map(plu => plu.trim())));
@@ -741,7 +743,11 @@ setTimeout(function() {
                                 }
                             });
                     })
-                    .catch(error => console.error('Error downloading data:', error));
+                    .catch(error => console.error('Error downloading data:', error))
+                    .finally(function() {
+                        if (window.TmTheme) window.TmTheme.clearButtonLoading(genRedriveBtn);
+                        document.getElementById('redriveLoadingIndicator').style.display = 'none';
+                    });
             });
         });
     }

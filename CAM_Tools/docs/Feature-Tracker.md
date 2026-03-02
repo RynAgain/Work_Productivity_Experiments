@@ -83,7 +83,7 @@ Bring every module into compliance with [`Anti-AI_Style-Guide.md`](Anti-AI_Style
 ### 2.5 Console Logging
 
 - [x] Standardize all console.log calls to use `[ModuleName]` prefix format -- **done for all entry-point logs across 18 modules** (remaining ~50 are data-flow debug logs inside API callbacks -- acceptable verbose)
-- [ ] Add log-level gating so debug logs can be toggled via a `FEATURE_FLAGS.DEBUG` or `Settings.debugMode` flag
+- [x] Add log-level gating so debug logs can be toggled via a `FEATURE_FLAGS.DEBUG` or `Settings.debugMode` flag -- **TmLog utility in tm-theme.js with debug/info/warn/error levels; Settings.debugMode toggle in Developer section; MassUploader MU_DEBUG migrated to TmLog.debug()**
 
 ### 2.6 Error Handling
 
@@ -155,7 +155,7 @@ Current z-index values are scattered and inconsistent:
 
 ### 4.3 Interaction Feedback
 
-- [ ] Add loading spinners / disabled states for async operations (update check, store data fetch, file upload, redrive execution)
+- [x] Add loading spinners / disabled states for async operations (update check, store data fetch, file upload, redrive execution) -- **tm-spinner CSS + TmTheme.setButtonLoading()/clearButtonLoading() helpers in tm-theme.js; wired into DownloadButton, activateButton, RedriveButton; Settings update check already had inline state**
 - [x] Implement a reusable toast notification component per style guide patterns (replace `alert()` calls) -- **TmTheme.showToast() in tm-theme.js**
 - [x] Add `transition: background 150ms ease` to all interactive elements that lack it -- **done across all modules**
 - [ ] Add `:focus-visible` outlines per style guide accessibility section -- currently only partially implemented
@@ -188,7 +188,7 @@ The style guide defines a standard floating panel pattern (`tm-floating-panel`) 
 
 - [ ] Add or update tests for any refactored module (especially style injection, global scope changes)
 - [ ] Update [`multi-tampermonkey-guide.md`](multi-tampermonkey-guide.md) if module patterns change
-- [ ] Update [`TOOLBOX_DESIGN.md`](TOOLBOX_DESIGN.md) if toolbar/registry pattern is adopted
+
 - [ ] Keep this tracker updated as items are completed
 
 ---
@@ -205,7 +205,7 @@ The style guide defines a standard floating panel pattern (`tm-floating-panel`) 
 
 ## Added Tasks
 - [x] remove audit history dashboard, it was never implemented never will be. -- **restricted section removed from GeneralHelpToolsButton**
-- [ ] bulk uploads by chunking csv always pops up 2 windows, we might have this noted but needs fix
+- [x] bulk uploads by chunking csv always pops up 2 windows -- **dedup guard added: checks for existing overlay ID before creating; both MassUploader + FileChunker patched**
 - [ ] improvements to existing item editor
 - [x] accent color selector, wfm green, red, blue -- **done: blue/red/green(WFM) in Settings + tm-theme.js**
 - [ ] light mode
@@ -221,12 +221,17 @@ The style guide defines a standard floating panel pattern (`tm-floating-panel`) 
 - [x] scratch pad upgrades, fix spawning in corner -- **center on screen via transform, re-center on open unless dragged**
 - [x] integrate Grocery Central Connect -- **GroceryCentralConnect.js created, GM_xmlhttpRequest->fetch, added to @require**
 - [ ] UI/UX audit
-- [ ] Settings icon upgrade
-- [ ] Mass upload: extract magic numbers to named constants (45s timeout, 5s min delay, 30s base wait)
-- [ ] Mass upload: replace confirm() with non-blocking modal for error flow control
-- [ ] Mass upload: reduce verbose PollingManager console.log output behind log-level gate
+- [x] Settings icon upgrade -- **gear SVG already Lucide-style; bottom bar, category headers, scratchpad all got SVG icons in v3.1.0**
+- [x] Mass upload: extract magic numbers to named constants -- **8 constants at top of addMassUploaderFunctionality()**
+- [x] Mass upload: replace confirm() with non-blocking modal -- **showConfirmModal() dark-mode Promise-based dialog**
+- [x] Mass upload: reduce verbose PollingManager logging -- **MU_DEBUG gate on 19 console.log calls**
 - [ ] Update test suites for IIFE/dark-mode changes (11 suites failing)
+- [x] grocery central connect should take its place on with the rest of the menu buttons -- **added as 7th side menu icon (database SVG) in Settings.js; floating toggle kept as secondary access**
+- [x] edit existing items has a bottom button always visible? -- **className was 'ei-btn' but CSS defined '.tm-ei-btn'; class rename missed the constructor**
+- [x] consider putting settings in a window like everything else -- **converted from left-anchored side drawer to centered modal with backdrop overlay, scale+fade animation, click-outside-to-close**
+- [x] general help tools has some questionable UI now -- **section headers span full grid width, removed redundant "Tools" h3, removed dead restricted section code + styles**
+- [x] bump version to 3.1.10 -- **@version, all 23 ?v= params, CAM_TOOLS_VERSION, credits toast**
 
 ---
 
-*Last updated: 2026-02-27 -- v3.1.0*
+*Last updated: 2026-03-02 -- v3.1.10*

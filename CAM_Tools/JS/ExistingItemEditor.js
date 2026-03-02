@@ -844,7 +844,7 @@
 
     const btn = createEl('button', {
       id: EDIT_BTN_ID,
-      className: 'ei-btn',
+      className: 'tm-ei-btn',
       innerHTML: OPEN_ICON_SVG
     });
     document.body.appendChild(btn);

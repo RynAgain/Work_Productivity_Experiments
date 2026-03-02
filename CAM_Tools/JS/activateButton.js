@@ -323,7 +323,7 @@ setTimeout(function() {
 
             document.getElementById('generateUploadFileButton').addEventListener('click', function() {
                 const generateButton = document.getElementById('generateUploadFileButton');
-                var originalButtonText = generateButton.innerHTML;
+                if (window.TmTheme) window.TmTheme.setButtonLoading(generateButton, 'Processing...');
                 
                 
                 // Logic to generate the upload file
@@ -505,9 +505,12 @@ setTimeout(function() {
                 })
                 .catch(error => console.error('Error downloading data:', error))
                 .finally(function() {
-                    generateButton.innerHTML = originalButtonText;
+                    if (window.TmTheme) {
+                        window.TmTheme.clearButtonLoading(generateButton);
+                    } else {
+                        generateButton.disabled = false;
+                    }
                     generateButton.style.cursor = 'pointer';
-                    generateButton.disabled = false;
                 });
             });
         });

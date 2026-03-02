@@ -5,9 +5,10 @@
  * into <head> exactly once, before any module renders.
  *
  * Also provides:
- *   - Accent theme toggle (blue / red) persisted via localStorage
+ *   - Accent theme toggle (blue / red / green) persisted via localStorage
  *   - A one-shot style-tag helper other modules can reuse
  *   - A shared toast notification primitive (replaces alert())
+ *   - TmLog: level-gated logging (debug/info/warn/error) controlled by Settings.debugMode
  *
  * Load order: this file MUST be @require'd BEFORE all other CAM_Tools modules.
  */
@@ -377,6 +378,28 @@
   outline-offset: 2px;
 }
 
+/* ---- Spinner ---- */
+.tm-spinner {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  border: 2px solid currentColor;
+  border-right-color: transparent;
+  border-radius: 50%;
+  animation: tm-spin 600ms linear infinite;
+  vertical-align: -2px;
+  margin-right: 6px;
+  flex-shrink: 0;
+}
+.tm-spinner--sm  { width: 12px; height: 12px; border-width: 1.5px; }
+.tm-spinner--lg  { width: 20px; height: 20px; border-width: 2.5px; }
+
+.tm-btn-loading {
+  pointer-events: none;
+  opacity: 0.6;
+  cursor: not-allowed !important;
+}
+
 /* ---- Animations ---- */
 @keyframes tm-fade-in {
   from { opacity: 0; transform: scale(0.95); }
@@ -389,6 +412,9 @@
 @keyframes tm-slide-out {
   from { opacity: 1; transform: translateX(0); }
   to   { opacity: 0; transform: translateX(20px); }
+}
+@keyframes tm-spin {
+  to { transform: rotate(360deg); }
 }
 `;
 
@@ -570,6 +596,108 @@
   }
 
   // ----------------------------------------------------------------
+  //  LEVEL-GATED LOGGING -- TmLog
+  //  Reads debugMode from cam_tools_settings in localStorage.
+  //  Levels: debug (0), info (1), warn (2), error (3), off (4)
+  //  When debugMode is OFF  -> effective level = info (1)
+  //  When debugMode is ON   -> effective level = debug (0)
+  // ----------------------------------------------------------------
+  const LOG_LEVELS = { debug: 0, info: 1, warn: 2, error: 3, off: 4 };
+
+  function readDebugMode() {
+    try {
+      const settings = JSON.parse(localStorage.getItem(SETTINGS_KEY)) || {};
+      return !!settings.debugMode;
+    } catch {
+      return false;
+    }
+  }
+
+  function effectiveLevel() {
+    return readDebugMode() ? LOG_LEVELS.debug : LOG_LEVELS.info;
+  }
+
+  /**
+   * Shared logger with level gating.
+   * Usage:  TmLog.debug('[Module]', 'message', data);
+   *         TmLog.info('[Module]', 'loaded');
+   *         TmLog.warn('[Module]', 'deprecation notice');
+   *         TmLog.error('[Module]', 'crash', err);
+   */
+  const TmLog = {
+    /** Log only when debugMode is enabled. */
+    debug: function () {
+      if (effectiveLevel() <= LOG_LEVELS.debug) {
+        console.log.apply(console, arguments);
+      }
+    },
+    /** Always logged (informational entry-point messages). */
+    info: function () {
+      if (effectiveLevel() <= LOG_LEVELS.info) {
+        console.log.apply(console, arguments);
+      }
+    },
+    /** Always logged (warnings). */
+    warn: function () {
+      if (effectiveLevel() <= LOG_LEVELS.warn) {
+        console.warn.apply(console, arguments);
+      }
+    },
+    /** Always logged (errors). */
+    error: function () {
+      if (effectiveLevel() <= LOG_LEVELS.error) {
+        console.error.apply(console, arguments);
+      }
+    },
+    /** Check if debug-level logging is active. */
+    isDebug: function () {
+      return readDebugMode();
+    }
+  };
+
+  // ----------------------------------------------------------------
+  //  BUTTON LOADING STATE HELPERS
+  //  Adds a spinner + disabled state to any button, stores original
+  //  content so it can be restored later.
+  // ----------------------------------------------------------------
+
+  /**
+   * Put a button into loading state with spinner and optional custom text.
+   * Stores original innerHTML on the element for later restoration.
+   * @param {HTMLElement} btn        The button element
+   * @param {string}      [text]     Loading text (default: 'Loading...')
+   */
+  function setButtonLoading(btn, text) {
+    if (!btn) return;
+    // Store original state only once (avoid double-save)
+    if (!btn.dataset.tmOriginalHtml) {
+      btn.dataset.tmOriginalHtml = btn.innerHTML;
+      btn.dataset.tmOriginalDisabled = btn.disabled ? 'true' : 'false';
+    }
+    btn.disabled = true;
+    btn.classList.add('tm-btn-loading');
+    btn.innerHTML = '<span class="tm-spinner"></span>' + (text || 'Loading...');
+  }
+
+  /**
+   * Restore a button from loading state.
+   * @param {HTMLElement} btn          The button element
+   * @param {string}      [text]       Override text (if omitted, restores original innerHTML)
+   */
+  function clearButtonLoading(btn, text) {
+    if (!btn) return;
+    btn.disabled = btn.dataset.tmOriginalDisabled === 'true';
+    btn.classList.remove('tm-btn-loading');
+    if (text !== undefined) {
+      btn.innerHTML = text;
+    } else if (btn.dataset.tmOriginalHtml) {
+      btn.innerHTML = btn.dataset.tmOriginalHtml;
+    }
+    delete btn.dataset.tmOriginalHtml;
+    delete btn.dataset.tmOriginalDisabled;
+  }
+
+  // ----------------------------------------------------------------
   //  EXPOSE
   // ----------------------------------------------------------------
   window.TmTheme = {
@@ -577,8 +705,12 @@
     getAccent: getAccent,
     injectStyle: injectStyle,
     showToast: showToast,
+    setButtonLoading: setButtonLoading,
+    clearButtonLoading: clearButtonLoading,
     ACCENT_THEMES: ACCENT_THEMES
   };
+
+  window.TmLog = TmLog;
 
   // Module export for testing
   try {
@@ -587,7 +719,12 @@
       getAccent: getAccent,
       injectStyle: injectStyle,
       showToast: showToast,
-      ACCENT_THEMES: ACCENT_THEMES
+      setButtonLoading: setButtonLoading,
+      clearButtonLoading: clearButtonLoading,
+      ACCENT_THEMES: ACCENT_THEMES,
+      TmLog: TmLog,
+      _readDebugMode: readDebugMode,
+      _LOG_LEVELS: LOG_LEVELS
     };
   } catch (e) {
     // Browser environment
