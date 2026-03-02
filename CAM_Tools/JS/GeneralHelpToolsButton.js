@@ -269,7 +269,7 @@
         creditsLink.addEventListener('click', (event) => {
             event.preventDefault();
             if (window.TmTheme && window.TmTheme.showToast) {
-                window.TmTheme.showToast('v3.1.10 -- Ryan Satterfield -- Unofficial tool', 'info', 4000);
+                window.TmTheme.showToast('v3.2.0 -- Ryan Satterfield -- Unofficial tool', 'info', 4000);
             }
         });
         
