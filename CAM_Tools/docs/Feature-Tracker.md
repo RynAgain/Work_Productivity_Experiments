@@ -232,6 +232,8 @@ The style guide defines a standard floating panel pattern (`tm-floating-panel`) 
 - [x] general help tools has some questionable UI now -- **section headers span full grid width, removed redundant "Tools" h3, removed dead restricted section code + styles**
 - [x] bump version to 3.1.10 -- **@version, all 23 ?v= params, CAM_TOOLS_VERSION, credits toast**
 
+- [x] bump version to 3.2.0 -- **@version, all 24 ?v= cache-bust params in MainScript.user.js, CAM_TOOLS_VERSION in Settings.js, credits toast in GeneralHelpToolsButton.js; 7 changes: TmLog debug gating, loading spinners, shared form CSS, GCC CORS fix, GCC info icon, gear SVG upgrade, form dark-mode cleanup across 5 modules**
+
 ---
 
-*Last updated: 2026-03-02 -- v3.1.10*
+*Last updated: 2026-03-02 -- v3.2.0*
