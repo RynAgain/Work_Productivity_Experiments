@@ -291,11 +291,12 @@ setTimeout(function() {
                         <label style="margin-bottom:2px;display:block;color:#aaaaaa;font-size:13px;">Store/Region</label>
                         <input type="text" id="storeRegionInput" style="width:100%;padding:8px;border:1px solid #3f3f3f;border-radius:4px;font-size:14px;background:#0f0f0f;color:#f1f1f1;font-family:inherit;box-sizing:border-box;" placeholder="Codes, comma-separated">
                     </div>
-                    <label style="font-weight:500;display:flex;align-items:center;gap:4px;margin-top:18px;color:#aaaaaa;font-size:13px;">
-                        <input type="checkbox" id="allStoresCheckbox" style="margin-right:4px;accent-color:var(--tm-accent-primary, #3ea6ff);"> All Stores
+                    <label class="tm-checkbox-label" style="margin-top:18px;">
+                        <input type="checkbox" id="allStoresCheckbox">
+                        <span>All Stores</span>
                     </label>
                 </div>
-                <button id="generateRedriveFileButton" style="width:100%;margin-top:10px;background:var(--tm-accent-primary, #3ea6ff);color:#0f0f0f;border:none;border-radius:4px;padding:8px 0;font-size:14px;font-weight:500;cursor:pointer;transition:background 150ms ease;">Generate Redrive Files</button>
+                <button id="generateRedriveFileButton" class="tm-form-action">Generate Redrive Files</button>
             `;
 
             // Separator
@@ -322,7 +323,7 @@ setTimeout(function() {
                     <div style="font-weight:600;margin-bottom:4px;color:var(--tm-accent-primary, #3ea6ff);">Conversion Summary:</div>
                     <div id="statsContent"></div>
                 </div>
-                <button id="makeRedriveFileButton" style="width:100%;margin-top:10px;background:var(--tm-accent-primary, #3ea6ff);color:#0f0f0f;border:none;border-radius:4px;padding:8px 0;font-size:14px;font-weight:500;cursor:pointer;transition:background 150ms ease;opacity:0.5;" disabled>Make Redrive File</button>
+                <button id="makeRedriveFileButton" class="tm-form-action" disabled>Make Redrive File</button>
             `;
 
             contentArea.appendChild(leftColumn);

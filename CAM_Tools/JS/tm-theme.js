@@ -200,6 +200,109 @@
 }
 .tm-input::placeholder { color: var(--tm-text-disabled); }
 
+/* ---- Checkbox ---- */
+.tm-checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--tm-text-primary);
+  font-size: var(--tm-font-base);
+  font-weight: 500;
+  cursor: pointer;
+  margin: 0;
+  width: 100%;
+  user-select: none;
+}
+.tm-checkbox-label input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--tm-accent-primary);
+  cursor: pointer;
+  flex-shrink: 0;
+  margin: 0;
+}
+.tm-checkbox-label input[type="checkbox"]:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* ---- Form Field Label ---- */
+.tm-field-label {
+  color: var(--tm-text-secondary);
+  font-size: 13px;
+  margin: 0;
+  font-weight: 400;
+}
+
+/* ---- Form Layout ---- */
+.tm-form-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: var(--tm-space-4);
+  max-height: 80vh;
+  overflow-y: auto;
+}
+
+/* ---- Primary Action Button (form context) ---- */
+.tm-form-action {
+  width: 100%;
+  margin-top: var(--tm-space-2);
+  background: var(--tm-accent-primary);
+  color: var(--tm-bg-primary);
+  border: none;
+  border-radius: var(--tm-radius-sm);
+  padding: 10px 0;
+  font-size: var(--tm-font-base);
+  font-weight: 600;
+  font-family: var(--tm-font-family);
+  cursor: pointer;
+  transition: background var(--tm-transition-normal);
+}
+.tm-form-action:hover { background: var(--tm-accent-hover); }
+.tm-form-action:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* ---- Cancel/Secondary Action Button (form context) ---- */
+.tm-form-cancel {
+  width: 100%;
+  margin-top: var(--tm-space-1);
+  background: transparent;
+  color: var(--tm-text-secondary);
+  border: 1px solid var(--tm-border-default);
+  border-radius: var(--tm-radius-sm);
+  padding: 8px 0;
+  font-size: 13px;
+  font-weight: 500;
+  font-family: var(--tm-font-family);
+  cursor: pointer;
+  transition: all var(--tm-transition-normal);
+}
+.tm-form-cancel:hover {
+  color: var(--tm-text-primary);
+  border-color: var(--tm-border-strong);
+}
+
+/* ---- Select (dark) ---- */
+.tm-select {
+  width: 100%;
+  padding: 8px 10px;
+  border: 1px solid var(--tm-border-default);
+  border-radius: var(--tm-radius-sm);
+  font-size: var(--tm-font-base);
+  background: var(--tm-bg-primary);
+  color: var(--tm-text-primary);
+  font-family: var(--tm-font-family);
+  box-sizing: border-box;
+  transition: border-color var(--tm-transition-normal);
+}
+.tm-select:focus {
+  outline: none;
+  border-color: var(--tm-accent-primary);
+}
+
 /* ---- Toggle ---- */
 .tm-toggle {
   position: relative;

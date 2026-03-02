@@ -1,8 +1,8 @@
 /**
  * GroceryCentralConnect.js -- Query Grocery Central API for item metadata by scan code
- * Uses fetch() instead of GM_xmlhttpRequest (compatible with @grant none).
- * NOTE: If fetch fails due to CORS, the standalone userscript with GM_xmlhttpRequest
- *       is needed instead. Both *.amazon.dev domains typically allow cross-origin.
+ * Uses GM_xmlhttpRequest to bypass CORS restrictions when calling grocerycentral.amazon.dev
+ * from the cam.wfm.amazon.dev origin. Requires @grant GM_xmlhttpRequest and
+ * @connect grocerycentral.amazon.dev in the userscript header.
  */
 (function () {
   'use strict';
@@ -118,7 +118,24 @@
       border-bottom: 1px solid var(--tm-border-subtle, #303030);
       background: var(--tm-bg-secondary, #1a1a1a);
     }
-    .tm-gcc-title { font-size: var(--tm-font-md, 16px); font-weight: 600; margin: 0; color: var(--tm-text-primary, #f1f1f1); }
+    .tm-gcc-title { font-size: var(--tm-font-md, 16px); font-weight: 600; margin: 0; color: var(--tm-text-primary, #f1f1f1); display: flex; align-items: center; gap: 6px; }
+    .tm-gcc-info-icon {
+      display: inline-flex; align-items: center; justify-content: center;
+      width: 20px; height: 20px; border-radius: 50%;
+      background: var(--tm-border-default, #3f3f3f); color: var(--tm-text-primary, #f1f1f1);
+      cursor: pointer; transition: background var(--tm-transition-fast, 100ms ease);
+      outline: none; flex-shrink: 0;
+    }
+    .tm-gcc-info-icon:hover, .tm-gcc-info-icon:focus-visible { background: var(--tm-accent-primary, #3ea6ff); color: var(--tm-bg-primary, #0f0f0f); }
+    .tm-gcc-info-box {
+      padding: var(--tm-space-3, 12px);
+      margin: 0 var(--tm-space-3, 12px) var(--tm-space-2, 8px);
+      background: var(--tm-bg-tertiary, #242424);
+      border: 1px solid var(--tm-border-subtle, #303030);
+      border-radius: var(--tm-radius-sm, 4px);
+      font-size: 13px; line-height: 1.5;
+      color: var(--tm-text-secondary, #aaaaaa);
+    }
     .tm-gcc-close {
       width: 28px; height: 28px;
       display: flex; align-items: center; justify-content: center;
@@ -442,15 +459,30 @@
 
     console.log(LOG_PREFIX, 'Fetching item data for', scanCodes.length, 'code(s)');
 
-    const response = await fetch('https://grocerycentral.amazon.dev/frontdesk', {
-      method: 'POST',
-      headers: { 'Accept': '*/*', 'Content-Type': 'text/plain;charset=UTF-8' },
-      credentials: 'include',
-      body: JSON.stringify(body)
+    // Use GM_xmlhttpRequest to bypass CORS (requires @grant GM_xmlhttpRequest + @connect)
+    return new Promise(function (resolve, reject) {
+      if (typeof GM_xmlhttpRequest === 'undefined') {
+        reject(new Error('GM_xmlhttpRequest not available. Check that @grant GM_xmlhttpRequest is set in the userscript header.'));
+        return;
+      }
+      GM_xmlhttpRequest({
+        method: 'POST',
+        url: 'https://grocerycentral.amazon.dev/frontdesk',
+        headers: { 'Accept': '*/*', 'Content-Type': 'text/plain;charset=UTF-8' },
+        data: JSON.stringify(body),
+        anonymous: false,  // send cookies
+        onload: function (res) {
+          if (res.status >= 200 && res.status < 300) {
+            try { resolve(JSON.parse(res.responseText)); }
+            catch (e) { reject(new Error('Failed to parse GCC response: ' + e.message)); }
+          } else {
+            reject(new Error('HTTP ' + res.status + ': ' + res.statusText));
+          }
+        },
+        onerror: function (err) { reject(new Error('GM_xmlhttpRequest network error')); },
+        ontimeout: function () { reject(new Error('GM_xmlhttpRequest timed out')); }
+      });
     });
-
-    if (!response.ok) throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-    return response.json();
   }
 
   // ------------------------------------------------------------------
@@ -465,8 +497,19 @@
       <button class="tm-gcc-toggle" title="Grocery Central Connect">${ICONS.database}</button>
       <div class="tm-gcc-panel">
         <div class="tm-gcc-header">
-          <h3 class="tm-gcc-title">Grocery Central Connect</h3>
+          <h3 class="tm-gcc-title">Grocery Central Connect
+            <span class="tm-gcc-info-icon" tabindex="0" title="Usage info">${ICONS.info}</span>
+          </h3>
           <button class="tm-gcc-close" title="Close">${ICONS.close}</button>
+        </div>
+        <div class="tm-gcc-info-box" style="display:none;">
+          <div style="font-weight:600;margin-bottom:6px;color:var(--tm-text-primary, #f1f1f1);">Before using Grocery Central Connect:</div>
+          <ol style="margin:0 0 0 18px;padding:0;font-size:13px;line-height:1.6;color:var(--tm-text-secondary, #aaaaaa);">
+            <li>Open <a href="https://grocerycentral.amazon.dev" target="_blank" rel="noopener noreferrer" style="color:var(--tm-accent-primary, #3ea6ff);">grocerycentral.amazon.dev</a> in another tab and sign in.</li>
+            <li>This establishes the authentication cookie needed for API calls.</li>
+            <li>Return here and search by scan code / PLU, or use "Scan Page for ASINs".</li>
+          </ol>
+          <div style="margin-top:8px;font-size:12px;color:var(--tm-text-disabled, #717171);">You only need to do this once per browser session.</div>
         </div>
         <div class="tm-gcc-search">
           <label class="tm-gcc-label">Scan Code(s) / PLU(s)</label>
@@ -493,6 +536,21 @@
     container.querySelector('.tm-gcc-toggle').addEventListener('click', togglePanel);
     container.querySelector('.tm-gcc-close').addEventListener('click', togglePanel);
     container.querySelector('.tm-gcc-search-btn').addEventListener('click', performSearch);
+
+    // Info icon toggle
+    const infoIcon = container.querySelector('.tm-gcc-info-icon');
+    const infoBox = container.querySelector('.tm-gcc-info-box');
+    if (infoIcon && infoBox) {
+      infoIcon.addEventListener('click', function () {
+        infoBox.style.display = infoBox.style.display === 'none' ? 'block' : 'none';
+      });
+      infoIcon.addEventListener('keydown', function (e) {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          infoBox.style.display = infoBox.style.display === 'none' ? 'block' : 'none';
+        }
+      });
+    }
     container.querySelector('.tm-gcc-input').addEventListener('keypress', (e) => { if (e.key === 'Enter') performSearch(); });
     container.querySelector('.tm-gcc-scan-btn').addEventListener('click', scanPageForAsins);
 

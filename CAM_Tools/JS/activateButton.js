@@ -275,31 +275,31 @@ setTimeout(function() {
             contentArea.style.overflowY = 'auto';
 
             // Main content HTML
-            const iStyle = 'width:100%;padding:8px;border:1px solid #3f3f3f;border-radius:4px;font-size:14px;background:#0f0f0f;color:#f1f1f1;font-family:inherit;box-sizing:border-box;';
-            const lStyle = 'margin-bottom:2px;color:#aaaaaa;font-size:13px;';
+            contentArea.className = 'tm-form-stack';
             contentArea.innerHTML = `
-                <label style="${lStyle}">PLU(s)</label>
-                <input type="text" id="pluInput" style="${iStyle}" placeholder="PLUs, comma-separated">
-                <label style="${lStyle}">By</label>
-                <select id="bySelect" style="${iStyle}">
+                <label class="tm-field-label">PLU(s)</label>
+                <input type="text" id="pluInput" class="tm-input" placeholder="PLUs, comma-separated">
+                <label class="tm-field-label">By</label>
+                <select id="bySelect" class="tm-select">
                     <option value="Store">Store</option>
                     <option value="Region">Region</option>
                 </select>
-                <div style="display:flex;align-items:center;gap:8px;">
+                <div style="display:flex;align-items:center;gap:12px;">
                     <div style="flex:1;">
-                        <label style="${lStyle}display:block;">Store/Region</label>
-                        <input type="text" id="storeRegionInput" style="${iStyle}" placeholder="Codes, comma-separated">
+                        <label class="tm-field-label" style="display:block;margin-bottom:4px;">Store/Region</label>
+                        <input type="text" id="storeRegionInput" class="tm-input" placeholder="Codes, comma-separated">
                     </div>
-                    <label style="font-weight:500;display:flex;align-items:center;gap:4px;margin-top:18px;color:#aaaaaa;font-size:13px;">
-                        <input type="checkbox" id="allStoresCheckbox" style="margin-right:4px;accent-color:var(--tm-accent-primary, #3ea6ff);"> All Stores
+                    <label class="tm-checkbox-label" style="margin-top:18px;width:auto;flex-shrink:0;">
+                        <input type="checkbox" id="allStoresCheckbox">
+                        <span>All Stores</span>
                     </label>
                 </div>
-                <label style="${lStyle}">Andon Cord</label>
-                <select id="andonCordSelect" style="${iStyle}">
+                <label class="tm-field-label">Andon Cord</label>
+                <select id="andonCordSelect" class="tm-select">
                     <option value="Enabled">Enabled</option>
                     <option value="Disabled">Disabled</option>
                 </select>
-                <button id="generateUploadFileButton" style="width:100%;margin-top:10px;background:var(--tm-accent-primary, #3ea6ff);color:#0f0f0f;border:none;border-radius:4px;padding:8px 0;font-size:14px;font-weight:500;cursor:pointer;transition:background 150ms ease;">Generate Upload File</button>
+                <button id="generateUploadFileButton" class="tm-form-action">Generate Upload File</button>
             `;
             formContainer.appendChild(contentArea);
             overlay.appendChild(formContainer);

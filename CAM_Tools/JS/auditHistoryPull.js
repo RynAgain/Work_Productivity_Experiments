@@ -52,40 +52,45 @@
         statusContainer.style.position = 'relative';
         statusContainer.style.backgroundColor = '#1a1a1a';
         statusContainer.style.color = '#f1f1f1';
-        statusContainer.style.padding = '20px';
-        statusContainer.style.borderRadius = '5px';
-        statusContainer.style.width = '300px';
-        statusContainer.style.textAlign = 'center';
+        statusContainer.style.padding = '0';
+        statusContainer.style.borderRadius = '12px';
+        statusContainer.style.width = '340px';
+        statusContainer.style.maxWidth = '95vw';
+        statusContainer.style.border = '1px solid #303030';
+        statusContainer.style.boxShadow = '0 20px 60px rgba(0,0,0,0.5)';
+        statusContainer.style.fontFamily = "'Roboto', 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif";
+        statusContainer.style.overflow = 'hidden';
         statusContainer.innerHTML = `
-            <h3>Audit History Status</h3>
-            <p id="statusMessage">Initializing...</p>
-            <label>By</label>
-            <select id="bySelect" style="margin-top: 10px; width: 100%;">
-                <option value="Store">Store</option>
-                <option value="Region">Region</option>
-            </select>
-            <select id="storeSelect" style="margin-top: 10px; width: 100%;"></select>
-            <label><input type="checkbox" id="getAsinCheckbox" style="margin-top: 10px;"> Get ASIN (extra slow)</label>
-            <label><input type="checkbox" id="allStoresCheckbox" style="margin-top: 10px;"> All Stores</label>
-            <button id="nextRequestButton" style="margin-top: 10px; margin-right: 5px;">Next Request</button>
-            <button id="cancelButton" style="margin-top: 10px;">Cancel</button>
+            <div style="background:#242424;padding:12px 16px;font-size:16px;font-weight:600;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid #303030;">
+                <span>Audit History</span>
+                <span id="auditHistoryCloseBtn" style="font-size:22px;cursor:pointer;color:#aaaaaa;padding:0 4px;transition:color 150ms ease;">&times;</span>
+            </div>
+            <div class="tm-form-stack">
+                <p id="statusMessage" style="margin:0;font-size:13px;color:var(--tm-accent-primary, #3ea6ff);">Initializing...</p>
+                <label class="tm-field-label">By</label>
+                <select id="bySelect" class="tm-select">
+                    <option value="Store">Store</option>
+                    <option value="Region">Region</option>
+                </select>
+                <select id="storeSelect" class="tm-select"></select>
+                <label class="tm-checkbox-label">
+                    <input type="checkbox" id="getAsinCheckbox">
+                    <span>Get ASIN (extra slow)</span>
+                </label>
+                <label class="tm-checkbox-label">
+                    <input type="checkbox" id="allStoresCheckbox">
+                    <span>All Stores</span>
+                </label>
+                <div style="display:flex;gap:8px;">
+                    <button id="nextRequestButton" class="tm-form-action" style="flex:1;">Next Request</button>
+                    <button id="cancelButton" class="tm-form-cancel" style="flex:1;margin-top:0;">Cancel</button>
+                </div>
+            </div>
         `;
 
-        const closeButton = document.createElement('span');
-        closeButton.innerHTML = '&times;';
-        closeButton.style.position = 'absolute';
-        closeButton.style.top = '10px';
-        closeButton.style.right = '10px';
-        closeButton.style.fontSize = '24px';
-        closeButton.style.cursor = 'pointer';
-        closeButton.style.color = '#fff';
-        closeButton.style.backgroundColor = '#000';
-        closeButton.style.padding = '5px';
-        closeButton.style.borderRadius = '0';
-        closeButton.addEventListener('click', function() {
+        statusContainer.querySelector('#auditHistoryCloseBtn').addEventListener('click', function() {
             document.body.removeChild(overlay);
         });
-        statusContainer.appendChild(closeButton);
         overlay.appendChild(statusContainer);
         document.body.appendChild(overlay);
 

@@ -219,12 +219,12 @@ The style guide defines a standard floating panel pattern (`tm-floating-panel`) 
 - [x] code review of mass upload -- **duplicate overlay guard, alert()->toast, info icon dark mode, verbose logging noted**
 - [x] bottom bar is broken af -- **auto-show on load/switch, EI removed from bottomButtonIds, observer parity fix**
 - [x] scratch pad upgrades, fix spawning in corner -- **center on screen via transform, re-center on open unless dragged**
-- [x] integrate Grocery Central Connect -- **GroceryCentralConnect.js created, GM_xmlhttpRequest->fetch, added to @require**
-- [ ] UI/UX audit
-- [x] Settings icon upgrade -- **gear SVG already Lucide-style; bottom bar, category headers, scratchpad all got SVG icons in v3.1.0**
+- [x] integrate Grocery Central Connect -- **GroceryCentralConnect.js created, reverted to GM_xmlhttpRequest (fetch blocked by CORS); @grant GM_xmlhttpRequest + @connect grocerycentral.amazon.dev added to MainScript.user.js**
+- [-] UI/UX audit -- **shared tm-form CSS (tm-checkbox-label, tm-field-label, tm-form-stack, tm-form-action, tm-form-cancel, tm-select) in tm-theme.js; migrated DownloadButton, activateButton, RedriveButton, AddItemButton, auditHistoryPull to use shared classes**
+- [x] Settings icon upgrade -- **gear SVG upgraded to Lucide v2 clean path (settings-2); button, modal header, Appearance section all updated**
 - [x] Mass upload: extract magic numbers to named constants -- **8 constants at top of addMassUploaderFunctionality()**
 - [x] Mass upload: replace confirm() with non-blocking modal -- **showConfirmModal() dark-mode Promise-based dialog**
-- [x] Mass upload: reduce verbose PollingManager logging -- **MU_DEBUG gate on 19 console.log calls**
+- [x] Mass upload: reduce verbose PollingManager logging -- **MU_DEBUG replaced with TmLog.debug() gated by Settings.debugMode**
 - [ ] Update test suites for IIFE/dark-mode changes (11 suites failing)
 - [x] grocery central connect should take its place on with the rest of the menu buttons -- **added as 7th side menu icon (database SVG) in Settings.js; floating toggle kept as secondary access**
 - [x] edit existing items has a bottom button always visible? -- **className was 'ei-btn' but CSS defined '.tm-ei-btn'; class rename missed the constructor**

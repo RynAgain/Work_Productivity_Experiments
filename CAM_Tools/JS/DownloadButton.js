@@ -241,32 +241,33 @@ setTimeout(function() {
             contentArea.style.maxHeight = '80vh';
             contentArea.style.overflowY = 'auto';
 
-            const inputStyle = 'width:100%;padding:8px;border:1px solid #3f3f3f;border-radius:4px;font-size:14px;background:#0f0f0f;color:#f1f1f1;font-family:inherit;box-sizing:border-box;';
-            const labelStyle = 'color:#aaaaaa;font-size:13px;margin-top:2px;';
-            const checkStyle = 'font-weight:500;display:flex;align-items:center;gap:8px;color:#f1f1f1;font-size:13px;';
+            contentArea.className = 'tm-form-stack';
 
             contentArea.innerHTML = `
-                <label style="${checkStyle}">
-                    <input type="checkbox" id="everythingCheckbox" style="accent-color:var(--tm-accent-primary, #3ea6ff);"> Everything, Everywhere
+                <label class="tm-checkbox-label">
+                    <input type="checkbox" id="everythingCheckbox">
+                    <span>Everything, Everywhere</span>
                 </label>
-                <label style="${labelStyle}">Specific PLUs</label>
-                <input type="text" id="pluInput" style="${inputStyle}" placeholder="PLUs, comma-separated">
-                <label style="${checkStyle}">
-                    <input type="checkbox" id="allPlusCheckbox" style="accent-color:var(--tm-accent-primary, #3ea6ff);"> All PLUs
+                <label class="tm-field-label">Specific PLUs</label>
+                <input type="text" id="pluInput" class="tm-input" placeholder="PLUs, comma-separated">
+                <label class="tm-checkbox-label">
+                    <input type="checkbox" id="allPlusCheckbox">
+                    <span>All PLUs</span>
                 </label>
-                <label style="${labelStyle}">By</label>
-                <select id="bySelect" style="${inputStyle}">
+                <label class="tm-field-label">By</label>
+                <select id="bySelect" class="tm-select">
                     <option value="Store">Store</option>
                     <option value="Region">Region</option>
                 </select>
-                <label style="${labelStyle}">Store/Region</label>
-                <input type="text" id="storeRegionInput" style="${inputStyle}" placeholder="Codes, comma-separated">
-                <label style="${checkStyle}">
-                    <input type="checkbox" id="allStoresCheckbox" style="accent-color:var(--tm-accent-primary, #3ea6ff);"> All Stores/Regions
+                <label class="tm-field-label">Store/Region</label>
+                <input type="text" id="storeRegionInput" class="tm-input" placeholder="Codes, comma-separated">
+                <label class="tm-checkbox-label">
+                    <input type="checkbox" id="allStoresCheckbox">
+                    <span>All Stores/Regions</span>
                 </label>
-                <button id="executeDownloadButton" style="width:100%;margin-top:12px;background:var(--tm-accent-primary, #3ea6ff);color:#0f0f0f;border:none;border-radius:4px;padding:8px 0;font-size:14px;font-weight:500;cursor:pointer;transition:background 150ms ease;">Download</button>
-                <div id="downloadProgress" style="display:none;margin-top:10px;text-align:center;font-size:13px;color:var(--tm-accent-primary, #3ea6ff);">Wait for Parameters</div>
-                <button id="cancelDownloadButton" style="width:100%;margin-top:8px;background:transparent;color:#d32f2f;border:1px solid #d32f2f;border-radius:4px;padding:8px 0;font-size:14px;font-weight:500;cursor:pointer;transition:all 150ms ease;">Cancel</button>
+                <button id="executeDownloadButton" class="tm-form-action">Download</button>
+                <div id="downloadProgress" style="display:none;text-align:center;font-size:13px;color:var(--tm-accent-primary, #3ea6ff);">Wait for Parameters</div>
+                <button id="cancelDownloadButton" class="tm-form-cancel">Cancel</button>
             `;
             formContainer.appendChild(contentArea);
 

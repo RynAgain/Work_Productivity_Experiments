@@ -347,35 +347,37 @@ setTimeout(function() {
             contentArea.style.overflowY = 'auto';
 
             // Main content HTML
+            contentArea.className = 'tm-form-stack';
             contentArea.innerHTML = `
-                <div style="display:flex;align-items:center;gap:8px;">
+                <div style="display:flex;align-items:center;gap:12px;">
                     <div style="flex:1;">
-                        <label style="margin-bottom:2px;display:block;">Store - 3 Letter Code</label>
-                        <input type="text" id="storeCode" style="width:100%;padding:6px 8px;border:1px solid #ccc;border-radius:5px;font-size:14px;" placeholder="AAA">
+                        <label class="tm-field-label" style="display:block;margin-bottom:4px;">Store - 3 Letter Code</label>
+                        <input type="text" id="storeCode" class="tm-input" placeholder="AAA">
                     </div>
-                    <label style="font-weight:500;display:flex;align-items:center;gap:4px;margin-top:18px;">
-                        <input type="checkbox" id="allStoresCheckbox" style="margin-right:4px;"> All Stores
+                    <label class="tm-checkbox-label" style="margin-top:18px;width:auto;flex-shrink:0;">
+                        <input type="checkbox" id="allStoresCheckbox">
+                        <span>All Stores</span>
                     </label>
                 </div>
-                <label style="margin-bottom:2px;">PLU</label>
-                <input type="text" id="plu" style="width:100%;padding:6px 8px;border:1px solid #ccc;border-radius:5px;font-size:14px;" placeholder="Enter PLU(s) separated by commas">
-                <label style="margin-bottom:2px;">Current Inventory</label>
-                <input type="number" id="currentInventory" style="width:100%;padding:6px 8px;border:1px solid #ccc;border-radius:5px;font-size:14px;" placeholder="0">
-                <label style="margin-bottom:2px;">Availability</label>
-                <select id="availability" style="width:100%;padding:6px 8px;border:1px solid #ccc;border-radius:5px;font-size:14px;">
+                <label class="tm-field-label">PLU</label>
+                <input type="text" id="plu" class="tm-input" placeholder="Enter PLU(s) separated by commas">
+                <label class="tm-field-label">Current Inventory</label>
+                <input type="number" id="currentInventory" class="tm-input" placeholder="0">
+                <label class="tm-field-label">Availability</label>
+                <select id="availability" class="tm-select">
                     <option value="Limited">Limited</option>
                     <option value="Unlimited">Unlimited</option>
                 </select>
-                <label style="margin-bottom:2px;">Andon Cord</label>
-                <select id="andonCord" style="width:100%;padding:6px 8px;border:1px solid #ccc;border-radius:5px;font-size:14px;">
+                <label class="tm-field-label">Andon Cord</label>
+                <select id="andonCord" class="tm-select">
                     <option value="Enabled">Enabled</option>
                     <option value="Disabled">Disabled</option>
                 </select>
-                <label style="margin-bottom:2px;">Tracking Start Date</label>
-                <input type="date" id="trackingStartDate" style="width:100%;padding:6px 8px;border:1px solid #ccc;border-radius:5px;font-size:14px;">
-                <label style="margin-bottom:2px;">Tracking End Date</label>
-                <input type="date" id="trackingEndDate" style="width:100%;padding:6px 8px;border:1px solid #ccc;border-radius:5px;font-size:14px;">
-                <button id="generateFileButton" style="width:100%;margin-top:10px;background:var(--tm-accent-primary, #3ea6ff);color:#0f0f0f;border:none;border-radius:4px;padding:8px 0;font-size:14px;font-weight:500;cursor:pointer;transition:background 150ms ease;">Generate File</button>
+                <label class="tm-field-label">Tracking Start Date</label>
+                <input type="date" id="trackingStartDate" class="tm-input">
+                <label class="tm-field-label">Tracking End Date</label>
+                <input type="date" id="trackingEndDate" class="tm-input">
+                <button id="generateFileButton" class="tm-form-action">Generate File</button>
             `;
             formContainer.appendChild(contentArea);
             overlay.appendChild(formContainer);

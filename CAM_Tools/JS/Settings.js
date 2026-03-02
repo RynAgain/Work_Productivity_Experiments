@@ -23,7 +23,7 @@
   // ------------------------------------------------------------------
   //  UPDATE SYSTEM CONFIGURATION
   // ------------------------------------------------------------------
-  const CAM_TOOLS_VERSION = '3.1.10'; // Extracted from MainScript.user.js @version
+  const CAM_TOOLS_VERSION = '3.2.0'; // Extracted from MainScript.user.js @version
   const GITHUB_API_URL = 'https://api.github.com/repos/RynAgain/Work_Productivity_Experiments/releases/latest'; //we don't really use releases for tm scripts
   const GITHUB_RAW_URL = 'https://raw.githubusercontent.com/RynAgain/Work_Productivity_Experiments/main/CAM_Tools/MainScript.user.js';
   const UPDATE_CHECK_INTERVAL = 4 * 60 * 60 * 1000; // 4 hours in milliseconds
@@ -292,25 +292,10 @@
     id: 'settings-btn',
     title: 'Settings',
     html: `
-      <svg width="22" height="22" viewBox="0 0 24 24" fill="none"
-           stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none"
+           stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/>
         <circle cx="12" cy="12" r="3"/>
-        <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2
-                 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0
-                 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0
-                 1 1-4 0v-.09A1.65 1.65 0 0 0 8 19.4a1.65
-                 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1
-                 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0
-                 4.6 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0
-                 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 8a1.65
-                 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0
-                 1 1 2.83-2.83l.06.06A1.65 1.65 0 0
-                 0 8 4.6a1.65 1.65 0 0 0 1-1.51V3a2
-                 2 0 1 1 4 0v.09A1.65 1.65 0 0 0
-                 16 4.6a1.65 1.65 0 0 0 1.82-.33l.06-.06a2
-                 2 0 1 1 2.83 2.83l-.06-.06A1.65 1.65 0 0
-                 0 19.4 8c.14.31.22.65.22 1v.09A1.65
-                 1.65 0 0 0 21 12c0 .35-.08.69-.22 1z"/>
       </svg>`,
     style: {
       position: 'fixed', left: '0', top: 'calc(10vh + 192px)',
@@ -721,8 +706,9 @@
                   display:flex;align-items:center;gap:8px;padding:14px 18px;
                   background:#242424;border-bottom:1px solid #303030;border-radius:12px 12px 0 0;
                   font-family:'Roboto','Segoe UI',sans-serif;flex-shrink:0;">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#aaaaaa" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 8 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.6 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 8a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 8 4.6a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09A1.65 1.65 0 0 0 16 4.6a1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06-.06A1.65 1.65 0 0 0 19.4 8c.14.31.22.65.22 1z"/>
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#aaaaaa" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/>
+          <circle cx="12" cy="12" r="3"/>
         </svg>
         <span>Settings</span><span style="flex:1"></span>
         <button id="settings-close" style="background:none;border:none;
@@ -736,7 +722,8 @@
         <summary style="font-size:14px;font-weight:600;color:#f1f1f1;cursor:pointer;padding:8px 0;
                         display:flex;align-items:center;gap:8px;list-style:none;user-select:none;">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="${a}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 8 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.6 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 8a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 8 4.6a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09A1.65 1.65 0 0 0 16 4.6a1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06-.06A1.65 1.65 0 0 0 19.4 8c.14.31.22.65.22 1z"/>
+            <path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/>
+            <circle cx="12" cy="12" r="3"/>
           </svg>
           Appearance
         </summary>
