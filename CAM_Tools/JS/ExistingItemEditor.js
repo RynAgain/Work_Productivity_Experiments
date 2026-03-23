@@ -862,17 +862,17 @@
     //}  //Removed password prompt, it is no longer needed
     if ($('#' + OVERLAY_ID)) return;
 
-    const overlay = createEl('div', { id: OVERLAY_ID, className: 'ei-overlay' });
-    const card = createEl('div', { className: 'ei-card' });
+    const overlay = createEl('div', { id: OVERLAY_ID, className: 'tm-ei-overlay' });
+    const card = createEl('div', { className: 'tm-ei-card' });
     overlay.appendChild(card);
 
-    const header = createEl('div', { className: 'ei-header' }, 'Edit Existing Item');
+    const header = createEl('div', { className: 'tm-ei-header' }, 'Edit Existing Item');
     const closeX = createEl('button', {}, '&times;');
     closeX.onclick = () => overlay.remove();
     header.appendChild(closeX);
     card.appendChild(header);
 
-    const body = createEl('div', { className: 'ei-body' });
+    const body = createEl('div', { className: 'tm-ei-body' });
     card.appendChild(body);
 
     body.innerHTML = `
@@ -916,7 +916,7 @@
         <option value="Sushi">Sushi</option>
       </select>
 
-      <button id="ei-fetch" class="ei-action green">Edit Items</button>
+      <button id="ei-fetch" class="tm-ei-action green">Edit Items</button>
       <div id="ei-progress" style="display:none;margin-top:8px;text-align:center;font-size:15px;color:#004E36;">
         <div class="progress-text">Waiting…</div>
         <div class="progress-bar" style="width:100%;height:4px;background:#303030;border-radius:2px;margin-top:4px;">
@@ -1273,7 +1273,7 @@
    * -------------------------------------------------- */
   const addCloseButton = (container) => {
     const closeButton = createEl('button', {
-      className: 'ei-close-btn',
+      className: 'tm-ei-close-btn',
       innerHTML: '&times;',
       title: 'Close Editor'
     });
@@ -1377,23 +1377,23 @@
   };
 
   const addToolbar = (container, dataModel, undoManager, autoSaveManager) => {
-    const toolbar = createEl('div', { className: 'ei-toolbar' });
-    
+    const toolbar = createEl('div', { className: 'tm-ei-toolbar' });
+
     toolbar.innerHTML = `
-      <div class="ei-toolbar-group">
+      <div class="tm-ei-toolbar-group">
         <button id="ei-undo-btn" title="Undo">↶ Undo</button>
         <button id="ei-redo-btn" title="Redo">↷ Redo</button>
       </div>
-      <div class="ei-toolbar-group">
+      <div class="tm-ei-toolbar-group">
         <button id="ei-save-btn" title="Manual Save">💾 Save</button>
         <button id="ei-clear-autosave-btn" title="Clear Auto-save">🗑 Clear Auto-save</button>
-        <span class="ei-autosave-indicator" id="ei-autosave-indicator">Auto-save active</span>
+        <span class="tm-ei-autosave-indicator" id="ei-autosave-indicator">Auto-save active</span>
       </div>
-      <div class="ei-toolbar-group">
+      <div class="tm-ei-toolbar-group">
         <button id="ei-validate-btn" title="Validate Data">✓ Validate</button>
         <button id="ei-clear-errors-btn" title="Clear Error Highlighting">Clear Errors</button>
       </div>
-      <div class="ei-toolbar-group">
+      <div class="tm-ei-toolbar-group">
         <span style="font-size:12px;color:#666;">Total Rows: <span id="ei-row-count">0</span></span>
       </div>
     `;
@@ -1450,7 +1450,7 @@
   };
 
   const addFilterBar = (container) => {
-    const filterBar = createEl('div', { className: 'ei-filter-bar' });
+    const filterBar = createEl('div', { className: 'tm-ei-filter-bar' });
     
     filterBar.innerHTML = `
       <input type="text" id="ei-search" placeholder="Search store, item name, PLU..." style="flex:1;min-width:200px;">
@@ -1623,8 +1623,8 @@
   };
 
   const addTable = (container, dataModel, undoManager, autoSaveManager, validationManager, teamData = []) => {
-    const tableContainer = createEl('div', { id: TABLE_CONTAINER, className: 'ei-table-container' });
-    const table = createEl('table', { id: 'ei-data-table', className: 'ei-table' });
+    const tableContainer = createEl('div', { id: TABLE_CONTAINER, className: 'tm-ei-table-container' });
+    const table = createEl('table', { id: 'ei-data-table', className: 'tm-ei-table' });
     
     // Create header with selection column
     const thead = createEl('thead');
@@ -1643,7 +1643,7 @@
     
     // Cosmetic column header
     COSMETIC_HEADERS.forEach(header => {
-      const th = createEl('th', { className: 'ei-cosmetic-column' }, header);
+      const th = createEl('th', { className: 'tm-ei-cosmetic-column' }, header);
       th.title = 'Read-only column for filtering (not included in export)';
       headerRow.appendChild(th);
     });
@@ -1665,7 +1665,7 @@
         
         // Selection checkbox
         const selectTd = createEl('td');
-        selectTd.innerHTML = `<input type="checkbox" class="ei-row-select" data-row="${actualRowIndex}">`;
+        selectTd.innerHTML = `<input type="checkbox" class="tm-ei-row-select" data-row="${actualRowIndex}">`;
         tr.appendChild(selectTd);
         
         // Data cells
@@ -1676,16 +1676,16 @@
           
           let input;
           if (colIndex === 3) { // Availability
-            input = createEl('select', { className: 'ei-cell-select' });
+            input = createEl('select', { className: 'tm-ei-cell-select' });
             input.innerHTML = '<option value="Limited">Limited</option><option value="Unlimited">Unlimited</option>';
             input.value = cell || 'Limited';
           } else if (colIndex === 6) { // Andon Cord
-            input = createEl('select', { className: 'ei-cell-select' });
+            input = createEl('select', { className: 'tm-ei-cell-select' });
             input.innerHTML = '<option value="Enabled">Enabled</option><option value="Disabled">Disabled</option>';
             input.value = cell || 'Disabled';
           } else if (colIndex === 4 || colIndex === 5) { // Inventory or Sales Floor Capacity
             input = createEl('input', {
-              className: 'ei-cell-input',
+              className: 'tm-ei-cell-input',
               type: 'number',
               min: '0',
               max: '10000',
@@ -1693,13 +1693,13 @@
             });
           } else if (colIndex === 7 || colIndex === 8) { // Tracking Start Date or Tracking End Date
             input = createEl('input', {
-              className: 'ei-cell-input',
+              className: 'tm-ei-cell-input',
               type: 'date',
               value: cell || ''
             });
           } else {
             input = createEl('input', {
-              className: 'ei-cell-input',
+              className: 'tm-ei-cell-input',
               type: 'text',
               value: cell || ''
             });
@@ -1737,10 +1737,10 @@
               // Real-time validation
               const cellErrors = validationManager.validateCell(actualRowIndex, colIndex, newValue, dataModel);
               if (cellErrors.length > 0) {
-                td.classList.add('ei-error');
+                td.classList.add('tm-ei-error');
                 td.title = cellErrors.join(', ');
               } else {
-                td.classList.remove('ei-error');
+                td.classList.remove('tm-ei-error');
                 td.title = '';
               }
             }
@@ -1748,11 +1748,11 @@
 
           // Add focus/blur effects
           input.addEventListener('focus', () => {
-            td.classList.add('ei-focused');
+            td.classList.add('tm-ei-focused');
           });
           
           input.addEventListener('blur', () => {
-            td.classList.remove('ei-focused');
+            td.classList.remove('tm-ei-focused');
           });
 
           td.appendChild(input);
@@ -1760,10 +1760,10 @@
         });
         
         // Add cosmetic column 1: Reserved Quantity
-        const reservedTd = createEl('td', { className: 'ei-cosmetic-column' });
+        const reservedTd = createEl('td', { className: 'tm-ei-cosmetic-column' });
         const reservedValue = dataModel.getReservedQuantity(actualRowIndex);
         const reservedInput = createEl('input', {
-          className: 'ei-cell-input',
+          className: 'tm-ei-cell-input',
           type: 'text',
           value: reservedValue,
           readOnly: true,
@@ -1774,10 +1774,10 @@
         tr.appendChild(reservedTd);
         
         // Add cosmetic column 2: Online Availability
-        const onlineTd = createEl('td', { className: 'ei-cosmetic-column' });
+        const onlineTd = createEl('td', { className: 'tm-ei-cosmetic-column' });
         const onlineValue = dataModel.getOnlineAvailability(actualRowIndex);
         const onlineInput = createEl('input', {
-          className: 'ei-cell-input',
+          className: 'tm-ei-cell-input',
           type: 'text',
           value: onlineValue,
           readOnly: true,
@@ -1809,7 +1809,7 @@
     
     // Connect individual row selections
     tbody.addEventListener('change', (e) => {
-      if (e.target.classList.contains('ei-row-select')) {
+      if (e.target.classList.contains('tm-ei-row-select')) {
         updateRowSelection(e.target);
         
         // Update select all checkbox
@@ -1824,14 +1824,14 @@
   const updateRowSelection = (checkbox) => {
     const row = checkbox.closest('tr');
     if (checkbox.checked) {
-      row.classList.add('ei-selected');
+      row.classList.add('tm-ei-selected');
     } else {
-      row.classList.remove('ei-selected');
+      row.classList.remove('tm-ei-selected');
     }
   };
 
   const addBulkOperations = (container, dataModel, undoManager, autoSaveManager) => {
-    const bulkOps = createEl('div', { className: 'ei-bulk-ops', style: 'display:none;' });
+    const bulkOps = createEl('div', { className: 'tm-ei-bulk-ops', style: 'display:none;' });
     
     bulkOps.innerHTML = `
       <strong>Bulk Operations:</strong>
@@ -1861,7 +1861,7 @@
     
     // Listen for selection changes
     document.addEventListener('change', (e) => {
-      if (e.target.classList.contains('ei-row-select') || e.target.id === 'ei-select-all') {
+      if (e.target.classList.contains('tm-ei-row-select') || e.target.id === 'ei-select-all') {
         updateBulkOpsVisibility();
       }
     });
@@ -2069,7 +2069,7 @@
             </select>
             <input id="ei-increment-input" type="number" value="1" min="-999" max="999" step="1" placeholder="e.g., 5"
                    style="width:80px;padding:6px;border:1px solid #ccc;border-radius:4px;box-sizing:border-box;">
-            <button id="ei-increment-btn" class="ei-action blue"
+            <button id="ei-increment-btn" class="tm-ei-action blue"
                     style="padding:6px 18px;font-size:14px;margin-top:0;white-space:nowrap;">Apply</button>
             <span id="ei-increment-help" style="color:#666;font-size:12px;flex-shrink:0;">(Limited items only, -999 to 999)</span>
           </div>
@@ -2078,9 +2078,9 @@
         <div>
           <label style="font-weight:500;">Quick Actions:</label>
           <div style="display:flex;gap:8px;margin-top:4px;flex-wrap:wrap;">
-            <button id="ei-validate-all-btn" class="ei-action green"
+            <button id="ei-validate-all-btn" class="tm-ei-action green"
                     style="padding:6px 12px;font-size:14px;margin-top:0;flex:1;min-width:100px;">Validate All</button>
-            <button id="ei-download-btn" class="ei-action blue"
+            <button id="ei-download-btn" class="tm-ei-action blue"
                     style="padding:6px 12px;font-size:14px;margin-top:0;flex:1;min-width:100px;">Download CSV</button>
           </div>
           <label style="font-weight:400;display:flex;align-items:center;gap:6px;margin-top:8px;font-size:13px;color:#666;">
@@ -2246,7 +2246,7 @@
     errors.forEach(error => {
       const cell = document.querySelector(`td[data-row="${error.row}"][data-col="${error.col}"]`);
       if (cell) {
-        cell.classList.add('ei-error');
+        cell.classList.add('tm-ei-error');
         cell.title = error.msg;
       }
     });

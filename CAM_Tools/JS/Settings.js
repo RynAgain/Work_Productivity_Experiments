@@ -23,7 +23,7 @@
   // ------------------------------------------------------------------
   //  UPDATE SYSTEM CONFIGURATION
   // ------------------------------------------------------------------
-  const CAM_TOOLS_VERSION = '3.2.0'; // Extracted from MainScript.user.js @version
+  const CAM_TOOLS_VERSION = '3.2.1'; // Extracted from MainScript.user.js @version
   const GITHUB_API_URL = 'https://api.github.com/repos/RynAgain/Work_Productivity_Experiments/releases/latest'; //we don't really use releases for tm scripts
   const GITHUB_RAW_URL = 'https://raw.githubusercontent.com/RynAgain/Work_Productivity_Experiments/main/CAM_Tools/MainScript.user.js';
   const UPDATE_CHECK_INTERVAL = 4 * 60 * 60 * 1000; // 4 hours in milliseconds
