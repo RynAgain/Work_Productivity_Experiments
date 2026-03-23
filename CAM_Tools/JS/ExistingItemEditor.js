@@ -847,6 +847,8 @@
       className: 'tm-ei-btn',
       innerHTML: OPEN_ICON_SVG
     });
+    // Hidden from view -- the iconbar button in Settings.js triggers this via .click()
+    btn.style.display = 'none';
     document.body.appendChild(btn);
     btn.onclick = openOverlay;
   };
@@ -1286,9 +1288,6 @@
         if (container._eiAutoSaveManager) {
           container._eiAutoSaveManager.destroy();
         }
-        // Restore the edit button
-        const editBtn = $('#' + EDIT_BTN_ID);
-        if (editBtn) editBtn.style.display = '';
       }
     };
     
@@ -1350,10 +1349,6 @@
       id: 'ei-interface'
     });
     document.body.appendChild(interfaceContainer); // Append to body instead of ctx
-    
-    // Hide the edit button while the editor interface is open
-    const editBtn = $('#' + EDIT_BTN_ID);
-    if (editBtn) editBtn.style.display = 'none';
     
     // Store references
     interfaceContainer._eiDataModel = dataModel;
