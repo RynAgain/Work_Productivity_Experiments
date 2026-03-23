@@ -1286,6 +1286,9 @@
         if (container._eiAutoSaveManager) {
           container._eiAutoSaveManager.destroy();
         }
+        // Restore the edit button
+        const editBtn = $('#' + EDIT_BTN_ID);
+        if (editBtn) editBtn.style.display = '';
       }
     };
     
@@ -1343,10 +1346,14 @@
     const validationManager = new ValidationManager();
     
     // Create a container for the entire interface with proper containment
-    const interfaceContainer = createEl('div', { 
+    const interfaceContainer = createEl('div', {
       id: 'ei-interface'
     });
     document.body.appendChild(interfaceContainer); // Append to body instead of ctx
+    
+    // Hide the edit button while the editor interface is open
+    const editBtn = $('#' + EDIT_BTN_ID);
+    if (editBtn) editBtn.style.display = 'none';
     
     // Store references
     interfaceContainer._eiDataModel = dataModel;
