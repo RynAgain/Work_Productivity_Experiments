@@ -1799,7 +1799,7 @@
     container.appendChild(tableContainer);
     
     // Connect select all checkbox
-    $('#tm-ei-select-all').onchange = (e) => {
+    $('#ei-select-all').onchange = (e) => {
       const checkboxes = document.querySelectorAll('.tm-ei-row-select');
       checkboxes.forEach(cb => {
         cb.checked = e.target.checked;
@@ -1815,7 +1815,7 @@
         // Update select all checkbox
         const allCheckboxes = document.querySelectorAll('.tm-ei-row-select');
         const checkedCheckboxes = document.querySelectorAll('.tm-ei-row-select:checked');
-        $('#tm-ei-select-all').checked = allCheckboxes.length === checkedCheckboxes.length;
+        $('#ei-select-all').checked = allCheckboxes.length === checkedCheckboxes.length;
         $('#ei-select-all').indeterminate = checkedCheckboxes.length > 0 && checkedCheckboxes.length < allCheckboxes.length;
       }
     });

@@ -237,6 +237,7 @@ The style guide defines a standard floating panel pattern (`tm-floating-panel`) 
 ---
 
 3/23
-- [x] edit existing items lost UI -- fixed 28 CSS/JS class name mismatches from v3.0.0 facelift (ei-* -> tm-ei-*); added 26 unit tests
+- [x] edit existing items lost UI -- fixed 28 CSS/JS class name mismatches from v3.0.0 facelift (ei-* -> tm-ei-*); added 26 unit tests (v3.2.1)
+- [x] edit existing items export/controls missing -- fixed select-all checkbox ID incorrectly prefixed (tm-ei-select-all -> ei-select-all); crash in addTable() prevented addControls() from rendering (v3.2.2)
 
 *Last updated: 2026-03-02 -- v3.2.0*
