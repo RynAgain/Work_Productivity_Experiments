@@ -241,7 +241,7 @@ The style guide defines a standard floating panel pattern (`tm-floating-panel`) 
 - [x] edit existing items export/controls missing -- fixed select-all checkbox ID incorrectly prefixed (tm-ei-select-all -> ei-select-all); crash in addTable() prevented addControls() from rendering (v3.2.2)
 - [x] edit existing items stray button overlapping content -- hide edit button when table editor is open, restore on close (v3.2.3)
 - [x] edit existing items floating button is now redundant (iconbar provides entry) -- permanently hidden via display:none, kept in DOM as click proxy for iconbar (v3.2.4)
-- [ ] Settings.js update toggle is bugged -- red pill-style toggle for "Auto-check for updates" has visual/functional issues
+- [x] Settings.js update toggle is bugged -- removed orphaned button-style `.tm-toggle` CSS block (`.active` class + `::after` knob) from tm-theme.js that conflicted with the correct checkbox-based toggle pattern; 19 regression tests added (v3.2.5)
 - [ ] DownloadButton.js (and elsewhere as well) checkboxes are plain unstyled squares -- "Everything, Everywhere" and "All PLUs" checkboxes need toggle/styled checkbox treatment to match dark theme
 
-*Last updated: 2026-03-23 -- v3.2.4*
+*Last updated: 2026-03-24 -- v3.2.5*

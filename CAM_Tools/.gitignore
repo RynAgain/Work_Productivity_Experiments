@@ -2,3 +2,6 @@
 *.csv
 *.xls
 *.xlsx
+
+# Dependencies
+node_modules/
