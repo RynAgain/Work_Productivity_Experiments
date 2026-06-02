@@ -470,16 +470,21 @@ setTimeout(function() {
                         if(allItems.length > 0) {
                             const desiredHeaders = Object.keys(allItems[0]);
                             
+                            // RFC 4180 compliant field escaping: wrap each field in
+                            // double quotes and double any embedded double quotes so
+                            // commas/quotes in item names do not break the CSV.
+                            const escapeCsv = (val) => `"${String(val ?? '').replace(/"/g, '""')}"`;
+
                             // Build CSV content efficiently without stack overflow
                             const csvRows = [desiredHeaders.join(",")];
                             
                             // Process items in chunks to avoid stack overflow
                             for (let i = 0; i < allItems.length; i++) {
-                                const row = desiredHeaders.map(header => "\"" + (allItems[i][header] || "") + "\"").join(",");
+                                const row = desiredHeaders.map(header => escapeCsv(allItems[i][header])).join(",");
                                 csvRows.push(row);
                             }
                             
-                            const csvContent = csvRows.join("\n");
+                            const csvContent = csvRows.join("\r\n");
                             
                             // Use Blob instead of data URI to handle large files
                             const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });

@@ -67,14 +67,18 @@
                 downloadItemListTemplate.addEventListener('click', function(event) {
                     event.preventDefault();
                     const headers = ['sku', 'itemName', 'region'];
-                    const csvContent = "data:text/csv;charset=utf-8," + headers.join(",") + "\n";
-                    const encodedUri = encodeURI(csvContent);
+                    // Use a Blob instead of a data: URI so reserved characters such as
+                    // '#' are never interpreted as a URI fragment delimiter.
+                    const csvContent = headers.join(",") + "\r\n";
+                    const blob = new Blob(["\uFEFF" + csvContent], { type: 'text/csv;charset=utf-8;' });
+                    const objectUrl = URL.createObjectURL(blob);
                     const link = document.createElement("a");
-                    link.setAttribute("href", encodedUri);
+                    link.setAttribute("href", objectUrl);
                     link.setAttribute("download", "ItemListTemplate.csv");
                     document.body.appendChild(link);
                     link.click();
                     document.body.removeChild(link);
+                    URL.revokeObjectURL(objectUrl);
                 });
             } else {
                 console.warn('downloadItemListTemplate not found in the DOM.');
@@ -85,14 +89,18 @@
                 downloadStoreMapTemplate.addEventListener('click', function(event) {
                     event.preventDefault();
                     const headers = ['Store ID', 'Region', 'Merchant ID', 'WFMOA Merchant ID'];
-                    const csvContent = "data:text/csv;charset=utf-8," + headers.join(",") + "\n";
-                    const encodedUri = encodeURI(csvContent);
+                    // Use a Blob instead of a data: URI so reserved characters such as
+                    // '#' are never interpreted as a URI fragment delimiter.
+                    const csvContent = headers.join(",") + "\r\n";
+                    const blob = new Blob(["\uFEFF" + csvContent], { type: 'text/csv;charset=utf-8;' });
+                    const objectUrl = URL.createObjectURL(blob);
                     const link = document.createElement("a");
-                    link.setAttribute("href", encodedUri);
+                    link.setAttribute("href", objectUrl);
                     link.setAttribute("download", "StoreMapTemplate.csv");
                     document.body.appendChild(link);
                     link.click();
                     document.body.removeChild(link);
+                    URL.revokeObjectURL(objectUrl);
                 });
             } else {
                 console.warn('downloadStoreMapTemplate not found in the DOM.');

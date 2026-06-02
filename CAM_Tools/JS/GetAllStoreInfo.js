@@ -181,19 +181,31 @@
                 .then(results => {
                     console.log('[GetAllStoreInfo.js] All store info:', results);
 
-                    // Generate CSV content
-                    const csvContent = "data:text/csv;charset=utf-8,"
-                        + ["Store ID,Region,Merchant ID,WFMOA Merchant ID"]
-                        .concat(results.map(result => `${result.storeId},${result.region},${result.merchantId},${result.wfmoaMerchantId}`))
-                        .join("\n");
+                    // RFC 4180 compliant field escaping: wrap each field in double
+                    // quotes and double any embedded double quotes so commas/quotes in
+                    // field values do not break the CSV structure.
+                    const escapeCsv = (val) => `"${String(val ?? '').replace(/"/g, '""')}"`;
 
-                    const encodedUri = encodeURI(csvContent);
+                    // Generate CSV content
+                    const csvContent = ["Store ID,Region,Merchant ID,WFMOA Merchant ID"]
+                        .concat(results.map(result =>
+                            [result.storeId, result.region, result.merchantId, result.wfmoaMerchantId].map(escapeCsv).join(",")
+                        ))
+                        .join("\r\n");
+
+                    // Use a Blob instead of a data: URI: a data URI run through
+                    // encodeURI() leaves '#' unencoded, and the browser treats '#' as
+                    // the URI fragment delimiter, silently truncating the file at the
+                    // first '#'. The BOM ensures Excel reads UTF-8.
+                    const blob = new Blob(["\uFEFF" + csvContent], { type: 'text/csv;charset=utf-8;' });
+                    const objectUrl = URL.createObjectURL(blob);
                     const link = document.createElement("a");
-                    link.setAttribute("href", encodedUri);
+                    link.setAttribute("href", objectUrl);
                     link.setAttribute("download", "store_info.csv");
                     document.body.appendChild(link);
                     link.click();
                     document.body.removeChild(link);
+                    URL.revokeObjectURL(objectUrl);
 
                     console.log('[GetAllStoreInfo.js] Downloading Now!');
                 });

@@ -261,6 +261,11 @@
                     'Tracking End Date'
                 ];
 
+                // RFC 4180 compliant field escaping: wrap each field in double quotes
+                // and double any embedded double quotes so commas/quotes in item names
+                // do not break the CSV structure.
+                const escapeCsv = (val) => `"${String(val ?? '').replace(/"/g, '""')}"`;
+
                 // Build CSV rows
                 const csvRows = [
                     headers.join(','),
@@ -270,23 +275,28 @@
                                 if (h === 'Current Inventory') {
                                     return row[h] !== undefined && row[h] !== null && row[h] !== '' ? row[h] : 0;
                                 }
-                                return row[h] || '';
+                                return escapeCsv(row[h]);
                             })
                             .join(',');
                     })
                 ];
 
-                // Create CSV string
-                const csvContent = 'data:text/csv;charset=utf-8,' + csvRows.join('\n');
-                const encodedUri = encodeURI(csvContent);
+                // Create CSV string. Use a Blob instead of a data: URI: a data URI run
+                // through encodeURI() leaves '#' unencoded, and the browser treats '#'
+                // as the URI fragment delimiter, silently truncating the file at the
+                // first '#' in any item name. The BOM ensures Excel reads UTF-8.
+                const csvContent = csvRows.join('\r\n');
+                const blob = new Blob(['\uFEFF' + csvContent], { type: 'text/csv;charset=utf-8;' });
+                const objectUrl = URL.createObjectURL(blob);
 
                 // Create a hidden link and trigger download
                 const link = document.createElement('a');
-                link.setAttribute('href', encodedUri);
+                link.setAttribute('href', objectUrl);
                 link.setAttribute('download', filename);
                 document.body.appendChild(link);
                 link.click();
                 document.body.removeChild(link);
+                URL.revokeObjectURL(objectUrl);
             }
         } catch (error) {
             console.error('[MeatInventory] Meat Inventory Failed', error);

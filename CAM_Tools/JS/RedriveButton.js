@@ -685,12 +685,18 @@ setTimeout(function() {
                                         'Current Inventory', 'Sales Floor Capacity', 'Andon Cord', 'Tracking Start Date', 'Tracking End Date'
                                     ];
 
+                                    // RFC 4180 compliant field escaping: wrap every
+                                    // field in double quotes and double any embedded
+                                    // double quotes so commas/quotes in item names do
+                                    // not break the CSV structure.
+                                    const escapeCsv = (val) => `"${String(val ?? '').replace(/"/g, '""')}"`;
+
                                     // For restore: use originalAndonCord
                                     const csvContentRestore = desiredHeaders.join(",") + "\n"
                                         + allItems.map(e =>
                                             desiredHeaders.map(header => {
-                                                if (header === 'Andon Cord') return `"${e['originalAndonCord'] || ''}"`;
-                                                return `"${e[header] || ''}"`;
+                                                if (header === 'Andon Cord') return escapeCsv(e['originalAndonCord']);
+                                                return escapeCsv(e[header]);
                                             }).join(",")
                                         ).join("\n");
 
@@ -698,8 +704,8 @@ setTimeout(function() {
                                     const csvContentRedrive = desiredHeaders.join(",") + "\n"
                                         + allItems.map(e =>
                                             desiredHeaders.map(header => {
-                                                if (header === 'Andon Cord') return `"${e['oppositeAndonCord'] || ''}"`;
-                                                return `"${e[header] || ''}"`;
+                                                if (header === 'Andon Cord') return escapeCsv(e['oppositeAndonCord']);
+                                                return escapeCsv(e[header]);
                                             }).join(",")
                                         ).join("\n");
 
