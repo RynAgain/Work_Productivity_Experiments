@@ -483,21 +483,33 @@ setTimeout(function() {
                                 'Store - 3 Letter Code', 'Item Name', 'Item PLU/UPC', 'Availability',
                                 'Current Inventory', 'Sales Floor Capacity', 'Andon Cord', 'Tracking Start Date', 'Tracking End Date'
                             ];
-                            const csvContent = "data:text/csv;charset=utf-8,"
-                                + desiredHeaders.join(",") + "\n"
-                                + allItems.map(e => desiredHeaders.map(header => `"${e[header] || ''}"`).join(",")).join("\n");
+                            // RFC 4180 compliant field escaping: wrap every field in
+                            // double quotes and double any embedded double quotes. This
+                            // keeps commas, quotes, and newlines safely contained within
+                            // a field.
+                            const escapeCsv = (val) => `"${String(val ?? '').replace(/"/g, '""')}"`;
+                            const csvBody = desiredHeaders.join(",") + "\r\n"
+                                + allItems.map(e => desiredHeaders.map(header => escapeCsv(e[header])).join(",")).join("\r\n");
 
-                            // Create a download link
+                            // Build the file via a Blob instead of a data: URI. A data
+                            // URI passed through encodeURI() leaves '#' unencoded, and
+                            // the browser treats '#' as the URI fragment delimiter,
+                            // silently truncating the payload at the first '#' in any
+                            // item name. A Blob carries the data verbatim with no
+                            // URI-reserved-character interpretation. The BOM ensures
+                            // Excel reads UTF-8 correctly.
                             loadingIndicator.innerHTML = 'Downloading...';
-                            const encodedUri = encodeURI(csvContent);
+                            const blob = new Blob(["\uFEFF" + csvBody], { type: 'text/csv;charset=utf-8;' });
+                            const objectUrl = URL.createObjectURL(blob);
                             const link = document.createElement("a");
-                            link.setAttribute("href", encodedUri);
+                            link.setAttribute("href", objectUrl);
                             link.setAttribute("download", "upload_items_data.csv");
                             document.body.appendChild(link);
 
                             // Trigger the download
                             link.click();
                             document.body.removeChild(link);
+                            URL.revokeObjectURL(objectUrl);
                         } else {
                             console.log('No items data available to download.');
                         }
