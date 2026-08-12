@@ -1,0 +1,52 @@
+{
+  "name": "CAM_Admin_Tools",
+  "namespace": "http://tampermonkey.net/",
+  "description": "CAM admin tool suite for WFM CAM (bundled build)",
+  "author": "Ryan Satterfield",
+  "match": ["https://*.cam.wfm.amazon.dev/*"],
+  "grant": ["GM_xmlhttpRequest"],
+  "connect": ["grocerycentral.amazon.dev"],
+  "runAt": "document-end",
+
+  "updateURL": "https://tamarin.aces.amazon.dev/scripts/cam-admin-tools/install.user.js",
+  "downloadURL": "https://tamarin.aces.amazon.dev/scripts/cam-admin-tools/install.user.js",
+  "updateCheckURL": "https://tamarin.aces.amazon.dev/scripts/cam-admin-tools/install.user.js",
+
+  "cdnRequires": [
+    "https://cdnjs.cloudflare.com/ajax/libs/jszip/3.7.1/jszip.min.js",
+    "https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.17.0/xlsx.full.min.js",
+    "https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js",
+    "https://cdnjs.cloudflare.com/ajax/libs/react/17.0.2/umd/react.production.min.js",
+    "https://cdnjs.cloudflare.com/ajax/libs/react-dom/17.0.2/umd/react-dom.production.min.js",
+    "https://code.jquery.com/jquery-3.7.1.min.js",
+    "https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js",
+    "https://unpkg.com/x-data-spreadsheet@1.1.5/dist/xspreadsheet.js"
+  ],
+
+  "modules": [
+    "tm-theme.js",
+    "AddItemButton.js",
+    "activateButton.js",
+    "RedriveButton.js",
+    "GeneralHelpToolsButton.js",
+    "PLUDedupeListButton.js",
+    "NISFileToCAMUploadButton.js",
+    "ScanCodeTo13PLUButton.js",
+    "PLUToASINButton.js",
+    "DownloadButton.js",
+    "GetMerchantIDFromStoreCode.js",
+    "GetAllStoreInfo.js",
+    "MeatInventoryToUploadConverter.js",
+    "inventoryPFDS.js",
+    "MassUploaderButton.js",
+    "FileChunker.js",
+    "componentUploadBuilder.js",
+    "ExistingItemEditor.js",
+    "Settings.js",
+    "auditHistoryPull.js",
+    "DesyncFinder.js",
+    "scratchpaper.js",
+    "GroceryCentralConnect.js",
+    "mainCore.js"
+  ]
+}
