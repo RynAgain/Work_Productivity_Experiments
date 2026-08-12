@@ -24,16 +24,54 @@
   //  ACCENT THEMES
   // ----------------------------------------------------------------
   const ACCENT_THEMES = {
-    blue:  { primary: '#3ea6ff', hover: '#65b8ff' },
-    red:   { primary: '#ff0000', hover: '#ff3333' },
-    green: { primary: '#00a650', hover: '#2ebe6a' }
+    blue:   { label: 'Blue',   primary: '#3ea6ff', hover: '#65b8ff' },
+    red:    { label: 'Red',    primary: '#ff0000', hover: '#ff3333' },
+    green:  { label: 'WFM',    primary: '#00a650', hover: '#2ebe6a' },
+    purple: { label: 'Purple', primary: '#a970ff', hover: '#bd8dff' },
+    orange: { label: 'Orange', primary: '#ff8a00', hover: '#ffa133' },
+    pink:   { label: 'Pink',   primary: '#ff5c8a', hover: '#ff7da1' },
+    teal:   { label: 'Teal',   primary: '#00bcd4', hover: '#33c9dd' },
+    gold:   { label: 'Gold',   primary: '#f2b01e', hover: '#f5c04b' },
+    mono:   { label: 'Mono',   primary: '#e0e0e0', hover: '#ffffff' }
   };
+
+  const HEX_RE = /^#[0-9a-fA-F]{6}$/;
+
+  /** Mix a hex color toward white (for derived hover shades). */
+  function lighten(hex, amt) {
+    if (!HEX_RE.test(hex)) return hex;
+    const f = typeof amt === 'number' ? amt : 0.18;
+    const n = parseInt(hex.slice(1), 16);
+    const mix = (c) => Math.min(255, Math.round(c + (255 - c) * f));
+    const r = mix((n >> 16) & 255), g = mix((n >> 8) & 255), b = mix(n & 255);
+    return '#' + ((1 << 24) | (r << 16) | (g << 8) | b).toString(16).slice(1);
+  }
+
+  /** Stored custom accent hex (settings.accentCustom), or null. */
+  function readCustomHex() {
+    try {
+      const settings = JSON.parse(localStorage.getItem(SETTINGS_KEY)) || {};
+      return HEX_RE.test(settings.accentCustom) ? settings.accentCustom : null;
+    } catch {
+      return null;
+    }
+  }
+
+  /** Resolve an accent name ('custom' included) to {primary, hover}. */
+  function resolveAccentColors(accent) {
+    if (accent === 'custom') {
+      const hex = readCustomHex();
+      if (hex) return { primary: hex, hover: lighten(hex) };
+    }
+    return ACCENT_THEMES[accent] || ACCENT_THEMES.blue;
+  }
 
   const SETTINGS_KEY = 'cam_tools_settings';
 
   function readAccent() {
     try {
       const settings = JSON.parse(localStorage.getItem(SETTINGS_KEY)) || {};
+      if (settings.accentTheme === 'custom' && HEX_RE.test(settings.accentCustom)) return 'custom';
       return ACCENT_THEMES[settings.accentTheme] ? settings.accentTheme : 'blue';
     } catch {
       return 'blue';
@@ -44,7 +82,7 @@
   //  CSS VARIABLE BLOCK  (from Anti-AI_Style-Guide.md :root template)
   // ----------------------------------------------------------------
   function buildVarBlock(accent) {
-    const t = ACCENT_THEMES[accent] || ACCENT_THEMES.blue;
+    const t = resolveAccentColors(accent);
     return `
 :root {
   /* -- Backgrounds -- */
@@ -572,19 +610,42 @@
 
   /**
    * Switch accent theme and persist.
-   * @param {'blue'|'red'} accent
+   * @param {string} accent  Preset name from ACCENT_THEMES, or 'custom'.
+   * @param {string} [customHex]  #rrggbb -- required the first time 'custom' is used.
    */
-  function setAccent(accent) {
-    if (!ACCENT_THEMES[accent]) return;
+  function setAccent(accent, customHex) {
+    if (accent === 'custom') {
+      if (!HEX_RE.test(customHex) && !readCustomHex()) return;
+    } else if (!ACCENT_THEMES[accent]) {
+      return;
+    }
     try {
       const settings = JSON.parse(localStorage.getItem(SETTINGS_KEY)) || {};
       settings.accentTheme = accent;
+      if (accent === 'custom' && HEX_RE.test(customHex)) settings.accentCustom = customHex;
       localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
     } catch { /* storage unavailable */ }
     // Hot-swap the two accent variables without full re-inject
+    const colors = (accent === 'custom' && HEX_RE.test(customHex))
+      ? { primary: customHex, hover: lighten(customHex) }
+      : resolveAccentColors(accent);
     const root = document.documentElement;
-    root.style.setProperty('--tm-accent-primary', ACCENT_THEMES[accent].primary);
-    root.style.setProperty('--tm-accent-hover', ACCENT_THEMES[accent].hover);
+    root.style.setProperty('--tm-accent-primary', colors.primary);
+    root.style.setProperty('--tm-accent-hover', colors.hover);
+  }
+
+  /** List preset accents for building pickers: [{name, label, primary}]. */
+  function listAccents() {
+    return Object.keys(ACCENT_THEMES).map((name) => ({
+      name: name,
+      label: ACCENT_THEMES[name].label || name,
+      primary: ACCENT_THEMES[name].primary
+    }));
+  }
+
+  /** Resolved {primary, hover} for the active accent. */
+  function getAccentColors() {
+    return resolveAccentColors(readAccent());
   }
 
   /** Get current accent name. */
@@ -780,6 +841,8 @@
   window.TmTheme = {
     setAccent: setAccent,
     getAccent: getAccent,
+    listAccents: listAccents,
+    getAccentColors: getAccentColors,
     injectStyle: injectStyle,
     showToast: showToast,
     setButtonLoading: setButtonLoading,
@@ -794,6 +857,8 @@
     module.exports = {
       setAccent: setAccent,
       getAccent: getAccent,
+      listAccents: listAccents,
+      getAccentColors: getAccentColors,
       injectStyle: injectStyle,
       showToast: showToast,
       setButtonLoading: setButtonLoading,

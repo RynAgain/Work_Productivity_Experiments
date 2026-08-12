@@ -1,6 +1,6 @@
 {
   "name": "cam-admin-tools",
-  "version": "4.0.1",
+  "version": "4.0.2",
   "private": true,
   "devDependencies": {
     "@babel/preset-env": "^7.16.0",

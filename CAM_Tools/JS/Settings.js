@@ -34,6 +34,7 @@
   const defaultSettings = {
     menuStyle: 'side',
     accentTheme: 'blue',
+    accentCustom: '#3ea6ff',
     autoCheckUpdates: true,
     debugMode: false,
     updateCheckInterval: UPDATE_CHECK_INTERVAL,
@@ -71,6 +72,7 @@
     setSettings({
       menuStyle: state.menuStyle,
       accentTheme: state.accentTheme,
+      accentCustom: state.accentCustom,
       autoCheckUpdates: state.autoCheckUpdates,
       debugMode: state.debugMode,
       updateCheckInterval: state.updateCheckInterval
@@ -707,6 +709,12 @@
   function renderSettingsMenu() {
     const a = accent();
     const currentAccent = (window.TmTheme && window.TmTheme.getAccent) ? window.TmTheme.getAccent() : 'blue';
+    const accentDefs = (window.TmTheme && window.TmTheme.listAccents)
+      ? window.TmTheme.listAccents()
+      : [{ name: 'blue', label: 'Blue', primary: '#3ea6ff' },
+         { name: 'red', label: 'Red', primary: '#ff0000' },
+         { name: 'green', label: 'WFM', primary: '#00a650' }];
+    const customColor = /^#[0-9a-fA-F]{6}$/.test(state.accentCustom) ? state.accentCustom : '#3ea6ff';
 
     settingsMenu.innerHTML = `
       <div style="font-size:16px;font-weight:600;color:#f1f1f1;
@@ -736,25 +744,24 @@
         </summary>
         <div style="padding:4px 0 8px;">
           <span style="font-weight:500;display:block;margin-bottom:6px;color:#aaaaaa;font-size:13px">Accent Color</span>
-          <div style="display:flex;gap:8px;margin-bottom:12px">
-            <button id="accent-blue" style="flex:1;padding:8px;border-radius:4px;cursor:pointer;font-size:13px;font-weight:500;
-                    border:1px solid ${currentAccent === 'blue' ? '#3ea6ff' : '#3f3f3f'};
-                    background:${currentAccent === 'blue' ? 'rgba(62,166,255,0.15)' : 'transparent'};
-                    color:#3ea6ff;transition:all 150ms ease">
-              Blue
-            </button>
-            <button id="accent-red" style="flex:1;padding:8px;border-radius:4px;cursor:pointer;font-size:13px;font-weight:500;
-                    border:1px solid ${currentAccent === 'red' ? '#ff0000' : '#3f3f3f'};
-                    background:${currentAccent === 'red' ? 'rgba(255,0,0,0.15)' : 'transparent'};
-                    color:#ff0000;transition:all 150ms ease">
-              Red
-            </button>
-            <button id="accent-green" style="flex:1;padding:8px;border-radius:4px;cursor:pointer;font-size:13px;font-weight:500;
-                    border:1px solid ${currentAccent === 'green' ? '#00a650' : '#3f3f3f'};
-                    background:${currentAccent === 'green' ? 'rgba(0,166,80,0.15)' : 'transparent'};
-                    color:#00a650;transition:all 150ms ease">
-              WFM
-            </button>
+          <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:10px">
+            ${accentDefs.map(d => `
+              <button class="accent-swatch" data-accent="${d.name}" title="${d.label}"
+                      style="width:26px;height:26px;border-radius:50%;cursor:pointer;padding:0;
+                      background:${d.primary};box-sizing:border-box;
+                      border:2px solid ${currentAccent === d.name ? '#f1f1f1' : 'rgba(255,255,255,0.15)'};
+                      transform:${currentAccent === d.name ? 'scale(1.15)' : 'scale(1)'};
+                      transition:all 150ms ease"></button>
+            `).join('')}
+          </div>
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px">
+            <input type="color" id="accent-custom-picker" value="${customColor}"
+                   title="Pick a custom accent color"
+                   style="width:34px;height:26px;padding:0;border:2px solid ${currentAccent === 'custom' ? '#f1f1f1' : 'rgba(255,255,255,0.15)'};
+                   border-radius:4px;background:transparent;cursor:pointer">
+            <span style="font-size:12px;color:${currentAccent === 'custom' ? '#f1f1f1' : '#717171'}">
+              Custom${currentAccent === 'custom' ? ` -- <span style="font-family:monospace">${customColor}</span>` : ''}
+            </span>
           </div>
           <span style="font-weight:500;display:block;margin-bottom:6px;color:#aaaaaa;font-size:13px">Button Layout</span>
           <select id="menuStyle" style="width:100%;padding:8px 10px;border:1px solid #3f3f3f;border-radius:4px;
@@ -862,18 +869,24 @@
     // --- Wiring ---
     settingsMenu.querySelector('#settings-close').onclick = () => setState({ settingsMenuOpen: false });
 
-    // Accent theme toggle
-    settingsMenu.querySelector('#accent-blue').onclick = () => {
-      if (window.TmTheme) window.TmTheme.setAccent('blue');
-      setState({ accentTheme: 'blue' });
+    // Accent theme toggle (preset swatches)
+    settingsMenu.querySelectorAll('.accent-swatch').forEach((btn) => {
+      btn.onclick = () => {
+        const name = btn.dataset.accent;
+        if (window.TmTheme) window.TmTheme.setAccent(name);
+        setState({ accentTheme: name });
+      };
+    });
+
+    // Custom accent color picker: live preview while dragging (oninput does
+    // not persist or re-render), commit on close (onchange).
+    const customPicker = settingsMenu.querySelector('#accent-custom-picker');
+    customPicker.oninput = (e) => {
+      if (window.TmTheme) window.TmTheme.setAccent('custom', e.target.value);
     };
-    settingsMenu.querySelector('#accent-red').onclick = () => {
-      if (window.TmTheme) window.TmTheme.setAccent('red');
-      setState({ accentTheme: 'red' });
-    };
-    settingsMenu.querySelector('#accent-green').onclick = () => {
-      if (window.TmTheme) window.TmTheme.setAccent('green');
-      setState({ accentTheme: 'green' });
+    customPicker.onchange = (e) => {
+      if (window.TmTheme) window.TmTheme.setAccent('custom', e.target.value);
+      setState({ accentTheme: 'custom', accentCustom: e.target.value });
     };
 
     settingsMenu.querySelector('#menuStyle').onchange = e => {
@@ -935,6 +948,7 @@
       setState({
         menuStyle: defaultSettings.menuStyle,
         accentTheme: 'blue',
+        accentCustom: defaultSettings.accentCustom,
         autoCheckUpdates: defaultSettings.autoCheckUpdates,
         debugMode: defaultSettings.debugMode,
         updateCheckInterval: defaultSettings.updateCheckInterval,
@@ -994,7 +1008,7 @@
   window.addEventListener('camToolsSettingsChanged', () => {
     const newSettings = getSettings();
     let changed = false;
-    ['menuStyle', 'accentTheme'].forEach(k => {
+    ['menuStyle', 'accentTheme', 'accentCustom'].forEach(k => {
       if (state[k] !== newSettings[k]) {
         state[k] = newSettings[k];
         changed = true;

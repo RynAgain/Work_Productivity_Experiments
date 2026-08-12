@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         CAM_Admin_Tools
 // @namespace    http://tampermonkey.net/
-// @version      4.0.1
+// @version      4.0.2
 // @description  CAM admin tool suite for WFM CAM (bundled build)
 // @author       Ryan Satterfield
 // @match        https://*.cam.wfm.amazon.dev/*
@@ -51,16 +51,54 @@ try {
   //  ACCENT THEMES
   // ----------------------------------------------------------------
   const ACCENT_THEMES = {
-    blue:  { primary: '#3ea6ff', hover: '#65b8ff' },
-    red:   { primary: '#ff0000', hover: '#ff3333' },
-    green: { primary: '#00a650', hover: '#2ebe6a' }
+    blue:   { label: 'Blue',   primary: '#3ea6ff', hover: '#65b8ff' },
+    red:    { label: 'Red',    primary: '#ff0000', hover: '#ff3333' },
+    green:  { label: 'WFM',    primary: '#00a650', hover: '#2ebe6a' },
+    purple: { label: 'Purple', primary: '#a970ff', hover: '#bd8dff' },
+    orange: { label: 'Orange', primary: '#ff8a00', hover: '#ffa133' },
+    pink:   { label: 'Pink',   primary: '#ff5c8a', hover: '#ff7da1' },
+    teal:   { label: 'Teal',   primary: '#00bcd4', hover: '#33c9dd' },
+    gold:   { label: 'Gold',   primary: '#f2b01e', hover: '#f5c04b' },
+    mono:   { label: 'Mono',   primary: '#e0e0e0', hover: '#ffffff' }
   };
+
+  const HEX_RE = /^#[0-9a-fA-F]{6}$/;
+
+  /** Mix a hex color toward white (for derived hover shades). */
+  function lighten(hex, amt) {
+    if (!HEX_RE.test(hex)) return hex;
+    const f = typeof amt === 'number' ? amt : 0.18;
+    const n = parseInt(hex.slice(1), 16);
+    const mix = (c) => Math.min(255, Math.round(c + (255 - c) * f));
+    const r = mix((n >> 16) & 255), g = mix((n >> 8) & 255), b = mix(n & 255);
+    return '#' + ((1 << 24) | (r << 16) | (g << 8) | b).toString(16).slice(1);
+  }
+
+  /** Stored custom accent hex (settings.accentCustom), or null. */
+  function readCustomHex() {
+    try {
+      const settings = JSON.parse(localStorage.getItem(SETTINGS_KEY)) || {};
+      return HEX_RE.test(settings.accentCustom) ? settings.accentCustom : null;
+    } catch {
+      return null;
+    }
+  }
+
+  /** Resolve an accent name ('custom' included) to {primary, hover}. */
+  function resolveAccentColors(accent) {
+    if (accent === 'custom') {
+      const hex = readCustomHex();
+      if (hex) return { primary: hex, hover: lighten(hex) };
+    }
+    return ACCENT_THEMES[accent] || ACCENT_THEMES.blue;
+  }
 
   const SETTINGS_KEY = 'cam_tools_settings';
 
   function readAccent() {
     try {
       const settings = JSON.parse(localStorage.getItem(SETTINGS_KEY)) || {};
+      if (settings.accentTheme === 'custom' && HEX_RE.test(settings.accentCustom)) return 'custom';
       return ACCENT_THEMES[settings.accentTheme] ? settings.accentTheme : 'blue';
     } catch {
       return 'blue';
@@ -71,7 +109,7 @@ try {
   //  CSS VARIABLE BLOCK  (from Anti-AI_Style-Guide.md :root template)
   // ----------------------------------------------------------------
   function buildVarBlock(accent) {
-    const t = ACCENT_THEMES[accent] || ACCENT_THEMES.blue;
+    const t = resolveAccentColors(accent);
     return `
 :root {
   /* -- Backgrounds -- */
@@ -599,19 +637,42 @@ try {
 
   /**
    * Switch accent theme and persist.
-   * @param {'blue'|'red'} accent
+   * @param {string} accent  Preset name from ACCENT_THEMES, or 'custom'.
+   * @param {string} [customHex]  #rrggbb -- required the first time 'custom' is used.
    */
-  function setAccent(accent) {
-    if (!ACCENT_THEMES[accent]) return;
+  function setAccent(accent, customHex) {
+    if (accent === 'custom') {
+      if (!HEX_RE.test(customHex) && !readCustomHex()) return;
+    } else if (!ACCENT_THEMES[accent]) {
+      return;
+    }
     try {
       const settings = JSON.parse(localStorage.getItem(SETTINGS_KEY)) || {};
       settings.accentTheme = accent;
+      if (accent === 'custom' && HEX_RE.test(customHex)) settings.accentCustom = customHex;
       localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
     } catch { /* storage unavailable */ }
     // Hot-swap the two accent variables without full re-inject
+    const colors = (accent === 'custom' && HEX_RE.test(customHex))
+      ? { primary: customHex, hover: lighten(customHex) }
+      : resolveAccentColors(accent);
     const root = document.documentElement;
-    root.style.setProperty('--tm-accent-primary', ACCENT_THEMES[accent].primary);
-    root.style.setProperty('--tm-accent-hover', ACCENT_THEMES[accent].hover);
+    root.style.setProperty('--tm-accent-primary', colors.primary);
+    root.style.setProperty('--tm-accent-hover', colors.hover);
+  }
+
+  /** List preset accents for building pickers: [{name, label, primary}]. */
+  function listAccents() {
+    return Object.keys(ACCENT_THEMES).map((name) => ({
+      name: name,
+      label: ACCENT_THEMES[name].label || name,
+      primary: ACCENT_THEMES[name].primary
+    }));
+  }
+
+  /** Resolved {primary, hover} for the active accent. */
+  function getAccentColors() {
+    return resolveAccentColors(readAccent());
   }
 
   /** Get current accent name. */
@@ -807,6 +868,8 @@ try {
   window.TmTheme = {
     setAccent: setAccent,
     getAccent: getAccent,
+    listAccents: listAccents,
+    getAccentColors: getAccentColors,
     injectStyle: injectStyle,
     showToast: showToast,
     setButtonLoading: setButtonLoading,
@@ -821,6 +884,8 @@ try {
     module.exports = {
       setAccent: setAccent,
       getAccent: getAccent,
+      listAccents: listAccents,
+      getAccentColors: getAccentColors,
       injectStyle: injectStyle,
       showToast: showToast,
       setButtonLoading: setButtonLoading,
@@ -10157,7 +10222,7 @@ try {
   // ------------------------------------------------------------------
   //  UPDATE SYSTEM CONFIGURATION
   // ------------------------------------------------------------------
-  const CAM_TOOLS_VERSION = '4.0.1'; // injected by build.js
+  const CAM_TOOLS_VERSION = '4.0.2'; // injected by build.js
   // Tamarin script page links (feedback)
   const TAMARIN_BUG_URL = 'https://tamarin.harmony.a2z.com/script/cam-admin-tools/report-bug';
   const TAMARIN_FEATURE_URL = 'https://tamarin.harmony.a2z.com/script/cam-admin-tools/request-feature';
@@ -10168,6 +10233,7 @@ try {
   const defaultSettings = {
     menuStyle: 'side',
     accentTheme: 'blue',
+    accentCustom: '#3ea6ff',
     autoCheckUpdates: true,
     debugMode: false,
     updateCheckInterval: UPDATE_CHECK_INTERVAL,
@@ -10205,6 +10271,7 @@ try {
     setSettings({
       menuStyle: state.menuStyle,
       accentTheme: state.accentTheme,
+      accentCustom: state.accentCustom,
       autoCheckUpdates: state.autoCheckUpdates,
       debugMode: state.debugMode,
       updateCheckInterval: state.updateCheckInterval
@@ -10841,6 +10908,12 @@ try {
   function renderSettingsMenu() {
     const a = accent();
     const currentAccent = (window.TmTheme && window.TmTheme.getAccent) ? window.TmTheme.getAccent() : 'blue';
+    const accentDefs = (window.TmTheme && window.TmTheme.listAccents)
+      ? window.TmTheme.listAccents()
+      : [{ name: 'blue', label: 'Blue', primary: '#3ea6ff' },
+         { name: 'red', label: 'Red', primary: '#ff0000' },
+         { name: 'green', label: 'WFM', primary: '#00a650' }];
+    const customColor = /^#[0-9a-fA-F]{6}$/.test(state.accentCustom) ? state.accentCustom : '#3ea6ff';
 
     settingsMenu.innerHTML = `
       <div style="font-size:16px;font-weight:600;color:#f1f1f1;
@@ -10870,25 +10943,24 @@ try {
         </summary>
         <div style="padding:4px 0 8px;">
           <span style="font-weight:500;display:block;margin-bottom:6px;color:#aaaaaa;font-size:13px">Accent Color</span>
-          <div style="display:flex;gap:8px;margin-bottom:12px">
-            <button id="accent-blue" style="flex:1;padding:8px;border-radius:4px;cursor:pointer;font-size:13px;font-weight:500;
-                    border:1px solid ${currentAccent === 'blue' ? '#3ea6ff' : '#3f3f3f'};
-                    background:${currentAccent === 'blue' ? 'rgba(62,166,255,0.15)' : 'transparent'};
-                    color:#3ea6ff;transition:all 150ms ease">
-              Blue
-            </button>
-            <button id="accent-red" style="flex:1;padding:8px;border-radius:4px;cursor:pointer;font-size:13px;font-weight:500;
-                    border:1px solid ${currentAccent === 'red' ? '#ff0000' : '#3f3f3f'};
-                    background:${currentAccent === 'red' ? 'rgba(255,0,0,0.15)' : 'transparent'};
-                    color:#ff0000;transition:all 150ms ease">
-              Red
-            </button>
-            <button id="accent-green" style="flex:1;padding:8px;border-radius:4px;cursor:pointer;font-size:13px;font-weight:500;
-                    border:1px solid ${currentAccent === 'green' ? '#00a650' : '#3f3f3f'};
-                    background:${currentAccent === 'green' ? 'rgba(0,166,80,0.15)' : 'transparent'};
-                    color:#00a650;transition:all 150ms ease">
-              WFM
-            </button>
+          <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:10px">
+            ${accentDefs.map(d => `
+              <button class="accent-swatch" data-accent="${d.name}" title="${d.label}"
+                      style="width:26px;height:26px;border-radius:50%;cursor:pointer;padding:0;
+                      background:${d.primary};box-sizing:border-box;
+                      border:2px solid ${currentAccent === d.name ? '#f1f1f1' : 'rgba(255,255,255,0.15)'};
+                      transform:${currentAccent === d.name ? 'scale(1.15)' : 'scale(1)'};
+                      transition:all 150ms ease"></button>
+            `).join('')}
+          </div>
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px">
+            <input type="color" id="accent-custom-picker" value="${customColor}"
+                   title="Pick a custom accent color"
+                   style="width:34px;height:26px;padding:0;border:2px solid ${currentAccent === 'custom' ? '#f1f1f1' : 'rgba(255,255,255,0.15)'};
+                   border-radius:4px;background:transparent;cursor:pointer">
+            <span style="font-size:12px;color:${currentAccent === 'custom' ? '#f1f1f1' : '#717171'}">
+              Custom${currentAccent === 'custom' ? ` -- <span style="font-family:monospace">${customColor}</span>` : ''}
+            </span>
           </div>
           <span style="font-weight:500;display:block;margin-bottom:6px;color:#aaaaaa;font-size:13px">Button Layout</span>
           <select id="menuStyle" style="width:100%;padding:8px 10px;border:1px solid #3f3f3f;border-radius:4px;
@@ -10996,18 +11068,24 @@ try {
     // --- Wiring ---
     settingsMenu.querySelector('#settings-close').onclick = () => setState({ settingsMenuOpen: false });
 
-    // Accent theme toggle
-    settingsMenu.querySelector('#accent-blue').onclick = () => {
-      if (window.TmTheme) window.TmTheme.setAccent('blue');
-      setState({ accentTheme: 'blue' });
+    // Accent theme toggle (preset swatches)
+    settingsMenu.querySelectorAll('.accent-swatch').forEach((btn) => {
+      btn.onclick = () => {
+        const name = btn.dataset.accent;
+        if (window.TmTheme) window.TmTheme.setAccent(name);
+        setState({ accentTheme: name });
+      };
+    });
+
+    // Custom accent color picker: live preview while dragging (oninput does
+    // not persist or re-render), commit on close (onchange).
+    const customPicker = settingsMenu.querySelector('#accent-custom-picker');
+    customPicker.oninput = (e) => {
+      if (window.TmTheme) window.TmTheme.setAccent('custom', e.target.value);
     };
-    settingsMenu.querySelector('#accent-red').onclick = () => {
-      if (window.TmTheme) window.TmTheme.setAccent('red');
-      setState({ accentTheme: 'red' });
-    };
-    settingsMenu.querySelector('#accent-green').onclick = () => {
-      if (window.TmTheme) window.TmTheme.setAccent('green');
-      setState({ accentTheme: 'green' });
+    customPicker.onchange = (e) => {
+      if (window.TmTheme) window.TmTheme.setAccent('custom', e.target.value);
+      setState({ accentTheme: 'custom', accentCustom: e.target.value });
     };
 
     settingsMenu.querySelector('#menuStyle').onchange = e => {
@@ -11069,6 +11147,7 @@ try {
       setState({
         menuStyle: defaultSettings.menuStyle,
         accentTheme: 'blue',
+        accentCustom: defaultSettings.accentCustom,
         autoCheckUpdates: defaultSettings.autoCheckUpdates,
         debugMode: defaultSettings.debugMode,
         updateCheckInterval: defaultSettings.updateCheckInterval,
@@ -11128,7 +11207,7 @@ try {
   window.addEventListener('camToolsSettingsChanged', () => {
     const newSettings = getSettings();
     let changed = false;
-    ['menuStyle', 'accentTheme'].forEach(k => {
+    ['menuStyle', 'accentTheme', 'accentCustom'].forEach(k => {
       if (state[k] !== newSettings[k]) {
         state[k] = newSettings[k];
         changed = true;
@@ -13544,4 +13623,4 @@ try {
   console.error('[CAM_Tools] Module mainCore.js failed to initialize:', e);
 }
 
-console.log('[CAM_Tools] Bundle v4.0.1 loaded (24 modules)');
+console.log('[CAM_Tools] Bundle v4.0.2 loaded (24 modules)');
