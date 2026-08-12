@@ -24,7 +24,9 @@
   //  UPDATE SYSTEM CONFIGURATION
   // ------------------------------------------------------------------
   const CAM_TOOLS_VERSION = '3.2.7'; // Extracted from MainScript.user.js @version
-  const GITHUB_API_URL = 'https://api.github.com/repos/RynAgain/Work_Productivity_Experiments/releases/latest'; //we don't really use releases for tm scripts
+  // Tamarin script page links (feedback)
+  const TAMARIN_BUG_URL = 'https://tamarin.harmony.a2z.com/script/cam-admin-tools/report-bug';
+  const TAMARIN_FEATURE_URL = 'https://tamarin.harmony.a2z.com/script/cam-admin-tools/request-feature';
   const GITHUB_RAW_URL = 'https://raw.githubusercontent.com/RynAgain/Work_Productivity_Experiments/main/CAM_Tools/MainScript.user.js';
   const UPDATE_CHECK_INTERVAL = 4 * 60 * 60 * 1000; // 4 hours in milliseconds
   const UPDATE_STORAGE_PREFIX = 'cam_tools_update_';
@@ -136,6 +138,38 @@
     return versionMatch ? versionMatch[1].trim() : null;
   }
 
+  // Fetches the published script source. Uses GM_xmlhttpRequest when available:
+  // it runs outside the page origin, so it bypasses CORS and sends the user's
+  // Midway cookies to tamarin.aces.amazon.dev (requires @connect in the header).
+  // Falls back to fetch() for test environments without the GM API.
+  function fetchScriptSource(url) {
+    if (typeof GM_xmlhttpRequest === 'function') {
+      return new Promise((resolve, reject) => {
+        GM_xmlhttpRequest({
+          method: 'GET',
+          url: url,
+          headers: { 'Cache-Control': 'no-cache' },
+          timeout: 30000,
+          onload: (res) => {
+            if (res.status >= 200 && res.status < 300) {
+              resolve(res.responseText);
+            } else {
+              reject(new Error(`HTTP ${res.status}`));
+            }
+          },
+          onerror: () => reject(new Error('Network error')),
+          ontimeout: () => reject(new Error('Request timed out'))
+        });
+      });
+    }
+    return fetch(url, { cache: 'no-cache' }).then((response) => {
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+      return response.text();
+    });
+  }
+
   async function checkForUpdates(showNoUpdateMessage = false) {
     if (state.updateCheckInProgress) return;
     
@@ -150,37 +184,10 @@
         return;
       }
       
-      let latestVersion = null;
-      try {
-        const response = await fetch(GITHUB_API_URL, {
-          cache: 'no-cache',
-          headers: { 'User-Agent': 'CAM-Tools-Update-Checker' }
-        });
-        
-        if (response.ok) {
-          const releaseData = await response.json();
-          latestVersion = releaseData.tag_name?.replace(/^v/, '') || null;
-        }
-      } catch (apiError) {
-        console.warn('[Settings] GitHub API failed, trying raw file:', apiError);
-      }
-      
+      const scriptContent = await fetchScriptSource(GITHUB_RAW_URL);
+      const latestVersion = extractVersionFromScript(scriptContent);
       if (!latestVersion) {
-        const response = await fetch(GITHUB_RAW_URL, {
-          cache: 'no-cache',
-          headers: { 'User-Agent': 'CAM-Tools-Update-Checker' }
-        });
-        
-        if (!response.ok) {
-          throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-        }
-        
-        const scriptContent = await response.text();
-        latestVersion = extractVersionFromScript(scriptContent);
-        
-        if (!latestVersion) {
-          throw new Error('Could not extract version from script');
-        }
+        throw new Error('Could not extract version from script');
       }
       
       setUpdateData('lastVersionCheck', now);
@@ -823,6 +830,20 @@
         </div>
       </details>
 
+      <!-- Feedback (Tamarin) -->
+      <div style="display:flex;gap:8px;margin-top:12px;">
+        <button id="report-bug-btn" style="flex:1;padding:8px;border:1px solid #3f3f3f;
+                background:transparent;color:#aaaaaa;border-radius:4px;cursor:pointer;
+                font-size:13px;font-weight:500;transition:all 150ms ease;">
+          Report Bug
+        </button>
+        <button id="request-feature-btn" style="flex:1;padding:8px;border:1px solid #3f3f3f;
+                background:transparent;color:#aaaaaa;border-radius:4px;cursor:pointer;
+                font-size:13px;font-weight:500;transition:all 150ms ease;">
+          Request Feature
+        </button>
+      </div>
+
       <!-- Reset to Defaults -->
       <button id="reset-defaults" style="width:100%;margin-top:12px;padding:8px;border:1px solid #3f3f3f;
               background:transparent;color:#aaaaaa;border-radius:4px;cursor:pointer;
@@ -832,7 +853,7 @@
 
       <!-- Dev Mark -->
       <div style="text-align: center; padding: 12px 0 4px; font-size: 11px; color: #717171; border-top: 1px solid #303030; margin-top: auto;">
-        Developed by <a href="https://github.com/RynAgain" target="_blank" rel="noopener noreferrer"
+        Developed by <a href="https://tamarin.harmony.a2z.com/script/cam-admin-tools" target="_blank" rel="noopener noreferrer"
                         style="color: ${a}; text-decoration: none;">Ryan Satterfield</a>
       </div>
       </div>
@@ -902,6 +923,13 @@
     };
 
     // Reset to Defaults
+    settingsMenu.querySelector('#report-bug-btn').onclick = () => {
+      window.open(TAMARIN_BUG_URL, '_blank');
+    };
+    settingsMenu.querySelector('#request-feature-btn').onclick = () => {
+      window.open(TAMARIN_FEATURE_URL, '_blank');
+    };
+
     settingsMenu.querySelector('#reset-defaults').onclick = () => {
       if (window.TmTheme) window.TmTheme.setAccent('blue');
       setState({

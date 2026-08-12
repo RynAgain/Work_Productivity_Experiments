@@ -104,10 +104,6 @@ function transform(name, src) {
     // Point the in-app update checker at Tamarin (once configured).
     if (cfg.updateCheckURL) {
       src = src.replace(
-        /const GITHUB_API_URL = '[^']*';[^\n]*/,
-        `const GITHUB_API_URL = ''; // disabled by build.js (Tamarin hosting)`
-      );
-      src = src.replace(
         /const GITHUB_RAW_URL = '[^']*';[^\n]*/,
         `const GITHUB_RAW_URL = '${cfg.updateCheckURL}'; // injected by build.js (Tamarin raw script URL)`
       );

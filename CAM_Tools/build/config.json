@@ -5,7 +5,7 @@
   "author": "Ryan Satterfield",
   "match": ["https://*.cam.wfm.amazon.dev/*"],
   "grant": ["GM_xmlhttpRequest"],
-  "connect": ["grocerycentral.amazon.dev"],
+  "connect": ["grocerycentral.amazon.dev", "tamarin.aces.amazon.dev"],
   "runAt": "document-end",
 
   "updateURL": "https://tamarin.aces.amazon.dev/scripts/cam-admin-tools/install.user.js",
